@@ -27,9 +27,11 @@ import {
   groupByDiscipline,
   type DisciplinePoint,
 } from '../../app/src/components/time-series-chart-math';
+import { nextSessionDeadline } from '../../app/src/features/compliance/next-session';
 import { disciplineLabel } from '../../app/src/features/session/labels';
 import { formatTotalScore } from '../../app/src/features/stats/format-total-score';
 import { overallLicenseActivity } from './license-activity';
+import { licenseCheckHash } from './shell/route';
 import { periodLabel, trendLine } from '../../app/src/features/stats/stats-filters';
 import type { PulledTables } from './pull';
 import { BarChart, LineChart, ScatterPlot } from './report/charts';
@@ -74,13 +76,25 @@ function LicenseActivityLine({ tables }: { tables: PulledTables }) {
   const { t } = useTranslation();
   const overall = useMemo(() => overallLicenseActivity(tables), [tables]);
   if (overall === null) return null;
+  const { status, lapseIso } = overall;
   return (
-    <p className="license-activity">
-      {t('compliance.licenseActivityTitle')}{' '}
-      <span className={overall === 'green' ? 'badge' : 'badge alert'}>
-        {t(ACTIVITY_LABEL[overall])}
+    <a
+      className="license-activity"
+      href={licenseCheckHash({ view: 'overview' })}
+      title={t('compliance.check.open')}
+    >
+      <span>
+        {t('compliance.licenseActivityTitle')}{' '}
+        <span className={status === 'green' ? 'badge' : 'badge alert'}>
+          {t(ACTIVITY_LABEL[status])}
+        </span>
       </span>
-    </p>
+      {lapseIso && (
+        <span className="muted">
+          {t('compliance.nextSessionBy', { date: showDate(nextSessionDeadline(lapseIso)) })}
+        </span>
+      )}
+    </a>
   );
 }
 

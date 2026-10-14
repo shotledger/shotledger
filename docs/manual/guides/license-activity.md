@@ -113,11 +113,16 @@ see where you stand.
 
 With sync on, **Statistics** in the web app shows the same overall status as
 Home on the phone, at the top of the page: **License Activity** followed by
-**On Track**, **Falling Behind** or **Inactive**. It counts every session on
-your account, whatever the report's filters are set to.
+**On Track**, **Falling Behind** or **Inactive**, with the date to log your
+next session by when you are on track. It counts every session on your
+account, whatever the report's filters are set to.
 
 It appears once a profile is chosen under **Settings → Compliance**, on the
-phone or on the web. The web cannot see your phone's language, so until you
-choose, it shows nothing. The web has no firearm pages yet, so a firearm's own
-criteria, and the date by which your next session keeps you on track, are on
-the phone only for now.
+phone or on the web, and not while license activity is switched off under
+**Settings → Features**. The web cannot see your phone's language, so until you
+choose, it shows nothing.
+
+Click the status to open **License Check**, with the same answers, rows and
+boxes as on the phone ([Seeing where you stand](#seeing-where-you-stand)). The
+web has no firearm pages yet, so a firearm's box has no **Open Firearm** row,
+and a firearm's own license-activity card is on the phone only for now.
