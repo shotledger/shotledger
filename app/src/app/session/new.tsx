@@ -51,7 +51,7 @@ import {
 import { enabledRegulationIds } from '@/features/regulations/use-regulations';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
 import { getDefaultFirearmForGroup, listFirearmGroups } from '@/db/queries/firearm-groups';
-import { listFirearms } from '@/db/queries/firearms';
+import { listActiveFirearms } from '@/db/queries/firearms';
 import { addSeries } from '@/db/queries/series';
 import { setSessionExtraRounds } from '@/db/queries/round-count';
 import { getSetting, SETTINGS_KEYS } from '@/db/queries/settings';
@@ -209,7 +209,7 @@ export default function NewSessionScreen() {
   const roundsInvalid = kind === 'rounds' && !parsedRounds.ok;
   const showEventPicker = events.length > 0 && isCompetition;
 
-  const firearms = useMemo(() => listFirearms(db), []);
+  const firearms = useMemo(() => listActiveFirearms(db), []);
   const ammoLots = useMemo(() => listAmmoLots(db), []);
   const knownTags = useMemo(() => listTags(db).map((tag) => tag.name), []);
   const onlineLocationLookup = useMemo(

@@ -141,7 +141,11 @@ export default function EditSessionScreen() {
   const showClassPicker =
     classes.length > 0 && ((isCompetition && tracked.shooterClass) || shooterClass !== null);
   const showEventPicker = events.length > 0 && (isCompetition || eventId !== null);
-  const firearms = listFirearms(db);
+  // An archived firearm (#799) is offered only to the session already shot
+  // with it, by the same one-way rule as the pickers above.
+  const firearms = listFirearms(db).filter(
+    (f) => f.archivedAt === null || f.id === session.firearmId,
+  );
   const ammoLots = listAmmoLots(db);
   const programs = session.kind === 'series' ? programsForDiscipline(session.disciplineId) : [];
   const formatEditable = canChangeMatchFormat(db, session.id);

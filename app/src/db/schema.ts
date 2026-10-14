@@ -38,6 +38,12 @@ export const firearms = sqliteTable('firearms', {
   roundCount: integer('round_count').notNull().default(0),
   maintenanceIntervalRounds: integer('maintenance_interval_rounds'),
   roundsSinceMaintenance: integer('rounds_since_maintenance').notNull().default(0),
+  /**
+   * When the shooter archived it — sold, returned or retired (#799). NULL is
+   * active. Archiving only hides the firearm from lists and pickers: its
+   * sessions, licences and maintenance stay, unlike `deleted_at`.
+   */
+  archivedAt: text('archived_at'),
 });
 
 export const licenses = sqliteTable('licenses', {

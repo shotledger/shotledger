@@ -17,7 +17,7 @@ import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { Toggle } from '@/components/toggle';
 import { db } from '@/db/client';
-import { listFirearms } from '@/db/queries/firearms';
+import { listActiveFirearms } from '@/db/queries/firearms';
 import {
   useWebshooterReview,
   type ReviewCandidate,
@@ -52,7 +52,7 @@ export default function WebshooterImportReviewScreen() {
   // Per start: each is one weapon group and class, shot with its own firearm.
   const [firearmByRow, setFirearmByRow] = useState<Record<number, string>>({});
   const [sightersByRow, setSightersByRow] = useState<Record<number, boolean>>({});
-  const firearms = listFirearms(db);
+  const firearms = listActiveFirearms(db);
 
   useEffect(() => {
     void load();
