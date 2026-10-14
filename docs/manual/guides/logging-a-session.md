@@ -37,6 +37,9 @@ Picked Full Match when you meant Free Format, or the other way round:
 1. Open the session's **⋮** menu and choose **Edit Session**.
 2. Pick the format under **Match Format** and tap **Save Changes**.
 
+Edit Session leads with the name, date, firearm and ammunition lot; location,
+notes, series entry and tags are folded under **Details**.
+
 The series are laid out afresh for the new format, which is why this works
 only until the first result: a shot, a photo waiting to be scored, or an
 imported total. After that the row shows the format with a note that it can
@@ -109,7 +112,8 @@ run as **field** or **point field**. A field shooting session has no stopwatch
 or sights buttons.
 
 Each station is six shots. On one screen you tap **Hits** (0–6), **Figures
-Hit**, and **Figures**, how many figures the station had. Five hits in three of
+Hit**, and **Figures**, how many figures the station had: one tap on the
+number for each. Five hits in three of
 four figures reads **5/3 of 4**: you missed one shot or put two in the same
 figure, and one figure went untouched. Leave Figures at **–** if you don't
 know it; the station then reads **5/3**. The session's result is two labelled

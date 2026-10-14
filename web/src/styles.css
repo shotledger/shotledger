@@ -830,48 +830,6 @@ fieldset.field legend {
   margin-bottom: 4px;
 }
 
-/* Radio groups drawn as the .choices pills; the input stays for the keyboard. */
-.radios {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.radios label {
-  position: relative;
-}
-
-.radios input {
-  position: absolute;
-  inset: 0;
-  margin: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.radios span {
-  display: inline-block;
-  padding: 6px 10px;
-  font-size: 13px;
-  border: 1px solid var(--primary);
-  border-radius: 10px;
-  color: var(--primary);
-}
-
-.radios input:checked + span {
-  background: var(--primary);
-  color: var(--on-primary);
-}
-
-.radios input:focus-visible + span {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-}
-
-.radios input:disabled + span {
-  opacity: 0.5;
-}
-
 .field.check,
 .series-rows .series-row .check {
   display: flex;
@@ -1594,4 +1552,201 @@ a.button.secondary {
   .edit-series .series-row {
     grid-template-columns: 72px minmax(0, 1fr);
   }
+}
+
+/* The two single-choice controls (fields/choice.tsx, #822): a segmented
+   track for two to four short options, choice chips for the rest. Native
+   radios underneath; chosen is the `selected` fill plus a `selected-outline`
+   edge of the same width, so a choice never rests on colour or border
+   thickness alone. 48px is the touch-target floor, as on the phone. */
+.segmented,
+.choice-chips {
+  display: flex;
+  gap: 2px;
+}
+
+.segmented {
+  padding: 2px;
+  border-radius: 12px;
+  background: var(--background-element);
+}
+
+.choice-chips {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.segmented label,
+.choice-chips label {
+  position: relative;
+}
+
+.segmented label {
+  flex: 1;
+}
+
+.segmented input,
+.choice-chips input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.segmented span,
+.choice-chips span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  box-sizing: border-box;
+  padding: 0 16px;
+  border: 2px solid transparent;
+  font-size: 14px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.segmented span {
+  border-radius: 8px;
+  padding: 0 8px;
+}
+
+.choice-chips span {
+  border-color: var(--border);
+  border-radius: 999px;
+}
+
+.segmented input:checked + span,
+.choice-chips input:checked + span {
+  background: var(--selected);
+  border-color: var(--selected-outline);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.segmented input:focus-visible + span,
+.choice-chips input:focus-visible + span {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.segmented input:disabled + span,
+.choice-chips input:disabled + span {
+  opacity: 0.5;
+}
+
+/* Count cells (fields/count.tsx): one 48px radio per value on a segmented
+   track, wrapping onto rows of equal cells rather than shrinking one. */
+.count-cells {
+  display: grid;
+  /* One fixed cell width, so a column of counts lines up from field to
+     field and a short list does not stretch into wide bars on a desktop. */
+  grid-template-columns: repeat(auto-fill, 56px);
+  justify-content: start;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 12px;
+  background: var(--background-element);
+}
+
+.count-cells label {
+  position: relative;
+}
+
+.count-cells input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.count-cells span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  box-sizing: border-box;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.count-cells input:checked + span {
+  background: var(--selected);
+  border-color: var(--selected-outline);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.count-cells input:focus-visible + span {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.count-cells input:disabled + span {
+  opacity: 0.5;
+}
+
+.station-row .count-field {
+  grid-column: 1 / -1;
+}
+
+/* "Details": a form's optional fields, folded (#822), as on the phone's
+   DetailsDisclosure. */
+details.form-details > summary {
+  display: grid;
+  gap: 2px;
+  min-height: 48px;
+  align-content: center;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+details.form-details > summary .muted {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+details.form-details[open] > summary {
+  margin-bottom: 12px;
+}
+
+/* A choice takes the form's full width: chips wrap across the row instead
+   of stretching one grid cell, and the row aligns as the phone's does. */
+.entry-fields > fieldset.field {
+  grid-column: 1 / -1;
+}
+
+.entry-fields > fieldset.field legend {
+  margin-bottom: 8px;
+}
+
+details.form-details > summary {
+  position: relative;
+  padding-right: 24px;
+  list-style: none;
+}
+
+details.form-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.form-details > summary::after {
+  content: '›';
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  color: var(--text-secondary);
+}
+
+details.form-details[open] > summary::after {
+  transform: translateY(-50%) rotate(90deg);
 }

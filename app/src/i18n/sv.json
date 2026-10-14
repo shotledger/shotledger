@@ -1705,5 +1705,17 @@
     "groupAndClass": "Vapengrupp {{group}}, klass {{class}}",
     "airgun": "Luftvapen",
     "airgunAndClass": "Luftvapen, klass {{class}}"
+  },
+  "formsA": {
+    "details": "Detaljer",
+    "optional": "Valfritt",
+    "ammoDetailsSummary": "Inköpsdatum, märke, kula, hastighet, anteckningar",
+    "ammoDetailsSummaryHandload": "Inköpsdatum, recept, kula, hastighet, anteckningar",
+    "firearmDetailsSummary": "Serienummer, vapenregister-id, laddsystem, underhåll, anteckningar",
+    "firearmEditDetailsSummary": "Serienummer, vapenregister-id, laddsystem, anteckningar",
+    "sessionDetailsSummary": "Plats, anteckningar, taggar, serieinmatning",
+    "sessionDetailsSummaryNoEntry": "Plats, anteckningar, taggar",
+    "seriesEntry": "Serieinmatning",
+    "webSessionDetailsSummary": "Plats, anteckningar"
   }
 }

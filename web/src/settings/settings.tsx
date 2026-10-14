@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { currentUserId, pushRows } from '../api';
 import { useOnline } from '../entry/entry';
 import type { ReauthOutcome } from '../reauth';
+import { ChoiceGroup } from '../fields/choice';
 import { SignInAgain } from '../sign-in-again';
 import type { PulledTables } from '../pull';
 import {
@@ -39,35 +40,15 @@ const PROFILE_LABEL_KEYS: Record<ProfileSelection, string> = {
   se: 'compliance.profileSe',
 };
 
-/** An exclusive choice: native radios, so the arrow keys move it (spec R15). */
-function RadioGroup<T extends string>({
-  labelledBy,
-  options,
-  value,
-  onChange,
-}: {
+/** An exclusive choice: native radios, so the arrow keys move it (spec R15),
+ *  drawn as the phone's Segmented or Choice Chips by the same rule (#822). */
+function RadioGroup<T extends string>(props: {
   labelledBy: string;
   options: readonly { value: T; label: string }[];
   value: T | null;
   onChange: (next: T) => void;
 }) {
-  const name = useId();
-  return (
-    <div className="radios" role="radiogroup" aria-labelledby={labelledBy}>
-      {options.map((option) => (
-        <label key={option.value}>
-          <input
-            type="radio"
-            name={name}
-            value={option.value}
-            checked={option.value === value}
-            onChange={() => onChange(option.value)}
-          />
-          <span>{option.label}</span>
-        </label>
-      ))}
-    </div>
-  );
+  return <ChoiceGroup {...props} />;
 }
 
 function statusText(t: TFunction, state: SaveState): string | null {

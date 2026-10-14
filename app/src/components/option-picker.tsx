@@ -1,8 +1,15 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+// A single choice with a heading (#822, finding "Six ways to pick one
+// option"). It no longer draws pills of its own: two to four short options
+// render as a SegmentedControl, anything else as single-select ChoiceChips,
+// so every screen that picks one thing uses one of the two controls and the
+// same selected state (fill plus outline).
+import { StyleSheet, View } from 'react-native';
 
+import { ChoiceChips } from '@/components/choice-chips';
+import { optionPickerLayout } from '@/components/option-picker-layout';
+import { SegmentedControl } from '@/components/segmented-control';
 import { ThemedText } from '@/components/themed-text';
-import { useTheme } from '@/hooks/use-theme';
-import { Radius, Spacing } from '@/theme/tokens';
+import { Spacing } from '@/theme/tokens';
 
 export interface PickerOption<T extends string> {
   value: T;
@@ -18,56 +25,61 @@ export interface OptionPickerProps<T extends string> {
   onChange: (value: T) => void;
   /** Rendered instead of the options when the list is empty. */
   emptyLabel?: string;
+  /** Forces one of the two controls instead of choosing by count and length. */
+  layout?: 'segmented' | 'chips';
+  /** On the control itself (the radio group), not the heading. */
+  testID?: string;
 }
 
-/**
- * A wrapping row of selectable pills. Used where a SegmentedControl would be
- * too cramped — disciplines, programs, vapengrupper, klasser, firearms.
- */
 export function OptionPicker<T extends string>({
   label,
   options,
   value,
   onChange,
   emptyLabel,
+  layout,
+  testID,
 }: OptionPickerProps<T>) {
-  const theme = useTheme();
+  const drawAs = layout ?? optionPickerLayout(options.map((option) => option.label));
+
+  let control;
+  if (options.length === 0 && emptyLabel) {
+    control = (
+      <ThemedText type="small" themeColor="textSecondary">
+        {emptyLabel}
+      </ThemedText>
+    );
+  } else if (drawAs === 'segmented') {
+    control = (
+      <SegmentedControl
+        options={options}
+        // Nothing chosen yet (null) leaves every segment unselected.
+        value={value as T}
+        onChange={onChange}
+        scrollable={false}
+        accessibilityLabel={label}
+        testID={testID}
+      />
+    );
+  } else {
+    control = (
+      <ChoiceChips
+        options={options}
+        value={value === null ? [] : [value]}
+        onChange={(next) => {
+          const [picked] = next;
+          if (picked !== undefined) onChange(picked);
+        }}
+        accessibilityLabel={label}
+        testID={testID}
+      />
+    );
+  }
 
   return (
     <View style={styles.container}>
       {label ? <ThemedText type="smallBold">{label}</ThemedText> : null}
-      {options.length === 0 && emptyLabel ? (
-        <ThemedText type="small" themeColor="textSecondary">
-          {emptyLabel}
-        </ThemedText>
-      ) : (
-        <View style={styles.row}>
-          {options.map((option) => {
-            const selected = option.value === value;
-            return (
-              <Pressable
-                key={option.value}
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
-                testID={option.testID}
-                onPress={() => onChange(option.value)}
-                style={[
-                  styles.pill,
-                  { backgroundColor: theme.backgroundElement, borderColor: theme.border },
-                  selected && {
-                    borderColor: theme.selectedOutline,
-                    backgroundColor: theme.selected,
-                  },
-                ]}
-              >
-                <ThemedText type="small" themeColor={selected ? 'text' : 'textSecondary'}>
-                  {option.label}
-                </ThemedText>
-              </Pressable>
-            );
-          })}
-        </View>
-      )}
+      {control}
     </View>
   );
 }
@@ -75,16 +87,5 @@ export function OptionPicker<T extends string>({
 const styles = StyleSheet.create({
   container: {
     gap: Spacing.two,
-  },
-  row: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-  },
-  pill: {
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Radius.pill,
-    borderWidth: 2,
   },
 });

@@ -1,7 +1,8 @@
 // Fält station entry (#315, reworked in #567). A station answers four
 // questions in one screen: did every shot hit, did I hit every figure, did I
-// score points, and what could I have scored. Each count is one row of
-// equal-width segments, so 0-6 never wraps.
+// score points, and what could I have scored. Each count is one tap on a
+// track of 48dp cells that wraps to a second row rather than shrink a cell
+// (#822); the old single row left each digit about 40dp wide on a phone.
 //
 // A station reached via "Add Station" (`?new=1`) does not exist in the
 // database yet. It is created by Save, and only when something was entered —
@@ -20,10 +21,10 @@ import {
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
+import { Button } from '@/components/button';
+import { Header } from '@/components/header';
 import { PrimaryButton } from '@/components/primary-button';
-import { SecondaryButton } from '@/components/secondary-button';
 import { Screen } from '@/components/screen';
-import { SegmentedControl } from '@/components/segmented-control';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { Toggle } from '@/components/toggle';
@@ -34,11 +35,12 @@ import {
   softDeleteStation,
   updateStation,
 } from '@/db/queries/falt';
+import { CountCells } from '@/features/forms/count-cells';
 import { Spacing } from '@/theme/tokens';
 
 const NOT_RECORDED = 'none';
 
-/** min…max as segments. */
+/** min…max as count cells. */
 function countSegments(max: number, min = 0) {
   return Array.from({ length: Math.max(0, max - min + 1) }, (_, index) => {
     const value = String(min + index);
@@ -136,36 +138,36 @@ export default function StationEntryScreen() {
 
   return (
     <Screen>
-      <ThemedText type="subtitle">{t('station.title', { position })}</ThemedText>
+      <Header title={t('station.title', { position })} />
       {isShootOff && <Chip label={t('station.shootOff')} testID="station-shoot-off" />}
 
       <Card>
         <ThemedText type="smallBold">{t('station.hits')}</ThemedText>
-        <SegmentedControl
+        <CountCells
           options={countSegments(SHOTS_PER_STATION)}
           value={String(hits)}
           onChange={(value) => onHitsChange(Number(value))}
-          scrollable={false}
+          label={t('station.hits')}
           testID="station-hits"
         />
 
         <ThemedText type="smallBold">{t('station.figuresHit')}</ThemedText>
-        <SegmentedControl
+        <CountCells
           // Never more figures than hits or than the station has, and never
           // zero while hits exist.
           options={countSegments(figuresHitBounds.max, figuresHitBounds.min)}
           value={String(figuresHit)}
           onChange={(value) => setFiguresHit(Number(value))}
-          scrollable={false}
+          label={t('station.figuresHit')}
           testID="station-figures-hit"
         />
 
         <ThemedText type="smallBold">{t('station.figureCount')}</ThemedText>
-        <SegmentedControl
+        <CountCells
           options={[{ value: NOT_RECORDED, label: '–' }, ...countSegments(SHOTS_PER_STATION, 1)]}
           value={figureCount === null ? NOT_RECORDED : String(figureCount)}
           onChange={(value) => onFigureCountChange(value === NOT_RECORDED ? null : Number(value))}
-          scrollable={false}
+          label={t('station.figureCount')}
           testID="station-figure-count"
         />
 
@@ -217,9 +219,9 @@ export default function StationEntryScreen() {
 
       <PrimaryButton label={t('station.save')} onPress={onSave} testID="save-station" />
       {row && (
-        <SecondaryButton
+        <Button
+          variant="destructive"
           label={t('station.delete')}
-          tone="danger"
           onPress={onDelete}
           testID="delete-station"
         />

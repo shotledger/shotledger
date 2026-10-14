@@ -37,6 +37,9 @@ Valde du hela matchen när du menade fritt format, eller tvärtom:
 1. Öppna passets **⋮**-meny och välj **Redigera pass**.
 2. Välj upplägg under **Matchupplägg** och tryck **Spara ändringar**.
 
+Redigera pass börjar med namn, datum, vapen och ammunitionsparti; plats,
+anteckningar, serieinmatning och taggar ligger hopfällda under **Detaljer**.
+
 Serierna läggs upp på nytt för det nya upplägget, och därför går det bara fram
 till första resultatet: ett skott, ett foto som väntar på att poängsättas eller
 en importerad summa. Därefter visar raden upplägget med en notering om att det
@@ -106,7 +109,8 @@ ställer passet en extra fråga: om tävlingen skjuts som **fält** eller
 **poängfält**. Ett fältpass har inga knappar för tidtagarur eller sikte.
 
 Varje station är sex skott. På en skärm trycker du **Träff** (0–6),
-**Träffade figurer** och **Figurer**, hur många figurer stationen hade. Fem
+**Träffade figurer** och **Figurer**, hur många figurer stationen hade: ett
+tryck på talet för var och en. Fem
 träff i tre av fyra figurer skrivs **5/3 av 4**: du missade ett skott eller
 satte två i samma figur, och en figur blev orörd. Låt Figurer stå på **–** om du
 inte vet; stationen skrivs då **5/3**. Passets resultat är två siffror med

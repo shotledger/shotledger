@@ -1705,5 +1705,17 @@
     "groupAndClass": "Weapon group {{group}}, class {{class}}",
     "airgun": "Air gun",
     "airgunAndClass": "Air gun, class {{class}}"
+  },
+  "formsA": {
+    "details": "Details",
+    "optional": "Optional",
+    "ammoDetailsSummary": "Purchase date, brand, bullet, velocity, notes",
+    "ammoDetailsSummaryHandload": "Purchase date, recipe, bullet, velocity, notes",
+    "firearmDetailsSummary": "Serial number, register ID, load system, maintenance, notes",
+    "firearmEditDetailsSummary": "Serial number, register ID, load system, notes",
+    "sessionDetailsSummary": "Location, notes, tags, series entry",
+    "sessionDetailsSummaryNoEntry": "Location, notes, tags",
+    "seriesEntry": "Series Entry",
+    "webSessionDetailsSummary": "Location, notes"
   }
 }

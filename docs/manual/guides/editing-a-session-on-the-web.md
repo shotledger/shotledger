@@ -6,9 +6,11 @@ location or a firearm, or retype a series you got wrong. Sign in, open
 
 ## Change the session
 
-**Edit** opens the session's fields as the phone's edit screen has them: date
-and time, name, location, notes, the competition fields of a competition,
-firearm and ammo lot. An empty name keeps the name the session has; an empty
+**Edit** opens the session's fields as the phone's edit screen has them: name,
+date and time, firearm and ammo lot first, then the competition fields of a
+competition. Location and notes are folded under **Details**; click it to open
+them. A choice such as the firearm or the competition level is a row of
+buttons, the chosen one filled; **None** clears it. An empty name keeps the name the session has; an empty
 location or note clears it. A new date before 1900 or later than tomorrow is
 refused, as on Enter Series, and the date and time are typed in the same format
 as there. The type, discipline, match format and decimal
@@ -23,7 +25,8 @@ In free format, tick **Sighter** on the one row that is a sighter series.
 
 A fält session shows its stations instead, each with the phone's station
 fields as on [Enter Series](entering-series-on-the-web.md): **Hits**,
-**Figures Hit**, **Figures**, **Points**, **Max Points** and **Scratched**. A
+**Figures Hit**, **Figures**, **Points**, **Max Points** and **Scratched**,
+each count a row of numbers to click, as on the phone. A
 station keeps its number, as on the phone, so after a deleted station the
 numbers have a gap. Change a station's fields to correct it. **Delete
 Station** removes it when you save (**Undo** takes it back), and **Add
