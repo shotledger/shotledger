@@ -69,6 +69,18 @@ jobs:
           key: gradle-e2e-${{ hashFiles('pnpm-lock.yaml', 'app/app.json') }}
           restore-keys: gradle-e2e-
 
+      # The third run built the APK, then the runner vanished while
+      # unpacking Maestro, leaving no log: most likely a full disk. The
+      # build, its native intermediates, the Gradle cache and node_modules
+      # fill most of the runner's free space, so drop toolchains this job
+      # never uses (.NET, Haskell, Swift, CodeQL; the Android SDK stays).
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /usr/share/swift /opt/hostedtoolcache/CodeQL
+          df -h /
+
       - name: Show the runner's size
         run: nproc && free -h
 
@@ -94,6 +106,7 @@ jobs:
           cd android && ./gradlew assembleRelease -PreactNativeArchitectures=x86_64 \
             -x lintVitalAnalyzeRelease --no-daemon \
             -Pkotlin.compiler.execution.strategy=in-process
+          df -h /
 
       - uses: actions/cache/save@v6.1.0
         if: ${{ always() && steps.build.outcome != 'skipped' && steps.gradle-cache.outputs.cache-hit != 'true' }}
