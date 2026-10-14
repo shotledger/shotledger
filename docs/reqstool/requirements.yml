@@ -238,6 +238,23 @@ requirements:
       - functional-suitability
     revision: '0.1.0'
 
+  - id: COMPL_004
+    title: A criterion that is not met says what it still needs
+    significance: shall
+    description: >-
+      For a per-firearm criterion that is not met now, the app shall give the
+      activities still missing from the most recent window, each earlier window
+      below the requirement, and the first instant the criterion can be met if
+      the shooter keeps logging sessions with that firearm; and shall not count
+      a session logged from now on towards a window that has already ended.
+    rationale: >-
+      "Not met" alone does not tell a shooter what to do (#804). The renewal
+      criterion's earlier year cannot be made up by shooting today, and saying
+      "shoot four more times" would be false.
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
   - id: DISC_001
     title: SPSF klasser are the shooter's skill class crossed with their category
     significance: shall

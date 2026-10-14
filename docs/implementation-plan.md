@@ -651,6 +651,15 @@ from §6.5 automatically).
       the status shown. No new regulatory value. The web shows no licence
       activity yet (#796). Spec/evidence:
       `docs/specs/compliance-next-session-{spec,evidence}.md`.
+- [x] **License Check** screen (issue #804) — opened from the Home status; every
+      requirement on the föreningsintyg grouped by purpose (New Purchase: the
+      5 §/6 § rule and "ytterligare enhandsvapen" per held handgun; Renewal:
+      "förnyelse" per end-dated licence), each met or not met with what it
+      still needs (`shared/src/compliance/shortfall.ts`), including the first
+      date an earlier, already-ended year can be met if the shooter keeps
+      logging. Purpose is profile data (`FirearmComplianceRule.purpose`). No
+      new regulatory value. Spec/evidence:
+      `docs/specs/compliance-license-check-{spec,evidence}.md`.
 - **Done when:** license-activity states unit-tested (boundary dates, tombstoned
   sessions excluded); PDF snapshot test of generated HTML.
   — both done. `shared/src/compliance/` was built under the old-coder loop
