@@ -162,10 +162,6 @@ function RootStack() {
         name="stats/records"
         options={{ presentation: 'modal', headerShown: true, title: t('webshooter.recordsTitle') }}
       />
-      <Stack.Screen
-        name="stats/report"
-        options={{ presentation: 'modal', headerShown: true, title: t('stats.reportTitle') }}
-      />
       <Stack.Screen name="dev" />
     </Stack>
   );

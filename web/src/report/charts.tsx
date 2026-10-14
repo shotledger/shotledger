@@ -1,7 +1,11 @@
 // SVG charts for a wide screen. Geometry and grouping come from the app's
 // chart math (components/time-series-chart-math.ts), so a discipline keeps
-// its colour and the axis its year on both surfaces.
+// its colour and the axis its year on both surfaces; the value axis rounds to
+// the same nice ticks as the phone's chart kit (`niceTicks`, #822), and a bar
+// chart's axis starts at zero.
+import { niceTicks } from '@shotledger/shared/src/charts/nice-ticks';
 import { useLayoutEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   MAX_DOTS,
@@ -30,40 +34,48 @@ function useWidth<T extends HTMLElement>(fallback: number) {
 }
 const PAD = { left: 48, right: 16, top: 12, bottom: 28 };
 
+/** A tick in the UI language's number format, like the phone's `formatTick`. */
+function useTickFormat() {
+  const { i18n } = useTranslation();
+  return (value: number, decimals: number) =>
+    new Intl.NumberFormat(i18n.language, {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(value);
+}
+
 export function LineChart({
   label,
   grouped,
-  formatValue,
   formatDate,
   emptyLabel,
   omittedLabel,
 }: {
   /** The chart's accessible name: what it plots. */
   label: string;
+  /** Values in the unit the axis shows (points, not tenths). */
   grouped: GroupedLines;
-  formatValue: (value: number) => string;
   formatDate: (iso: string, withYear: boolean) => string;
   emptyLabel: string;
   omittedLabel: string | null;
 }) {
   const [ref, WIDTH] = useWidth<HTMLElement>(640);
+  const format = useTickFormat();
   const all = grouped.lines.flatMap((line) => line.points);
   if (all.length < 2) return <p className="muted">{emptyLabel}</p>;
 
   const extent = timeExtent(all);
   const values = all.map((p) => p.value);
-  let min = Math.min(...values);
-  let max = Math.max(...values);
-  if (min === max) {
-    min -= 1;
-    max += 1;
-  }
+  const axis = niceTicks(Math.min(...values), Math.max(...values), 5);
+  const { min, max } = axis;
   const plotW = WIDTH - PAD.left - PAD.right;
   const plotH = HEIGHT - PAD.top - PAD.bottom;
   const x = (iso: string) => timeScale(iso, extent, PAD.left, plotW);
   const y = (value: number) => PAD.top + (1 - (value - min) / (max - min)) * plotH;
   const withYear = axisNeedsYear(all);
-  const ticks = [min, (min + max) / 2, max];
+  const ticks = axis.ticks;
+  const formatValue = (value: number) => format(value, axis.decimals);
+  const formatPoint = (value: number) => format(value, axis.decimals + 1);
   const first = new Date(extent.minMs).toISOString();
   const last = new Date(extent.maxMs).toISOString();
 
@@ -72,7 +84,13 @@ export function LineChart({
       <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label={label}>
         {ticks.map((tick) => (
           <g key={tick}>
-            <line className="grid" x1={PAD.left} x2={WIDTH - PAD.right} y1={y(tick)} y2={y(tick)} />
+            <line
+              className={tick === min ? 'grid' : 'grid dashed'}
+              x1={PAD.left}
+              x2={WIDTH - PAD.right}
+              y1={y(tick)}
+              y2={y(tick)}
+            />
             <text className="axis" x={PAD.left - 6} y={y(tick)} textAnchor="end" dy="0.35em">
               {formatValue(tick)}
             </text>
@@ -95,7 +113,7 @@ export function LineChart({
             {line.points.length <= MAX_DOTS &&
               line.points.map((p) => (
                 <circle key={p.key} cx={x(p.startedAt)} cy={y(p.value)} r={3} fill={line.color}>
-                  <title>{`${line.label} · ${formatDate(p.startedAt, true)} · ${formatValue(p.value)}`}</title>
+                  <title>{`${line.label} · ${formatDate(p.startedAt, true)} · ${formatPoint(p.value)}`}</title>
                 </circle>
               ))}
           </g>
@@ -123,17 +141,56 @@ export function BarChart({
   label: string;
   buckets: readonly { value: number; count: number }[];
 }) {
-  const max = Math.max(...buckets.map((b) => b.count), 1);
+  const [ref, WIDTH] = useWidth<HTMLElement>(480);
+  const format = useTickFormat();
+  const height = 200;
+  const pad = { left: 40, right: 8, top: 8, bottom: 22 };
+  // A bar's length is its count, so the axis starts at zero, always.
+  const axis = niceTicks(0, Math.max(1, ...buckets.map((b) => b.count)), 4);
+  const plotH = height - pad.top - pad.bottom;
+  const plotW = WIDTH - pad.left - pad.right;
+  const slot = plotW / Math.max(1, buckets.length);
+  const barW = Math.min(slot * 0.7, 56);
+  const y = (count: number) => pad.top + (1 - count / axis.max) * plotH;
   return (
-    <div className="bars" role="img" aria-label={label}>
-      {buckets.map((bucket) => (
-        <div key={bucket.value} className="bar">
-          <span className="bar-count">{bucket.count}</span>
-          <span className="bar-fill" style={{ height: `${(bucket.count / max) * 100}%` }} />
-          <span className="bar-label">{bucket.value}</span>
-        </div>
-      ))}
-    </div>
+    <figure className="chart" ref={ref}>
+      <svg viewBox={`0 0 ${WIDTH} ${height}`} role="img" aria-label={label}>
+        {axis.ticks.map((tick) => (
+          <g key={tick}>
+            <line
+              className={tick === 0 ? 'grid' : 'grid dashed'}
+              x1={pad.left}
+              x2={WIDTH - pad.right}
+              y1={y(tick)}
+              y2={y(tick)}
+            />
+            <text className="axis" x={pad.left - 6} y={y(tick)} textAnchor="end" dy="0.35em">
+              {format(tick, axis.decimals)}
+            </text>
+          </g>
+        ))}
+        {buckets.map((bucket, index) => {
+          const center = pad.left + index * slot + slot / 2;
+          return (
+            <g key={bucket.value}>
+              <rect
+                className="bar-fill"
+                x={center - barW / 2}
+                y={y(bucket.count)}
+                width={barW}
+                height={Math.max(0, y(0) - y(bucket.count))}
+                rx={2}
+              >
+                <title>{`${bucket.value}: ${bucket.count}`}</title>
+              </rect>
+              <text className="axis" x={center} y={height - 6} textAnchor="middle">
+                {bucket.value}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </figure>
   );
 }
 
