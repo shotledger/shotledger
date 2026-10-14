@@ -106,6 +106,18 @@ describe('buildFilterOptions', () => {
       tags: [{ id: 't', name: 'Club' }],
     });
   });
+
+  it('offers the disciplines of fält sessions too, with no ring series at all', () => {
+    const falt = [{ disciplineId: 'spsf-falt' }] as unknown as Parameters<
+      typeof buildFilterOptions
+    >[0]['falt'];
+    expect(buildFilterOptions({ series: [], falt, tags: [] })).toEqual({
+      hasAnyData: true,
+      disciplineIds: ['spsf-falt'],
+      shotsPerSeriesValues: [],
+      tags: [],
+    });
+  });
 });
 
 describe('composeAnalyticsReport', () => {
@@ -152,6 +164,25 @@ describe('composeAnalyticsReport', () => {
     );
     expect(report.bestSessionScore?.sessionName).toBe('s1');
   });
+
+  it('echoes the name of a picked tag', () => {
+    const report = composeAnalyticsReport(
+      { ...DEFAULT_ANALYTICS_FILTER, tagIds: ['t'] },
+      {
+        series: buildAnalyticsSeries(rows),
+        sessions: buildAnalyticsSessions(rows),
+        falt: [],
+        tags: [
+          { id: 't', name: 'Club' },
+          { id: 'u', name: 'Away' },
+        ],
+        sessionNames: new Map(),
+        birthYear: null,
+      },
+      NOW,
+    );
+    expect(report.tagNames).toEqual(['Club']);
+  });
 });
 
 describe('previousPeriodRange', () => {
@@ -186,6 +217,13 @@ describe('previousPeriodRange', () => {
     ).toBeNull();
     expect(
       previousPeriodRange({ period: 'custom', customFrom: null, customTo: '2026-09-20' }, NOW),
+    ).toBeNull();
+    // A custom range typed backwards has no length to repeat.
+    expect(
+      previousPeriodRange(
+        { period: 'custom', customFrom: '2026-10-05', customTo: '2026-10-01' },
+        NOW,
+      ),
     ).toBeNull();
   });
 });

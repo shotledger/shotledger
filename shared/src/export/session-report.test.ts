@@ -203,6 +203,14 @@ describe('targetFaceSvg', () => {
     expect(svg).toContain('<circle cx="5" cy="-3" r="4.83"');
   });
 
+  it('lightens the center of a face whose black is an annulus', () => {
+    const annulus = { ...SPSF_PISTOL_25M_PRECISION, referenceIsSolidBlack: false };
+    const svg = targetFaceSvg(annulus, photoSeries.marks, 170);
+    const rings = SPSF_PISTOL_25M_PRECISION.rings.length;
+    // black disc + light center + rings + marks + mean-radius circle
+    expect(count(svg, '<circle')).toBe(1 + 1 + rings + 3 + 1);
+  });
+
   it('draws no group overlay for a single mark', () => {
     const svg = targetFaceSvg(SPSF_PISTOL_25M_PRECISION, [photoSeries.marks[0]!], 170);
     expect(svg).not.toContain('<line');
