@@ -519,14 +519,16 @@
       "photos": "Target Photos",
       "timer": "Timers",
       "sightSettings": "Sight Settings",
-      "ammoLots": "Ammunition Lots"
+      "ammoLots": "Ammunition Lots",
+      "maintenance": "Maintenance"
     },
     "featureHint": {
       "licenseActivity": "Off: no license activity status on Home, on the Firearms tab or on a firearm. Your sessions still count, and Compliance stays in Settings.",
       "photos": "Off: no Photos in Tools, and adding a series goes straight to the keypad. A series that already has a photo still shows it.",
       "timer": "Off: no Timers in Tools.",
       "sightSettings": "Off: no sight settings on a firearm and no Sights button on a session.",
-      "ammoLots": "Off: no ammunition list under Firearms and no ammo lot when you log a session. A session that has a lot still shows it."
+      "ammoLots": "Off: no ammunition list under Firearms and no ammo lot when you log a session. A session that has a lot still shows it.",
+      "maintenance": "Off: no maintenance status, intervals or log on a firearm, and no maintenance reminders. The round count stays, and switching it back on brings your intervals and log back."
     }
   },
   "about": {

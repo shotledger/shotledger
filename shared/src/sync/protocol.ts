@@ -67,6 +67,7 @@ export const SYNCED_SETTING_KEYS = [
   'showTimer',
   'showSightSettings',
   'showAmmoLots',
+  'showMaintenance',
 ] as const;
 
 const SYNCED_SETTINGS: ReadonlySet<string> = new Set(SYNCED_SETTING_KEYS);

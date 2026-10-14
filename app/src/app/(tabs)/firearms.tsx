@@ -83,7 +83,7 @@ export default function FirearmsScreen() {
                 !(row.isIncomplete && row.licenseStatus === 'none') && (
                   <Chip label={t(`firearms.licenseStatus${capitalize(row.licenseStatus)}`)} />
                 )}
-              {row.maintenanceStatus !== 'unknown' && (
+              {features.maintenance && row.maintenanceStatus !== 'unknown' && (
                 <Chip
                   label={t(`firearms.maintenanceStatus${capitalize(row.maintenanceStatus)}`)}
                   tone={MAINTENANCE_TONE[row.maintenanceStatus]}

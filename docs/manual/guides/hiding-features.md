@@ -5,7 +5,7 @@ it leaves the menus and screens. Nothing is deleted: what you have already
 recorded stays, still shows where you recorded it, and everything comes back
 when you switch the part on again.
 
-Logging sessions and statistics are always on. These five parts can be
+Logging sessions and statistics are always on. These six parts can be
 switched off:
 
 | Switch           | Off, the app leaves out                                                                                                         | Still shown                                         |
@@ -15,6 +15,7 @@ switched off:
 | Timers           | **Timers** in Tools                                                                                                             |                                                     |
 | Sight Settings   | Sight settings on a firearm, and the **Sights** button on a session                                                             | The session's **Stopwatch**                         |
 | Ammunition Lots  | The ammunition list under Firearms, **Compare Lots** in Statistics, and the ammo lot when you log a session                     | The lot on a session that has one                   |
+| Maintenance      | A firearm's maintenance status, intervals and log, the maintenance status on the Firearms tab, and maintenance reminders        | The firearm's round count, and correcting it        |
 
 With Target Photos off, adding a series always opens the keypad.
 
@@ -28,6 +29,9 @@ up a change at its next sync, and the web app shows the same parts: with
 Target Photos off it has no photo upload in series entry and no photo
 comparing, and with Ammunition Lots off series entry has no ammo lot field.
 You can also change the switches on the web, under **Settings → Features**.
+
+With Maintenance off you get no maintenance reminders. Your intervals and log
+are kept, and the reminders start again when you switch it back on.
 
 Switching a part off changes nothing else. Your sessions still count towards
 license activity, and exports, backups and sync still carry everything.

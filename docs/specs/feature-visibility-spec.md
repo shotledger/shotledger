@@ -7,8 +7,11 @@
 > overnight on 2026-10-13 at the maintainer's request to take #801 end to end
 > while he slept. This spec is the artifact to review after the fact; any
 > change he asks for lands as a follow-up.
+>
+> **2026-10-14:** the maintainer asked for Maintenance as a sixth switch in
+> this PR (after #800 and #819 merged); §2.1, S1, P9 and W4 cover it.
 
-- **Tier: 3 for the sync part, normal UI testing for the rest.** Five keys join
+- **Tier: 3 for the sync part, normal UI testing for the rest.** Six keys join
   `SYNCED_SETTING_KEYS`. A wrong rule leaks a device-local key, refuses a valid
   push, or lets the web write a value the phone does not read.
 - **Scope:** `shared/src/features/` (the feature list and its reader),
@@ -17,8 +20,7 @@
   (the settings triggers' WHEN clause; baseline reset, hard rule 8), the phone
   entry points in §3, `web/src/settings/`, `web/src/entry/`, `web/src/edit/`,
   `web/src/sessions/`, `app/src/i18n/{en,sv}.json`, `docs/manual/` EN + SV.
-- **Not in scope:** maintenance and cleaning (#800 is reworking it on another
-  branch; a follow-up can add it), tags, the share card, location lookup (already
+- **Not in scope:** tags, the share card, location lookup (already
   opt-in), external sites (each already has its own switch, ADR 0010), the
   Optional Fields switches (they stay device-local), Records and statistics.
 
@@ -44,6 +46,7 @@
 | `timer`           | `showTimer`           | The shot timer                                   |
 | `sightSettings`   | `showSightSettings`   | Sight settings (clicks) per firearm              |
 | `ammoLots`        | `showAmmoLots`        | Ammunition lots                                  |
+| `maintenance`     | `showMaintenance`     | Maintenance status, intervals, log and reminders |
 
 - One boolean key per area, not one list: two devices hiding two different
   areas offline then both keep their change, since each key is its own row
@@ -63,8 +66,8 @@ applied to whole areas. Routes stay registered, so a deep link still opens.
 
 ### 2.3 Sync
 
-- `SYNCED_SETTING_KEYS` gains the five keys, in table order, after the
-  existing five. The app's settings triggers list the same ten.
+- `SYNCED_SETTING_KEYS` gains the six keys, in table order, after the
+  existing five. The app's settings triggers list the same eleven.
 - `PROTOCOL_VERSION` stays 1 and the server storage is unchanged (hard rule 8).
   The server's allowlist check reads `isSyncableSettingRow`, so it accepts the
   new keys without a code change.
@@ -75,13 +78,13 @@ applied to whole areas. Routes stay registered, so a deep link still opens.
 
 ### 3.1 Shared (Tier 3)
 
-- **F1** `readFeatureVisibility(get)` returns all five `true` when `get`
+- **F1** `readFeatureVisibility(get)` returns all six `true` when `get`
   returns `undefined` for every key.
 - **F2** A key whose decoded value is `false` reads as hidden; `true`, `null`,
   `0`, `"false"` and `undefined` read as shown.
 - **F3** `FEATURE_IDS` and `FEATURE_SETTING_KEYS` are pinned value by value,
   in the table's order.
-- **S1** `SYNCED_SETTING_KEYS` equals the ten keys, in order; each new key is
+- **S1** `SYNCED_SETTING_KEYS` equals the eleven keys, in order; each new key is
   `isSyncedSettingKey`. Device-local keys (`theme`, `trackHandloads`,
   `photoTrainingConsent`) still are not.
 - **S2** `readAccountSettings` reads each `show*` key: absent → `true`,
@@ -123,20 +126,28 @@ applied to whole areas. Routes stay registered, so a deep link still opens.
   on its detail.
 - **P7** The Tools tab is hidden when the timer and photos are both hidden and
   no external site is enabled, since it would be empty.
+- **P9** `maintenance` hidden: on a firearm, no Rounds Since Maintenance figure,
+  maintenance status chip or due lines, and the Maintenance card keeps only
+  **Adjust Round Count** (the round count is not part of the area); no
+  maintenance chip on the Firearms tab; New Firearm has no interval fields.
+  No maintenance notification: the rounds crossing is not announced and the
+  time reminders are cleared (`replaceMaintenanceTimeReminders([])`, never
+  asking for permission). Switching it back on reschedules them; the
+  intervals and the log are kept.
 - **P8** A change made on another device shows after the next sync and on the
   next screen focus, without a restart.
 
 ### 3.3 Web (mirrors the phone)
 
 - **W1** Settings has a **Features** section with one checkbox per area (all
-  five, as on the phone), saved with the page's one Save.
+  six, as on the phone), saved with the page's one Save.
 - **W2** `photos` hidden: series entry has no photo upload; Sessions has no
   pick-photos controls and `#compare` shows the Sessions list. A series photo
   that exists still shows on the detail and the edit form.
 - **W3** `ammoLots` hidden: series entry has no Ammo Lot field and pushes no
   lot; the edit form shows the field only when the session has a lot. The
   detail still shows a lot that is set.
-- **W4** `licenseActivity`, `timer`, `sightSettings`: the web shows none of
+- **W4** `licenseActivity`, `timer`, `sightSettings`, `maintenance`: the web shows none of
   them, so only the switch applies.
 
 ### 3.4 Must not

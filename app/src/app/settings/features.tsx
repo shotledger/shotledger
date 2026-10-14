@@ -10,6 +10,7 @@ import { Card } from '@/components/card';
 import { Screen } from '@/components/screen';
 import { ScreenTitle } from '@/components/screen-title';
 import { ThemedText } from '@/components/themed-text';
+import { refreshMaintenanceTimeReminders } from '@/features/firearms/maintenance';
 import { setFeatureVisible, useFeatures } from '@/features/settings/feature-visibility';
 import { Spacing } from '@/theme/tokens';
 
@@ -33,7 +34,11 @@ export default function FeaturesSettingsScreen() {
             </ThemedText>
             <Switch
               value={features[id]}
-              onValueChange={(next) => setFeatureVisible(id, next)}
+              onValueChange={(next) => {
+                setFeatureVisible(id, next);
+                // Hiding clears the scheduled reminders; showing puts them back.
+                if (id === 'maintenance') void refreshMaintenanceTimeReminders({ request: false });
+              }}
               testID={`feature-${id}`}
             />
           </View>

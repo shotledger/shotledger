@@ -37,6 +37,7 @@ const ALL_SHOWN = {
   timer: true,
   sightSettings: true,
   ammoLots: true,
+  maintenance: true,
 };
 
 beforeEach(() => {

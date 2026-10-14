@@ -5,7 +5,7 @@ stänga av den, så försvinner den ur menyerna och skärmarna. Ingenting radera
 det du redan har registrerat finns kvar, visas fortfarande där du registrerade
 det, och allt kommer tillbaka när du slår på delen igen.
 
-Att logga pass och statistiken är alltid på. De här fem delarna kan stängas av:
+Att logga pass och statistiken är alltid på. De här sex delarna kan stängas av:
 
 | Reglage            | Av: appen visar inte                                                                                                                                        | Visas fortfarande                                      |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
@@ -14,6 +14,7 @@ Att logga pass och statistiken är alltid på. De här fem delarna kan stängas 
 | Tidtagning         | **Tidtagning** under Verktyg                                                                                                                                |                                                        |
 | Siktinställningar  | Siktinställningar på ett vapen, och knappen **Sikte** på ett pass                                                                                           | Passets **Tidtagarur**                                 |
 | Ammunitionspartier | Ammunitionslistan under Vapen, **Jämför partier** i Statistik, och ammunitionspartiet när du loggar ett pass                                                | Partiet på ett pass som har ett                        |
+| Underhåll          | Ett vapens underhållsstatus, intervall och logg, underhållsstatusen på fliken Vapen, och underhållspåminnelser                                              | Vapnets skottantal, och att rätta det                  |
 
 Med Målfoton avstängt öppnar en ny serie alltid knappsatsen.
 
@@ -28,6 +29,9 @@ avstängt finns ingen fotouppladdning när du matar in serier och ingen
 jämförelse av foton, och med Ammunitionspartier avstängt finns inget fält för
 ammunitionsparti. Du kan också ändra reglagen på webben, under
 **Inställningar → Funktioner**.
+
+Med Underhåll avstängt får du inga underhållspåminnelser. Dina intervall och
+din logg sparas, och påminnelserna börjar igen när du slår på det.
 
 Att stänga av en del ändrar inget annat. Dina pass räknas fortfarande till
 licensaktiviteten, och export, säkerhetskopior och synk tar med allt.

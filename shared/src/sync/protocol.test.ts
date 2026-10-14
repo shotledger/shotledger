@@ -260,7 +260,7 @@ describe('session_tags and settings (sync-tags-settings spec)', () => {
     }
   });
 
-  it('P2 the settings allowlist is exactly the five account keys and the five feature switches', () => {
+  it('P2 the settings allowlist is exactly the five account keys and the six feature switches', () => {
     expect([...SYNCED_SETTING_KEYS]).toEqual([
       'birthYear',
       'skillClass',
@@ -272,6 +272,7 @@ describe('session_tags and settings (sync-tags-settings spec)', () => {
       'showTimer',
       'showSightSettings',
       'showAmmoLots',
+      'showMaintenance',
     ]);
     for (const key of SYNCED_SETTING_KEYS) expect(isSyncedSettingKey(key)).toBe(true);
     for (const key of [

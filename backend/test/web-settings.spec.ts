@@ -157,6 +157,7 @@ describe('the web settings write path', () => {
       showTimer: true,
       showSightSettings: true,
       showAmmoLots: true,
+      showMaintenance: true,
     });
     // The phone's row kept its created_at.
     expect(rows.get('birthYear')?.payload).toMatchObject({
@@ -213,8 +214,9 @@ describe('the web settings write path', () => {
     const changes = webEdit(payloads(await pullSettings(web.transport)), {
       showPhotos: false,
       showAmmoLots: false,
+      showMaintenance: false,
     });
-    expect(changes.map((c) => c.rowId)).toEqual(['showPhotos', 'showAmmoLots']);
+    expect(changes.map((c) => c.rowId)).toEqual(['showPhotos', 'showAmmoLots', 'showMaintenance']);
     await expect(pushChanges(web.transport, PROTOCOL_VERSION, changes)).resolves.toEqual({
       kind: 'saved',
     });
@@ -224,6 +226,7 @@ describe('the web settings write path', () => {
       showTimer: true,
       showSightSettings: true,
       showAmmoLots: false,
+      showMaintenance: false,
     });
 
     // The Optional Fields switches stay on each phone (spec §1).

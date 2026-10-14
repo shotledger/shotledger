@@ -9,6 +9,7 @@ export const FEATURE_IDS = [
   'timer',
   'sightSettings',
   'ammoLots',
+  'maintenance',
 ] as const;
 
 export type FeatureId = (typeof FEATURE_IDS)[number];
@@ -20,6 +21,7 @@ export const FEATURE_SETTING_KEYS = {
   timer: 'showTimer',
   sightSettings: 'showSightSettings',
   ammoLots: 'showAmmoLots',
+  maintenance: 'showMaintenance',
 } as const satisfies Record<FeatureId, string>;
 
 export type FeatureSettingKey = (typeof FEATURE_SETTING_KEYS)[FeatureId];
@@ -35,5 +37,6 @@ export function readFeatureVisibility(get: (key: FeatureSettingKey) => unknown):
     timer: shown('timer'),
     sightSettings: shown('sightSettings'),
     ammoLots: shown('ammoLots'),
+    maintenance: shown('maintenance'),
   };
 }

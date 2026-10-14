@@ -43,6 +43,7 @@ const UNSET: AccountSettings = {
   showTimer: true,
   showSightSettings: true,
   showAmmoLots: true,
+  showMaintenance: true,
 };
 
 const SET: AccountSettings = {
@@ -56,6 +57,7 @@ const SET: AccountSettings = {
   showTimer: true,
   showSightSettings: true,
   showAmmoLots: true,
+  showMaintenance: true,
 };
 
 describe('building the push', () => {
@@ -105,7 +107,7 @@ describe('building the push', () => {
     });
   });
 
-  it('B4 all ten changed → ten changes in SYNCED_SETTING_KEYS order, each valid', () => {
+  it('B4 all eleven changed → eleven changes in SYNCED_SETTING_KEYS order, each valid', () => {
     const after: AccountSettings = {
       birthYear: 1975,
       skillClass: '1',
@@ -117,6 +119,7 @@ describe('building the push', () => {
       showTimer: false,
       showSightSettings: false,
       showAmmoLots: false,
+      showMaintenance: false,
     };
     const before: AccountSettings = { ...SET, complianceProfile: 'none' };
     const result = buildSettingsChanges(before, after, new Map(), deps());
@@ -133,9 +136,10 @@ describe('building the push', () => {
       'false',
       'false',
       'false',
+      'false',
     ]);
     const ids = new Set(result.changes.map((c) => c.clientChangeId));
-    expect(ids.size).toBe(10);
+    expect(ids.size).toBe(11);
     for (const change of result.changes) {
       expect(ClientChangeSchema.safeParse(change).success).toBe(true);
       expect(change.tableName).toBe('settings');
@@ -163,6 +167,7 @@ describe('building the push', () => {
       [{ showTimer: 0 as never }, 'showTimer'],
       [{ showSightSettings: undefined }, 'showSightSettings'],
       [{ showAmmoLots: 'no' as never }, 'showAmmoLots'],
+      [{ showMaintenance: 'no' as never }, 'showMaintenance'],
     ];
     for (const [edit, key] of refused) {
       expect(buildSettingsChanges(SET, { ...SET, ...edit }, new Map(), deps()), key).toEqual({
@@ -203,6 +208,15 @@ describe('building the push', () => {
     expect(show.ok && show.changes.map((c) => [c.rowId, (c.payload as Payload).value])).toEqual([
       ['showTimer', 'true'],
     ]);
+    const service = buildSettingsChanges(
+      SET,
+      { ...SET, showMaintenance: false },
+      new Map(),
+      deps(),
+    );
+    expect(
+      service.ok && service.changes.map((c) => [c.rowId, (c.payload as Payload).value]),
+    ).toEqual([['showMaintenance', 'false']]);
   });
 
   it('B8 a pulled column this build does not know survives the rewrite', () => {
@@ -291,6 +305,7 @@ describe('building the push', () => {
           showTimer: fc.boolean(),
           showSightSettings: fc.boolean(),
           showAmmoLots: fc.boolean(),
+          showMaintenance: fc.boolean(),
         })
         // A profile that offers cases holds one of them; under one that offers
         // none, or no profile at all, any stale case may sit.

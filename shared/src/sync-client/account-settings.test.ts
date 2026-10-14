@@ -27,6 +27,7 @@ const UNSET: AccountSettings = {
   showTimer: true,
   showSightSettings: true,
   showAmmoLots: true,
+  showMaintenance: true,
 };
 
 const SET: AccountSettings = {
@@ -40,6 +41,7 @@ const SET: AccountSettings = {
   showTimer: true,
   showSightSettings: true,
   showAmmoLots: true,
+  showMaintenance: true,
 };
 
 describe('reading the pulled settings rows', () => {
@@ -98,6 +100,7 @@ describe('reading the pulled settings rows', () => {
       row('showTimer', 'false'),
       row('showSightSettings', 'false'),
       row('showAmmoLots', 'false'),
+      row('showMaintenance', 'false'),
     );
     expect(readAccountSettings(hidden)).toEqual({
       ...UNSET,
@@ -106,6 +109,7 @@ describe('reading the pulled settings rows', () => {
       showTimer: false,
       showSightSettings: false,
       showAmmoLots: false,
+      showMaintenance: false,
     });
     // Under another key's id, or as a non-string value, it is not read.
     expect(readAccountSettings(new Map([['showPhotos', row('showTimer', 'false')]]))).toEqual(

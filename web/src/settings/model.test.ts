@@ -34,6 +34,7 @@ const SET: AccountSettings = {
   showTimer: true,
   showSightSettings: true,
   showAmmoLots: true,
+  showMaintenance: true,
 };
 
 describe('the settings form', () => {
@@ -56,6 +57,7 @@ describe('the settings form', () => {
       showTimer: true,
       showSightSettings: true,
       showAmmoLots: true,
+      showMaintenance: true,
     });
     // An unset profile stays unset in the form: nothing is highlighted (R13).
     const unset = initialSettings(new Map());
@@ -134,6 +136,7 @@ describe('the settings form', () => {
       { showTimer: false },
       { showSightSettings: false },
       { showAmmoLots: false },
+      { showMaintenance: false },
     ]) {
       expect(hasChanges(SET, { ...SET, ...edit })).toBe(true);
     }

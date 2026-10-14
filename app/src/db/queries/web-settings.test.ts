@@ -53,12 +53,13 @@ describe('web-built settings rows on the phone schema', () => {
           competesInWomensClasses: true,
           complianceProfile: 'se',
           complianceProfileVariant: SE_EXISTING_HANDGUN_VARIANT,
-          // Two feature switches hidden (#801 S5); the other three unchanged.
+          // Three feature switches hidden (#801 S5); the other three unchanged.
           showLicenseActivity: true,
           showPhotos: false,
           showTimer: true,
           showSightSettings: true,
           showAmmoLots: false,
+          showMaintenance: false,
         },
         pulled,
         {
@@ -68,7 +69,7 @@ describe('web-built settings rows on the phone schema', () => {
         },
       );
       if (!result.ok) throw new Error(JSON.stringify(result.errors));
-      expect(result.changes).toHaveLength(7);
+      expect(result.changes).toHaveLength(8);
       const pulledBack: ChangeRow[] = result.changes.map((change, index) => ({
         tableName: change.tableName,
         rowId: change.rowId,
@@ -94,13 +95,14 @@ describe('web-built settings rows on the phone schema', () => {
         isExplicit: true,
         reasonId: null,
       });
-      // The phone's own reader hides exactly the two areas the web hid (#801 S5).
+      // The phone's own reader hides exactly the three areas the web hid (#801 S5).
       expect(readFeatureVisibility((key) => getSetting<unknown>(db, key, undefined))).toEqual({
         licenseActivity: true,
         photos: false,
         timer: true,
         sightSettings: true,
         ammoLots: false,
+        maintenance: false,
       });
       // The phone's own row kept its created_at; only the value and stamp moved.
       const row = db.select().from(settings).all();

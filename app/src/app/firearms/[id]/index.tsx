@@ -561,16 +561,19 @@ export default function FirearmDetailScreen() {
               {t('firearms.roundCount')}
             </ThemedText>
           </View>
-          <View>
-            <ThemedText type="subtitle" testID="rounds-since-maintenance">
-              {detail.roundsSinceMaintenance}
-            </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('firearms.roundsSinceMaintenance')}
-            </ThemedText>
-          </View>
+          {features.maintenance && (
+            <View>
+              <ThemedText type="subtitle" testID="rounds-since-maintenance">
+                {detail.roundsSinceMaintenance}
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('firearms.roundsSinceMaintenance')}
+              </ThemedText>
+            </View>
+          )}
         </View>
-        {detail.maintenanceStatus !== 'unknown' && (
+        {/* Maintenance hidden (#801): the round count stays, the rest goes. */}
+        {features.maintenance && detail.maintenanceStatus !== 'unknown' && (
           <Chip
             testID="maintenance-status"
             label={t(`firearms.maintenanceStatus${capitalize(detail.maintenanceStatus)}`)}
@@ -578,12 +581,12 @@ export default function FirearmDetailScreen() {
           />
         )}
         {/* What made it due: the rounds, the months, or both (#800). */}
-        {detail.maintenanceDue.reasons.includes('rounds') && (
+        {features.maintenance && detail.maintenanceDue.reasons.includes('rounds') && (
           <ThemedText type="small" themeColor="textSecondary" testID="maintenance-due-rounds">
             {t('firearms.maintenanceDueRounds', { count: firearm.maintenanceIntervalRounds ?? 0 })}
           </ThemedText>
         )}
-        {detail.maintenanceDue.reasons.includes('time') && (
+        {features.maintenance && detail.maintenanceDue.reasons.includes('time') && (
           <ThemedText type="small" themeColor="textSecondary" testID="maintenance-due-time">
             {t(
               detail.lastMaintenanceAt !== undefined
@@ -593,7 +596,8 @@ export default function FirearmDetailScreen() {
             )}
           </ThemedText>
         )}
-        {detail.maintenanceDue.dueDay !== null &&
+        {features.maintenance &&
+          detail.maintenanceDue.dueDay !== null &&
           !detail.maintenanceDue.reasons.includes('time') && (
             <ThemedText type="small" themeColor="textSecondary" testID="maintenance-due-by">
               {t('firearms.maintenanceDueBy', {
@@ -1215,115 +1219,128 @@ export default function FirearmDetailScreen() {
         )}
       </Card>
 
-      {/* Maintenance */}
+      {/* Maintenance. Hidden (#801): only the round-count correction stays,
+          since the round count is not part of the area. */}
       <Card>
-        <View style={styles.sectionHeader}>
-          <ThemedText type="smallBold" style={styles.headerLabel}>
-            {t('firearms.maintenanceTitle')}
-          </ThemedText>
-          {!showLogEvent && (
-            <TextButton
-              label={t('firearms.logEvent')}
-              onPress={() => setShowLogEvent(true)}
-              testID="log-maintenance"
-            />
-          )}
-        </View>
-        <ThemedText type="small">{t('firearms.maintenanceInterval')}</ThemedText>
-        <TextField
-          value={intervalValue}
-          onChangeText={(text) => {
-            setIntervalInput(text);
-            setIntervalStatus('idle');
-          }}
-          keyboardType="number-pad"
-          testID="maintenance-interval"
-        />
-        {intervalStatus === 'invalid' && intervalInvalid.rounds ? (
-          <ThemedText type="small" themeColor="danger" testID="interval-error">
-            {t('firearms.intervalInvalid')}
-          </ThemedText>
-        ) : null}
-        <ThemedText type="small">{t('firearms.maintenanceIntervalMonths')}</ThemedText>
-        <TextField
-          value={monthsValue}
-          onChangeText={(text) => {
-            setMonthsInput(text);
-            setIntervalStatus('idle');
-          }}
-          keyboardType="number-pad"
-          testID="maintenance-interval-months"
-        />
-        {intervalStatus === 'invalid' && intervalInvalid.months ? (
-          <ThemedText type="small" themeColor="danger" testID="interval-months-error">
-            {t('firearms.intervalMonthsInvalid')}
-          </ThemedText>
-        ) : null}
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('firearms.maintenanceIntervalMonthsHelp')}
-        </ThemedText>
-        <SecondaryButton label={t('common.save')} onPress={onSaveInterval} testID="save-interval" />
-        {intervalStatus === 'saved' ? (
-          <ThemedText
-            type="small"
-            themeColor="textSecondary"
-            accessibilityLiveRegion="polite"
-            testID="interval-saved"
-          >
-            {t('firearms.intervalSaved')}
-          </ThemedText>
-        ) : null}
-
-        {detail.maintenanceEvents.length === 0 ? (
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('firearms.noMaintenanceEvents')}
-          </ThemedText>
-        ) : (
-          detail.maintenanceEvents.map((event) => (
-            <ListRow
-              key={event.id}
-              title={maintenanceEventTitle(event, t('firearms.adjustmentEvent'))}
-              subtitle={maintenanceEventLines(event, dates.date)}
-            />
-          ))
-        )}
-
-        {showLogEvent && (
+        {features.maintenance && (
           <>
-            <ThemedText type="small">{t('firearms.eventDate')}</ThemedText>
+            <View style={styles.sectionHeader}>
+              <ThemedText type="smallBold" style={styles.headerLabel}>
+                {t('firearms.maintenanceTitle')}
+              </ThemedText>
+              {!showLogEvent && (
+                <TextButton
+                  label={t('firearms.logEvent')}
+                  onPress={() => setShowLogEvent(true)}
+                  testID="log-maintenance"
+                />
+              )}
+            </View>
+            <ThemedText type="small">{t('firearms.maintenanceInterval')}</ThemedText>
+            <TextField
+              value={intervalValue}
+              onChangeText={(text) => {
+                setIntervalInput(text);
+                setIntervalStatus('idle');
+              }}
+              keyboardType="number-pad"
+              testID="maintenance-interval"
+            />
+            {intervalStatus === 'invalid' && intervalInvalid.rounds ? (
+              <ThemedText type="small" themeColor="danger" testID="interval-error">
+                {t('firearms.intervalInvalid')}
+              </ThemedText>
+            ) : null}
+            <ThemedText type="small">{t('firearms.maintenanceIntervalMonths')}</ThemedText>
+            <TextField
+              value={monthsValue}
+              onChangeText={(text) => {
+                setMonthsInput(text);
+                setIntervalStatus('idle');
+              }}
+              keyboardType="number-pad"
+              testID="maintenance-interval-months"
+            />
+            {intervalStatus === 'invalid' && intervalInvalid.months ? (
+              <ThemedText type="small" themeColor="danger" testID="interval-months-error">
+                {t('firearms.intervalMonthsInvalid')}
+              </ThemedText>
+            ) : null}
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('firearms.maintenanceIntervalMonthsHelp')}
+            </ThemedText>
             <SecondaryButton
-              label={dates.date(eventPerformedAt)}
-              onPress={() => setEventDatePickerOpen(true)}
-              testID="event-date"
+              label={t('common.save')}
+              onPress={onSaveInterval}
+              testID="save-interval"
             />
-            {eventDatePickerOpen && (
-              <DateTimePicker
-                testID="event-date-picker"
-                value={new Date(eventPerformedAt)}
-                mode="date"
-                maximumDate={new Date()}
-                display={Platform.OS === 'ios' ? 'inline' : 'default'}
-                onChange={(_event, selected) => {
-                  setEventDatePickerOpen(false);
-                  if (selected) setEventPerformedAt(selected.toISOString());
-                }}
-              />
+            {intervalStatus === 'saved' ? (
+              <ThemedText
+                type="small"
+                themeColor="textSecondary"
+                accessibilityLiveRegion="polite"
+                testID="interval-saved"
+              >
+                {t('firearms.intervalSaved')}
+              </ThemedText>
+            ) : null}
+
+            {detail.maintenanceEvents.length === 0 ? (
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('firearms.noMaintenanceEvents')}
+              </ThemedText>
+            ) : (
+              detail.maintenanceEvents.map((event) => (
+                <ListRow
+                  key={event.id}
+                  title={maintenanceEventTitle(event, t('firearms.adjustmentEvent'))}
+                  subtitle={maintenanceEventLines(event, dates.date)}
+                />
+              ))
             )}
-            <ThemedText type="small">{t('firearms.kind')}</ThemedText>
-            <TextField
-              value={eventKind}
-              onChangeText={setEventKind}
-              maxLength={TEXT_LIMITS.maintenance_events.kind}
-              placeholder={t('firearms.kindPlaceholder')}
-              testID="event-kind"
-            />
-            <ThemedText type="small">{t('firearms.notes')}</ThemedText>
-            <TextField
-              value={eventNotes}
-              onChangeText={setEventNotes}
-              maxLength={TEXT_LIMITS.maintenance_events.notes}
-            />
-            <SecondaryButton label={t('common.save')} onPress={onLogEvent} testID="save-event" />
+
+            {showLogEvent && (
+              <>
+                <ThemedText type="small">{t('firearms.eventDate')}</ThemedText>
+                <SecondaryButton
+                  label={dates.date(eventPerformedAt)}
+                  onPress={() => setEventDatePickerOpen(true)}
+                  testID="event-date"
+                />
+                {eventDatePickerOpen && (
+                  <DateTimePicker
+                    testID="event-date-picker"
+                    value={new Date(eventPerformedAt)}
+                    mode="date"
+                    maximumDate={new Date()}
+                    display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                    onChange={(_event, selected) => {
+                      setEventDatePickerOpen(false);
+                      if (selected) setEventPerformedAt(selected.toISOString());
+                    }}
+                  />
+                )}
+                <ThemedText type="small">{t('firearms.kind')}</ThemedText>
+                <TextField
+                  value={eventKind}
+                  onChangeText={setEventKind}
+                  maxLength={TEXT_LIMITS.maintenance_events.kind}
+                  placeholder={t('firearms.kindPlaceholder')}
+                  testID="event-kind"
+                />
+                <ThemedText type="small">{t('firearms.notes')}</ThemedText>
+                <TextField
+                  value={eventNotes}
+                  onChangeText={setEventNotes}
+                  maxLength={TEXT_LIMITS.maintenance_events.notes}
+                />
+                <SecondaryButton
+                  label={t('common.save')}
+                  onPress={onLogEvent}
+                  testID="save-event"
+                />
+              </>
+            )}
           </>
         )}
 

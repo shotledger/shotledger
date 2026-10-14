@@ -22,11 +22,13 @@ import {
   parseMaintenanceInterval,
   parseMaintenanceIntervalMonths,
 } from '@/features/firearms/round-adjustment';
+import { useFeatures } from '@/features/settings/feature-visibility';
 
 const WEAPON_TYPES: WeaponType[] = ['pistol', 'revolver', 'rifle', 'airgun'];
 
 export default function NewFirearmScreen() {
   const { t } = useTranslation();
+  const features = useFeatures();
   const router = useRouter();
 
   const [make, setMake] = useState('');
@@ -127,39 +129,42 @@ export default function NewFirearmScreen() {
         />
       </Card>
 
-      <Card>
-        <ThemedText type="smallBold">{t('firearms.maintenanceInterval')}</ThemedText>
-        <TextField
-          accessibilityLabel={t('firearms.maintenanceInterval')}
-          value={maintenanceIntervalRounds}
-          onChangeText={setMaintenanceIntervalRounds}
-          keyboardType="number-pad"
-        />
-        {interval.ok ? null : (
-          <ThemedText type="small" themeColor="danger" testID="interval-error">
-            {t('firearms.intervalInvalid')}
+      {/* Maintenance hidden (#801): the firearm is saved with no interval. */}
+      {features.maintenance && (
+        <Card>
+          <ThemedText type="smallBold">{t('firearms.maintenanceInterval')}</ThemedText>
+          <TextField
+            accessibilityLabel={t('firearms.maintenanceInterval')}
+            value={maintenanceIntervalRounds}
+            onChangeText={setMaintenanceIntervalRounds}
+            keyboardType="number-pad"
+          />
+          {interval.ok ? null : (
+            <ThemedText type="small" themeColor="danger" testID="interval-error">
+              {t('firearms.intervalInvalid')}
+            </ThemedText>
+          )}
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('firearms.maintenanceIntervalHelp')}
           </ThemedText>
-        )}
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('firearms.maintenanceIntervalHelp')}
-        </ThemedText>
-        <ThemedText type="smallBold">{t('firearms.maintenanceIntervalMonths')}</ThemedText>
-        <TextField
-          accessibilityLabel={t('firearms.maintenanceIntervalMonths')}
-          value={maintenanceIntervalMonths}
-          onChangeText={setMaintenanceIntervalMonths}
-          keyboardType="number-pad"
-          testID="new-firearm-interval-months"
-        />
-        {months.ok ? null : (
-          <ThemedText type="small" themeColor="danger" testID="new-firearm-interval-months-error">
-            {t('firearms.intervalMonthsInvalid')}
+          <ThemedText type="smallBold">{t('firearms.maintenanceIntervalMonths')}</ThemedText>
+          <TextField
+            accessibilityLabel={t('firearms.maintenanceIntervalMonths')}
+            value={maintenanceIntervalMonths}
+            onChangeText={setMaintenanceIntervalMonths}
+            keyboardType="number-pad"
+            testID="new-firearm-interval-months"
+          />
+          {months.ok ? null : (
+            <ThemedText type="small" themeColor="danger" testID="new-firearm-interval-months-error">
+              {t('firearms.intervalMonthsInvalid')}
+            </ThemedText>
+          )}
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('firearms.maintenanceIntervalMonthsHelp')}
           </ThemedText>
-        )}
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('firearms.maintenanceIntervalMonthsHelp')}
-        </ThemedText>
-      </Card>
+        </Card>
+      )}
 
       <Card>
         <ThemedText type="smallBold">{t('firearms.notes')}</ThemedText>

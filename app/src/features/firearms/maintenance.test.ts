@@ -6,6 +6,7 @@ import { maintenanceTimeNotificationAt } from '@shotledger/shared';
 import {
   firearmMaintenanceDue,
   maintenanceCountedFrom,
+  maintenanceShown,
   maintenanceTimeReminders,
   refreshMaintenanceTimeReminders,
   type MaintenanceFirearm,
@@ -26,6 +27,12 @@ jest.mock('@/db/queries/firearms', () => ({
 const mockLastMaintenance = new Map<string, string>();
 jest.mock('@/db/queries/maintenance-events', () => ({
   lastMaintenanceAtByFirearm: () => mockLastMaintenance,
+}));
+
+const mockSettings = new Map<string, unknown>();
+jest.mock('@/db/queries/settings', () => ({
+  getSetting: (_db: unknown, key: string, fallback: unknown) =>
+    mockSettings.has(key) ? mockSettings.get(key) : fallback,
 }));
 
 const mockReplace = jest.fn();
@@ -51,6 +58,7 @@ beforeEach(() => {
   mockClient.db = { tag: 'drizzle-db' };
   mockFirearms.length = 0;
   mockLastMaintenance.clear();
+  mockSettings.clear();
   mockReplace.mockReset();
 });
 
@@ -143,9 +151,29 @@ describe('refreshMaintenanceTimeReminders', () => {
     expect(mockReplace).toHaveBeenCalledWith([], { request: true });
   });
 
+  it('clears every reminder while Maintenance is hidden (#801), even with intervals set', async () => {
+    mockFirearms.push(firearm({ maintenanceIntervalMonths: 120 }));
+    mockSettings.set('showMaintenance', false);
+    await refreshMaintenanceTimeReminders({ request: true });
+    expect(mockReplace).toHaveBeenCalledWith([], { request: false });
+  });
+
   it('does nothing without a database', async () => {
     mockClient.db = null;
     await refreshMaintenanceTimeReminders({ request: true });
     expect(mockReplace).not.toHaveBeenCalled();
+  });
+});
+
+describe('maintenanceShown (#801)', () => {
+  it('is true unless the switch is stored as false', () => {
+    const database = mockClient.db as never;
+    expect(maintenanceShown(database)).toBe(true);
+    for (const value of [true, null, 'false', 0]) {
+      mockSettings.set('showMaintenance', value);
+      expect(maintenanceShown(database)).toBe(true);
+    }
+    mockSettings.set('showMaintenance', false);
+    expect(maintenanceShown(database)).toBe(false);
   });
 });

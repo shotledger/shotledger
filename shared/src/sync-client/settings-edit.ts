@@ -54,6 +54,7 @@ function allowed(key: SyncedSettingKey, after: AccountSettings, deps: SettingsDe
     case 'showTimer':
     case 'showSightSettings':
     case 'showAmmoLots':
+    case 'showMaintenance':
       return typeof value === 'boolean';
     case 'complianceProfile':
       return isProfile(value);

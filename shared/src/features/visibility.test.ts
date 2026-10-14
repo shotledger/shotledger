@@ -16,6 +16,7 @@ describe('feature visibility (docs/specs/feature-visibility-spec.md §3.1)', () 
       timer: true,
       sightSettings: true,
       ammoLots: true,
+      maintenance: true,
     });
   });
 
@@ -33,6 +34,7 @@ describe('feature visibility (docs/specs/feature-visibility-spec.md §3.1)', () 
       timer: true,
       sightSettings: true,
       ammoLots: false,
+      maintenance: true,
     });
   });
 
@@ -52,6 +54,7 @@ describe('feature visibility (docs/specs/feature-visibility-spec.md §3.1)', () 
       'timer',
       'sightSettings',
       'ammoLots',
+      'maintenance',
     ]);
     expect(FEATURE_SETTING_KEYS).toEqual({
       licenseActivity: 'showLicenseActivity',
@@ -59,6 +62,7 @@ describe('feature visibility (docs/specs/feature-visibility-spec.md §3.1)', () 
       timer: 'showTimer',
       sightSettings: 'showSightSettings',
       ammoLots: 'showAmmoLots',
+      maintenance: 'showMaintenance',
     });
   });
 

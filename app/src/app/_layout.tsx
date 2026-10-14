@@ -11,6 +11,7 @@ import { MigrationGate } from '@/db/migration-gate';
 import { setMaintenanceDueListener } from '@/db/queries/maintenance-due';
 import { rewriteSeriesPhotoUris } from '@/db/queries/series';
 import { EvaluationGate } from '@/features/evaluation/evaluation-gate';
+import { maintenanceShown } from '@/features/firearms/maintenance';
 import { MaintenanceReminders } from '@/features/firearms/maintenance-reminders';
 import { SyncTriggers } from '@/features/sync/sync-triggers';
 import { useResolvedThemeName, useTheme } from '@/hooks/use-theme';
@@ -223,6 +224,8 @@ export default function RootLayout() {
   useEffect(
     () =>
       setMaintenanceDueListener((firearm) => {
+        // Hidden in Settings → Features (#801): no maintenance notifications.
+        if (db && !maintenanceShown(db)) return;
         void notifyMaintenanceDue(`${firearm.make} ${firearm.model}`);
       }),
     [],

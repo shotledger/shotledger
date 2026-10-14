@@ -24,6 +24,7 @@ export interface AccountSettings {
   showTimer: boolean;
   showSightSettings: boolean;
   showAmmoLots: boolean;
+  showMaintenance: boolean;
 }
 
 const isBirthYear = (value: unknown): value is number => Number.isInteger(value);
@@ -65,5 +66,6 @@ export function readAccountSettings(rows: ReadonlyMap<string, Payload>): Account
     [FEATURE_SETTING_KEYS.timer]: shown.timer,
     [FEATURE_SETTING_KEYS.sightSettings]: shown.sightSettings,
     [FEATURE_SETTING_KEYS.ammoLots]: shown.ammoLots,
+    [FEATURE_SETTING_KEYS.maintenance]: shown.maintenance,
   };
 }
