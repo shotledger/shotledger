@@ -255,6 +255,8 @@ export function Settings({
                   <label className="field check">
                     <input
                       type="checkbox"
+                      role="switch"
+                      className="switch"
                       checked={form[key]}
                       onChange={(event) => edit({ [key]: event.target.checked })}
                     />
