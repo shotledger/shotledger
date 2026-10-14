@@ -9,7 +9,8 @@ windows of [`m6-compliance-spec.md`](m6-compliance-spec.md),
 counted. Their numbers (6 months, 12/6 required, 2 in 6 months, 4 per year for
 two years) are unchanged.
 
-**Spec approval: pending.**
+**Spec approval: approved** by the maintainer on 2026-10-14 ("Ok", in reply to the
+request to approve this spec).
 
 **Tier 2.** No new regulatory value. The change is how "de senaste sex
 månaderna" is read at day level, which the source does not state.
