@@ -429,7 +429,7 @@ button.destructive {
 }
 
 .license-activity {
-  margin: 0 0 16px;
+  margin: 0;
 }
 
 .license-activity .badge.alert {

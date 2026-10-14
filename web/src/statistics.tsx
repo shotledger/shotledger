@@ -103,13 +103,13 @@ export function Statistics({
 
   if (!options.hasAnyData) {
     return (
-      <>
+      <div className="stats-page">
         <LicenseActivityLine tables={tables} />
         <section className="card">
           <h2>{t('stats.emptyTitle')}</h2>
           <p className="muted">{t('stats.emptyBody')}</p>
         </section>
-      </>
+      </div>
     );
   }
 
