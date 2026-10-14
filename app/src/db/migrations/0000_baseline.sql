@@ -81,7 +81,8 @@ CREATE TABLE `firearms` (
 	`notes` text,
 	`round_count` integer DEFAULT 0 NOT NULL,
 	`maintenance_interval_rounds` integer,
-	`rounds_since_maintenance` integer DEFAULT 0 NOT NULL
+	`rounds_since_maintenance` integer DEFAULT 0 NOT NULL,
+	`archived_at` text
 );
 --> statement-breakpoint
 CREATE TABLE `licenses` (

@@ -84,6 +84,7 @@ export interface ExportFirearmRow {
   readonly roundCount: number;
   readonly maintenanceIntervalRounds: number | null;
   readonly roundsSinceMaintenance: number;
+  readonly archivedAt: string | null;
 }
 
 export interface ExportAmmoLotRow {
@@ -202,6 +203,7 @@ export function firearmExportsFromRows(rows: readonly ExportFirearmRow[]): Firea
     roundCount: f.roundCount,
     maintenanceIntervalRounds: f.maintenanceIntervalRounds,
     roundsSinceMaintenance: f.roundsSinceMaintenance,
+    archivedAt: f.archivedAt ?? null,
   }));
 }
 

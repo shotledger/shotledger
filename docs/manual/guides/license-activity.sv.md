@@ -47,7 +47,9 @@ krav på föreningens intyg, grupperade efter vad du ansöker om:
 Varje krav visar om det är uppfyllt. Är det uppfyllt står det när du senast ska
 skjuta nästa gång. Är det inte uppfyllt står det hur många pass till som behövs,
 och med vilket vapen när det spelar roll. Tryck på ett vapens namn för att öppna
-det.
+det. Ett
+[arkiverat](firearms-and-ammunition.sv.md#arkivera-ett-vapen-du-inte-langre-har)
+vapen visas inte.
 
 Om ett tidigare år i förnyelserutan inte räcker kan pass du loggar i dag inte
 rätta till det, och kontrollen säger det. Den visar också från vilket datum
