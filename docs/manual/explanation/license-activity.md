@@ -75,6 +75,21 @@ ends on 31 October starts on 1 May, because there is no 31 April; so a session o
 therefore be a day or two earlier than counting months on your fingers would
 suggest, never later.
 
+## A year that has already ended
+
+The renewal box asks for four activities in each of the last two years. The
+older of those two years ended a year ago, so a session you log today lands in
+the recent year and can never count towards the older one.
+
+What does change the older year is time. As the days pass, both years move
+forward together: sessions from the start of your recent year cross into the
+older one, and the oldest sessions drop out of it. So an older year that is
+short now can fill up later, either from sessions you have already logged or
+from sessions you log from now on once they are a year old. The date the app
+gives is the first day on which every year can be at four, provided you keep
+logging sessions with that firearm. It is the earliest the box can be ticked,
+not a promise that it will be.
+
 ## What counts, and what this is not
 
 **Every session counts, whatever you shot.** 5 § and 6 § are requirements on
