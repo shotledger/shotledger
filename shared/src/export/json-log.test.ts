@@ -72,6 +72,7 @@ const firearm = {
   roundCount: 0,
   maintenanceIntervalRounds: null,
   roundsSinceMaintenance: 0,
+  archivedAt: null,
 };
 
 const input: AnalyticsReportJsonInput = {

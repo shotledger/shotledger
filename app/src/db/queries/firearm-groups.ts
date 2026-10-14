@@ -1,6 +1,6 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, getTableColumns, isNull } from 'drizzle-orm';
 
-import { firearmGroups } from '../schema';
+import { firearmGroups, firearms } from '../schema';
 import type { Database } from '../types';
 import { newId, nowIso } from '../util';
 
@@ -37,26 +37,39 @@ export function listFirearmGroups(db: Database, firearmId: string) {
     .all();
 }
 
-/** Distinct weapon-group ids the shooter holds across every firearm (M6 license-activity overview). */
+/**
+ * Distinct weapon-group ids the shooter holds across every firearm they still
+ * have (M6 license-activity overview). An archived firearm's groups drop out:
+ * a sold firearm's licence needs no activity (#799).
+ */
 export function listAllFirearmGroupIds(db: Database): string[] {
   const rows = db
     .select({ groupId: firearmGroups.groupId })
     .from(firearmGroups)
-    .where(isNull(firearmGroups.deletedAt))
+    .innerJoin(firearms, eq(firearms.id, firearmGroups.firearmId))
+    .where(
+      and(isNull(firearmGroups.deletedAt), isNull(firearms.deletedAt), isNull(firearms.archivedAt)),
+    )
     .all();
   return [...new Set(rows.map((row) => row.groupId))];
 }
 
-/** The firearm currently marked default for a federation-scoped group id. */
+/**
+ * The firearm currently marked default for a federation-scoped group id. An
+ * archived default is no default: a new session never picks it (#799).
+ */
 export function getDefaultFirearmForGroup(db: Database, groupId: string) {
   return db
-    .select()
+    .select(getTableColumns(firearmGroups))
     .from(firearmGroups)
+    .innerJoin(firearms, eq(firearms.id, firearmGroups.firearmId))
     .where(
       and(
         eq(firearmGroups.groupId, groupId),
         eq(firearmGroups.isDefaultForGroup, 1),
         isNull(firearmGroups.deletedAt),
+        isNull(firearms.deletedAt),
+        isNull(firearms.archivedAt),
       ),
     )
     .get();

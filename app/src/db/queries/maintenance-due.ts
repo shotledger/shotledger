@@ -25,15 +25,20 @@ export function setMaintenanceDueListener(next: MaintenanceDueListener | null): 
 /**
  * Tells the listener when a counter move takes rounds-since-maintenance from
  * below the interval to at or above it. Once over, later rounds do not cross
- * again; a maintenance reset brings it back below.
+ * again; a maintenance reset brings it back below. An archived firearm stays
+ * quiet: it is gone from the shooter's cabinet (#799).
  */
 export function reportMaintenanceCounterMove(
-  firearm: MaintenanceDueFirearm & { maintenanceIntervalRounds: number | null },
+  firearm: MaintenanceDueFirearm & {
+    maintenanceIntervalRounds: number | null;
+    archivedAt?: string | null;
+  },
   previousRoundsSinceMaintenance: number,
   nextRoundsSinceMaintenance: number,
 ): void {
   if (
     listener &&
+    !firearm.archivedAt &&
     shouldNotifyMaintenanceDue(
       previousRoundsSinceMaintenance,
       nextRoundsSinceMaintenance,
