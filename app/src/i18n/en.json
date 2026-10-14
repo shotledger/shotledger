@@ -442,7 +442,13 @@
     "compareImbalance": "These lots differ {{ratio}}x in shot count, so the table is not a fair race — the lot with fewer shots has the less settled average.",
     "compareCaveats": "Shots inside one series move together, so the true uncertainty is a little wider than the intervals shown. And nothing here separates the ammunition from your own form on the day a lot happened to be used.",
     "muzzleEnergy": "Muzzle Energy",
-    "joules": "{{value}} J"
+    "joules": "{{value}} J",
+    "mergeInto": "Merge Into Another Lot",
+    "lotWithCaliber": "{{label}} · {{caliber}}",
+    "mergeConfirmTitle": "Merge Ammo Lots?",
+    "mergeConfirmBody_one": "Move {{count}} session from “{{duplicate}}” to “{{kept}}” and delete “{{duplicate}}”? Its quantity and notes are not carried over.",
+    "mergeConfirmBody_other": "Move {{count}} sessions from “{{duplicate}}” to “{{kept}}” and delete “{{duplicate}}”? Its quantity and notes are not carried over.",
+    "mergeConfirm": "Merge"
   },
   "settings": {
     "title": "Settings",
@@ -1579,7 +1585,22 @@
       "errorNoSessions": "Select at least one session.",
       "errorBlankTag": "Enter a tag.",
       "errorNothing": "Nothing to change: the selected sessions already are that way.",
-      "errorTooMany": "That is {{needed}} changes, and at most {{max}} go at once. Select fewer sessions."
+      "errorTooMany": "That is {{needed}} changes, and at most {{max}} go at once. Select fewer sessions.",
+      "mergeTitle": "Merge Ammo Lots",
+      "mergeHelp": "For two lots that are really the same lot. Every session on the duplicate moves to the lot you keep, and the duplicate is deleted.",
+      "mergeDuplicate": "Duplicate",
+      "mergeKeep": "Keep",
+      "mergeLotOption_one": "{{lot}} · {{count}} session",
+      "mergeLotOption_other": "{{lot}} · {{count}} sessions",
+      "merge": "Merge",
+      "merged_one": "Moved {{count}} session and deleted the duplicate.",
+      "merged_other": "Moved {{count}} sessions and deleted the duplicate.",
+      "mergeDuplicateGone": "The duplicate was already deleted on another device.",
+      "mergeErrorSameLot": "Choose two different lots.",
+      "mergeErrorUnknownLot": "One of the lots is no longer in your logbook.",
+      "mergeErrorTooMany": "That is {{needed}} changes, and at most {{max}} go at once. Merge on the phone instead.",
+      "mergeFailedNetwork": "Could not reach the server. Retry sends the same merge again.",
+      "mergeAccountChanged": "You are now signed in to another account, so the merge was not sent. Choose the lots again."
     },
     "edit": {
       "readOnly": "Final and total-only series are changed on the phone.",

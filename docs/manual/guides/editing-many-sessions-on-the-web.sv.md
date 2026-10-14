@@ -58,4 +58,15 @@ skottantal. Att spara serier i telefonen medan ett vapenbyte väntar på
 En ändring kan röra högst 500 rader. Behövs fler säger sidan hur många, och
 du markerar färre pass och tillämpar två gånger.
 
-Att slå ihop dubbla ammunitionspartier finns inte här än.
+## Slå ihop ammunitionspartier {#merge-ammo-lots}
+
+Under listan gör **Slå ihop ammunitionspartier** samma sak som **Slå ihop med
+ett annat parti** i telefonen (se [Vapen och ammunition](firearms-and-ammunition.md)).
+Välj ett parti under **Dubblett** och ett under **Behåll**; vart och ett
+visar sin kaliber och hur många pass det har. **Slå ihop** frågar först, flyttar sedan alla pass
+på dubbletten till partiet du behåller och tar bort dubbletten, i en enda
+ändring. Det behållna partiets antal och anteckningar lämnas som de är.
+
+Försök igen, att logga in igen och gränsen på 500 rader fungerar som ovan. En
+dubblett med fler än 499 pass är för stor för en ändring: slå ihop den i
+telefonen.

@@ -442,7 +442,13 @@
     "compareImbalance": "Partierna skiljer {{ratio}}x i antal skott, så tabellen är ingen rättvis jämförelse — partiet med färre skott har det mer osäkra snittet.",
     "compareCaveats": "Skott inom samma serie följs åt, så den verkliga osäkerheten är något större än intervallen som visas. Och inget här skiljer ammunitionen från din egen form de dagar ett parti råkade användas.",
     "muzzleEnergy": "Anslagsenergi",
-    "joules": "{{value}} J"
+    "joules": "{{value}} J",
+    "mergeInto": "Slå ihop med en annat parti",
+    "lotWithCaliber": "{{label}} · {{caliber}}",
+    "mergeConfirmTitle": "Slå ihop ammunitionspartier?",
+    "mergeConfirmBody_one": "Flytta {{count}} pass från ”{{duplicate}}” till ”{{kept}}” och ta bort ”{{duplicate}}”? Dess antal och anteckningar förs inte över.",
+    "mergeConfirmBody_other": "Flytta {{count}} pass från ”{{duplicate}}” till ”{{kept}}” och ta bort ”{{duplicate}}”? Dess antal och anteckningar förs inte över.",
+    "mergeConfirm": "Slå ihop"
   },
   "settings": {
     "title": "Inställningar",
@@ -1579,7 +1585,22 @@
       "errorNoSessions": "Markera minst ett pass.",
       "errorBlankTag": "Skriv en tagg.",
       "errorNothing": "Inget att ändra: de markerade passen är redan så.",
-      "errorTooMany": "Det blir {{needed}} ändringar, och högst {{max}} går på en gång. Markera färre pass."
+      "errorTooMany": "Det blir {{needed}} ändringar, och högst {{max}} går på en gång. Markera färre pass.",
+      "mergeTitle": "Slå ihop ammunitionspartier",
+      "mergeHelp": "För två partier som egentligen är samma parti. Alla pass på dubbletten flyttas till partiet du behåller, och dubbletten tas bort.",
+      "mergeDuplicate": "Dubblett",
+      "mergeKeep": "Behåll",
+      "mergeLotOption_one": "{{lot}} · {{count}} pass",
+      "mergeLotOption_other": "{{lot}} · {{count}} pass",
+      "merge": "Slå ihop",
+      "merged_one": "Flyttade {{count}} pass och tog bort dubbletten.",
+      "merged_other": "Flyttade {{count}} pass och tog bort dubbletten.",
+      "mergeDuplicateGone": "Dubbletten var redan borttagen på en annan enhet.",
+      "mergeErrorSameLot": "Välj två olika partier.",
+      "mergeErrorUnknownLot": "En av partierna finns inte längre i din loggbok.",
+      "mergeErrorTooMany": "Det blir {{needed}} ändringar, och högst {{max}} går på en gång. Slå ihop i telefonen i stället.",
+      "mergeFailedNetwork": "Kunde inte nå servern. Försök igen skickar samma sammanslagning igen.",
+      "mergeAccountChanged": "Du är nu inloggad på ett annat konto, så sammanslagningen skickades inte. Välj partierna igen."
     },
     "edit": {
       "readOnly": "Finalserier och serier med bara totalsumma ändras i telefonen.",

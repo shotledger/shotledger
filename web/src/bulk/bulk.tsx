@@ -1,5 +1,6 @@
 // Bulk Edit: retag, change the firearm on, or move many sessions with one
-// push (docs/specs/web-bulk-edit-spec.md §3.2). The list is model.ts, the
+// push (docs/specs/web-bulk-edit-spec.md §3.2), and merge two ammo lots
+// (merge-panel.tsx, docs/specs/ammo-lot-merge-spec.md M6). The list is model.ts, the
 // request request.ts, what an Apply does apply.ts and what the page then
 // says messages.ts; this file only renders and wires.
 import { rankRecentLocations } from '@shotledger/shared/src/locations/recent-locations';
@@ -26,6 +27,7 @@ import {
   type ApplyState,
 } from './apply';
 import { carry, clearCarried, peekCarried } from './carry';
+import { MergeLots } from './merge-panel';
 import { statusMessages, type Message } from './messages';
 import {
   bulkRows,
@@ -386,6 +388,12 @@ export function BulkEdit({
           </div>
         )}
       </section>
+      <MergeLots
+        tables={tables}
+        refresh={refresh}
+        online={online}
+        onReauthenticated={onReauthenticated}
+      />
     </fieldset>
   );
 }

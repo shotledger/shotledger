@@ -1,6 +1,6 @@
 import { and, eq, isNull } from 'drizzle-orm';
 
-import { ammoLots } from '../schema';
+import { ammoLots, sessions } from '../schema';
 import type { Database } from '../types';
 import { newId, nowIso } from '../util';
 
@@ -85,4 +85,34 @@ export function updateAmmoLot(db: Database, id: string, patch: UpdateAmmoLotInpu
 export function softDeleteAmmoLot(db: Database, id: string) {
   const now = nowIso();
   db.update(ammoLots).set({ deletedAt: now, updatedAt: now }).where(eq(ammoLots.id, id)).run();
+}
+
+export type MergeAmmoLotsResult =
+  { ok: true; moved: number } | { ok: false; error: 'sameLot' | 'unknownLot' };
+
+/**
+ * Merges a duplicate lot into the kept one (docs/specs/ammo-lot-merge-spec.md
+ * M1–M3): every live session on the duplicate moves to the kept lot, then the
+ * duplicate is soft-deleted. The kept lot's own row is not written (M2).
+ */
+export function mergeAmmoLots(
+  db: Database,
+  duplicateId: string,
+  keptId: string,
+): MergeAmmoLotsResult {
+  if (duplicateId === keptId) return { ok: false, error: 'sameLot' };
+  return db.transaction((tx): MergeAmmoLotsResult => {
+    if (!getAmmoLot(tx, duplicateId) || !getAmmoLot(tx, keptId)) {
+      return { ok: false, error: 'unknownLot' };
+    }
+    const onDuplicate = and(eq(sessions.ammoLotId, duplicateId), isNull(sessions.deletedAt));
+    const moved = tx.select({ id: sessions.id }).from(sessions).where(onDuplicate).all().length;
+    const now = nowIso();
+    tx.update(sessions).set({ ammoLotId: keptId, updatedAt: now }).where(onDuplicate).run();
+    tx.update(ammoLots)
+      .set({ deletedAt: now, updatedAt: now })
+      .where(eq(ammoLots.id, duplicateId))
+      .run();
+    return { ok: true, moved };
+  });
 }
