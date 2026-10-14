@@ -102,7 +102,6 @@ const pulled = tables({
       notes: null,
       round_count: 0,
       maintenance_interval_rounds: null,
-      rounds_since_maintenance: 0,
       deleted_at: null,
     },
   ],
@@ -134,6 +133,48 @@ describe('sessionsJson', () => {
       ],
       stations: [{ position: 2, hits: 6 }],
     });
+  });
+});
+
+describe('sessionsJson maintenance log (#727 M6)', () => {
+  it('carries the live maintenance events, adjustments included, readable by the importer', () => {
+    const event = {
+      id: 'm1',
+      firearm_id: 'f1',
+      performed_at: '2026-09-01T10:00:00.000Z',
+      kind: 'Rengöring',
+      round_count_at: 500,
+      is_adjustment: 0,
+      notes: null,
+      deleted_at: null,
+    };
+    const text = sessionsJson(
+      tables({
+        maintenance_events: [
+          event,
+          { ...event, id: 'm2', kind: '', is_adjustment: 1, notes: '+10 · Club' },
+          { ...event, id: 'm3', deleted_at: '2026-09-02T10:00:00.000Z' },
+        ],
+      }),
+      '1.2.3',
+    );
+    const parsed = importSessionsFromJson(text);
+    expect(parsed).toMatchObject({
+      errors: [],
+      maintenanceEvents: [
+        {
+          id: 'm1',
+          firearmId: 'f1',
+          performedAt: '2026-09-01T10:00:00.000Z',
+          kind: 'Rengöring',
+          roundCountAt: 500,
+          isAdjustment: false,
+          notes: null,
+        },
+        { id: 'm2', isAdjustment: true, notes: '+10 · Club' },
+      ],
+    });
+    expect((parsed as { maintenanceEvents: unknown[] }).maintenanceEvents).toHaveLength(2);
   });
 });
 

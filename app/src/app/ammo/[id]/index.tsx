@@ -5,7 +5,7 @@ import { muzzleEnergyJoules, powerFactor, TEXT_LIMITS } from '@shotledger/shared
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ScreenTitle } from '@/components/screen-title';
 import { CaliberPicker } from '@/components/caliber-picker';
@@ -14,6 +14,7 @@ import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { db } from '@/db/client';
 import { getAmmoLot, updateAmmoLot } from '@/db/queries/ammo-lots';
 import { getAmmoLotUsage } from '@/db/queries/ammo-usage';
@@ -117,7 +118,7 @@ export default function AmmoLotDetailScreen() {
         {(tracked.handloads || lot?.isHandload === 1) && (
           <View style={styles.switchRow}>
             <ThemedText type="small">{t('ammo.isHandload')}</ThemedText>
-            <Switch value={isHandload} onValueChange={setIsHandload} />
+            <Toggle value={isHandload} onValueChange={setIsHandload} />
           </View>
         )}
       </Card>

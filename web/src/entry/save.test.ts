@@ -105,10 +105,15 @@ describe('saving an entry', () => {
   });
 
   it('U2 nothing retries on its own (N2)', async () => {
-    const failing = deps({ kind: 'failed', error: 'network' });
-    await save(failing, null);
-    await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(failing.push).toHaveBeenCalledTimes(1);
+    vi.useFakeTimers();
+    try {
+      const failing = deps({ kind: 'failed', error: 'network' });
+      await save(failing, null);
+      await vi.advanceTimersByTimeAsync(60 * 60_000);
+      expect(failing.push).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('a failed pull before the build sends nothing and holds nothing', async () => {

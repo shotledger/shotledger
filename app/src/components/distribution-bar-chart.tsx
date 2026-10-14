@@ -1,7 +1,8 @@
 // M5: shot-value distribution, plain react-native-svg (see trend-line-chart.tsx
 // for the chart-library deviation rationale).
 import { StyleSheet, View, type ViewProps } from 'react-native';
-import Svg, { Rect, Text as SvgText } from 'react-native-svg';
+import Svg, { Rect } from 'react-native-svg';
+import { SvgText } from '@/components/svg-text';
 
 import { useTheme } from '@/hooks/use-theme';
 import type { DistributionBucket } from '@/features/stats/use-stats-data';

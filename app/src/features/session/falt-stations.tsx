@@ -10,6 +10,7 @@ import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { EmptyState } from '@/components/empty-state';
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { faltSessionResult, listStationsForSession } from '@/db/queries/falt';
@@ -137,7 +138,7 @@ export function FaltStations({ sessionId, resultMode }: FaltStationsProps) {
           testID="add-station"
         />
         {canStartShootOff(stations) && (
-          <PrimaryButton
+          <SecondaryButton
             label={t('session.startShootOff')}
             onPress={() => router.push(stationHref(true))}
             testID="start-shoot-off"

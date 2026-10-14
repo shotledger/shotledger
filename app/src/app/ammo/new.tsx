@@ -5,7 +5,7 @@ import { muzzleEnergyJoules, powerFactor, TEXT_LIMITS } from '@shotledger/shared
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { CaliberPicker } from '@/components/caliber-picker';
 import { Card } from '@/components/card';
@@ -13,6 +13,7 @@ import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { db } from '@/db/client';
 import { createAmmoLot } from '@/db/queries/ammo-lots';
 import { parseMeasure, parseQuantity } from '@/features/ammo/quantity';
@@ -82,6 +83,7 @@ export default function NewAmmoLotScreen() {
       <Card>
         <ThemedText type="smallBold">{t('ammo.label')}</ThemedText>
         <TextField
+          accessibilityLabel={t('ammo.label')}
           value={label}
           onChangeText={setLabel}
           maxLength={TEXT_LIMITS.ammo_lots.label}
@@ -89,9 +91,15 @@ export default function NewAmmoLotScreen() {
         />
         <CaliberPicker label={t('ammo.caliber')} value={caliber} onChange={setCaliber} />
         <ThemedText type="smallBold">{t('ammo.quantity')}</ThemedText>
-        <TextField value={quantity} onChangeText={setQuantity} keyboardType="number-pad" />
+        <TextField
+          accessibilityLabel={t('ammo.quantity')}
+          value={quantity}
+          onChangeText={setQuantity}
+          keyboardType="number-pad"
+        />
         <ThemedText type="smallBold">{t('ammo.purchasedOn')}</ThemedText>
         <TextField
+          accessibilityLabel={t('ammo.purchasedOn')}
           value={purchasedOn}
           onChangeText={setPurchasedOn}
           maxLength={TEXT_LIMITS.ammo_lots.purchased_on}
@@ -100,7 +108,7 @@ export default function NewAmmoLotScreen() {
         {tracked.handloads && (
           <View style={styles.switchRow}>
             <ThemedText type="small">{t('ammo.isHandload')}</ThemedText>
-            <Switch value={isHandload} onValueChange={setIsHandload} testID="handload-toggle" />
+            <Toggle value={isHandload} onValueChange={setIsHandload} testID="handload-toggle" />
           </View>
         )}
       </Card>
@@ -109,18 +117,21 @@ export default function NewAmmoLotScreen() {
         <Card>
           <ThemedText type="smallBold">{t('ammo.brand')}</ThemedText>
           <TextField
+            accessibilityLabel={t('ammo.brand')}
             value={brand}
             onChangeText={setBrand}
             maxLength={TEXT_LIMITS.ammo_lots.brand}
           />
           <ThemedText type="smallBold">{t('ammo.product')}</ThemedText>
           <TextField
+            accessibilityLabel={t('ammo.product')}
             value={product}
             onChangeText={setProduct}
             maxLength={TEXT_LIMITS.ammo_lots.product}
           />
           <ThemedText type="smallBold">{t('ammo.lotNumber')}</ThemedText>
           <TextField
+            accessibilityLabel={t('ammo.lotNumber')}
             value={lotNumber}
             onChangeText={setLotNumber}
             maxLength={TEXT_LIMITS.ammo_lots.lot_number}
@@ -131,24 +142,28 @@ export default function NewAmmoLotScreen() {
       <Card>
         <ThemedText type="smallBold">{t('ammo.bulletMake')}</ThemedText>
         <TextField
+          accessibilityLabel={t('ammo.bulletMake')}
           value={bulletMake}
           onChangeText={setBulletMake}
           maxLength={TEXT_LIMITS.ammo_lots.bullet_make}
         />
         <ThemedText type="smallBold">{t('ammo.bulletModel')}</ThemedText>
         <TextField
+          accessibilityLabel={t('ammo.bulletModel')}
           value={bulletModel}
           onChangeText={setBulletModel}
           maxLength={TEXT_LIMITS.ammo_lots.bullet_model}
         />
         <ThemedText type="smallBold">{t('ammo.bulletWeightGr')}</ThemedText>
         <TextField
+          accessibilityLabel={t('ammo.bulletWeightGr')}
           value={bulletWeightGr}
           onChangeText={setBulletWeightGr}
           keyboardType="decimal-pad"
         />
         <ThemedText type="smallBold">{t('ammo.velocityMps')}</ThemedText>
         <TextField
+          accessibilityLabel={t('ammo.velocityMps')}
           value={velocityMps}
           onChangeText={setVelocityMps}
           keyboardType="decimal-pad"
@@ -182,6 +197,7 @@ export default function NewAmmoLotScreen() {
           <ThemedText type="smallBold">{t('ammo.recipeTitle')}</ThemedText>
           <ThemedText type="small">{t('ammo.powder')}</ThemedText>
           <TextField
+            accessibilityLabel={t('ammo.powder')}
             value={powder}
             onChangeText={setPowder}
             maxLength={TEXT_LIMITS.ammo_lots.powder}
@@ -189,32 +205,46 @@ export default function NewAmmoLotScreen() {
           />
           <ThemedText type="small">{t('ammo.powderChargeGr')}</ThemedText>
           <TextField
+            accessibilityLabel={t('ammo.powderChargeGr')}
             value={powderChargeGr}
             onChangeText={setPowderChargeGr}
             keyboardType="decimal-pad"
           />
           <ThemedText type="small">{t('ammo.primer')}</ThemedText>
           <TextField
+            accessibilityLabel={t('ammo.primer')}
             value={primer}
             onChangeText={setPrimer}
             maxLength={TEXT_LIMITS.ammo_lots.primer}
           />
           <ThemedText type="small">{t('ammo.brass')}</ThemedText>
           <TextField
+            accessibilityLabel={t('ammo.brass')}
             value={brass}
             onChangeText={setBrass}
             maxLength={TEXT_LIMITS.ammo_lots.brass}
           />
           <ThemedText type="small">{t('ammo.colMm')}</ThemedText>
-          <TextField value={colMm} onChangeText={setColMm} keyboardType="decimal-pad" />
+          <TextField
+            accessibilityLabel={t('ammo.colMm')}
+            value={colMm}
+            onChangeText={setColMm}
+            keyboardType="decimal-pad"
+          />
           <ThemedText type="small">{t('ammo.crimpMm')}</ThemedText>
-          <TextField value={crimpMm} onChangeText={setCrimpMm} keyboardType="decimal-pad" />
+          <TextField
+            accessibilityLabel={t('ammo.crimpMm')}
+            value={crimpMm}
+            onChangeText={setCrimpMm}
+            keyboardType="decimal-pad"
+          />
         </Card>
       )}
 
       <Card>
         <ThemedText type="smallBold">{t('ammo.notes')}</ThemedText>
         <TextField
+          accessibilityLabel={t('ammo.notes')}
           value={notes}
           onChangeText={setNotes}
           maxLength={TEXT_LIMITS.ammo_lots.notes}

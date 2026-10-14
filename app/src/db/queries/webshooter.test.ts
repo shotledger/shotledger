@@ -13,6 +13,7 @@ import { createSession, getSession, updateSession } from './sessions';
 import { faltSessionResult, listStationsForSession } from './falt';
 import { listSeriesForSession } from './series';
 import { getFirearm, createFirearm } from './firearms';
+import { getRoundsSinceMaintenance } from './maintenance-counter';
 import { cacheManualClassMapping, classifyResultRow, importResultRow } from './webshooter';
 
 let db: Database;
@@ -364,7 +365,7 @@ describe('importResultRow — total-only series are volume (one-volume-figure-sp
     });
 
     expect(getFirearm(db, firearm.id)?.roundCount).toBe(35);
-    expect(getFirearm(db, firearm.id)?.roundsSinceMaintenance).toBe(35);
+    expect(getRoundsSinceMaintenance(db, getFirearm(db, firearm.id)!)).toBe(35);
   });
 
   it('A8: assigning the firearm on a fält import credits its stations and the sighter rounds', () => {

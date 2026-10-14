@@ -10,13 +10,13 @@ import {
 } from '@shotledger/shared/src/regulations/registry';
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Switch } from 'react-native';
 
 import { Card } from '@/components/card';
 import { ListRow } from '@/components/list-row';
 import { Screen } from '@/components/screen';
 import { ScreenTitle } from '@/components/screen-title';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { useRegulations } from '@/features/regulations/use-regulations';
 
 export default function RegulationsScreen() {
@@ -60,7 +60,7 @@ export default function RegulationsScreen() {
                 isImplied ? t('regulations.impliedBy') : null,
               ]}
               trailing={
-                <Switch
+                <Toggle
                   value={isOn}
                   onValueChange={(next) => toggle(regulation.id, next)}
                   testID={`regulation-${regulation.id}-toggle`}

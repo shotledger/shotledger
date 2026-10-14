@@ -118,9 +118,22 @@ export interface FirearmExport {
   notes: string | null;
   roundCount: number;
   maintenanceIntervalRounds: number | null;
-  roundsSinceMaintenance: number;
+  maintenanceIntervalMonths: number | null;
   /** When it was archived (sold, returned or retired), or null while active (#799). */
   archivedAt: string | null;
+}
+
+/** One entry of a firearm's maintenance log. Rounds since maintenance is not
+ *  stored anywhere; it is derived from these (#727 M2), so the file carries
+ *  them to keep that figure across export and import. */
+export interface MaintenanceEventExport {
+  id: string;
+  firearmId: string;
+  performedAt: string;
+  kind: string;
+  roundCountAt: number;
+  isAdjustment: boolean;
+  notes: string | null;
 }
 
 /** One ISSUED license. A renewal is another row, not an edit of this one, so a
@@ -144,6 +157,7 @@ export interface JsonExportEnvelope {
   sessions: SessionExport[];
   firearms: FirearmExport[];
   licenses: LicenseExport[];
+  maintenanceEvents: MaintenanceEventExport[];
 }
 
 // Descriptions are not decoration: they are the published schema's only prose,
@@ -459,12 +473,18 @@ export const firearmExportSchema = z.object({
     .nullable()
     .default(null)
     .describe('Rounds between cleanings, or null for no reminder.'),
-  roundsSinceMaintenance: z
+  maintenanceIntervalMonths: z
     .number()
     .int()
-    .min(0)
-    .default(0)
-    .describe('Rounds fired since the last maintenance event.'),
+    .min(1)
+    // MAINTENANCE_INTERVAL_MONTHS_MAX. A literal: generate-export-schema.mjs
+    // loads this compiled file on its own, where no relative import resolves.
+    .max(120)
+    .nullable()
+    .default(null)
+    .describe(
+      'Calendar months between cleanings, or null for no reminder by time. Due when either interval is reached.',
+    ),
   archivedAt: z
     .string()
     .nullable()
@@ -473,6 +493,35 @@ export const firearmExportSchema = z.object({
       'When the shooter archived it (sold, returned or retired), as an ISO timestamp; ' +
         'null while it is in use. Its sessions and licenses are kept either way.',
     ),
+});
+
+export const maintenanceEventExportSchema = z.object({
+  id: z.string().min(1).describe('Stable id of the maintenance event.'),
+  firearmId: z
+    .string()
+    .min(1)
+    .describe('The firearm it belongs to. An import drops an event naming no firearm in the file.'),
+  performedAt: z.string().min(1).describe('When the maintenance was done, ISO 8601.'),
+  kind: z
+    .string()
+    .default('')
+    .describe('What was done, as the user typed it, e.g. `Rengöring`. Empty for an adjustment.'),
+  roundCountAt: z
+    .number()
+    .int()
+    .min(0)
+    .describe(
+      "The firearm's round count when the event was logged. Rounds since maintenance counts from the newest event that is not an adjustment.",
+    ),
+  isAdjustment: z
+    .boolean()
+    .default(false)
+    .describe('A manual correction of the round count with a reason, not maintenance performed.'),
+  notes: z
+    .string()
+    .nullable()
+    .default(null)
+    .describe("The event's notes; for an adjustment, the amount and reason."),
 });
 
 export const licenseExportSchema = z.object({
@@ -535,6 +584,12 @@ export const envelopeSchema = z.object({
     .describe(
       'Weapon licenses, one entry per issued license, each naming its firearm. Loosely typed by the parser for the same reason as `sessions`.',
     ),
+  maintenanceEvents: z
+    .array(z.unknown())
+    .default([])
+    .describe(
+      "The firearms' maintenance logs, adjustments included, each entry naming its firearm. Loosely typed by the parser for the same reason as `sessions`.",
+    ),
 });
 
 /** Why an import was refused outright, or one session was skipped. */
@@ -544,13 +599,14 @@ export type ImportErrorCode =
   | 'newer-format-version'
   | 'invalid-session'
   | 'invalid-firearm'
-  | 'invalid-license';
+  | 'invalid-license'
+  | 'invalid-maintenance-event';
 
 export interface ImportError {
   code: ImportErrorCode;
   /** 0-based index into `sessions`, when the failure is one session's. */
   sessionIndex?: number;
-  /** 0-based index into `firearms` or `licenses`, for those two codes. */
+  /** 0-based index into `firearms`, `licenses` or `maintenanceEvents`, for those codes. */
   itemIndex?: number;
   message: string;
 }

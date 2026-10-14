@@ -6,15 +6,16 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, Switch, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { EmptyState } from '@/components/empty-state';
 import { OptionPicker } from '@/components/option-picker';
-import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { db } from '@/db/client';
 import { listActiveFirearms } from '@/db/queries/firearms';
 import {
@@ -127,7 +128,7 @@ export default function WebshooterImportReviewScreen() {
               {importable && !reimport && (
                 <View style={styles.switchRow}>
                   <ThemedText type="small">{t('webshooter.addSighterRounds')}</ThemedText>
-                  <Switch
+                  <Toggle
                     value={sightersByRow[item.row.id] === true}
                     onValueChange={(on) =>
                       setSightersByRow((prev) => ({ ...prev, [item.row.id]: on }))
@@ -137,7 +138,7 @@ export default function WebshooterImportReviewScreen() {
                 </View>
               )}
               {importable && (
-                <PrimaryButton
+                <SecondaryButton
                   label={reimport ? t('webshooter.reimport') : t('webshooter.import')}
                   onPress={() => void onConfirm(item)}
                   testID={`webshooter-confirm-${item.row.id}`}

@@ -121,9 +121,10 @@ export function newShotRow(id: string, now: string, fields: ShotFields): Payload
 const counter = (value: unknown): number => (typeof value === 'number' ? value : 0);
 
 /**
- * The pulled firearm with `n` more rounds on both counters, as the phone's
- * applyRoundCountDelta moves them; null when there is nothing to add. The
- * pulled payload is spread so a column this build does not know survives.
+ * The pulled firearm with `n` more rounds on its counter, as the phone's
+ * applyRoundCountDelta moves it (rounds since maintenance is derived, #727
+ * M4); null when there is nothing to add. The pulled payload is spread so a
+ * column this build does not know survives.
  */
 export function withRoundsAdded(pulled: Payload, n: number, now: string): Payload | null {
   if (!Number.isInteger(n) || n < 0) {
@@ -133,14 +134,13 @@ export function withRoundsAdded(pulled: Payload, n: number, now: string): Payloa
   return {
     ...pulled,
     round_count: counter(pulled.round_count) + n,
-    rounds_since_maintenance: counter(pulled.rounds_since_maintenance) + n,
     updated_at: now,
   };
 }
 
 /**
- * The pulled firearm with both counters moved by `delta` (signed), each
- * floored at 0, as the phone's applyRoundCountDelta; null when `delta` is 0.
+ * The pulled firearm with its counter moved by `delta` (signed), floored at
+ * 0, as the phone's applyRoundCountDelta; null when `delta` is 0.
  * The pulled payload is spread so a column this build does not know survives.
  */
 export function withRoundsMoved(pulled: Payload, delta: number, now: string): Payload | null {
@@ -149,7 +149,6 @@ export function withRoundsMoved(pulled: Payload, delta: number, now: string): Pa
   return {
     ...pulled,
     round_count: Math.max(0, counter(pulled.round_count) + delta),
-    rounds_since_maintenance: Math.max(0, counter(pulled.rounds_since_maintenance) + delta),
     updated_at: now,
   };
 }

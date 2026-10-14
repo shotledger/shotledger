@@ -33,7 +33,7 @@ const F = {
   notes: null,
   round_count: 120,
   maintenance_interval_rounds: 500,
-  rounds_since_maintenance: 20,
+  maintenance_interval_months: null,
   archived_at: null,
 };
 
@@ -320,7 +320,7 @@ describe('derivation from the Drizzle tables (C1)', () => {
       ]),
     );
     expect(counts).toEqual({
-      firearms: ['round_count', 'maintenance_interval_rounds', 'rounds_since_maintenance'],
+      firearms: ['round_count', 'maintenance_interval_rounds', 'maintenance_interval_months'],
       licenses: [],
       firearm_groups: [],
       firearm_calibers: ['position'],

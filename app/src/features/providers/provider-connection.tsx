@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { View, StyleSheet } from 'react-native';
 
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { CalendarPicker } from '@/features/webshooter/calendar-picker';
@@ -72,7 +73,7 @@ export function ProviderConnection({ provider }: ProviderConnectionProps) {
         {/* Only offered once connected: choosing a calendar for starts you
             cannot fetch yet would be a setting about nothing. */}
         <CalendarPicker />
-        <PrimaryButton
+        <SecondaryButton
           label={t('webshooter.disconnect')}
           onPress={() => void connection.disconnect()}
           testID={`provider-${provider.id}-disconnect`}
@@ -122,7 +123,7 @@ export function ProviderConnection({ provider }: ProviderConnectionProps) {
             autoCapitalize="none"
             testID="webshooter-token"
           />
-          <PrimaryButton
+          <SecondaryButton
             label={t('webshooter.connectWithToken')}
             onPress={() => void connection.connectWithToken(token)}
             testID="webshooter-connect-token"

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   firearmExportsFromRows,
   licenseExportsFromRows,
+  maintenanceEventExportsFromRows,
   sessionExportsFromRows,
   type ExportFirearmRow,
   type ExportSeriesRow,
@@ -64,7 +65,7 @@ const firearm: ExportFirearmRow = {
   notes: 'note',
   roundCount: 500,
   maintenanceIntervalRounds: 1000,
-  roundsSinceMaintenance: 200,
+  maintenanceIntervalMonths: 12,
   archivedAt: '2026-10-01T00:00:00.000Z',
 };
 
@@ -342,7 +343,7 @@ describe('firearmExportsFromRows', () => {
         notes: 'note',
         roundCount: 500,
         maintenanceIntervalRounds: 1000,
-        roundsSinceMaintenance: 200,
+        maintenanceIntervalMonths: 12,
         archivedAt: '2026-10-01T00:00:00.000Z',
       },
       expect.objectContaining({ id: 'F2', isOwn: false }),
@@ -364,6 +365,39 @@ describe('licenseExportsFromRows', () => {
     };
     expect(licenseExportsFromRows([{ ...license, deletedAt: null } as typeof license])).toEqual([
       license,
+    ]);
+  });
+});
+
+describe('maintenanceEventExportsFromRows (#727 M6)', () => {
+  it('keeps the envelope fields, turns the flag into a boolean and drops row bookkeeping', () => {
+    const row = {
+      id: 'M1',
+      firearmId: 'F1',
+      performedAt: '2026-09-01T10:00:00.000Z',
+      kind: '',
+      roundCountAt: 510,
+      isAdjustment: 1,
+      notes: '+10 · Club rental rounds',
+      createdAt: '2026-09-01T10:00:00.000Z',
+      deletedAt: null,
+    };
+    expect(
+      maintenanceEventExportsFromRows([
+        row,
+        { ...row, id: 'M2', kind: 'Rengöring', isAdjustment: 0 },
+      ]),
+    ).toEqual([
+      {
+        id: 'M1',
+        firearmId: 'F1',
+        performedAt: '2026-09-01T10:00:00.000Z',
+        kind: '',
+        roundCountAt: 510,
+        isAdjustment: true,
+        notes: '+10 · Club rental rounds',
+      },
+      expect.objectContaining({ id: 'M2', kind: 'Rengöring', isAdjustment: false }),
     ]);
   });
 });

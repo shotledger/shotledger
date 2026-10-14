@@ -1,6 +1,6 @@
 import { isSyncedSettingKey, SYNCED_SETTING_KEYS } from '@shotledger/shared';
 import { eq } from 'drizzle-orm';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { settings, syncOutbox } from '../schema';
 import { createTestDb } from '../test-db';
@@ -45,10 +45,16 @@ describe('synced account settings', () => {
       .map((row) => row.rowId)
       .sort();
 
-  it('S1 setSetting stamps updated_at on every write, created_at once', async () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('S1 setSetting stamps updated_at on every write, created_at once', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-14T10:00:00.000Z'));
     setSetting(db, SETTINGS_KEYS.birthYear, 1980);
     const first = rowOf('birthYear')!;
-    await new Promise((resolve) => setTimeout(resolve, 5));
+    vi.setSystemTime(new Date('2026-10-14T10:00:00.005Z'));
     setSetting(db, SETTINGS_KEYS.birthYear, 1981);
     const second = rowOf('birthYear')!;
     expect(second.value).toBe('1981');

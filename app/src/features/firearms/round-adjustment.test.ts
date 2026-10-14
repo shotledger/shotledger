@@ -1,6 +1,7 @@
 import {
   adjustmentNote,
   parseMaintenanceInterval,
+  parseMaintenanceIntervalMonths,
   parseRoundAdjustment,
   roundAdjustmentErrors,
   signedRounds,
@@ -44,6 +45,22 @@ describe('parseMaintenanceInterval', () => {
 
   it.each(['0', '-5', '1.5', '500 rounds'])('refuses %j', (text) => {
     expect(parseMaintenanceInterval(text)).toEqual({ ok: false });
+  });
+});
+
+describe('parseMaintenanceIntervalMonths', () => {
+  it('reads blank as no time interval', () => {
+    expect(parseMaintenanceIntervalMonths('')).toEqual({ ok: true, months: null });
+  });
+
+  it('reads whole months from 1 to 120', () => {
+    expect(parseMaintenanceIntervalMonths('1')).toEqual({ ok: true, months: 1 });
+    expect(parseMaintenanceIntervalMonths(' 6 ')).toEqual({ ok: true, months: 6 });
+    expect(parseMaintenanceIntervalMonths('120')).toEqual({ ok: true, months: 120 });
+  });
+
+  it.each(['0', '121', '-6', '1.5', '6 months'])('refuses %j', (text) => {
+    expect(parseMaintenanceIntervalMonths(text)).toEqual({ ok: false });
   });
 });
 

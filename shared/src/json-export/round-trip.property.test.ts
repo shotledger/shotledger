@@ -9,7 +9,13 @@ import { describe, expect, it } from 'vitest';
 
 import { exportSessionsToJson } from './export';
 import { importSessionsFromJson, type ImportResult } from './import';
-import type { FirearmExport, LicenseExport, SessionExport, ShotExport } from './types';
+import type {
+  FirearmExport,
+  LicenseExport,
+  MaintenanceEventExport,
+  SessionExport,
+  ShotExport,
+} from './types';
 
 const OPTIONS = { appVersion: '1.0.0', generatedAt: '2026-09-11T09:12:33.104Z' };
 
@@ -152,7 +158,7 @@ const firearmArb: fc.Arbitrary<FirearmExport> = fc.record({
   notes: nullableText,
   roundCount: fc.integer({ min: 0, max: 100_000 }),
   maintenanceIntervalRounds: fc.option(fc.integer({ min: 0, max: 5000 }), { nil: null }),
-  roundsSinceMaintenance: fc.integer({ min: 0, max: 5000 }),
+  maintenanceIntervalMonths: fc.option(fc.integer({ min: 1, max: 120 }), { nil: null }),
   archivedAt: fc.option(fc.constant('2026-10-13T20:00:00.000Z'), { nil: null }),
 });
 
@@ -165,6 +171,16 @@ const licenseArb: fc.Arbitrary<LicenseExport> = fc.record({
   validUntil: nullableText,
   conditions: nullableText,
   authority: nullableText,
+});
+
+const maintenanceEventArb: fc.Arbitrary<MaintenanceEventExport> = fc.record({
+  id: fc.string({ minLength: 1, maxLength: 8 }),
+  firearmId: fc.string({ minLength: 1, maxLength: 8 }),
+  performedAt: fc.string({ minLength: 1, maxLength: 24 }),
+  kind: textArb,
+  roundCountAt: fc.integer({ min: 0, max: 100_000 }),
+  isAdjustment: fc.boolean(),
+  notes: nullableText,
 });
 
 type Json = fc.JsonValue;
@@ -196,10 +212,11 @@ const mutatedExportArb = fc
     fc.array(sessionArb, { minLength: 1, maxLength: 3 }),
     fc.array(firearmArb, { maxLength: 2 }),
     fc.array(licenseArb, { maxLength: 2 }),
+    fc.array(maintenanceEventArb, { maxLength: 2 }),
   )
-  .chain(([sessions, firearms, licenses]) => {
+  .chain(([sessions, firearms, licenses, maintenanceEvents]) => {
     const file = JSON.parse(
-      exportSessionsToJson(sessions, { ...OPTIONS, firearms, licenses }),
+      exportSessionsToJson(sessions, { ...OPTIONS, firearms, licenses, maintenanceEvents }),
     ) as Json;
     const paths = pathsIn(file);
     return fc
@@ -236,6 +253,19 @@ describe('JSON export properties', () => {
           expect(imported.licenses).toEqual(licenses);
         },
       ),
+      { numRuns: 200 },
+    );
+  });
+
+  it('P21: maintenance events survive the round trip whole (#727 M6)', () => {
+    fc.assert(
+      fc.property(fc.array(maintenanceEventArb, { maxLength: 4 }), (maintenanceEvents) => {
+        const imported = importSessionsFromJson(
+          exportSessionsToJson([], { ...OPTIONS, maintenanceEvents }),
+        ) as ImportResult;
+        expect(imported.errors).toEqual([]);
+        expect(imported.maintenanceEvents).toEqual(maintenanceEvents);
+      }),
       { numRuns: 200 },
     );
   });
@@ -279,6 +309,7 @@ describe('JSON export properties', () => {
           ['sessions', 'invalid-session'],
           ['firearms', 'invalid-firearm'],
           ['licenses', 'invalid-license'],
+          ['maintenanceEvents', 'invalid-maintenance-event'],
         ] as const) {
           const given = Array.isArray(file[key]) ? (file[key] as unknown[]).length : 0;
           const failed = result.errors.filter((e) => e.code === code).length;

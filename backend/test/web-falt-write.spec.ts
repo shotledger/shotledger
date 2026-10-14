@@ -77,7 +77,7 @@ const FIREARM = {
   notes: null,
   round_count: 100,
   maintenance_interval_rounds: null,
-  rounds_since_maintenance: 3,
+  maintenance_interval_months: null,
   archived_at: null,
 };
 
@@ -185,7 +185,6 @@ describe('the web fält write path', () => {
     }
     expect(rows.get('firearms:f-1')?.payload).toMatchObject({
       round_count: 118,
-      rounds_since_maintenance: 21,
     });
     const session = [...rows.values()].find((row) => row.tableName === 'sessions');
     expect(session?.payload).toMatchObject({

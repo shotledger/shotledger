@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { createAmmoLot } from './ammo-lots';
 import { getAmmoLotUsage } from './ammo-usage';
 import { createFirearm, getFirearm } from './firearms';
+import { getRoundsSinceMaintenance } from './maintenance-counter';
 import { deleteSessionAndSeries } from './round-count';
 import { createSession } from './sessions';
 import { createTestDb } from '../test-db';
@@ -214,7 +215,7 @@ describe('stations are volume, even when they are not score (spec P6, P7)', () =
     });
 
     expect(getFirearm(db, firearm.id)!.roundCount).toBe(12);
-    expect(getFirearm(db, firearm.id)!.roundsSinceMaintenance).toBe(12);
+    expect(getRoundsSinceMaintenance(db, getFirearm(db, firearm.id)!)).toBe(12);
   });
 
   it('P6b: an ammo lot counts a station’s rounds too', () => {

@@ -16,6 +16,8 @@ import { syncOutbox } from '../schema';
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
 import { createFirearm, listFirearms } from './firearms';
+import { getRoundsSinceMaintenance } from './maintenance-counter';
+import { logMaintenanceEvent } from './maintenance-events';
 import { deleteSessionAndSeries, saveSeriesShots, setSessionExtraRounds } from './round-count';
 import { addSeries } from './series';
 import { createSession, getSession, updateSession } from './sessions';
@@ -102,6 +104,14 @@ function seed(db: Database): Ids {
   const f1 = createFirearm(db, { make: 'Pardini', model: 'SP', roundCount: 100 }).id;
   const f2 = createFirearm(db, { make: 'Walther', model: 'GSP', roundCount: 10 }).id;
   const f3 = createFirearm(db, { make: 'Hämmerli', model: 'X', roundCount: 0 }).id;
+  // Each cleaned at its starting count, so rounds since maintenance starts at 0.
+  for (const firearmId of [f1, f2, f3]) {
+    logMaintenanceEvent(db, {
+      firearmId: firearmId,
+      performedAt: '2026-01-01T00:00:00.000Z',
+      kind: 'cleaning',
+    });
+  }
   const make = (name: string, firearmId: string | null, location: string | null, n: number[]) => {
     const id = createSession(db, {
       name,
@@ -151,7 +161,7 @@ function snapshot(db: Database, ids: Ids) {
           }
         : { id, deleted: true };
     }),
-    firearms: listFirearms(db).map((f) => [f.id, f.roundCount, f.roundsSinceMaintenance]),
+    firearms: listFirearms(db).map((f) => [f.id, f.roundCount, getRoundsSinceMaintenance(db, f)]),
     tags: listTags(db).map((t) => t.name),
   };
 }

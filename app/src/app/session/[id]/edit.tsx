@@ -11,7 +11,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import {
   categoryKey,
   eventsForDiscipline,
@@ -33,9 +33,11 @@ import { OptionPicker, type PickerOption } from '@/components/option-picker';
 import { SegmentedControl } from '@/components/segmented-control';
 import type { SeriesEntryMode } from '@/features/session/series-entry-choice';
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { Screen } from '@/components/screen';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { db } from '@/db/client';
 import { enabledRegulationIds } from '@/features/regulations/use-regulations';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
@@ -208,7 +210,7 @@ export default function EditSessionScreen() {
         />
 
         <ThemedText type="smallBold">{t('session.date')}</ThemedText>
-        <PrimaryButton
+        <SecondaryButton
           label={dates.date(startedAt)}
           onPress={() => setDatePickerOpen(true)}
           testID="edit-date"
@@ -297,7 +299,7 @@ export default function EditSessionScreen() {
           />
           <View style={styles.switchRow}>
             <ThemedText type="small">{t('session.championship')}</ThemedText>
-            <Switch
+            <Toggle
               value={isChampionship}
               onValueChange={setIsChampionship}
               testID="edit-championship-toggle"
@@ -436,7 +438,7 @@ export default function EditSessionScreen() {
             onSubmitEditing={onAddTag}
             testID="edit-tag-input"
           />
-          <PrimaryButton label={t('session.addTag')} onPress={onAddTag} testID="edit-tag-add" />
+          <SecondaryButton label={t('session.addTag')} onPress={onAddTag} testID="edit-tag-add" />
         </View>
       </Card>
 
