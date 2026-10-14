@@ -8,10 +8,20 @@ import { useTheme } from '@/hooks/use-theme';
 const FabHeight = 20 + Spacing.three * 2;
 
 /**
- * Vertical space a scrolling screen must reserve so its last row clears the
- * FAB. `Screen`'s `fab` prop applies it; nothing else should need it.
+ * Vertical space a scrolling screen must reserve so its last row clears a FAB
+ * of the given height: the gap below the button, the button, and a gap above
+ * it. `Screen`'s `fab` prop applies it; nothing else should need it.
  */
-export const FabClearance = Spacing.three + FabHeight + Spacing.four;
+export function fabClearanceFor(height: number): number {
+  return Spacing.three + height + Spacing.four;
+}
+
+/**
+ * The clearance before the button has been measured. The real height grows
+ * with the system font size, which this estimate cannot see, so `Screen`
+ * swaps in the measured one after the first layout.
+ */
+export const FabClearance = fabClearanceFor(FabHeight);
 
 export interface FABProps extends Omit<PressableProps, 'style'> {
   label: string;
