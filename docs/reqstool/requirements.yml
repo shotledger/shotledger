@@ -13,7 +13,7 @@ metadata:
   urn: shotledger
   variant: microservice
   title: ShotLedger
-  url: https://github.com/jimisola/shotledger
+  url: https://github.com/shotledger/shotledger
 
 requirements:
   - id: SCORE_001

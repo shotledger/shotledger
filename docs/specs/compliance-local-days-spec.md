@@ -1,7 +1,7 @@
 # License-activity windows in whole local days — executable spec
 
 Scope: `shared/src/compliance/**` (old-coder mandatory per CLAUDE.md). Issue
-[#816](https://github.com/jimisola/shotledger/issues/816). Changes how the
+[#816](https://github.com/shotledger/shotledger/issues/816). Changes how the
 windows of [`m6-compliance-spec.md`](m6-compliance-spec.md),
 [`compliance-firearm-criteria-spec.md`](compliance-firearm-criteria-spec.md),
 [`compliance-next-session-spec.md`](compliance-next-session-spec.md) and

@@ -2,7 +2,7 @@
 
 Scope: `shared/src/compliance/**` (old-coder mandatory per CLAUDE.md), the
 query that feeds it, and the firearm-detail UI that shows the result. Issue
-[#329](https://github.com/jimisola/shotledger/issues/329). Builds on
+[#329](https://github.com/shotledger/shotledger/issues/329). Builds on
 [`compliance-fap551-spec.md`](compliance-fap551-spec.md), which transcribed
 these two criteria and deliberately did not model them; everything that spec
 settles — the source, the numbers, the reading of "sammantaget i genomsnitt",

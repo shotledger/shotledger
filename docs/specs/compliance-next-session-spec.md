@@ -2,7 +2,7 @@
 
 Scope: `shared/src/compliance/**` (old-coder mandatory per CLAUDE.md) and the
 phone screens that show licence activity. Issue
-[#795](https://github.com/jimisola/shotledger/issues/795). Builds on
+[#795](https://github.com/shotledger/shotledger/issues/795). Builds on
 [`m6-compliance-spec.md`](m6-compliance-spec.md),
 [`compliance-fap551-spec.md`](compliance-fap551-spec.md) and
 [`compliance-firearm-criteria-spec.md`](compliance-firearm-criteria-spec.md);
@@ -40,7 +40,7 @@ no schema change, no new tooling. Files touched by path:
 
 The web app shows no licence activity at all today, so there is nothing for the
 date to sit on there. That gap is filed as
-[#796](https://github.com/jimisola/shotledger/issues/796), which carries this
+[#796](https://github.com/shotledger/shotledger/issues/796), which carries this
 date with it.
 
 ## The definition

@@ -9,6 +9,12 @@
 
   addLabels: ['dependencies'],
 
+  // The preset hands merging to GitHub auto-merge, which a private repo on a
+  // free org does not have, and with no ruleset there are no required checks
+  // for it to wait on. Renovate merges itself instead, on a later run and only
+  // once every check on the PR is green.
+  platformAutomerge: false,
+
   // Default 'auto' rebases every open branch each time main moves, and each
   // rebase costs a full CI run: 43% of this repo's Actions minutes, one branch
   // alone paying for 39. Revisit when the repo is public and minutes are free.

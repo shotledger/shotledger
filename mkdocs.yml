@@ -18,9 +18,9 @@ site_description: >-
   A free target-shooting logbook for SPSF pistol shooters — log sessions shot by
   shot, score paper targets from a photograph, and keep the range activity your
   license renewal needs.
-site_url: https://jimisola.github.io/shotledger/
-repo_url: https://github.com/jimisola/shotledger
-repo_name: jimisola/shotledger
+site_url: https://shotledger.github.io/shotledger/
+repo_url: https://github.com/shotledger/shotledger
+repo_name: shotledger/shotledger
 edit_uri: edit/main/docs/manual/
 copyright: Free and open source. Donations unlock nothing.
 
