@@ -1,7 +1,7 @@
 # Bound a fält station's point fields (#837, scoring part)
 
-**Spec approval: not obtained yet.** Opened as a draft; the maintainer approves
-this spec before the PR merges (CLAUDE.md, evidence-first).
+**Spec approved by the maintainer, 2026-10-14**, after implementation (the PR
+opened as a draft): "1. ok", answering "Approve the spec for #854".
 
 Tier 2 bug fix (old-coder). Isolation: its own branch and worktree,
 `bugfix/837-bound-falt-and-shotlog-counts`. No new dependency, no schema

@@ -1,7 +1,9 @@
 # Evidence: bound a fält station's point fields (#837)
 
-Spec: `docs/specs/falt-station-bounds-spec.md`. **Spec approval: not obtained
-yet**; this PR stays a draft until the maintainer approves the spec.
+Spec: `docs/specs/falt-station-bounds-spec.md`. **Spec approved by the
+maintainer, 2026-10-14**, after implementation: "1. ok", answering "Approve
+the spec for #854". The approval is post hoc, so the code was written against
+an unreviewed spec; the spec did not change on approval.
 
 Tier 2 bug fix. Source state: the commit this file lands in, on
 `bugfix/837-bound-falt-and-shotlog-counts` from `main` at `f4914ee`. Tools:
