@@ -27,7 +27,7 @@ provserie.
 Ett fältskjutningspass visar i stället sina stationer, var och en med
 telefonens stationsfält som i [Mata in serier](entering-series-on-the-web.md):
 **Träff**, **Träffade figurer**, **Figurer**, **Poäng**, **Maxpoäng** och
-**Struken**, där antalen ställs in med **−** och **+** som i telefonen. En station behåller sitt nummer, som i telefonen, så efter en
+**Struken**, där varje antal är en rad tal att klicka på, som i telefonen. En station behåller sitt nummer, som i telefonen, så efter en
 borttagen station blir det ett hopp i numreringen. Ändra en stations fält för
 att rätta den. **Ta bort station** tar bort den när du sparar (**Ångra** tar
 tillbaka den), och **Lägg till station** lägger till en efter den sista

@@ -1653,8 +1653,6 @@
     "clearFilters": "Clear All"
   },
   "formsA": {
-    "decrease": "{{field}}, decrease",
-    "increase": "{{field}}, increase",
     "details": "Details",
     "optional": "Optional",
     "ammoDetailsSummary": "Purchase date, brand, bullet, velocity, notes",

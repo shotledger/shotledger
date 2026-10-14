@@ -1469,48 +1469,63 @@ a.button.secondary {
   opacity: 0.5;
 }
 
-/* Count stepper (fields/stepper.tsx): − value +, 48px cells. */
-.stepper {
-  display: flex;
+/* Count cells (fields/count.tsx): one 48px radio per value on a segmented
+   track, wrapping onto rows of equal cells rather than shrinking one. */
+.count-cells {
+  display: grid;
+  /* One fixed cell width, so a column of counts lines up from field to
+     field and a short list does not stretch into wide bars on a desktop. */
+  grid-template-columns: repeat(auto-fill, 56px);
+  justify-content: start;
   gap: 2px;
   padding: 2px;
   border-radius: 12px;
   background: var(--background-element);
 }
 
-.stepper button {
-  padding: 0;
-  min-width: 48px;
-  min-height: 48px;
-  border-radius: 8px;
-  border: 2px solid var(--border);
-  background: transparent;
-  color: var(--text);
-  font-size: 20px;
+.count-cells label {
+  position: relative;
 }
 
-.stepper button:disabled {
-  color: var(--text-secondary);
-  opacity: 0.6;
+.count-cells input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
 }
 
-.stepper output {
-  flex: 1;
+.count-cells span {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 48px;
+  min-height: 48px;
+  box-sizing: border-box;
+  border: 2px solid transparent;
   border-radius: 8px;
-  border: 2px solid var(--selected-outline);
-  background: var(--selected);
-  color: var(--text);
+  color: var(--text-secondary);
   font-size: 20px;
-  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
-.station-row .stepper-field {
-  grid-column: span 2;
+.count-cells input:checked + span {
+  background: var(--selected);
+  border-color: var(--selected-outline);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.count-cells input:focus-visible + span {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.count-cells input:disabled + span {
+  opacity: 0.5;
+}
+
+.station-row .count-field {
+  grid-column: 1 / -1;
 }
 
 /* "Details": a form's optional fields, folded (#822), as on the phone's

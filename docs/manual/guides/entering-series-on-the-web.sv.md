@@ -82,7 +82,7 @@ Välj **Fältskjutning** som gren, så blir raderna stationer, som i telefonen.
 eller som en summa (**Poängfält**).
 
 Varje station har telefonens stationsfält: **Träff**, **Träffade figurer**,
-**Figurer** (hur många som var utställda), var och en med **−** och **+**,
+**Figurer** (hur många som var utställda), var och en en rad tal att klicka på,
 **Poäng** och **Maxpoäng** för ett
 poängmål, och **Struken**. Träffade figurer erbjuder bara det som träffen och
 figurerna tillåter. Summan ovanför stationerna räknar de stationer som sparas
@@ -97,7 +97,7 @@ särskjutningen.
 
 **Träff** börjar på **–**. En station där inget är ifyllt sparas inte, och
 stationerna efter den flyttas upp ett nummer. För en station där alla skott
-missade stegar du Träff till **0** med **+**: den sparas och räknas, som en station med
+missade klickar du **0** under Träff: den sparas och räknas, som en station med
 0 träff.
 
 ## Lägg till ett foto av tavlan

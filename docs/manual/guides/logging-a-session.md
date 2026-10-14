@@ -88,9 +88,9 @@ rule book) and the session asks one extra question: whether the competition is
 run as **field** or **point field**. A field shooting session has no stopwatch
 or sights buttons.
 
-Each station is six shots. On one screen you set **Hits** (0–6), **Figures
-Hit**, and **Figures**, how many figures the station had, each with **−** and
-**+** either side of the number. Five hits in three of
+Each station is six shots. On one screen you tap **Hits** (0–6), **Figures
+Hit**, and **Figures**, how many figures the station had: one tap on the
+number for each. Five hits in three of
 four figures reads **5/3 of 4**: you missed one shot or put two in the same
 figure, and one figure went untouched. Leave Figures at **–** if you don't
 know it; the station then reads **5/3**. The session total shows

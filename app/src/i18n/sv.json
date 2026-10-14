@@ -1653,8 +1653,6 @@
     "clearFilters": "Rensa alla"
   },
   "formsA": {
-    "decrease": "{{field}}, minska",
-    "increase": "{{field}}, öka",
     "details": "Detaljer",
     "optional": "Valfritt",
     "ammoDetailsSummary": "Inköpsdatum, märke, kula, hastighet, anteckningar",

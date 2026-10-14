@@ -26,7 +26,7 @@ In free format, tick **Sighter** on the one row that is a sighter series.
 A fält session shows its stations instead, each with the phone's station
 fields as on [Enter Series](entering-series-on-the-web.md): **Hits**,
 **Figures Hit**, **Figures**, **Points**, **Max Points** and **Scratched**,
-the counts set with **−** and **+** as on the phone. A
+each count a row of numbers to click, as on the phone. A
 station keeps its number, as on the phone, so after a deleted station the
 numbers have a gap. Change a station's fields to correct it. **Delete
 Station** removes it when you save (**Undo** takes it back), and **Add

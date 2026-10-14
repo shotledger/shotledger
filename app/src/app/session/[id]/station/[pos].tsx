@@ -1,8 +1,8 @@
 // Fält station entry (#315, reworked in #567). A station answers four
 // questions in one screen: did every shot hit, did I hit every figure, did I
-// score points, and what could I have scored. Each count is a segmented
-// stepper (− value +) with 48dp cells (#822); a row of seven digits left
-// each one about 40dp wide on a phone.
+// score points, and what could I have scored. Each count is one tap on a
+// track of 48dp cells that wraps to a second row rather than shrink a cell
+// (#822); the old single row left each digit about 40dp wide on a phone.
 //
 // A station reached via "Add Station" (`?new=1`) does not exist in the
 // database yet. It is created by Save, and only when something was entered —
@@ -35,12 +35,12 @@ import {
   softDeleteStation,
   updateStation,
 } from '@/db/queries/falt';
-import { SegmentedStepper } from '@/features/forms/segmented-stepper';
+import { CountCells } from '@/features/forms/count-cells';
 import { Spacing } from '@/theme/tokens';
 
 const NOT_RECORDED = 'none';
 
-/** min…max as stepper options. */
+/** min…max as count cells. */
 function countSegments(max: number, min = 0) {
   return Array.from({ length: Math.max(0, max - min + 1) }, (_, index) => {
     const value = String(min + index);
@@ -143,37 +143,31 @@ export default function StationEntryScreen() {
 
       <Card>
         <ThemedText type="smallBold">{t('station.hits')}</ThemedText>
-        <SegmentedStepper
+        <CountCells
           options={countSegments(SHOTS_PER_STATION)}
           value={String(hits)}
           onChange={(value) => onHitsChange(Number(value))}
           label={t('station.hits')}
-          decrementLabel={t('formsA.decrease', { field: t('station.hits') })}
-          incrementLabel={t('formsA.increase', { field: t('station.hits') })}
           testID="station-hits"
         />
 
         <ThemedText type="smallBold">{t('station.figuresHit')}</ThemedText>
-        <SegmentedStepper
+        <CountCells
           // Never more figures than hits or than the station has, and never
           // zero while hits exist.
           options={countSegments(figuresHitBounds.max, figuresHitBounds.min)}
           value={String(figuresHit)}
           onChange={(value) => setFiguresHit(Number(value))}
           label={t('station.figuresHit')}
-          decrementLabel={t('formsA.decrease', { field: t('station.figuresHit') })}
-          incrementLabel={t('formsA.increase', { field: t('station.figuresHit') })}
           testID="station-figures-hit"
         />
 
         <ThemedText type="smallBold">{t('station.figureCount')}</ThemedText>
-        <SegmentedStepper
+        <CountCells
           options={[{ value: NOT_RECORDED, label: '–' }, ...countSegments(SHOTS_PER_STATION, 1)]}
           value={figureCount === null ? NOT_RECORDED : String(figureCount)}
           onChange={(value) => onFigureCountChange(value === NOT_RECORDED ? null : Number(value))}
           label={t('station.figureCount')}
-          decrementLabel={t('formsA.decrease', { field: t('station.figureCount') })}
-          incrementLabel={t('formsA.increase', { field: t('station.figureCount') })}
           testID="station-figure-count"
         />
 
