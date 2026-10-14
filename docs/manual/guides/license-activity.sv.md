@@ -124,6 +124,10 @@ du väljer visas ingenting.
 
 Klicka på statusen för att öppna **Licenskontroll**, med samma svar, rader
 och rutor som på telefonen ([Att se var du står](#att-se-var-du-star)).
-Webben har ännu inga sidor för vapen, så ett vapens ruta saknar raden
-**Öppna vapnet**, och ett vapens eget kort för licensaktivitet finns än så
-länge bara på telefonen.
+**Öppna vapnet**, och ett vapens namn ovanför dess ruta, öppnar vapnets sida.
+
+**Vapen** i menyn listar dina vapen med samma statusrader som telefonens
+vapenflik, licensaktiviteten bland dem. Öppna ett vapen för att se dess eget
+kort **Licensaktivitet** och dess **Kriterier för föreningsintyg**, vart och
+ett med datumet då nästa pass senast ska loggas, som på telefonen. Webben
+visar dem bara; se [Ditt konto på webben](your-account-on-the-web.md#vapen).

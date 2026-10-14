@@ -661,8 +661,9 @@ from §6.5 automatically).
       a met 5 §/6 § rule or Föreningsintyg criterion met. The date is the first
       day the same status function stops saying "met" with nothing more
       logged (`shared/src/compliance/lapse.ts`), so it can never disagree with
-      the status shown. No new regulatory value. The web shows no licence
-      activity yet (#796). Spec/evidence:
+      the status shown. No new regulatory value. The web shows the same
+      dates on Statistics, License Check and its firearm pages (#796).
+      Spec/evidence:
       `docs/specs/compliance-next-session-{spec,evidence}.md`.
 - [x] **License Check** screen (issue #804) — opened from the Home status; every
       requirement on the föreningsintyg grouped by purpose (New Purchase: the

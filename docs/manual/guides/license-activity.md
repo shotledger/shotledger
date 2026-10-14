@@ -123,6 +123,12 @@ phone or on the web, and not while license activity is switched off under
 choose, it shows nothing.
 
 Click the status to open **License Check**, with the same answers, rows and
-boxes as on the phone ([Seeing where you stand](#seeing-where-you-stand)). The
-web has no firearm pages yet, so a firearm's box has no **Open Firearm** row,
-and a firearm's own license-activity card is on the phone only for now.
+boxes as on the phone ([Seeing where you stand](#seeing-where-you-stand)).
+**Open Firearm**, and a firearm's name above its box, open that firearm's
+page.
+
+**Firearms** in the menu lists your firearms with the same status lines as the
+phone's Firearms tab, license activity among them. Open one to see its own
+**License Activity** card and its **Föreningsintyg Criteria**, each with the
+date to log your next session by, as on the phone. The web shows them only; see
+[Your account on the web](your-account-on-the-web.md#firearms).

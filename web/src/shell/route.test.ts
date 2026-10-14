@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { licenseCheckHash, replacementHash, routeFromHash } from './route';
+import { firearmHash, licenseCheckHash, replacementHash, routeFromHash } from './route';
 
 describe('routeFromHash', () => {
   it.each([
@@ -40,6 +40,11 @@ describe('routeFromHash', () => {
       { page: 'statistics', sessionId: null, check: { view: 'overview' } },
     ],
     ['#license-check/other', { page: 'statistics', sessionId: null, check: { view: 'overview' } }],
+    ['#firearms', { page: 'firearms', sessionId: null }],
+    ['#firearms/', { page: 'firearms', sessionId: null }],
+    ['#firearms/f1', { page: 'firearms', sessionId: null, firearmId: 'f1' }],
+    ['#firearms/a%2Fb', { page: 'firearms', sessionId: null, firearmId: 'a/b' }],
+    ['#firearms/%E0%A4%A', { page: 'firearms', sessionId: null }],
   ])('%s', (hash, route) => {
     expect(routeFromHash(hash)).toEqual(route);
   });
@@ -61,6 +66,8 @@ describe('replacementHash (QA #747)', () => {
       '#license-check',
       '#license-check/new-firearm',
       '#license-check/firearm/f1',
+      '#firearms',
+      '#firearms/f1',
     ]) {
       expect(replacementHash(hash)).toBeNull();
     }
@@ -75,6 +82,18 @@ describe('licenseCheckHash (#796)', () => {
       { view: 'firearm', firearmId: 'a/b c' },
     ] as const) {
       expect(routeFromHash(licenseCheckHash(check)).check).toEqual(check);
+    }
+  });
+});
+
+describe('firearmHash (#796)', () => {
+  it('round-trips a firearm id through routeFromHash', () => {
+    for (const id of ['f1', 'a/b c', '0193-é']) {
+      expect(routeFromHash(firearmHash(id))).toEqual({
+        page: 'firearms',
+        sessionId: null,
+        firearmId: id,
+      });
     }
   });
 });

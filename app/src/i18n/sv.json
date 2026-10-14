@@ -561,10 +561,10 @@
     "exportSubtitle": "Dela alla pass som en JSON-fil",
     "importTitle": "Importera pass",
     "importSubtitle": "Välj en JSON-fil för att lägga till eller uppdatera pass",
-    "exportSuccess": "CSV exporterad",
-    "exportFailed": "CSV-export misslyckades",
+    "exportSuccess": "Passen exporterade",
+    "exportFailed": "Exporten misslyckades",
     "importCanceled": "Import avbruten",
-    "importFailed": "CSV-import misslyckades",
+    "importFailed": "Importen misslyckades",
     "importErrorsTitle": "Importen har fel",
     "importErrors": "{{count}} pass kunde inte läsas och hoppas över.",
     "importConfirmTitle": "Importera den här filen?",
@@ -1671,6 +1671,9 @@
       "accountChanged": "Du är nu inloggad på ett annat konto, så ändringarna skickades inte. Kontrollera dem och spara sedan.",
       "failedUnconfirmed": "Servern svarade, men inte som väntat. Dina ändringar finns kvar; Försök igen skickar dem på nytt.",
       "profileUnset": "Ingen profil vald. Telefonen använder standardvalet för sitt språk."
+    },
+    "firearms": {
+      "readOnly": "Webben visar dina vapen som appen har registrerat dem. Lägg till, ändra eller arkivera ett vapen i appen på telefonen."
     }
   },
   "notifications": {

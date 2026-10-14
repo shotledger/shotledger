@@ -561,10 +561,10 @@
     "exportSubtitle": "Share every session as one JSON file",
     "importTitle": "Import Sessions",
     "importSubtitle": "Pick a JSON file to add or update sessions",
-    "exportSuccess": "CSV exported",
-    "exportFailed": "CSV export failed",
+    "exportSuccess": "Sessions exported",
+    "exportFailed": "Export failed",
     "importCanceled": "Import canceled",
-    "importFailed": "CSV import failed",
+    "importFailed": "Import failed",
     "importErrorsTitle": "Import Has Errors",
     "importErrors": "{{count}} session(s) could not be read and will be skipped.",
     "importConfirmTitle": "Import This File?",
@@ -1671,6 +1671,9 @@
       "accountChanged": "You are now signed in to another account, so your changes were not sent. Check them, then save.",
       "failedUnconfirmed": "The server answered, but not as expected. Your changes are still here; Retry sends them again.",
       "profileUnset": "No profile chosen. Your phone uses the default for its language."
+    },
+    "firearms": {
+      "readOnly": "The web shows your firearms as the app has recorded them. Add, change or archive a firearm in the app on your phone."
     }
   },
   "notifications": {

@@ -125,6 +125,12 @@ An archived firearm:
 **Restore Firearm** on an archived firearm brings it back as it was, and its
 license and maintenance reminders start again.
 
+### On the web
+
+With sync on, **Firearms** in the web app shows the same list and the same
+firearm pages, to read: see
+[Your account on the web](your-account-on-the-web.md#firearms).
+
 ## Ammunition
 
 An ammunition lot is either factory ammunition or a handload.
