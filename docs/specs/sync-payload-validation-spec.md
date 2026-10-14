@@ -5,7 +5,7 @@
 >
 > **Approval status: partly obtained.** C1 (drizzle-zod) is the maintainer's
 > decision of 2026-10-13 ("I prefer libraries over handmade duplication").
-> C2–C14 and Q1–Q5 were not reviewed: the spec was revised and implemented in
+> C2–C14 and Q1–Q6 were not reviewed: the spec was revised and implemented in
 > an overnight run on the recommendations below, and the evidence report says
 > `spec approval: not obtained (autonomous run)` for them. The first draft
 > was PR #711 (hand-written schemas); Revision 1 at the end lists what
@@ -101,9 +101,10 @@ paths and codes only (never a value). A tombstone (`payload: null`) is not
 validated beyond today's envelope refine.
 
 The flag set is derived, not listed: an `integer` column named `is_*`, plus
-`decimal_scoring`. A test pins the exact derived set per table, so a new
-flag named otherwise fails the test rather than slipping through as "any
-integer".
+`decimal_scoring`. Two tests pin every `integer` column per table, one the
+flags and one the counting columns, so a new integer column of either kind
+fails a test until someone classifies it. A flag named otherwise cannot slip
+through as "any integer".
 
 The module is not exported from the `@shotledger/shared` barrel. The server
 imports it by path. The phone and the web never run it (C2), so drizzle-zod
@@ -144,7 +145,10 @@ PII-bearing log (N6).
   `invalid` to `SyncStatus.refusedCount`, and Account & Sync shows
   "n change(s) refused by the server" while it is above zero (C3). The count
   lives for the app session; it is not persisted. The row stays on the
-  phone, unsynced, until it is edited again.
+  phone, unsynced, until it is edited again or a pull brings a change to
+  the same row from another device, which replaces it (last write wins, as
+  for any row). A refused change is therefore not guaranteed to survive;
+  the count and the manual say so.
 - **Web (`direct-push.ts`).** Already reports any rejection as
   `partlyRejected` with its reason, and every web page already says a
   rejected save did not land. No code change; a test pins that
@@ -215,11 +219,16 @@ Each choice has a recommendation and the alternative it rules out.
   that would act on it. The server log has the paths.
 - **C5 Strict keys: every column required, no unknown column accepted.**
   Pre-1.0, rule 8 applies: the server and both clients ship from one repo,
-  and no compatibility path is built for a newer client. The cost is release
-  order: a phone built with a new column, talking to an older server, has
-  every push of that table refused and cleared. `docs/release.md` therefore
-  gains "deploy the Worker before shipping an app build that changes a
-  synced table". Alternatives: (a) `.passthrough()` for unknown keys. That
+  and no compatibility path is built for a newer client. The cost is a
+  window at every column change of a synced table, in either deploy order:
+  a phone built with the new column, talking to an older server, has every
+  push of that table refused and cleared, and so does a phone that has not
+  updated yet, talking to a server that has the new column (its rows lack
+  the key, or carry a dropped one). Deploy order cannot close the window,
+  only choose whose changes fall in it. `docs/release.md` step 0 therefore
+  says "deploy the Worker first, then update every phone", which keeps
+  updated phones syncing and leaves the stragglers refused until they
+  update. Q6 asks whether to narrow the window. Alternatives: (a) `.passthrough()` for unknown keys. That
   lets a misspelled key (`startedAt`) through, and on apply the misspelled
   key is dropped and the row's `NOT NULL` column is left unset — the wedge.
   (b) `.strip()`. That silently loses the newer column for every device.
@@ -388,18 +397,18 @@ green.
 
 ## 6. Failure model
 
-| Failure                                                                    | Layer that catches it                                                |
-| -------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Schema stricter than a real writer: a good row is refused and lost to sync | §2.5 writer conformance (demo data, importers, web builders); P1     |
-| Schema looser than the apply path: a wedging row is stored                 | P2 per-mutation rows; Stryker on `payload-schemas.ts`; properties    |
-| Schema drifts from `schema.ts` after a later column change                 | Impossible by construction (C1); P9 and the derivation test pin it   |
-| A new flag column named outside the `is_*` rule                            | the pinned per-table flag set (§2.1)                                 |
-| A refusal consumes a seq or half-writes                                    | P2/P3 `last_seq` assertions; atomicity C1–C9 unchanged               |
-| A refusal is silent on the phone                                           | P7 `invalid` count; P12 reducer test; the screen string              |
-| Release skew (C5): new app column, old server                              | `docs/release.md` deploy-order step; known limit, not testable in CI |
-| A hostile payload (prototype keys, huge arrays, deep nesting)              | the 16 KiB cap; strict keys; adversarial tests                       |
-| Validation cost pushes a 500-change push past Worker CPU                   | adversarial timing test (500 fullest rows)                           |
-| The CHECK refuses a row the route accepted                                 | P1 (every table through the real D1 with the CHECK)                  |
+| Failure                                                                    | Layer that catches it                                                         |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Schema stricter than a real writer: a good row is refused and lost to sync | §2.5 writer conformance (demo data, importers, web builders); P1              |
+| Schema looser than the apply path: a wedging row is stored                 | P2 per-mutation rows; Stryker on `payload-schemas.ts`; properties             |
+| Schema drifts from `schema.ts` after a later column change                 | Impossible by construction (C1); P9 and the derivation test pin it            |
+| A new flag column named outside the `is_*` rule                            | the pinned per-table flag and counting-integer sets (§2.1)                    |
+| A refusal consumes a seq or half-writes                                    | P2/P3 `last_seq` assertions; atomicity C1–C9 unchanged                        |
+| A refusal is silent on the phone                                           | P7 `invalid` count; P12 reducer test; the screen string                       |
+| Release skew (C5): a phone and the server on different column sets         | `docs/release.md` step 0; known limit in either order (Q6)                    |
+| A hostile payload (prototype keys, huge arrays, deep nesting)              | the 16 KiB cap; strict keys; adversarial tests                                |
+| Validation cost pushes a 500-change push past Worker CPU                   | a Node-side sanity bound only (500 session rows under 1 s); known limit (§10) |
+| The CHECK refuses a row the route accepted                                 | P1 (every table through the real D1 with the CHECK)                           |
 
 ## 7. Gauntlet
 
@@ -452,12 +461,19 @@ only columns every writer fills with `toISOString()`.
 - **A writer this spec did not find.** A write path outside the conformance
   tests that sends a partial row or a local-time timestamp would have its
   rows refused and cleared. The refusal count (C3) makes it visible, and the
-  row stays on the phone; an edit after the fix pushes it again.
+  row stays on the phone unless another device changes it; an edit after
+  the fix pushes it again.
 - **drizzle-zod's mapping changes on upgrade.** A Renovate bump could widen
   or narrow a type. The derivation test and P2 pin today's mapping, so a
   change in it fails CI.
 - **Local is not production.** `json_valid` and `CHECK` enforcement are
   probed in the Workers pool (P10), not on a deployed D1.
+- **Worker CPU is not measured.** The timing test runs `validatePayload` in
+  Node on a developer machine and bounds 500 session rows at 1 s. It catches
+  an order-of-magnitude regression, not a breach of the Worker's CPU limit,
+  which only a deployed Worker under load would show.
+- **A refused change can be overwritten.** It stays on the phone only until
+  a pull brings a newer change to the same row (§2.3).
 
 ## 11. Questions for the maintainer
 
@@ -472,6 +488,13 @@ only columns every writer fills with `toISOString()`.
 - **Q5** Move the Drizzle tables into the Apache-2.0 `shared/src/sync/` (ADR
   0021), or keep them AGPL and validate against a generated zod-only column
   list instead? Asked on the #697 thread; the branch implements the first.
+- **Q6** Strict keys (C5) refuse a not-yet-updated phone's rows after the
+  server gains a column, whatever the deploy order. Accept that pre-1.0
+  (today: one user, phones updated together), or let the server accept a
+  row that omits a nullable or defaulted column it knows, so that adding
+  such a column with the server deployed first refuses nothing? A rename,
+  a drop, or a new `NOT NULL` column without a default still refuses either
+  way. The branch implements the first.
 
 ## Revisions
 

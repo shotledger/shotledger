@@ -1198,7 +1198,7 @@
     "neverSynced": "aldrig",
     "lastSynced": "Senast synkad: {{when}}",
     "pendingChanges": "{{count}} ändring(ar) väntar på uppladdning",
-    "refusedChanges": "{{count}} ändring(ar) avvisades av servern och finns bara kvar på telefonen",
+    "refusedChanges": "{{count}} ändring(ar) avvisades av servern och synkades inte",
     "server": "Server: {{url}}",
     "deleteTitle": "Radera konto",
     "deleteSubtitle": "Tar bort ditt konto och allt som synkats till servern",

@@ -65,10 +65,11 @@ sends nothing from the file on its own.
 
 If **Account & Sync** says that changes were refused by the server, the server
 found something in them it cannot store. That is a fault in the app, not
-something you did. The changes stay on this phone, so nothing is lost, but they
-are not on your other devices or in the web app. Changing the same thing again
-sends it again. If the line keeps coming back, report it, and make a backup
-before you sign out or restore.
+something you did. The changes stay on this phone for now, but they are not on
+your other devices or in the web app. If you change the same thing on another
+device or in the web app, that change replaces the refused one on this phone.
+Changing the same thing again on this phone sends it again. If the line keeps
+coming back, report it, and make a backup before you sign out or restore.
 
 ## How often
 
