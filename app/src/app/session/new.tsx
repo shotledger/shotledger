@@ -1,6 +1,9 @@
-// New-session form (§4 M3). Field order follows the maintainer's ruling
-// (2026-09-03): what the session IS (type + kind), what it is CALLED, WHERE it
-// was — then the shooting details.
+// New-session form (§4 M3; #822 finding "Long forms"). What the first shot
+// needs leads: the type, the discipline and its format, the firearm — the
+// discipline and firearm preselected from the last session
+// (lastSessionDefaults, shared with the web's Enter Series). Everything
+// optional — logging, name, location, ammo, series length, decimal scoring,
+// tags — sits folded under Details, with nothing removed.
 //
 // `kind` is the fork in the form: a 'series' session logs scored series and is
 // never offered extra_rounds here, a 'rounds' session logs a fixed shot count
@@ -33,6 +36,8 @@ import {
   TEXT_LIMITS,
 } from '@shotledger/shared';
 
+import { lastSessionDefaults } from '@shotledger/shared/src/disciplines/last-session-defaults';
+
 import { Card } from '@/components/card';
 import { InfoButton } from '@/components/info-button';
 import { OptionPicker, type PickerOption } from '@/components/option-picker';
@@ -55,9 +60,15 @@ import { listActiveFirearms } from '@/db/queries/firearms';
 import { addSeries } from '@/db/queries/series';
 import { setSessionExtraRounds } from '@/db/queries/round-count';
 import { getSetting, SETTINGS_KEYS } from '@/db/queries/settings';
-import { createSession, type SessionKind, type SessionType } from '@/db/queries/sessions';
+import {
+  createSession,
+  listSessions,
+  type SessionKind,
+  type SessionType,
+} from '@/db/queries/sessions';
 import { addSessionTag, getOrCreateTag, listTags } from '@/db/queries/tags';
 import { LocationField } from '@/features/location/location-field';
+import { DetailsDisclosure } from '@/features/session-entry/details-disclosure';
 import {
   COMPETITION_LEVELS,
   disciplineLabel,
@@ -114,13 +125,31 @@ export default function NewSessionScreen() {
         .filter((regulation): regulation is Regulation => regulation !== null),
     [],
   );
-  const [regulationId, setRegulationId] = useState<string>(() => regulations[0]?.id ?? '');
+  const firearms = useMemo(() => listActiveFirearms(db), []);
+  // The last session's discipline and firearm, each only while it is still
+  // offered; with no session yet, the first-run defaults below stand.
+  const lastUsed = useMemo(
+    () =>
+      lastSessionDefaults(listSessions(db), {
+        regulationIds: regulations.map((regulation) => regulation.id),
+        isFirearmPickable: (id) => firearms.some((firearm) => firearm.id === id),
+      }),
+    [regulations, firearms],
+  );
+  const [regulationId, setRegulationId] = useState<string>(
+    () => lastUsed?.regulationId ?? regulations[0]?.id ?? '',
+  );
   // Generic disciplines survive every filter (ADR 0011), so free training is
   // reachable whichever regelverk is selected — and with none enabled, the
   // unknown id filters to exactly those.
   const availableDisciplines = disciplinesForRegulations([regulationId]);
-  const disciplineIdInitial =
-    firstDisciplineFor(regulationId) ?? DISCIPLINES[0]?.id ?? 'spsf-precision';
+  const [disciplineIdInitial] = useState<string>(
+    () =>
+      lastUsed?.disciplineId ??
+      firstDisciplineFor(regulationId) ??
+      DISCIPLINES[0]?.id ??
+      'spsf-precision',
+  );
   const [disciplineId, setDisciplineId] = useState<string>(disciplineIdInitial);
   const [programId, setProgramId] = useState<string>(() =>
     initialProgramFor(type, disciplineIdInitial),
@@ -138,7 +167,7 @@ export default function NewSessionScreen() {
   const [eventId, setEventId] = useState<string | null>(() =>
     preferredEventId(regulationId, disciplineIdInitial, shooterProfile, new Date().getFullYear()),
   );
-  const [firearmId, setFirearmId] = useState<string | null>(null);
+  const [firearmId, setFirearmId] = useState<string | null>(() => lastUsed?.firearmId ?? null);
   const [ammoLotId, setAmmoLotId] = useState<string | null>(null);
   const [decimalScoring, setDecimalScoring] = useState(false);
   // Vanlig fält is the default: poängfält is the rarer form, and SHB
@@ -209,7 +238,6 @@ export default function NewSessionScreen() {
   const roundsInvalid = kind === 'rounds' && !parsedRounds.ok;
   const showEventPicker = events.length > 0 && isCompetition;
 
-  const firearms = useMemo(() => listActiveFirearms(db), []);
   const ammoLots = useMemo(() => listAmmoLots(db), []);
   const knownTags = useMemo(() => listTags(db).map((tag) => tag.name), []);
   const onlineLocationLookup = useMemo(
@@ -324,8 +352,27 @@ export default function NewSessionScreen() {
   ): PickerOption<T>[] =>
     values.map((option) => ({ ...option, testID: `${prefix}-${option.value}` }));
 
+  const kindPicker = (
+    <OptionPicker
+      label={t('session.kind')}
+      options={toOptions(
+        [
+          { value: 'series' as SessionKind, label: t('sessionKind.series') },
+          { value: 'rounds' as SessionKind, label: t('sessionKind.rounds') },
+        ],
+        'kind',
+      )}
+      value={kind}
+      onChange={onSelectKind}
+    />
+  );
+
   return (
-    <Screen>
+    <Screen
+      footer={
+        <PrimaryButton label={t('session.create')} onPress={onCreate} testID="create-session" />
+      }
+    >
       <Card>
         <ThemedText type="smallBold">{t('session.type')}</ThemedText>
         <SegmentedControl
@@ -336,49 +383,14 @@ export default function NewSessionScreen() {
           value={type}
           onChange={onSelectType}
         />
-        <OptionPicker
-          label={t('session.kind')}
-          options={toOptions(
-            [
-              { value: 'series' as SessionKind, label: t('sessionKind.series') },
-              { value: 'rounds' as SessionKind, label: t('sessionKind.rounds') },
-            ],
-            'kind',
-          )}
-          value={kind}
-          onChange={onSelectKind}
-        />
       </Card>
 
       <Card>
-        <View style={styles.headerRow}>
-          <ThemedText type="smallBold" style={styles.headerLabel}>
-            {t('session.name')}
+        {lastUsed?.disciplineId != null && (
+          <ThemedText type="small" themeColor="textSecondary" testID="from-last-session">
+            {t('entryA.fromLastSession')}
           </ThemedText>
-          <InfoButton
-            title={t('session.name')}
-            body={t('session.nameHint')}
-            testID="session-name-info"
-          />
-        </View>
-        <TextField
-          value={name}
-          onChangeText={setNameOverride}
-          maxLength={TEXT_LIMITS.sessions.name}
-          testID="session-name"
-        />
-      </Card>
-
-      <Card>
-        <LocationField
-          value={location}
-          onChange={setLocation}
-          onlineEnabled={onlineLocationLookup}
-          language={i18n.language}
-        />
-      </Card>
-
-      <Card>
+        )}
         {regulations.length > 1 && (
           <OptionPicker
             label={t('session.regulation')}
@@ -438,25 +450,21 @@ export default function NewSessionScreen() {
             )}
           </>
         )}
-        {showSeriesLength && (
+        {/* Fält is scored in hits; how its result reads is part of the
+            scoring, so it stays beside the discipline rather than in Details. */}
+        {showFaltResultMode && (
           <>
-            <View style={styles.headerRow}>
-              <ThemedText type="smallBold" style={styles.headerLabel}>
-                {t('session.seriesLength')}
-              </ThemedText>
-              <InfoButton
-                title={t('session.seriesLength')}
-                body={t('session.seriesLengthHint')}
-                testID="series-length-info"
-              />
-            </View>
-            <TextField
-              value={seriesLengthText}
-              onChangeText={setSeriesLengthText}
-              keyboardType="number-pad"
-              inputMode="numeric"
-              placeholder={String(discipline.defaultSeriesLength)}
-              testID="series-length"
+            <ThemedText type="smallBold" style={styles.headerLabel}>
+              {t('session.faltResultMode')}
+            </ThemedText>
+            <SegmentedControl
+              options={[
+                { value: 'falt', label: t('session.faltResultModeFalt') },
+                { value: 'poangfalt', label: t('session.faltResultModePoangfalt') },
+              ]}
+              value={faltResultMode}
+              onChange={(value) => setFaltResultMode(value as 'falt' | 'poangfalt')}
+              testID="falt-result-mode"
             />
           </>
         )}
@@ -563,48 +571,10 @@ export default function NewSessionScreen() {
           onChange={setFirearmId}
           emptyLabel={t('session.none')}
         />
-        <OptionPicker
-          label={t('session.ammoLot')}
-          options={toOptions(
-            ammoLots.map((lot) => ({ value: lot.id, label: lot.label })),
-            'ammo',
-          )}
-          value={ammoLotId}
-          onChange={setAmmoLotId}
-          emptyLabel={t('session.none')}
-        />
       </Card>
 
-      {showDecimalToggle && (
-        <Card>
-          <View style={styles.switchRow}>
-            <ThemedText type="small">{t('session.decimalScoring')}</ThemedText>
-            <Toggle
-              value={decimalScoring}
-              onValueChange={setDecimalScoring}
-              testID="decimal-toggle"
-            />
-          </View>
-        </Card>
-      )}
-
-      {showFaltResultMode && (
-        <Card>
-          <ThemedText type="smallBold" style={styles.headerLabel}>
-            {t('session.faltResultMode')}
-          </ThemedText>
-          <SegmentedControl
-            options={[
-              { value: 'falt', label: t('session.faltResultModeFalt') },
-              { value: 'poangfalt', label: t('session.faltResultModePoangfalt') },
-            ]}
-            value={faltResultMode}
-            onChange={(value) => setFaltResultMode(value as 'falt' | 'poangfalt')}
-            testID="falt-result-mode"
-          />
-        </Card>
-      )}
-
+      {/* Chosen under Details; the count it asks for is the session itself,
+          so it is never folded away. */}
       {kind === 'rounds' && (
         <Card>
           <View style={styles.headerRow}>
@@ -633,11 +603,86 @@ export default function NewSessionScreen() {
         </Card>
       )}
 
-      <Card>
-        <TagSelect known={knownTags} selected={selectedTags} onChange={setSelectedTags} />
-      </Card>
+      <DetailsDisclosure
+        title={t('entryA.details')}
+        summary={t('entryA.detailsSummary')}
+        testID="session-details"
+      >
+        {kindPicker}
 
-      <PrimaryButton label={t('session.create')} onPress={onCreate} testID="create-session" />
+        <View style={styles.field}>
+          <View style={styles.headerRow}>
+            <ThemedText type="smallBold" style={styles.headerLabel}>
+              {t('session.name')}
+            </ThemedText>
+            <InfoButton
+              title={t('session.name')}
+              body={t('session.nameHint')}
+              testID="session-name-info"
+            />
+          </View>
+          <TextField
+            value={name}
+            onChangeText={setNameOverride}
+            maxLength={TEXT_LIMITS.sessions.name}
+            testID="session-name"
+          />
+        </View>
+
+        <LocationField
+          value={location}
+          onChange={setLocation}
+          onlineEnabled={onlineLocationLookup}
+          language={i18n.language}
+        />
+
+        <OptionPicker
+          label={t('session.ammoLot')}
+          options={toOptions(
+            ammoLots.map((lot) => ({ value: lot.id, label: lot.label })),
+            'ammo',
+          )}
+          value={ammoLotId}
+          onChange={setAmmoLotId}
+          emptyLabel={t('session.none')}
+        />
+
+        {showSeriesLength && (
+          <View style={styles.field}>
+            <View style={styles.headerRow}>
+              <ThemedText type="smallBold" style={styles.headerLabel}>
+                {t('session.seriesLength')}
+              </ThemedText>
+              <InfoButton
+                title={t('session.seriesLength')}
+                body={t('session.seriesLengthHint')}
+                testID="series-length-info"
+              />
+            </View>
+            <TextField
+              value={seriesLengthText}
+              onChangeText={setSeriesLengthText}
+              keyboardType="number-pad"
+              inputMode="numeric"
+              placeholder={String(discipline.defaultSeriesLength)}
+              testID="series-length"
+            />
+          </View>
+        )}
+
+        {showDecimalToggle && (
+          <View style={styles.switchRow}>
+            <ThemedText type="small">{t('session.decimalScoring')}</ThemedText>
+            <Toggle
+              value={decimalScoring}
+              onValueChange={setDecimalScoring}
+              testID="decimal-toggle"
+            />
+          </View>
+        )}
+
+        <TagSelect known={knownTags} selected={selectedTags} onChange={setSelectedTags} />
+      </DetailsDisclosure>
     </Screen>
   );
 }
@@ -653,6 +698,9 @@ const styles = StyleSheet.create({
   },
   headerLabel: {
     flexShrink: 1,
+  },
+  field: {
+    gap: Spacing.two,
   },
   switchRow: {
     flexDirection: 'row',
