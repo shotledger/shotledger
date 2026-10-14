@@ -65,6 +65,14 @@ coverage when the floor was set, rounded down (`COVERAGE_FLOOR` in
 change raises coverage, raise the floor in the same PR; never lower it to
 get a change through.
 
+Vitest runs with `isolate: false`: test files in one worker share module
+state, so a test that changes a module, a global or the clock puts it back
+in `afterEach`. Tests do not wait on real time: ESLint rejects a
+`setTimeout`/`setInterval` with a delay in a test file; use fake timers
+(`vi.advanceTimersByTimeAsync`, `jest.advanceTimersByTime`) or
+`vi.setSystemTime`. `pnpm exec vitest run --sequence.shuffle` checks for
+order dependence.
+
 #### `scripts/`
 
 | Script                                              | Run by                                         | What it guards                                                                                          |
