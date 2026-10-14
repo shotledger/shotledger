@@ -844,7 +844,7 @@ input[type='checkbox'] {
 
 /* The phone's Toggle (app/src/components/toggle.tsx) on the web: a native
    checkbox with role="switch", drawn as a track and thumb in the theme's
-   colours — border off, primary on (#845). */
+   colours — a quiet track off, primary on (#845). */
 input[type='checkbox'].switch {
   appearance: none;
   flex: none;
@@ -853,7 +853,7 @@ input[type='checkbox'].switch {
   height: 24px;
   margin: 0;
   border-radius: 12px;
-  background: var(--border);
+  background: var(--background-selected);
   cursor: pointer;
   transition: background 120ms ease;
 }
