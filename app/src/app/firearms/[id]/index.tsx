@@ -32,6 +32,7 @@ import { ListRow } from '@/components/list-row';
 import { OptionPicker } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { SecondaryButton } from '@/components/secondary-button';
+import { TextButton } from '@/components/text-button';
 import { Screen } from '@/components/screen';
 import { Slider } from '@/components/slider';
 import { licenseActivityKey } from '@/features/compliance/activity-key';
@@ -695,11 +696,20 @@ export default function FirearmDetailScreen() {
           <ThemedText type="smallBold" style={styles.headerLabel}>
             {t('firearms.calibersTitle')}
           </ThemedText>
-          <InfoButton
-            title={t('firearms.calibersTitle')}
-            body={t('firearms.calibersHint')}
-            testID="calibers-info"
-          />
+          <View style={styles.headerActions}>
+            <InfoButton
+              title={t('firearms.calibersTitle')}
+              body={t('firearms.calibersHint')}
+              testID="calibers-info"
+            />
+            {!showAddCaliber && (
+              <TextButton
+                label={t('firearms.addCaliber')}
+                onPress={() => setShowAddCaliber(true)}
+                testID="add-caliber"
+              />
+            )}
+          </View>
         </View>
         <ListRow
           title={firearm.caliber ?? t('firearms.noChambering')}
@@ -723,26 +733,20 @@ export default function FirearmDetailScreen() {
             }
           />
         ))}
-        {showAddCaliber ? (
+        {showAddCaliber && (
           <>
             <CaliberPicker
               label={t('firearms.caliber')}
               value={newCaliber}
               onChange={setNewCaliber}
             />
-            <PrimaryButton
+            <SecondaryButton
               label={t('firearms.addCaliber')}
               onPress={onAddCaliber}
               disabled={!newCaliber}
               testID="save-caliber"
             />
           </>
-        ) : (
-          <PrimaryButton
-            label={t('firearms.addCaliber')}
-            onPress={() => setShowAddCaliber(true)}
-            testID="add-caliber"
-          />
         )}
       </Card>
 
@@ -752,11 +756,20 @@ export default function FirearmDetailScreen() {
           <ThemedText type="smallBold" style={styles.headerLabel}>
             {t('firearms.groupsTitle')}
           </ThemedText>
-          <InfoButton
-            title={t('firearms.groupsTitle')}
-            body={t('firearms.groupsHint')}
-            testID="groups-info"
-          />
+          <View style={styles.headerActions}>
+            <InfoButton
+              title={t('firearms.groupsTitle')}
+              body={t('firearms.groupsHint')}
+              testID="groups-info"
+            />
+            {!showAddGroup && (
+              <TextButton
+                label={t('firearms.addGroup')}
+                onPress={() => setShowAddGroup(true)}
+                testID="add-group"
+              />
+            )}
+          </View>
         </View>
         {detail.groups.length === 0 ? (
           <ThemedText type="small" themeColor="textSecondary">
@@ -785,7 +798,7 @@ export default function FirearmDetailScreen() {
             />
           ))
         )}
-        {showAddGroup ? (
+        {showAddGroup && (
           <>
             <OptionPicker
               label={t('firearms.group')}
@@ -805,19 +818,13 @@ export default function FirearmDetailScreen() {
               </ThemedText>
               <Switch value={newGroupDefault} onValueChange={setNewGroupDefault} />
             </View>
-            <PrimaryButton
+            <SecondaryButton
               label={t('firearms.addGroup')}
               onPress={onAddGroup}
               disabled={!newGroupId}
               testID="save-group"
             />
           </>
-        ) : (
-          <PrimaryButton
-            label={t('firearms.addGroup')}
-            onPress={() => setShowAddGroup(true)}
-            testID="add-group"
-          />
         )}
       </Card>
 
@@ -827,11 +834,20 @@ export default function FirearmDetailScreen() {
           <ThemedText type="smallBold" style={styles.headerLabel}>
             {t('firearms.sightSettingsTitle')}
           </ThemedText>
-          <InfoButton
-            title={t('firearms.sightSettingsTitle')}
-            body={t('firearms.sightSettingsHint')}
-            testID="sight-settings-info"
-          />
+          <View style={styles.headerActions}>
+            <InfoButton
+              title={t('firearms.sightSettingsTitle')}
+              body={t('firearms.sightSettingsHint')}
+              testID="sight-settings-info"
+            />
+            {!showSightForm && (
+              <TextButton
+                label={t('firearms.addSightSetting')}
+                onPress={onAddSightSetting}
+                testID="add-sight-setting"
+              />
+            )}
+          </View>
         </View>
         {detail.sightSettings.length === 0 ? (
           <ThemedText type="small" themeColor="textSecondary">
@@ -863,7 +879,7 @@ export default function FirearmDetailScreen() {
             );
           })
         )}
-        {showSightForm ? (
+        {showSightForm && (
           <>
             <ThemedText type="small">{t('firearms.sightLabel')}</ThemedText>
             <TextField
@@ -951,13 +967,13 @@ export default function FirearmDetailScreen() {
               maxLength={TEXT_LIMITS.sight_settings.notes}
               testID="sight-notes"
             />
-            <PrimaryButton
+            <SecondaryButton
               label={t('common.save')}
               onPress={onSaveSightSetting}
               testID="save-sight-setting"
             />
             {editingSightId && !editingIsCurrentSightSetting ? (
-              <PrimaryButton
+              <SecondaryButton
                 label={t('firearms.sightSetCurrent')}
                 onPress={onSetCurrentSightSetting}
                 testID="sight-set-current"
@@ -972,12 +988,6 @@ export default function FirearmDetailScreen() {
               />
             ) : null}
           </>
-        ) : (
-          <PrimaryButton
-            label={t('firearms.addSightSetting')}
-            onPress={onAddSightSetting}
-            testID="add-sight-setting"
-          />
         )}
       </Card>
 
@@ -989,14 +999,27 @@ export default function FirearmDetailScreen() {
               "No License" would name a gap that does not exist (#365). The
               card stays, because a powerful air rifle above the limit does
               need one and the app cannot tell them apart. */}
-          <Chip
-            testID="license-status"
-            label={
-              licenseExempt
-                ? t('firearms.licenseNotRequired')
-                : t(`firearms.licenseStatus${capitalize(detail.licenseStatus)}`)
-            }
-          />
+          <View style={styles.headerActions}>
+            {/* Chip pins itself to the top of its row; its own View centres it
+                beside the text button. */}
+            <View>
+              <Chip
+                testID="license-status"
+                label={
+                  licenseExempt
+                    ? t('firearms.licenseNotRequired')
+                    : t(`firearms.licenseStatus${capitalize(detail.licenseStatus)}`)
+                }
+              />
+            </View>
+            {!showAddLicense && (
+              <TextButton
+                label={t('firearms.addLicense')}
+                onPress={() => setShowAddLicense(true)}
+                testID="add-license"
+              />
+            )}
+          </View>
         </View>
         {detail.licenses.length === 0 ? (
           <ThemedText type="small" themeColor="textSecondary">
@@ -1014,7 +1037,7 @@ export default function FirearmDetailScreen() {
             />
           ))
         )}
-        {showAddLicense ? (
+        {showAddLicense && (
           <>
             {SCAN_SUPPORTED ? (
               <>
@@ -1022,13 +1045,13 @@ export default function FirearmDetailScreen() {
                 <ThemedText type="small" themeColor="textSecondary">
                   {t('firearms.scanHint')}
                 </ThemedText>
-                <PrimaryButton
+                <SecondaryButton
                   label={t('firearms.scanFromCamera')}
                   onPress={() => void onScanCard('camera')}
                   disabled={scan.status === 'busy'}
                   testID="scan-card-camera"
                 />
-                <PrimaryButton
+                <SecondaryButton
                   label={t('firearms.scanFromLibrary')}
                   onPress={() => void onScanCard('library')}
                   disabled={scan.status === 'busy'}
@@ -1115,24 +1138,29 @@ export default function FirearmDetailScreen() {
               onChangeText={setAuthority}
               maxLength={TEXT_LIMITS.licenses.authority}
             />
-            <PrimaryButton
+            <SecondaryButton
               label={t('common.save')}
               onPress={() => void onAddLicense()}
               testID="save-license"
             />
           </>
-        ) : (
-          <PrimaryButton
-            label={t('firearms.addLicense')}
-            onPress={() => setShowAddLicense(true)}
-            testID="add-license"
-          />
         )}
       </Card>
 
       {/* Maintenance */}
       <Card>
-        <ThemedText type="smallBold">{t('firearms.maintenanceTitle')}</ThemedText>
+        <View style={styles.sectionHeader}>
+          <ThemedText type="smallBold" style={styles.headerLabel}>
+            {t('firearms.maintenanceTitle')}
+          </ThemedText>
+          {!showLogEvent && (
+            <TextButton
+              label={t('firearms.logEvent')}
+              onPress={() => setShowLogEvent(true)}
+              testID="log-maintenance"
+            />
+          )}
+        </View>
         <ThemedText type="small">{t('firearms.maintenanceInterval')}</ThemedText>
         <TextField
           value={intervalValue}
@@ -1148,7 +1176,7 @@ export default function FirearmDetailScreen() {
             {t('firearms.intervalInvalid')}
           </ThemedText>
         ) : null}
-        <PrimaryButton label={t('common.save')} onPress={onSaveInterval} testID="save-interval" />
+        <SecondaryButton label={t('common.save')} onPress={onSaveInterval} testID="save-interval" />
         {intervalStatus === 'saved' ? (
           <ThemedText
             type="small"
@@ -1174,10 +1202,10 @@ export default function FirearmDetailScreen() {
           ))
         )}
 
-        {showLogEvent ? (
+        {showLogEvent && (
           <>
             <ThemedText type="small">{t('firearms.eventDate')}</ThemedText>
-            <PrimaryButton
+            <SecondaryButton
               label={dates.date(eventPerformedAt)}
               onPress={() => setEventDatePickerOpen(true)}
               testID="event-date"
@@ -1209,14 +1237,8 @@ export default function FirearmDetailScreen() {
               onChangeText={setEventNotes}
               maxLength={TEXT_LIMITS.maintenance_events.notes}
             />
-            <PrimaryButton label={t('common.save')} onPress={onLogEvent} testID="save-event" />
+            <SecondaryButton label={t('common.save')} onPress={onLogEvent} testID="save-event" />
           </>
-        ) : (
-          <PrimaryButton
-            label={t('firearms.logEvent')}
-            onPress={() => setShowLogEvent(true)}
-            testID="log-maintenance"
-          />
         )}
 
         {showAdjust ? (
@@ -1247,14 +1269,14 @@ export default function FirearmDetailScreen() {
                 {t('firearms.adjustReasonRequired')}
               </ThemedText>
             ) : null}
-            <PrimaryButton
+            <SecondaryButton
               label={t('firearms.adjustSave')}
               onPress={onAdjust}
               testID="save-adjust"
             />
           </>
         ) : (
-          <PrimaryButton
+          <SecondaryButton
             label={t('firearms.adjustRoundCount')}
             onPress={() => setShowAdjust(true)}
             testID="adjust-round-count"
@@ -1340,6 +1362,11 @@ const styles = StyleSheet.create({
   },
   headerLabel: {
     flexShrink: 1,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
   },
   switchRow: {
     flexDirection: 'row',

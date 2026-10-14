@@ -31,6 +31,7 @@ import { GroupPlot } from '@/components/group-plot';
 import { ShotHeatmap } from '@/components/shot-heatmap';
 import { ZoomableView } from '@/components/zoomable-view';
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { ShotChips } from '@/components/shot-chips';
@@ -897,7 +898,7 @@ export default function SessionDetailScreen() {
                 testID="add-series"
               />
               {detail.canStartFinal && !nextIsFinal && (
-                <PrimaryButton
+                <SecondaryButton
                   label={t('session.startFinal')}
                   onPress={onStartFinal}
                   testID="start-final"

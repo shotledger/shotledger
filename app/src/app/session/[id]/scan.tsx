@@ -1026,7 +1026,7 @@ export default function ScanScreen() {
               onPress={() => void onCapture('camera')}
               testID="scan-camera"
             />
-            <PrimaryButton
+            <SecondaryButton
               label={t('photoScoring.pickFromLibrary')}
               onPress={() => void onCapture('library')}
               testID="scan-library"
@@ -1077,7 +1077,7 @@ export default function ScanScreen() {
               onPress={onRetake}
               testID="scan-retake"
             />
-            <PrimaryButton
+            <SecondaryButton
               label={t('photoScoring.adjustCorners')}
               onPress={() => setPhase('corners')}
               testID="scan-adjust-corners"
@@ -1138,7 +1138,7 @@ export default function ScanScreen() {
               onPress={onUseCorners}
               testID="scan-use-corners"
             />
-            <PrimaryButton label={t('photoScoring.retake')} onPress={onRetake} />
+            <SecondaryButton label={t('photoScoring.retake')} onPress={onRetake} />
           </>
         )}
       </ScrollView>
