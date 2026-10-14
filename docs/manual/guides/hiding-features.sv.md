@@ -27,7 +27,7 @@ Reglagen följer ditt konto. En telefon som är inloggad på samma konto får
 ändringen vid nästa synk, och webbappen visar samma delar: med Målfoton
 avstängt finns ingen fotouppladdning när du matar in serier och ingen
 jämförelse av foton, och med Ammunitionspartier avstängt finns inget fält för
-ammunitionsparti. Du kan också ändra reglagen på webben, under
+ammunitionsparti och ingen sammanslagning av partier under **Ändra flera pass**. Du kan också ändra reglagen på webben, under
 **Inställningar → Funktioner**.
 
 Med Underhåll avstängt får du inga underhållspåminnelser. Dina intervall och

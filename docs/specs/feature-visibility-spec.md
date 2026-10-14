@@ -3,10 +3,9 @@
 > Old-coder SPEC for #801. Evidence report: `docs/specs/feature-visibility-evidence.md`.
 > Decision records: ADR 0019 (settings sync per user, for an allowlist).
 >
-> **Approval status: not obtained (autonomous run).** Written and implemented
-> overnight on 2026-10-13 at the maintainer's request to take #801 end to end
-> while he slept. This spec is the artifact to review after the fact; any
-> change he asks for lands as a follow-up.
+> **Approval status: approved by the maintainer on 2026-10-14**, after the
+> fact: it was written and implemented overnight on 2026-10-13 at his request
+> to take #801 end to end while he slept.
 >
 > **2026-10-14:** the maintainer asked for Maintenance as a sixth switch in
 > this PR (after #800 and #819 merged); §2.1, S1, P9 and W4 cover it.
@@ -145,8 +144,9 @@ applied to whole areas. Routes stay registered, so a deep link still opens.
   pick-photos controls and `#compare` shows the Sessions list. A series photo
   that exists still shows on the detail and the edit form.
 - **W3** `ammoLots` hidden: series entry has no Ammo Lot field and pushes no
-  lot; the edit form shows the field only when the session has a lot. The
-  detail still shows a lot that is set.
+  lot; the edit form shows the field only when the session has a lot; Bulk
+  Edit has no Merge Ammo Lots panel (the phone's merge is on the lot's own
+  screen, which is hidden). The detail still shows a lot that is set.
 - **W4** `licenseActivity`, `timer`, `sightSettings`, `maintenance`: the web shows none of
   them, so only the switch applies.
 

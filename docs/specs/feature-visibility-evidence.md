@@ -2,11 +2,8 @@
 
 Spec: [`feature-visibility-spec.md`](feature-visibility-spec.md).
 
-- **Spec approval: not obtained (autonomous run).** The maintainer asked for
-  #801 to be done end to end overnight on 2026-10-13. The spec has not been
-  reviewed by him, so this report claims correspondingly lower confidence:
-  the gauntlet shows the code does what the spec says, not that the spec says
-  what he wants.
+- **Spec approval: given by the maintainer on 2026-10-14**, after the
+  implementation (autonomous overnight run on 2026-10-13).
 - **2026-10-14 addendum:** Maintenance added as the sixth switch at the
   maintainer's request; the gauntlet below was re-run after that change, on
   top of `main` at `31195e0`.

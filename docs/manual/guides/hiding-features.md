@@ -27,7 +27,8 @@ Tools would be empty, so the Tools tab goes too.
 The switches follow your account. A phone signed in to the same account picks
 up a change at its next sync, and the web app shows the same parts: with
 Target Photos off it has no photo upload in series entry and no photo
-comparing, and with Ammunition Lots off series entry has no ammo lot field.
+comparing, and with Ammunition Lots off series entry has no ammo lot field
+and **Bulk Edit** has no lot merging.
 You can also change the switches on the web, under **Settings → Features**.
 
 With Maintenance off you get no maintenance reminders. Your intervals and log
