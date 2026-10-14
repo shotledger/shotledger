@@ -65,8 +65,8 @@ describe('New firearm', () => {
   it('defaults to an own pistol', async () => {
     await renderWithProviders(<NewFirearmScreen />);
 
-    expect(screen.getByRole('button', { name: 'Pistol' })).toBeSelected();
-    expect(screen.getByRole('button', { name: 'My Own' })).toBeSelected();
+    expect(screen.getByRole('radio', { name: 'Pistol' })).toBeSelected();
+    expect(screen.getByRole('radio', { name: 'My Own' })).toBeSelected();
     expect(screen.getByTestId('load-system-unset')).toBeSelected();
   });
 
@@ -101,8 +101,8 @@ describe('New firearm', () => {
     await type('Model', 'Long 22');
     await fireEvent.press(screen.getByTestId('caliber-toggle'));
     await fireEvent.press(screen.getByTestId('caliber-option-.22 LR'));
-    await fireEvent.press(screen.getByRole('button', { name: 'Rifle' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Borrowed' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Rifle' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Borrowed' }));
     await type('Serial Number', 'SN-0001');
     await type('National Register ID', 'TEST-0001');
     await fireEvent.press(screen.getByTestId('load-system-bolt_action'));
@@ -193,8 +193,8 @@ describe('Edit firearm', () => {
     expect(screen.getByLabelText('Make')).toHaveDisplayValue('Acme');
     expect(screen.getByLabelText('Model')).toHaveDisplayValue('Target 22');
     expect(screen.getByTestId('caliber-toggle')).toHaveTextContent('.22 LR');
-    expect(screen.getByRole('button', { name: 'Pistol' })).toBeSelected();
-    expect(screen.getByRole('button', { name: 'My Own' })).toBeSelected();
+    expect(screen.getByRole('radio', { name: 'Pistol' })).toBeSelected();
+    expect(screen.getByRole('radio', { name: 'My Own' })).toBeSelected();
     expect(screen.getByLabelText('Serial Number')).toHaveDisplayValue('SN-0002');
     expect(screen.getByTestId('load-system-semi_automatic')).toBeSelected();
     expect(screen.getByLabelText('Notes')).toHaveDisplayValue('Competition pistol');
@@ -205,7 +205,7 @@ describe('Edit firearm', () => {
     await openEdit(firearm.id);
 
     await type('Model', 'Target 22 Mk II');
-    await fireEvent.press(screen.getByRole('button', { name: 'Borrowed' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Borrowed' }));
     await type('Serial Number', '  ');
     await fireEvent.press(screen.getByTestId('load-system-unset'));
     await fireEvent.press(screen.getByRole('button', { name: 'Save' }));

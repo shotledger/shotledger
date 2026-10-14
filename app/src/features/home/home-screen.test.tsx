@@ -153,11 +153,11 @@ describe('Home', () => {
     await renderWithProviders(<HomeScreen />);
     expect(screen.getByTestId('home-session-1')).toBeOnTheScreen();
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Rounds' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Rounds' }));
     expect(screen.getByTestId('home-session-0')).toHaveTextContent(/Plinking/);
     expect(screen.queryByTestId('home-session-1')).toBeNull();
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Series' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Series' }));
     expect(screen.getByTestId('home-session-0')).toHaveTextContent(/Scored evening/);
     expect(screen.queryByTestId('home-session-1')).toBeNull();
   });
@@ -167,7 +167,7 @@ describe('Home', () => {
     series(scored.id, 1, [9, 9, 9, 9, 9]);
 
     await renderWithProviders(<HomeScreen />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Rounds' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Rounds' }));
 
     expect(screen.getByText('No sessions match this filter')).toBeOnTheScreen();
     expect(screen.queryByTestId('home-session-0')).toBeNull();
