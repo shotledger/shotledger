@@ -178,7 +178,11 @@ operation.
   through the phone's `toPayload`, passes `validatePayload`; so does every
   row the ShotLog and WebShooter importers and the JSON-export import
   write. The web builders' rows (`app/src/db/queries/web-*.test.ts`) and
-  the `shared/` builders' own tests assert the same.
+  the `shared/` builders' own tests assert the same. The phone's screens
+  turn typed text into integers with parsers that accept only digits within
+  a safe integer (`parseQuantity`, `parseMaintenanceInterval`), each with
+  its own tests; a screen that parsed with `Number()` would store `12.5` or
+  `1e20` and have the row refused.
 
 ### 2.6 Out of scope
 
@@ -397,18 +401,18 @@ green.
 
 ## 6. Failure model
 
-| Failure                                                                    | Layer that catches it                                                         |
-| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Schema stricter than a real writer: a good row is refused and lost to sync | §2.5 writer conformance (demo data, importers, web builders); P1              |
-| Schema looser than the apply path: a wedging row is stored                 | P2 per-mutation rows; Stryker on `payload-schemas.ts`; properties             |
-| Schema drifts from `schema.ts` after a later column change                 | Impossible by construction (C1); P9 and the derivation test pin it            |
-| A new flag column named outside the `is_*` rule                            | the pinned per-table flag and counting-integer sets (§2.1)                    |
-| A refusal consumes a seq or half-writes                                    | P2/P3 `last_seq` assertions; atomicity C1–C9 unchanged                        |
-| A refusal is silent on the phone                                           | P7 `invalid` count; P12 reducer test; the screen string                       |
-| Release skew (C5): a phone and the server on different column sets         | `docs/release.md` step 0; known limit in either order (Q6)                    |
-| A hostile payload (prototype keys, huge arrays, deep nesting)              | the 16 KiB cap; strict keys; adversarial tests                                |
-| Validation cost pushes a 500-change push past Worker CPU                   | a Node-side sanity bound only (500 session rows under 1 s); known limit (§10) |
-| The CHECK refuses a row the route accepted                                 | P1 (every table through the real D1 with the CHECK)                           |
+| Failure                                                                    | Layer that catches it                                                                             |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Schema stricter than a real writer: a good row is refused and lost to sync | §2.5 writer conformance (demo data, importers, web builders) and the screens' integer parsers; P1 |
+| Schema looser than the apply path: a wedging row is stored                 | P2 per-mutation rows; Stryker on `payload-schemas.ts`; properties                                 |
+| Schema drifts from `schema.ts` after a later column change                 | Impossible by construction (C1); P9 and the derivation test pin it                                |
+| A new flag column named outside the `is_*` rule                            | the pinned per-table flag and counting-integer sets (§2.1)                                        |
+| A refusal consumes a seq or half-writes                                    | P2/P3 `last_seq` assertions; atomicity C1–C9 unchanged                                            |
+| A refusal is silent on the phone                                           | P7 `invalid` count; P12 reducer test; the screen string                                           |
+| Release skew (C5): a phone and the server on different column sets         | `docs/release.md` step 0; known limit in either order (Q6)                                        |
+| A hostile payload (prototype keys, huge arrays, deep nesting)              | the 16 KiB cap; strict keys; adversarial tests                                                    |
+| Validation cost pushes a 500-change push past Worker CPU                   | a Node-side sanity bound only (500 session rows under 1 s); known limit (§10)                     |
+| The CHECK refuses a row the route accepted                                 | P1 (every table through the real D1 with the CHECK)                                               |
 
 ## 7. Gauntlet
 

@@ -41,8 +41,9 @@ export interface SyncCycleResult {
   rejected: number;
   /**
    * Changes the server refused as malformed (`invalid_payload`). The row
-   * stays on this device, unsynced, until it is edited again
-   * (docs/specs/sync-payload-validation-spec.md §2.3).
+   * stays on this device, unsynced, until it is edited again or a pull of
+   * the same row replaces it (docs/specs/sync-payload-validation-spec.md
+   * §2.3).
    */
   invalid: number;
   duplicates: number;
