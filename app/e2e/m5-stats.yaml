@@ -82,11 +82,13 @@ appId: app.shotledger
     timeout: 15000
 
 # --- Period filter: switch to Max in the Filter Bar's sheet, applied live ---
+# Back up past every card: on the small screen that takes about six swipes,
+# longer than the 15 s the downward scrolls get.
 - scrollUntilVisible:
     element:
       id: 'stats-filter-bar-open'
     direction: UP
-    timeout: 15000
+    timeout: 45000
 - tapOn:
     id: 'stats-filter-bar-open'
 - tapOn: 'Max'

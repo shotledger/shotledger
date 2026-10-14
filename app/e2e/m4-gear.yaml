@@ -119,6 +119,10 @@ appId: app.shotledger
     timeout: 20000
 - tapOn:
     id: 'class-2'
+- scrollUntilVisible:
+    element: 'Walther GSP'
+    direction: DOWN
+    timeout: 20000
 - tapOn: 'Walther GSP'
 - scrollUntilVisible:
     element:
@@ -157,10 +161,16 @@ appId: app.shotledger
     timeout: 20000
 - tapOn:
     id: 'save-series'
+# The saved series leaves the screen scrolled to Add Series, below the total.
 - extendedWaitUntil:
     visible:
-      id: 'session-total'
+      id: 'add-series'
     timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: 'session-total'
+    direction: UP
+    timeout: 20000
 
 # --- Assert the round count incremented and maintenance went amber ---
 # Session detail has no tab bar; back out to the tabs.
