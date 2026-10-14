@@ -95,6 +95,14 @@ Till ett vapen samlas:
 Siktesinställningarna går att nå från passet självt, så en justering mellan
 serier innebär inte att du måste lämna det du håller på med.
 
+### Påminnelser om att licensen går ut
+
+När ett vapens senaste licens har ett slutdatum påminner telefonen dig i god tid
+före det. Påminnelserna följer det som är sparat, hur det än kom dit: en licens
+du lagt till, en från en import, demodata eller en annan enhet via synk. En
+förnyad licens ersätter den gamlas påminnelser. Telefonen ber om lov att ge
+notiser när du sparar en licens; tills du tillåter det kommer inga.
+
 ### Arkivera ett vapen du inte längre har
 
 När du har sålt, lämnat tillbaka eller slutat använda ett vapen öppnar du det

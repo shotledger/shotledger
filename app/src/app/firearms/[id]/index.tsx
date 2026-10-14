@@ -10,7 +10,6 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import {
   canonicalCaliber,
-  licenseExpiryNotifications,
   localDayStartIso,
   parseLocalDay,
   resolveActiveSightSetting,
@@ -60,6 +59,7 @@ import {
   archiveFirearmAndReminders,
   restoreFirearmAndReminders,
 } from '@/features/firearms/archive-firearm';
+import { refreshLicenseExpiryReminders } from '@/features/firearms/license-reminders';
 import {
   firearmMaintenanceDue,
   refreshMaintenanceTimeReminders,
@@ -93,7 +93,7 @@ import {
   scanLicenseCard,
   type ScanSource,
 } from '@/features/licenses/scan-license-card';
-import { notifyMaintenanceDue, scheduleLicenseExpiryNotifications } from '@/platform/notifications';
+import { notifyMaintenanceDue } from '@/platform/notifications';
 import { deleteScannedImage } from '@/platform/text-recognition';
 import { Spacing, TabularNums } from '@/theme/tokens';
 import { useDateFormat } from '@/features/dates/use-date-format';
@@ -312,7 +312,7 @@ export default function FirearmDetailScreen() {
       setScannedImageUri(null);
     }
 
-    const license = addLicense(db, {
+    addLicense(db, {
       firearmId: firearm!.id,
       licenseNumber: licenseNumber.trim() || null,
       purpose: purpose.trim() || null,
@@ -321,12 +321,8 @@ export default function FirearmDetailScreen() {
       conditions: conditions.trim() || null,
       authority: authority.trim() || null,
     });
-    const notifications = licenseExpiryNotifications(license.validUntil);
-    void scheduleLicenseExpiryNotifications(
-      license.id,
-      `${firearm!.make} ${firearm!.model}`,
-      notifications,
-    );
+    // Saving a license is what asks for notification permission (#847).
+    void refreshLicenseExpiryReminders({ request: true });
 
     // The card also carries the firearm's own identity; applying it is the
     // user's separate, opt-in confirmation.
