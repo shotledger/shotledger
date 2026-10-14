@@ -44,7 +44,7 @@ och en med frågan den svarar på. Tryck på en för att gå direkt dit.
   en linje gav en sågtandskurva som inte sa något om någondera. Den vågräta
   axeln är verklig tid, inte ett steg per pass — pass som delar datum ligger
   ovanpå varandra, vilket är sanningen om dem — och etiketterna anger året så
-  snart perioden korsar ett årsskifte. Bortom åtta grenar säger diagrammet hur
+  snart perioden korsar ett årsskifte. Bortom fyra grenar säger diagrammet hur
   många det utelämnat i stället för att ge två av dem samma färg.
 - **Fältskjutning** (på engelska _Field Shooting_), när rapporten innehåller fältpass: stationer, träffar,
   träffade figurer, träffandelen (träffar av sex per station) och ett diagram

@@ -41,3 +41,4 @@ export * from './backup';
 export * from './licenses';
 export * from './locations';
 export * from './ranges';
+export * from './design-tokens';

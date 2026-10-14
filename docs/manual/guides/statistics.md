@@ -44,7 +44,7 @@ each with the question it answers. Tap one to scroll straight to it.
   so drawing them as one line produced a saw-tooth that said nothing about
   either. The horizontal axis is real time, not one step per session — sessions
   that share a date sit on top of each other, which is the truth about them —
-  and the labels name the year whenever the range crosses one. Past eight
+  and the labels name the year whenever the range crosses one. Past four
   disciplines the chart says how many it left out rather than giving two of
   them the same colour.
 - **Field Shooting**, when the report holds fält sessions: stations, hits,
