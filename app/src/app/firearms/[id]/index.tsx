@@ -96,6 +96,7 @@ import { notifyMaintenanceDue, scheduleLicenseExpiryNotifications } from '@/plat
 import { deleteScannedImage } from '@/platform/text-recognition';
 import { Spacing } from '@/theme/tokens';
 import { useDateFormat } from '@/features/dates/use-date-format';
+import { useFeatures } from '@/features/settings/feature-visibility';
 
 /** Only groups a session can actually be logged under — see
  *  `selectableWeaponGroups`. */
@@ -127,6 +128,7 @@ const MAINTENANCE_TONE: Record<string, 'neutral' | 'primary'> = {
 
 export default function FirearmDetailScreen() {
   const { t } = useTranslation();
+  const features = useFeatures();
   const dates = useDateFormat();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -559,16 +561,19 @@ export default function FirearmDetailScreen() {
               {t('firearms.roundCount')}
             </ThemedText>
           </View>
-          <View>
-            <ThemedText type="subtitle" testID="rounds-since-maintenance">
-              {detail.roundsSinceMaintenance}
-            </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('firearms.roundsSinceMaintenance')}
-            </ThemedText>
-          </View>
+          {features.maintenance && (
+            <View>
+              <ThemedText type="subtitle" testID="rounds-since-maintenance">
+                {detail.roundsSinceMaintenance}
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('firearms.roundsSinceMaintenance')}
+              </ThemedText>
+            </View>
+          )}
         </View>
-        {detail.maintenanceStatus !== 'unknown' && (
+        {/* Maintenance hidden (#801): the round count stays, the rest goes. */}
+        {features.maintenance && detail.maintenanceStatus !== 'unknown' && (
           <Chip
             testID="maintenance-status"
             label={t(`firearms.maintenanceStatus${capitalize(detail.maintenanceStatus)}`)}
@@ -576,12 +581,12 @@ export default function FirearmDetailScreen() {
           />
         )}
         {/* What made it due: the rounds, the months, or both (#800). */}
-        {detail.maintenanceDue.reasons.includes('rounds') && (
+        {features.maintenance && detail.maintenanceDue.reasons.includes('rounds') && (
           <ThemedText type="small" themeColor="textSecondary" testID="maintenance-due-rounds">
             {t('firearms.maintenanceDueRounds', { count: firearm.maintenanceIntervalRounds ?? 0 })}
           </ThemedText>
         )}
-        {detail.maintenanceDue.reasons.includes('time') && (
+        {features.maintenance && detail.maintenanceDue.reasons.includes('time') && (
           <ThemedText type="small" themeColor="textSecondary" testID="maintenance-due-time">
             {t(
               detail.lastMaintenanceAt !== undefined
@@ -591,7 +596,8 @@ export default function FirearmDetailScreen() {
             )}
           </ThemedText>
         )}
-        {detail.maintenanceDue.dueDay !== null &&
+        {features.maintenance &&
+          detail.maintenanceDue.dueDay !== null &&
           !detail.maintenanceDue.reasons.includes('time') && (
             <ThemedText type="small" themeColor="textSecondary" testID="maintenance-due-by">
               {t('firearms.maintenanceDueBy', {
@@ -604,74 +610,81 @@ export default function FirearmDetailScreen() {
       {/* M6 (§6.6): hidden entirely when the compliance profile is 'none'.
           Also for an archived firearm (#799): a firearm the shooter no longer
           has needs no activity to keep its licence. */}
-      {profile && !isArchived && detail.licenseActivities.length > 0 && (
-        <Card>
-          <ThemedText type="smallBold">{t('compliance.licenseActivityTitle')}</ThemedText>
-          <View style={styles.chipsRow}>
-            {detail.licenseActivities.map((b) => (
-              <Chip
-                key={licenseActivityKey(b)}
-                testID={`firearm-barometer-${licenseActivityKey(b)}`}
-                label={t(`compliance.licenseActivity${capitalize(b.status)}`, {
-                  count: b.activityCount,
-                  required: b.requiredActivities,
-                })}
-                tone={LICENSE_ACTIVITY_TONE[b.status]}
-              />
-            ))}
-          </View>
-          {detail.licenseActivities.map((b, index) => (
-            <View key={`detail-${licenseActivityKey(b)}`}>
-              <ThemedText
-                type="small"
-                themeColor="textSecondary"
-                testID={`firearm-barometer-detail-${licenseActivityKey(b)}`}
-              >
-                {t('compliance.licenseActivityDetail', {
-                  done: b.activityCount,
-                  required: b.requiredActivities,
-                  months: b.windowMonths,
-                })}
-              </ThemedText>
-              {/* A number on a firearm card that is not about that firearm has
-                  to say so, or it reads as this gun's activity (#319). */}
-              <ThemedText
-                type="small"
-                themeColor="textSecondary"
-                testID={`firearm-barometer-scope-${licenseActivityKey(b)}`}
-              >
-                {b.scope === 'shooter'
-                  ? t('compliance.licenseActivityScopeShooter')
-                  : t('compliance.licenseActivityScopeGroups', {
-                      count: b.skippedSessionCount,
-                    })}
-              </ThemedText>
-              <NextSessionLine
-                lapseIso={detail.licenseActivityLapses[index]}
-                labelKey="compliance.nextSessionBy"
-                testID={`firearm-barometer-next-session-${licenseActivityKey(b)}`}
-              />
+      {features.licenseActivity &&
+        profile &&
+        !isArchived &&
+        detail.licenseActivities.length > 0 && (
+          <Card>
+            <ThemedText type="smallBold">{t('compliance.licenseActivityTitle')}</ThemedText>
+            <View style={styles.chipsRow}>
+              {detail.licenseActivities.map((b) => (
+                <Chip
+                  key={licenseActivityKey(b)}
+                  testID={`firearm-barometer-${licenseActivityKey(b)}`}
+                  label={t(`compliance.licenseActivity${capitalize(b.status)}`, {
+                    count: b.activityCount,
+                    required: b.requiredActivities,
+                  })}
+                  tone={LICENSE_ACTIVITY_TONE[b.status]}
+                />
+              ))}
             </View>
-          ))}
-          {/* Which case is in effect is never silently applied — it is on
+            {detail.licenseActivities.map((b, index) => (
+              <View key={`detail-${licenseActivityKey(b)}`}>
+                <ThemedText
+                  type="small"
+                  themeColor="textSecondary"
+                  testID={`firearm-barometer-detail-${licenseActivityKey(b)}`}
+                >
+                  {t('compliance.licenseActivityDetail', {
+                    done: b.activityCount,
+                    required: b.requiredActivities,
+                    months: b.windowMonths,
+                  })}
+                </ThemedText>
+                {/* A number on a firearm card that is not about that firearm has
+                  to say so, or it reads as this gun's activity (#319). */}
+                <ThemedText
+                  type="small"
+                  themeColor="textSecondary"
+                  testID={`firearm-barometer-scope-${licenseActivityKey(b)}`}
+                >
+                  {b.scope === 'shooter'
+                    ? t('compliance.licenseActivityScopeShooter')
+                    : t('compliance.licenseActivityScopeGroups', {
+                        count: b.skippedSessionCount,
+                      })}
+                </ThemedText>
+                <NextSessionLine
+                  lapseIso={detail.licenseActivityLapses[index]}
+                  labelKey="compliance.nextSessionBy"
+                  testID={`firearm-barometer-next-session-${licenseActivityKey(b)}`}
+                />
+              </View>
+            ))}
+            {/* Which case is in effect is never silently applied — it is on
               screen wherever the number it produced is. */}
-          <ThemedText type="small" themeColor="textSecondary" testID="compliance-barometer-case">
-            {t(`compliance.licenseActivityCase.${profile.variantId}`)}
-          </ThemedText>
-          {!profile.verified && (
-            <ThemedText type="small" themeColor="textSecondary" testID="compliance-unverified-hint">
-              {t('compliance.unverifiedHint')}
+            <ThemedText type="small" themeColor="textSecondary" testID="compliance-barometer-case">
+              {t(`compliance.licenseActivityCase.${profile.variantId}`)}
             </ThemedText>
-          )}
-        </Card>
-      )}
+            {!profile.verified && (
+              <ThemedText
+                type="small"
+                themeColor="textSecondary"
+                testID="compliance-unverified-hint"
+              >
+                {t('compliance.unverifiedHint')}
+              </ThemedText>
+            )}
+          </Card>
+        )}
 
       {/* The two "Intyget avser" boxes that cover THIS firearm (#329). Shown
           separately from License Activity above because they are a different
           claim: that one counts every session whatever it was shot with, these
           count only sessions logged with this gun. Not for an archived
           firearm (#799): it is neither held nor up for renewal. */}
-      {profile && !isArchived && detail.firearmCriteria.length > 0 && (
+      {features.licenseActivity && profile && !isArchived && detail.firearmCriteria.length > 0 && (
         <Card>
           <ThemedText type="smallBold">{t('compliance.firearmCriteriaTitle')}</ThemedText>
           {detail.firearmCriteria.map((criterion, index) => (
@@ -883,168 +896,172 @@ export default function FirearmDetailScreen() {
         )}
       </Card>
 
-      {/* Sight settings (#114) */}
-      <Card>
-        <View style={styles.sectionHeader}>
-          <ThemedText type="smallBold" style={styles.headerLabel}>
-            {t('firearms.sightSettingsTitle')}
-          </ThemedText>
-          <View style={styles.headerActions}>
-            <InfoButton
-              title={t('firearms.sightSettingsTitle')}
-              body={t('firearms.sightSettingsHint')}
-              testID="sight-settings-info"
-            />
-            {!showSightForm && (
-              <TextButton
-                label={t('firearms.addSightSetting')}
-                onPress={onAddSightSetting}
-                testID="add-sight-setting"
+      {/* Sight settings (#114); hidden with the area (#801). */}
+      {features.sightSettings && (
+        <Card>
+          <View style={styles.sectionHeader}>
+            <ThemedText type="smallBold" style={styles.headerLabel}>
+              {t('firearms.sightSettingsTitle')}
+            </ThemedText>
+            <View style={styles.headerActions}>
+              <InfoButton
+                title={t('firearms.sightSettingsTitle')}
+                body={t('firearms.sightSettingsHint')}
+                testID="sight-settings-info"
               />
-            )}
+              {!showSightForm && (
+                <TextButton
+                  label={t('firearms.addSightSetting')}
+                  onPress={onAddSightSetting}
+                  testID="add-sight-setting"
+                />
+              )}
+            </View>
           </View>
-        </View>
-        {detail.sightSettings.length === 0 ? (
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('firearms.noSightSettings')}
-          </ThemedText>
-        ) : (
-          detail.sightSettings.map((setting) => {
-            const isCurrent = currentSightSetting?.id === setting.id;
-            const summary = t('firearms.sightSummary', {
-              elevation: sightClicksText(setting.elevationClicks),
-              windage: sightClicksText(setting.windageClicks),
-            });
-            const turns = isCurrent
-              ? ''
-              : sightTurnsText(t, sightTurnsBetween(currentSightSetting, setting));
-            return (
-              <ListRow
-                key={setting.id}
-                title={setting.label}
-                subtitle={
-                  turns ? `${summary}\n${t('firearms.sightSwitchHint', { turns })}` : summary
+          {detail.sightSettings.length === 0 ? (
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('firearms.noSightSettings')}
+            </ThemedText>
+          ) : (
+            detail.sightSettings.map((setting) => {
+              const isCurrent = currentSightSetting?.id === setting.id;
+              const summary = t('firearms.sightSummary', {
+                elevation: sightClicksText(setting.elevationClicks),
+                windage: sightClicksText(setting.windageClicks),
+              });
+              const turns = isCurrent
+                ? ''
+                : sightTurnsText(t, sightTurnsBetween(currentSightSetting, setting));
+              return (
+                <ListRow
+                  key={setting.id}
+                  title={setting.label}
+                  subtitle={
+                    turns ? `${summary}\n${t('firearms.sightSwitchHint', { turns })}` : summary
+                  }
+                  trailing={
+                    isCurrent ? (
+                      <Chip label={t('firearms.sightCurrent')} tone="primary" />
+                    ) : undefined
+                  }
+                  onPress={() => onEditSightSetting(setting)}
+                  testID={`sight-row-${setting.id}`}
+                />
+              );
+            })
+          )}
+          {showSightForm && (
+            <>
+              <ThemedText type="small">{t('firearms.sightLabel')}</ThemedText>
+              <TextField
+                value={sightLabel}
+                onChangeText={setSightLabel}
+                maxLength={TEXT_LIMITS.sight_settings.label}
+                placeholder={t('firearms.sightLabelPlaceholder')}
+                testID="sight-label"
+              />
+              <View style={styles.sectionHeader}>
+                <ThemedText type="small" style={styles.headerLabel}>
+                  {t('firearms.sightElevation')}
+                </ThemedText>
+                <InfoButton
+                  title={t('firearms.sightElevation')}
+                  body={t('firearms.sightElevationHint')}
+                  testID="sight-elevation-info"
+                />
+              </View>
+              <Stepper
+                value={sightElevation}
+                onChange={setSightElevation}
+                min={SIGHT_CLICK_MIN}
+                max={SIGHT_CLICK_MAX}
+                decrementLabel={t('firearms.sightElevationDecrease')}
+                incrementLabel={t('firearms.sightElevationIncrease')}
+                clearLabel={t('firearms.sightClicksClear')}
+                format={(clicks) =>
+                  clicks === null
+                    ? t('firearms.sightClicksNotRecorded')
+                    : sightClicksDirectionText(t, clicks, 'elevation')
                 }
-                trailing={
-                  isCurrent ? <Chip label={t('firearms.sightCurrent')} tone="primary" /> : undefined
-                }
-                onPress={() => onEditSightSetting(setting)}
-                testID={`sight-row-${setting.id}`}
+                testID="sight-elevation"
               />
-            );
-          })
-        )}
-        {showSightForm && (
-          <>
-            <ThemedText type="small">{t('firearms.sightLabel')}</ThemedText>
-            <TextField
-              value={sightLabel}
-              onChangeText={setSightLabel}
-              maxLength={TEXT_LIMITS.sight_settings.label}
-              placeholder={t('firearms.sightLabelPlaceholder')}
-              testID="sight-label"
-            />
-            <View style={styles.sectionHeader}>
-              <ThemedText type="small" style={styles.headerLabel}>
-                {t('firearms.sightElevation')}
-              </ThemedText>
-              <InfoButton
-                title={t('firearms.sightElevation')}
-                body={t('firearms.sightElevationHint')}
-                testID="sight-elevation-info"
-              />
-            </View>
-            <Stepper
-              value={sightElevation}
-              onChange={setSightElevation}
-              min={SIGHT_CLICK_MIN}
-              max={SIGHT_CLICK_MAX}
-              decrementLabel={t('firearms.sightElevationDecrease')}
-              incrementLabel={t('firearms.sightElevationIncrease')}
-              clearLabel={t('firearms.sightClicksClear')}
-              format={(clicks) =>
-                clicks === null
-                  ? t('firearms.sightClicksNotRecorded')
-                  : sightClicksDirectionText(t, clicks, 'elevation')
-              }
-              testID="sight-elevation"
-            />
-            <View style={styles.sectionHeader}>
-              <ThemedText type="small" style={styles.headerLabel}>
-                {t('firearms.sightWindage')}
-              </ThemedText>
-              <InfoButton
-                title={t('firearms.sightWindage')}
-                body={t('firearms.sightWindageHint')}
-                testID="sight-windage-info"
-              />
-            </View>
-            {/* Slider trial (#138): windage only, so it can be compared
+              <View style={styles.sectionHeader}>
+                <ThemedText type="small" style={styles.headerLabel}>
+                  {t('firearms.sightWindage')}
+                </ThemedText>
+                <InfoButton
+                  title={t('firearms.sightWindage')}
+                  body={t('firearms.sightWindageHint')}
+                  testID="sight-windage-info"
+                />
+              </View>
+              {/* Slider trial (#138): windage only, so it can be compared
                 against the elevation stepper directly above it. */}
-            <View style={styles.sectionHeader}>
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('firearms.sightWindageRange', { value: windageWindow })}
-              </ThemedText>
-              <ThemedText type="smallBold" testID="sight-windage-value">
-                {sightWindage === null
-                  ? t('firearms.sightClicksNotRecorded')
-                  : sightClicksDirectionText(t, sightWindage, 'windage')}
-              </ThemedText>
-            </View>
-            <Slider
-              value={sightWindage ?? 0}
-              min={-windageWindow}
-              max={windageWindow}
-              onChange={(clicks) => {
-                setSightWindage(clicks);
-                setWindageWindow((current) => expandedSightWindow(current, clicks));
-              }}
-              accessibilityLabel={t('firearms.sightWindage')}
-              testID="sight-windage"
-            />
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => setSightWindage(null)}
-              disabled={sightWindage === null}
-              testID="sight-windage-clear"
-            >
-              <ThemedText
-                type="small"
-                themeColor={sightWindage === null ? 'textSecondary' : 'primary'}
+              <View style={styles.sectionHeader}>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t('firearms.sightWindageRange', { value: windageWindow })}
+                </ThemedText>
+                <ThemedText type="smallBold" testID="sight-windage-value">
+                  {sightWindage === null
+                    ? t('firearms.sightClicksNotRecorded')
+                    : sightClicksDirectionText(t, sightWindage, 'windage')}
+                </ThemedText>
+              </View>
+              <Slider
+                value={sightWindage ?? 0}
+                min={-windageWindow}
+                max={windageWindow}
+                onChange={(clicks) => {
+                  setSightWindage(clicks);
+                  setWindageWindow((current) => expandedSightWindow(current, clicks));
+                }}
+                accessibilityLabel={t('firearms.sightWindage')}
+                testID="sight-windage"
+              />
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setSightWindage(null)}
+                disabled={sightWindage === null}
+                testID="sight-windage-clear"
               >
-                {t('firearms.sightClicksClear')}
-              </ThemedText>
-            </Pressable>
-            <ThemedText type="small">{t('firearms.notes')}</ThemedText>
-            <TextField
-              value={sightNotes}
-              onChangeText={setSightNotes}
-              maxLength={TEXT_LIMITS.sight_settings.notes}
-              testID="sight-notes"
-            />
-            <SecondaryButton
-              label={t('common.save')}
-              onPress={onSaveSightSetting}
-              testID="save-sight-setting"
-            />
-            {editingSightId && !editingIsCurrentSightSetting ? (
-              <SecondaryButton
-                label={t('firearms.sightSetCurrent')}
-                onPress={onSetCurrentSightSetting}
-                testID="sight-set-current"
+                <ThemedText
+                  type="small"
+                  themeColor={sightWindage === null ? 'textSecondary' : 'primary'}
+                >
+                  {t('firearms.sightClicksClear')}
+                </ThemedText>
+              </Pressable>
+              <ThemedText type="small">{t('firearms.notes')}</ThemedText>
+              <TextField
+                value={sightNotes}
+                onChangeText={setSightNotes}
+                maxLength={TEXT_LIMITS.sight_settings.notes}
+                testID="sight-notes"
               />
-            ) : null}
-            {editingSightId ? (
               <SecondaryButton
-                tone="danger"
-                label={t('firearms.sightDelete')}
-                onPress={onDeleteSightSetting}
-                testID="sight-delete"
+                label={t('common.save')}
+                onPress={onSaveSightSetting}
+                testID="save-sight-setting"
               />
-            ) : null}
-          </>
-        )}
-      </Card>
+              {editingSightId && !editingIsCurrentSightSetting ? (
+                <SecondaryButton
+                  label={t('firearms.sightSetCurrent')}
+                  onPress={onSetCurrentSightSetting}
+                  testID="sight-set-current"
+                />
+              ) : null}
+              {editingSightId ? (
+                <SecondaryButton
+                  tone="danger"
+                  label={t('firearms.sightDelete')}
+                  onPress={onDeleteSightSetting}
+                  testID="sight-delete"
+                />
+              ) : null}
+            </>
+          )}
+        </Card>
+      )}
 
       {/* License register */}
       <Card>
@@ -1202,115 +1219,128 @@ export default function FirearmDetailScreen() {
         )}
       </Card>
 
-      {/* Maintenance */}
+      {/* Maintenance. Hidden (#801): only the round-count correction stays,
+          since the round count is not part of the area. */}
       <Card>
-        <View style={styles.sectionHeader}>
-          <ThemedText type="smallBold" style={styles.headerLabel}>
-            {t('firearms.maintenanceTitle')}
-          </ThemedText>
-          {!showLogEvent && (
-            <TextButton
-              label={t('firearms.logEvent')}
-              onPress={() => setShowLogEvent(true)}
-              testID="log-maintenance"
-            />
-          )}
-        </View>
-        <ThemedText type="small">{t('firearms.maintenanceInterval')}</ThemedText>
-        <TextField
-          value={intervalValue}
-          onChangeText={(text) => {
-            setIntervalInput(text);
-            setIntervalStatus('idle');
-          }}
-          keyboardType="number-pad"
-          testID="maintenance-interval"
-        />
-        {intervalStatus === 'invalid' && intervalInvalid.rounds ? (
-          <ThemedText type="small" themeColor="danger" testID="interval-error">
-            {t('firearms.intervalInvalid')}
-          </ThemedText>
-        ) : null}
-        <ThemedText type="small">{t('firearms.maintenanceIntervalMonths')}</ThemedText>
-        <TextField
-          value={monthsValue}
-          onChangeText={(text) => {
-            setMonthsInput(text);
-            setIntervalStatus('idle');
-          }}
-          keyboardType="number-pad"
-          testID="maintenance-interval-months"
-        />
-        {intervalStatus === 'invalid' && intervalInvalid.months ? (
-          <ThemedText type="small" themeColor="danger" testID="interval-months-error">
-            {t('firearms.intervalMonthsInvalid')}
-          </ThemedText>
-        ) : null}
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('firearms.maintenanceIntervalMonthsHelp')}
-        </ThemedText>
-        <SecondaryButton label={t('common.save')} onPress={onSaveInterval} testID="save-interval" />
-        {intervalStatus === 'saved' ? (
-          <ThemedText
-            type="small"
-            themeColor="textSecondary"
-            accessibilityLiveRegion="polite"
-            testID="interval-saved"
-          >
-            {t('firearms.intervalSaved')}
-          </ThemedText>
-        ) : null}
-
-        {detail.maintenanceEvents.length === 0 ? (
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('firearms.noMaintenanceEvents')}
-          </ThemedText>
-        ) : (
-          detail.maintenanceEvents.map((event) => (
-            <ListRow
-              key={event.id}
-              title={maintenanceEventTitle(event, t('firearms.adjustmentEvent'))}
-              subtitle={maintenanceEventLines(event, dates.date)}
-            />
-          ))
-        )}
-
-        {showLogEvent && (
+        {features.maintenance && (
           <>
-            <ThemedText type="small">{t('firearms.eventDate')}</ThemedText>
+            <View style={styles.sectionHeader}>
+              <ThemedText type="smallBold" style={styles.headerLabel}>
+                {t('firearms.maintenanceTitle')}
+              </ThemedText>
+              {!showLogEvent && (
+                <TextButton
+                  label={t('firearms.logEvent')}
+                  onPress={() => setShowLogEvent(true)}
+                  testID="log-maintenance"
+                />
+              )}
+            </View>
+            <ThemedText type="small">{t('firearms.maintenanceInterval')}</ThemedText>
+            <TextField
+              value={intervalValue}
+              onChangeText={(text) => {
+                setIntervalInput(text);
+                setIntervalStatus('idle');
+              }}
+              keyboardType="number-pad"
+              testID="maintenance-interval"
+            />
+            {intervalStatus === 'invalid' && intervalInvalid.rounds ? (
+              <ThemedText type="small" themeColor="danger" testID="interval-error">
+                {t('firearms.intervalInvalid')}
+              </ThemedText>
+            ) : null}
+            <ThemedText type="small">{t('firearms.maintenanceIntervalMonths')}</ThemedText>
+            <TextField
+              value={monthsValue}
+              onChangeText={(text) => {
+                setMonthsInput(text);
+                setIntervalStatus('idle');
+              }}
+              keyboardType="number-pad"
+              testID="maintenance-interval-months"
+            />
+            {intervalStatus === 'invalid' && intervalInvalid.months ? (
+              <ThemedText type="small" themeColor="danger" testID="interval-months-error">
+                {t('firearms.intervalMonthsInvalid')}
+              </ThemedText>
+            ) : null}
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('firearms.maintenanceIntervalMonthsHelp')}
+            </ThemedText>
             <SecondaryButton
-              label={dates.date(eventPerformedAt)}
-              onPress={() => setEventDatePickerOpen(true)}
-              testID="event-date"
+              label={t('common.save')}
+              onPress={onSaveInterval}
+              testID="save-interval"
             />
-            {eventDatePickerOpen && (
-              <DateTimePicker
-                testID="event-date-picker"
-                value={new Date(eventPerformedAt)}
-                mode="date"
-                maximumDate={new Date()}
-                display={Platform.OS === 'ios' ? 'inline' : 'default'}
-                onChange={(_event, selected) => {
-                  setEventDatePickerOpen(false);
-                  if (selected) setEventPerformedAt(selected.toISOString());
-                }}
-              />
+            {intervalStatus === 'saved' ? (
+              <ThemedText
+                type="small"
+                themeColor="textSecondary"
+                accessibilityLiveRegion="polite"
+                testID="interval-saved"
+              >
+                {t('firearms.intervalSaved')}
+              </ThemedText>
+            ) : null}
+
+            {detail.maintenanceEvents.length === 0 ? (
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('firearms.noMaintenanceEvents')}
+              </ThemedText>
+            ) : (
+              detail.maintenanceEvents.map((event) => (
+                <ListRow
+                  key={event.id}
+                  title={maintenanceEventTitle(event, t('firearms.adjustmentEvent'))}
+                  subtitle={maintenanceEventLines(event, dates.date)}
+                />
+              ))
             )}
-            <ThemedText type="small">{t('firearms.kind')}</ThemedText>
-            <TextField
-              value={eventKind}
-              onChangeText={setEventKind}
-              maxLength={TEXT_LIMITS.maintenance_events.kind}
-              placeholder={t('firearms.kindPlaceholder')}
-              testID="event-kind"
-            />
-            <ThemedText type="small">{t('firearms.notes')}</ThemedText>
-            <TextField
-              value={eventNotes}
-              onChangeText={setEventNotes}
-              maxLength={TEXT_LIMITS.maintenance_events.notes}
-            />
-            <SecondaryButton label={t('common.save')} onPress={onLogEvent} testID="save-event" />
+
+            {showLogEvent && (
+              <>
+                <ThemedText type="small">{t('firearms.eventDate')}</ThemedText>
+                <SecondaryButton
+                  label={dates.date(eventPerformedAt)}
+                  onPress={() => setEventDatePickerOpen(true)}
+                  testID="event-date"
+                />
+                {eventDatePickerOpen && (
+                  <DateTimePicker
+                    testID="event-date-picker"
+                    value={new Date(eventPerformedAt)}
+                    mode="date"
+                    maximumDate={new Date()}
+                    display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                    onChange={(_event, selected) => {
+                      setEventDatePickerOpen(false);
+                      if (selected) setEventPerformedAt(selected.toISOString());
+                    }}
+                  />
+                )}
+                <ThemedText type="small">{t('firearms.kind')}</ThemedText>
+                <TextField
+                  value={eventKind}
+                  onChangeText={setEventKind}
+                  maxLength={TEXT_LIMITS.maintenance_events.kind}
+                  placeholder={t('firearms.kindPlaceholder')}
+                  testID="event-kind"
+                />
+                <ThemedText type="small">{t('firearms.notes')}</ThemedText>
+                <TextField
+                  value={eventNotes}
+                  onChangeText={setEventNotes}
+                  maxLength={TEXT_LIMITS.maintenance_events.notes}
+                />
+                <SecondaryButton
+                  label={t('common.save')}
+                  onPress={onLogEvent}
+                  testID="save-event"
+                />
+              </>
+            )}
           </>
         )}
 

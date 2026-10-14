@@ -8,6 +8,7 @@ import {
 } from '@shotledger/shared/src/disciplines';
 import { tenthsToScore } from '@shotledger/shared/src/scoring/totals';
 import { partitionTags } from '@shotledger/shared/src/tags/machine-tag';
+import { readAccountSettings } from '@shotledger/shared/src/sync-client/account-settings';
 import type { TFunction } from 'i18next';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -82,10 +83,17 @@ export function Sessions({
 }) {
   const sessions = useMemo(() => browseSessions(tables), [tables]);
   const owners = useMemo(() => photoOwners(sessions), [sessions]);
-  const picks = useMemo(() => ({ picked, setPicked: onPicked }), [picked, onPicked]);
+  // Target photos hidden (#801): no picking, and #compare shows the list, as
+  // the phone's Photos leaves Tools.
+  const { showPhotos } = useMemo(() => readAccountSettings(tables.settings), [tables]);
+  const picks = useMemo(
+    () => ({ picked, setPicked: onPicked, enabled: showPhotos }),
+    [picked, onPicked, showPhotos],
+  );
+  const comparing = compare && showPhotos;
 
   let view;
-  if (compare) view = <Compare owners={owners} />;
+  if (comparing) view = <Compare owners={owners} />;
   else if (sessionId === null) view = <SessionList sessions={sessions} />;
   else {
     view = (
@@ -107,7 +115,7 @@ export function Sessions({
         </div>
       )}
       {view}
-      {!compare && <PickBar />}
+      {!comparing && <PickBar />}
     </PicksProvider>
   );
 }

@@ -510,7 +510,26 @@
     "externalSitesRowSubtitle": "Turn a site on and sign in to it",
     "dataTitle": "Backup & Data",
     "dataRowSubtitle": "Encrypted backup, JSON export and import",
-    "trainingRowSubtitle": "Keep your marks to improve hole detection"
+    "trainingRowSubtitle": "Keep your marks to improve hole detection",
+    "featuresTitle": "Features",
+    "featuresRowSubtitle": "Hide parts of the app you don’t use",
+    "featuresIntro": "Switch off a part you never use, and it leaves the menus and screens. Nothing is deleted: what you have already recorded stays, still shows where you recorded it, and everything comes back when you switch the part on again. Your choice follows your account to your other phones and the web.",
+    "feature": {
+      "licenseActivity": "License Activity",
+      "photos": "Target Photos",
+      "timer": "Timers",
+      "sightSettings": "Sight Settings",
+      "ammoLots": "Ammunition Lots",
+      "maintenance": "Maintenance"
+    },
+    "featureHint": {
+      "licenseActivity": "Off: no license activity status on Home, on the Firearms tab or on a firearm. Your sessions still count, and Compliance stays in Settings.",
+      "photos": "Off: no Photos in Tools, and adding a series goes straight to the keypad. A series that already has a photo still shows it.",
+      "timer": "Off: no Timers in Tools.",
+      "sightSettings": "Off: no sight settings on a firearm and no Sights button on a session.",
+      "ammoLots": "Off: no ammunition list under Firearms and no ammo lot when you log a session. A session that has a lot still shows it.",
+      "maintenance": "Off: no maintenance status, intervals or log on a firearm, and no maintenance reminders. The round count stays, and switching it back on brings your intervals and log back."
+    }
   },
   "about": {
     "title": "About",

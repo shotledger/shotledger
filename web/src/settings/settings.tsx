@@ -1,8 +1,9 @@
-// Settings: the five account settings that sync, edited and saved with one
+// Settings: the account settings that sync, edited and saved with one
 // push (docs/specs/web-settings-edit-spec.md). The form logic is in
 // model.ts, what a Save does in save.ts; this file only renders.
 import { PROFILE_SELECTIONS, type ProfileSelection } from '@shotledger/shared/src/compliance';
 import { SKILL_CLASSES } from '@shotledger/shared/src/disciplines/eligibility';
+import { FEATURE_IDS, FEATURE_SETTING_KEYS } from '@shotledger/shared/src/features';
 import { buildSettingsChanges } from '@shotledger/shared/src/sync-client/settings-edit';
 import type { AccountSettings } from '@shotledger/shared/src/sync-client/account-settings';
 import type { TFunction } from 'i18next';
@@ -260,6 +261,28 @@ export function Settings({
                 )}
               </fieldset>
             )}
+          </section>
+
+          {/* The phone's Settings → Features (#801): synced, so one switch per area here too. */}
+          <section className="card">
+            <h2>{t('settings.featuresTitle')}</h2>
+            <p className="muted">{t('settings.featuresIntro')}</p>
+            {FEATURE_IDS.map((id) => {
+              const key = FEATURE_SETTING_KEYS[id];
+              return (
+                <div key={id}>
+                  <label className="field check">
+                    <input
+                      type="checkbox"
+                      checked={form[key]}
+                      onChange={(event) => edit({ [key]: event.target.checked })}
+                    />
+                    {t(`settings.feature.${id}`)}
+                  </label>
+                  <p className="muted">{t(`settings.featureHint.${id}`)}</p>
+                </div>
+              );
+            })}
           </section>
         </fieldset>
 

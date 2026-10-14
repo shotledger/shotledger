@@ -5,12 +5,15 @@
 import {
   maintenanceDue,
   maintenanceTimeNotificationAt,
+  readFeatureVisibility,
   type MaintenanceDue,
 } from '@shotledger/shared';
 
 import { db } from '@/db/client';
 import { listActiveFirearms } from '@/db/queries/firearms';
 import { lastMaintenanceAtByFirearm } from '@/db/queries/maintenance-events';
+import { getSetting } from '@/db/queries/settings';
+import type { Database } from '@/db/types';
 import {
   replaceMaintenanceTimeReminders,
   type MaintenanceTimeReminder,
@@ -69,6 +72,11 @@ export function maintenanceTimeReminders(
   });
 }
 
+/** Settings → Features (#801): a hidden Maintenance sends no reminders. */
+export function maintenanceShown(database: Database): boolean {
+  return readFeatureVisibility((key) => getSetting<unknown>(database, key, undefined)).maintenance;
+}
+
 /**
  * Re-schedules every firearm's time reminder from the database. Runs at app
  * start and on return to the foreground (so an interval or maintenance that
@@ -81,6 +89,11 @@ export async function refreshMaintenanceTimeReminders({
   request: boolean;
 }): Promise<void> {
   if (!db) return;
+  // Hidden (#801): clear what is scheduled, and never ask for permission.
+  if (!maintenanceShown(db)) {
+    await replaceMaintenanceTimeReminders([], { request: false });
+    return;
+  }
   await replaceMaintenanceTimeReminders(
     maintenanceTimeReminders(listActiveFirearms(db), lastMaintenanceAtByFirearm(db), new Date()),
     { request },

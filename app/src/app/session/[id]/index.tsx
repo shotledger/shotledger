@@ -69,6 +69,7 @@ import { vibrate } from '@/platform/haptics';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
 import { useDateFormat } from '@/features/dates/use-date-format';
+import { useFeatures } from '@/features/settings/feature-visibility';
 
 type DetailView = 'series' | 'stats' | 'group';
 
@@ -91,6 +92,7 @@ export default function SessionDetailScreen() {
   const { detail, refresh } = useSessionDetail(id);
   const stats = useSessionStats(id);
   const group = useSessionGroup(id);
+  const features = useFeatures();
   const [nextIsFinal, setNextIsFinal] = useState(false);
   const [view, setView] = useState<DetailView>('series');
   const [entryChoiceOpen, setEntryChoiceOpen] = useState(false);
@@ -155,7 +157,9 @@ export default function SessionDetailScreen() {
     // the only way in, so neither the choice nor a remembered "photo" applies.
     const faceId =
       seriesTargetFace(session!.disciplineId, session!.programId, target.position) ?? '';
-    if (!isPhotoScoringSupported(faceId)) {
+    // With target photos hidden (#801) the keypad is the way in too, whatever
+    // the session remembered.
+    if (!features.photos || !isPhotoScoringSupported(faceId)) {
       openSeriesEntry('manual', target);
       return;
     }

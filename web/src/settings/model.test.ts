@@ -29,6 +29,12 @@ const SET: AccountSettings = {
   competesInWomensClasses: true,
   complianceProfile: 'se',
   complianceProfileVariant: null,
+  showLicenseActivity: true,
+  showPhotos: true,
+  showTimer: true,
+  showSightSettings: true,
+  showAmmoLots: true,
+  showMaintenance: true,
 };
 
 describe('the settings form', () => {
@@ -46,6 +52,12 @@ describe('the settings form', () => {
       competesInWomensClasses: true,
       complianceProfile: 'none',
       complianceProfileVariant: SE_FIRST_HANDGUN_VARIANT,
+      showLicenseActivity: true,
+      showPhotos: true,
+      showTimer: true,
+      showSightSettings: true,
+      showAmmoLots: true,
+      showMaintenance: true,
     });
     // An unset profile stays unset in the form: nothing is highlighted (R13).
     const unset = initialSettings(new Map());
@@ -118,6 +130,13 @@ describe('the settings form', () => {
       { competesInWomensClasses: false },
       { complianceProfile: 'none' as const },
       { complianceProfileVariant: SE_FIRST_HANDGUN_VARIANT },
+      // The feature switches (#801 W1).
+      { showLicenseActivity: false },
+      { showPhotos: false },
+      { showTimer: false },
+      { showSightSettings: false },
+      { showAmmoLots: false },
+      { showMaintenance: false },
     ]) {
       expect(hasChanges(SET, { ...SET, ...edit })).toBe(true);
     }

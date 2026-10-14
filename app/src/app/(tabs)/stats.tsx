@@ -33,6 +33,7 @@ import {
 import { Spacing } from '@/theme/tokens';
 import { localDayOf, localDayStartIso } from '@/features/dates/local-day';
 import { useDateFormat } from '@/features/dates/use-date-format';
+import { useFeatures } from '@/features/settings/feature-visibility';
 
 const ALL = 'all-values';
 type TypeChoice = typeof ALL | 'training' | 'competition';
@@ -69,6 +70,7 @@ export default function StatsScreen() {
   const { t } = useTranslation();
   const dates = useDateFormat();
   const router = useRouter();
+  const features = useFeatures();
   const [filter, setFilter] = useState<AnalyticsFilterState>(DEFAULT_ANALYTICS_FILTER);
   const [pickerOpen, setPickerOpen] = useState<'from' | 'to' | null>(null);
   const [openSection, setOpenSection] = useState<'discipline' | 'tags' | null>(null);
@@ -132,12 +134,14 @@ export default function StatsScreen() {
           onPress={() => router.push('/stats/records')}
           testID="stats-open-records"
         />
-        <DrillDownRow
-          title={t('ammo.compareOpen')}
-          subtitle={t('ammo.compareOpenSubtitle')}
-          onPress={() => router.push('/ammo/compare')}
-          testID="stats-open-ammo-compare"
-        />
+        {features.ammoLots && (
+          <DrillDownRow
+            title={t('ammo.compareOpen')}
+            subtitle={t('ammo.compareOpenSubtitle')}
+            onPress={() => router.push('/ammo/compare')}
+            testID="stats-open-ammo-compare"
+          />
+        )}
       </Card>
 
       <FilterCard title={t('stats.sectionPeriod')}>

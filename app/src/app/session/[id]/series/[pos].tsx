@@ -42,12 +42,14 @@ import { loadSessionDetail } from '@/features/session/use-session-detail';
 import { keepSeriesPhoto } from '@/platform/series-photos';
 import { resolveSeriesPhotoUri, seriesPhotoGone } from '@/platform/sync-photos';
 import { useTheme } from '@/hooks/use-theme';
+import { useFeatures } from '@/features/settings/feature-visibility';
 import { Radius, Spacing } from '@/theme/tokens';
 
 export default function SeriesEntryScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
   const router = useRouter();
+  const features = useFeatures();
   const { id, pos, final } = useLocalSearchParams<{
     id: string;
     pos: string;
@@ -243,11 +245,14 @@ export default function SeriesEntryScreen() {
         </Pressable>
       )}
 
-      <SecondaryButton
-        label={t(photoUri ? 'session.replacePhoto' : 'session.addPhoto')}
-        onPress={() => void onAttachPhoto()}
-        testID="attach-photo"
-      />
+      {/* Target photos hidden (#801): a photo already here still shows above. */}
+      {features.photos && (
+        <SecondaryButton
+          label={t(photoUri ? 'session.replacePhoto' : 'session.addPhoto')}
+          onPress={() => void onAttachPhoto()}
+          testID="attach-photo"
+        />
+      )}
 
       {showSighterOption && (
         <Card>
