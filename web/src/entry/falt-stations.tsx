@@ -7,6 +7,7 @@ import { figuresHitRange } from '@shotledger/shared/src/scoring/falt-station';
 import { useTranslation } from 'react-i18next';
 
 import { formatFaltResult } from '../../../app/src/features/session/format-falt-result';
+import { StepperField } from '../fields/stepper';
 import {
   addStation,
   canStartShootOff,
@@ -21,6 +22,17 @@ import {
 
 const range = (min: number, max: number) =>
   Array.from({ length: Math.max(0, max - min + 1) }, (_, i) => min + i);
+
+/** "Not chosen" / "not recorded" in a stepper's option list. */
+const NONE = '';
+
+/** min…max as stepper options, after an optional "–" for none. */
+const countOptions = (min: number, max: number, withNone: boolean) => [
+  ...(withNone ? [{ value: NONE, label: '–' }] : []),
+  ...range(min, max).map((n) => ({ value: String(n), label: String(n) })),
+];
+
+const countOrNull = (value: string) => (value === NONE ? null : Number(value));
 
 export function FaltStations({
   falt,
@@ -62,70 +74,31 @@ export function FaltStations({
               {t('station.title', { position: positions?.[index] ?? index + 1 })}
               {shootOff[index] && <span className="badge">{t('station.shootOff')}</span>}
             </legend>
-            <label className="field">
-              {t('station.hits')}
-              <select
-                disabled={removed}
-                value={row.hits ?? ''}
-                onChange={(event) =>
-                  onEdit(
-                    withHits(
-                      falt,
-                      index,
-                      event.target.value === '' ? null : Number(event.target.value),
-                    ),
-                  )
-                }
-              >
-                {/* Not chosen yet: a row left so is not saved; 0 is every shot missed (R8).
-                    A stored station always holds hits, as the phone's screen (E15). */}
-                {row.id === undefined && <option value="">–</option>}
-                {range(0, SHOTS_PER_STATION).map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              {t('station.figuresHit')}
-              <select
-                disabled={removed}
-                value={row.figuresHit}
-                onChange={(event) =>
-                  onEdit(withStation(falt, index, { figuresHit: Number(event.target.value) }))
-                }
-              >
-                {range(figures.min, figures.max).map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              {t('station.figureCount')}
-              <select
-                disabled={removed}
-                value={row.figureCount ?? ''}
-                onChange={(event) =>
-                  onEdit(
-                    withFigureCount(
-                      falt,
-                      index,
-                      event.target.value === '' ? null : Number(event.target.value),
-                    ),
-                  )
-                }
-              >
-                <option value="">–</option>
-                {range(1, SHOTS_PER_STATION).map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {/* Steppers, as the phone's station screen (#822): − value +. */}
+            <StepperField
+              label={t('station.hits')}
+              disabled={removed}
+              // Not chosen yet: a row left so is not saved; 0 is every shot
+              // missed (R8). A stored station always holds hits, as the
+              // phone's screen (E15).
+              options={countOptions(0, SHOTS_PER_STATION, row.id === undefined)}
+              value={row.hits === null ? NONE : String(row.hits)}
+              onChange={(next) => onEdit(withHits(falt, index, countOrNull(next)))}
+            />
+            <StepperField
+              label={t('station.figuresHit')}
+              disabled={removed}
+              options={countOptions(figures.min, figures.max, false)}
+              value={String(row.figuresHit)}
+              onChange={(next) => onEdit(withStation(falt, index, { figuresHit: Number(next) }))}
+            />
+            <StepperField
+              label={t('station.figureCount')}
+              disabled={removed}
+              options={countOptions(1, SHOTS_PER_STATION, true)}
+              value={row.figureCount === null ? NONE : String(row.figureCount)}
+              onChange={(next) => onEdit(withFigureCount(falt, index, countOrNull(next)))}
+            />
             <label className="field">
               {t('station.points')}
               <input

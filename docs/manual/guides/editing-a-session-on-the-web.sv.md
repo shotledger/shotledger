@@ -7,8 +7,10 @@ en plats eller ett vapen, eller skriva om en serie som blev fel. Logga in,
 ## Ändra passet
 
 **Redigera** öppnar passets fält som telefonens redigeringsskärm har dem:
-datum och tid, namn, plats, anteckningar, tävlingsfälten för en tävling, vapen
-och ammunitionsparti. Ett tomt namn behåller passets namn; en tom plats eller
+namn, datum och tid, vapen och ammunitionsparti först, sedan tävlingsfälten för
+en tävling. Plats och anteckningar ligger hopfällda under **Detaljer**; klicka
+för att öppna dem. Ett val som vapnet eller tävlingsnivån är en rad knappar där
+den valda är ifylld; **Ingen** rensar valet. Ett tomt namn behåller passets namn; en tom plats eller
 anteckning rensar den. Ett nytt datum före 1900 eller senare än i morgon
 avvisas, som i Mata in serier, och datum och tid skrivs i samma format som där.
 Typ, gren, matchformat och decimalräkning
@@ -25,7 +27,7 @@ provserie.
 Ett fältskjutningspass visar i stället sina stationer, var och en med
 telefonens stationsfält som i [Mata in serier](entering-series-on-the-web.md):
 **Träff**, **Träffade figurer**, **Figurer**, **Poäng**, **Maxpoäng** och
-**Struken**. En station behåller sitt nummer, som i telefonen, så efter en
+**Struken**, där antalen ställs in med **−** och **+** som i telefonen. En station behåller sitt nummer, som i telefonen, så efter en
 borttagen station blir det ett hopp i numreringen. Ändra en stations fält för
 att rätta den. **Ta bort station** tar bort den när du sparar (**Ångra** tar
 tillbaka den), och **Lägg till station** lägger till en efter den sista

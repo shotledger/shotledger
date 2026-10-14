@@ -81,7 +81,7 @@ on the phone. **Result Mode** sets whether the result reads as hits and
 figures (**Field**) or as one sum (**Point field**).
 
 Each station has the phone's station fields: **Hits**, **Figures Hit**,
-**Figures** (how many were set out), **Points** and **Max Points** for a
+**Figures** (how many were set out), each set with **−** and **+**, **Points** and **Max Points** for a
 ringed figure, and **Scratched**. Figures Hit offers only what the hits and
 figures allow. The total above the stations counts the stations that will be
 saved, leaving out scratched and shoot-off ones, as the phone does. **Add
@@ -94,7 +94,7 @@ station with nothing entered is not saved and does not start the shoot-off.
 
 **Hits** starts at **–**. A station with nothing entered is not saved, and
 the stations after it move up a number. For a station where every shot
-missed, choose **0** under Hits: it is saved and counts, as a station with 0
+missed, step Hits to **0** with **+**: it is saved and counts, as a station with 0
 hits.
 
 ## Add a target photo

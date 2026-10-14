@@ -1651,5 +1651,18 @@
     "filtersActive": "Filters ({{count}})",
     "removeFilter": "Remove filter {{label}}",
     "clearFilters": "Clear All"
+  },
+  "formsA": {
+    "decrease": "{{field}}, decrease",
+    "increase": "{{field}}, increase",
+    "details": "Details",
+    "optional": "Optional",
+    "ammoDetailsSummary": "Purchase date, brand, bullet, velocity, notes",
+    "ammoDetailsSummaryHandload": "Purchase date, recipe, bullet, velocity, notes",
+    "firearmDetailsSummary": "Serial number, register ID, load system, maintenance, notes",
+    "firearmEditDetailsSummary": "Serial number, register ID, load system, notes",
+    "sessionDetailsSummary": "Location, notes, tags, series entry",
+    "seriesEntry": "Series Entry",
+    "webSessionDetailsSummary": "Location, notes"
   }
 }

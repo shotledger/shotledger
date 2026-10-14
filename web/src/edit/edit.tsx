@@ -23,6 +23,7 @@ import { faltSendsTheSame, type FaltForm } from '../entry/falt-model';
 import { FaltStations } from '../entry/falt-stations';
 import { rowSummary } from '../entry/model';
 import { useOnline } from '../entry/entry';
+import { ChoiceField } from '../fields/choice';
 import { DateField, TimeField } from '../fields/date-time-fields';
 import type { PulledTables } from '../pull';
 import type { ReauthOutcome } from '../reauth';
@@ -75,6 +76,10 @@ function options(
 }
 
 /** The I/O a Save or Delete runs with, from the live page. */
+
+/** The "None" choice's value; never an id. */
+const NONE = '';
+
 export function webIo(refresh: () => Promise<boolean>): EditIo {
   return {
     currentUserId,
@@ -270,7 +275,19 @@ export function SessionEdit({
       <form className="entry" onSubmit={onSubmit} onKeyDown={onFormKeyDown} noValidate>
         {/* Nothing changes under a save in flight (#669 R23). */}
         <fieldset className="entry-fieldset" disabled={working}>
+          {/* As the phone's Edit Session (app/src/app/session/[id]/edit.tsx,
+              #822): what identifies the session leads, the competition facts
+              follow, and the optional location and notes fold under
+              Details. Choices are segmented or chips, never a native select. */}
           <section className="card entry-fields">
+            <label className="field">
+              {t('session.name')}
+              <input
+                value={form.name}
+                maxLength={TEXT_LIMITS.sessions.name}
+                onChange={(e) => set('name', e.target.value)}
+              />
+            </label>
             <DateField
               label={t('session.date')}
               value={form.date}
@@ -281,136 +298,24 @@ export function SessionEdit({
               value={form.time}
               onChange={(v) => set('time', v)}
             />
-            <label className="field">
-              {t('session.name')}
-              <input
-                value={form.name}
-                maxLength={TEXT_LIMITS.sessions.name}
-                onChange={(e) => set('name', e.target.value)}
-              />
-            </label>
-            <label className="field">
-              {t('session.location')}
-              <input
-                value={form.location}
-                placeholder={t('session.locationPlaceholder')}
-                maxLength={TEXT_LIMITS.sessions.location}
-                onChange={(e) => set('location', e.target.value)}
-              />
-            </label>
-            {isCompetition && (
-              <>
-                <label className="field">
-                  {t('session.competitionLevel')}
-                  <select
-                    value={form.competitionLevel ?? ''}
-                    onChange={(e) => set('competitionLevel', e.target.value || null)}
-                  >
-                    {form.competitionLevel === null && (
-                      <option value="">{t('session.none')}</option>
-                    )}
-                    {COMPETITION_LEVELS.map((level) => (
-                      <option key={level} value={level}>
-                        {t(`competitionLevel.${level}`)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="field check">
-                  <input
-                    type="checkbox"
-                    checked={form.isChampionship}
-                    onChange={(e) => set('isChampionship', e.target.checked)}
-                  />
-                  {t('session.championship')}
-                </label>
-                <label className="field">
-                  {t('session.competitionName')}
-                  <input
-                    value={form.competitionName}
-                    placeholder={t('session.competitionNamePlaceholder')}
-                    maxLength={TEXT_LIMITS.sessions.competition_name}
-                    onChange={(e) => set('competitionName', e.target.value)}
-                  />
-                </label>
-                {groups.length > 0 && (
-                  <label className="field">
-                    {t('session.weaponGroup')}
-                    <select
-                      value={form.weaponGroup ?? ''}
-                      onChange={(e) => set('weaponGroup', e.target.value || null)}
-                    >
-                      <option value="">{t('session.none')}</option>
-                      {groups.map((g) => (
-                        <option key={g.id} value={g.id}>
-                          {g.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-                {classes.length > 0 && (
-                  <label className="field">
-                    {t('session.shooterClass')}
-                    <select
-                      value={form.shooterClass ?? ''}
-                      onChange={(e) => set('shooterClass', e.target.value || null)}
-                    >
-                      <option value="">{t('session.none')}</option>
-                      {classes.map((code) => (
-                        <option key={code} value={code}>
-                          {formatShooterClass(code)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-                {events.length > 0 && (
-                  <label className="field">
-                    {t('session.event')}
-                    <select
-                      value={form.eventId ?? ''}
-                      onChange={(e) => set('eventId', e.target.value || null)}
-                    >
-                      <option value="">{t('session.none')}</option>
-                      {events.map((e) => (
-                        <option key={e.id} value={e.id}>
-                          {t(`eventCategory.${categoryKey(e.category)}`)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-              </>
-            )}
-            <label className="field">
-              {t('session.firearm')}
-              <select
-                value={form.firearmId ?? ''}
-                onChange={(e) => set('firearmId', e.target.value || null)}
-              >
-                <option value="">{t('session.none')}</option>
-                {firearms.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              {t('session.ammoLot')}
-              <select
-                value={form.ammoLotId ?? ''}
-                onChange={(e) => set('ammoLotId', e.target.value || null)}
-              >
-                <option value="">{t('session.none')}</option>
-                {ammoLots.map((lot) => (
-                  <option key={lot.id} value={lot.id}>
-                    {lot.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <ChoiceField
+              label={t('session.firearm')}
+              options={[
+                { value: NONE, label: t('session.none') },
+                ...firearms.map((f) => ({ value: f.id, label: f.label })),
+              ]}
+              value={form.firearmId ?? NONE}
+              onChange={(v) => set('firearmId', v || null)}
+            />
+            <ChoiceField
+              label={t('session.ammoLot')}
+              options={[
+                { value: NONE, label: t('session.none') },
+                ...ammoLots.map((lot) => ({ value: lot.id, label: lot.label })),
+              ]}
+              value={form.ammoLotId ?? NONE}
+              onChange={(v) => set('ammoLotId', v || null)}
+            />
             {opened.editsRounds && (
               <label className="field">
                 {t('session.roundsFired')}
@@ -436,16 +341,108 @@ export function SessionEdit({
                 </span>
               </p>
             )}
-            <label className="field edit-notes">
-              {t('session.notes')}
-              <textarea
-                value={form.notes}
-                rows={3}
-                maxLength={TEXT_LIMITS.sessions.notes}
-                onChange={(e) => set('notes', e.target.value)}
-              />
-            </label>
           </section>
+
+          {isCompetition && (
+            <section className="card entry-fields">
+              <ChoiceField
+                label={t('session.competitionLevel')}
+                options={[
+                  // A stored session without a level keeps "None" until one is chosen.
+                  ...(form.competitionLevel === null
+                    ? [{ value: NONE, label: t('session.none') }]
+                    : []),
+                  ...COMPETITION_LEVELS.map((level) => ({
+                    value: level as string,
+                    label: t(`competitionLevel.${level}`),
+                  })),
+                ]}
+                value={form.competitionLevel ?? NONE}
+                onChange={(v) => set('competitionLevel', v || null)}
+              />
+              <label className="field check">
+                <input
+                  type="checkbox"
+                  checked={form.isChampionship}
+                  onChange={(e) => set('isChampionship', e.target.checked)}
+                />
+                {t('session.championship')}
+              </label>
+              <label className="field">
+                {t('session.competitionName')}
+                <input
+                  value={form.competitionName}
+                  placeholder={t('session.competitionNamePlaceholder')}
+                  maxLength={TEXT_LIMITS.sessions.competition_name}
+                  onChange={(e) => set('competitionName', e.target.value)}
+                />
+              </label>
+              {groups.length > 0 && (
+                <ChoiceField
+                  label={t('session.weaponGroup')}
+                  options={[
+                    { value: NONE, label: t('session.none') },
+                    ...groups.map((g) => ({ value: g.id, label: g.label })),
+                  ]}
+                  value={form.weaponGroup ?? NONE}
+                  onChange={(v) => set('weaponGroup', v || null)}
+                />
+              )}
+              {classes.length > 0 && (
+                <ChoiceField
+                  label={t('session.shooterClass')}
+                  options={[
+                    { value: NONE, label: t('session.none') },
+                    ...classes.map((code) => ({ value: code, label: formatShooterClass(code) })),
+                  ]}
+                  value={form.shooterClass ?? NONE}
+                  onChange={(v) => set('shooterClass', v || null)}
+                />
+              )}
+              {events.length > 0 && (
+                <ChoiceField
+                  label={t('session.event')}
+                  options={[
+                    { value: NONE, label: t('session.none') },
+                    ...events.map((e) => ({
+                      value: e.id,
+                      label: t(`eventCategory.${categoryKey(e.category)}`),
+                    })),
+                  ]}
+                  value={form.eventId ?? NONE}
+                  onChange={(v) => set('eventId', v || null)}
+                />
+              )}
+            </section>
+          )}
+
+          <details className="card form-details">
+            <summary>
+              {t('formsA.details')}
+              <span className="muted">{t('formsA.webSessionDetailsSummary')}</span>
+            </summary>
+            <div className="entry-fields">
+              <label className="field">
+                {t('session.location')}
+                <input
+                  value={form.location}
+                  placeholder={t('session.locationPlaceholder')}
+                  maxLength={TEXT_LIMITS.sessions.location}
+                  onChange={(e) => set('location', e.target.value)}
+                />
+              </label>
+              <label className="field edit-notes">
+                {t('session.notes')}
+                <textarea
+                  value={form.notes}
+                  rows={3}
+                  placeholder={t('formsA.optional')}
+                  maxLength={TEXT_LIMITS.sessions.notes}
+                  onChange={(e) => set('notes', e.target.value)}
+                />
+              </label>
+            </div>
+          </details>
 
           {opened.editsSeries && (
             <SeriesRows

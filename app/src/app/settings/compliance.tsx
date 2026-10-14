@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/card';
 import { Screen } from '@/components/screen';
 import { ScreenTitle } from '@/components/screen-title';
-import { SegmentedControl } from '@/components/segmented-control';
+import { OptionPicker } from '@/components/option-picker';
 import { ThemedText } from '@/components/themed-text';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 
@@ -37,7 +37,9 @@ export default function ComplianceSettingsScreen() {
       <ScreenTitle>{t('compliance.settingsTitle')}</ScreenTitle>
 
       <Card>
-        <SegmentedControl
+        {/* OptionPicker picks Segmented or Choice Chips by label length;
+            "Sverige (FAP 551-3)" does not fit half a phone (#822). */}
+        <OptionPicker
           options={PROFILE_SELECTIONS.map((value) => ({
             value,
             label: t(PROFILE_LABEL_KEYS[value]),
@@ -60,7 +62,7 @@ export default function ComplianceSettingsScreen() {
           <ThemedText type="small" themeColor="textSecondary">
             {t('compliance.caseBody')}
           </ThemedText>
-          <SegmentedControl
+          <OptionPicker
             options={variantIds.map((id) => ({ value: id, label: t(`compliance.case.${id}`) }))}
             value={variantId}
             onChange={setVariantId}

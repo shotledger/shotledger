@@ -30,6 +30,12 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
+/** Unfolds "Details", where the optional fields live (#822). */
+async function openDetails() {
+  const toggle = screen.queryByTestId('ammo-details');
+  if (toggle) await fireEvent.press(toggle);
+}
+
 async function type(label: string, text: string) {
   await fireEvent.changeText(screen.getByLabelText(label), text);
 }
@@ -37,8 +43,22 @@ async function type(label: string, text: string) {
 const create = () => screen.getByRole('button', { name: 'Create Ammo Lot' });
 
 describe('New ammo lot', () => {
+  it('leads with label, caliber and quantity and folds the rest under Details', async () => {
+    await renderWithProviders(<NewAmmoLotScreen />);
+
+    expect(screen.getByLabelText('Label')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Quantity')).toHaveProp('placeholder', 'Optional');
+    expect(screen.queryByLabelText('Brand')).toBeNull();
+    expect(screen.queryByTestId('handload-toggle')).toBeNull();
+
+    await openDetails();
+    expect(screen.getByLabelText('Brand')).toHaveProp('placeholder', 'Optional');
+    expect(screen.getByTestId('handload-toggle')).toBeOnTheScreen();
+  });
+
   it('cannot be created without a label', async () => {
     await renderWithProviders(<NewAmmoLotScreen />);
+    await openDetails();
     expect(create()).toBeDisabled();
 
     await type('Label', '   ');
@@ -52,6 +72,7 @@ describe('New ammo lot', () => {
 
   it('stores a factory lot, numbers parsed and text trimmed', async () => {
     await renderWithProviders(<NewAmmoLotScreen />);
+    await openDetails();
 
     await type('Label', ' Practice box ');
     await fireEvent.press(screen.getByTestId('caliber-toggle'));
@@ -87,6 +108,7 @@ describe('New ammo lot', () => {
 
   it('stores nothing for a number field holding text', async () => {
     await renderWithProviders(<NewAmmoLotScreen />);
+    await openDetails();
 
     await type('Label', 'Practice box');
     await type('Quantity', 'a box');
@@ -98,6 +120,7 @@ describe('New ammo lot', () => {
 
   it('shows power factor and muzzle energy once weight and velocity are both in', async () => {
     await renderWithProviders(<NewAmmoLotScreen />);
+    await openDetails();
     expect(screen.queryByText('Power Factor')).toBeNull();
 
     await type('Bullet Weight (gr)', '124');
@@ -114,6 +137,7 @@ describe('New ammo lot', () => {
   describe('handloads', () => {
     it('swaps the factory fields for the recipe', async () => {
       await renderWithProviders(<NewAmmoLotScreen />);
+      await openDetails();
       expect(screen.getByLabelText('Brand')).toBeOnTheScreen();
       expect(screen.queryByText('Handload Recipe')).toBeNull();
 
@@ -127,6 +151,7 @@ describe('New ammo lot', () => {
 
     it('stores the recipe and drops factory fields typed before switching', async () => {
       await renderWithProviders(<NewAmmoLotScreen />);
+      await openDetails();
 
       await type('Label', 'Load 1');
       await type('Brand', 'Acme');
@@ -156,6 +181,7 @@ describe('New ammo lot', () => {
 
     it('drops the recipe typed before switching back to factory', async () => {
       await renderWithProviders(<NewAmmoLotScreen />);
+      await openDetails();
 
       await type('Label', 'Practice box');
       await fireEvent(screen.getByTestId('handload-toggle'), 'valueChange', true);
@@ -169,6 +195,7 @@ describe('New ammo lot', () => {
     it('hides the switch when handloads are turned off in Settings', async () => {
       setSetting(db, SETTINGS_KEYS.trackHandloads, false);
       await renderWithProviders(<NewAmmoLotScreen />);
+      await openDetails();
 
       expect(screen.queryByTestId('handload-toggle')).toBeNull();
       expect(screen.queryByText('Handload')).toBeNull();

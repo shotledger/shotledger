@@ -1651,5 +1651,18 @@
     "filtersActive": "Filter ({{count}})",
     "removeFilter": "Ta bort filtret {{label}}",
     "clearFilters": "Rensa alla"
+  },
+  "formsA": {
+    "decrease": "{{field}}, minska",
+    "increase": "{{field}}, öka",
+    "details": "Detaljer",
+    "optional": "Valfritt",
+    "ammoDetailsSummary": "Inköpsdatum, märke, kula, hastighet, anteckningar",
+    "ammoDetailsSummaryHandload": "Inköpsdatum, recept, kula, hastighet, anteckningar",
+    "firearmDetailsSummary": "Serienummer, vapenregister-id, laddsystem, underhåll, anteckningar",
+    "firearmEditDetailsSummary": "Serienummer, vapenregister-id, laddsystem, anteckningar",
+    "sessionDetailsSummary": "Plats, anteckningar, taggar, serieinmatning",
+    "seriesEntry": "Serieinmatning",
+    "webSessionDetailsSummary": "Plats, anteckningar"
   }
 }
