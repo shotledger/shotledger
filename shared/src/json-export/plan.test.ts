@@ -375,6 +375,7 @@ describe('buildDryRunPlan — firearms and licenses the file carries (#314)', ()
     roundCount: 0,
     maintenanceIntervalRounds: null,
     roundsSinceMaintenance: 0,
+    archivedAt: null,
   };
   const license: LicenseExport = {
     id: 'l1',

@@ -10,7 +10,10 @@ import { fileURLToPath } from 'node:url';
 
 import * as schema from './schema';
 
-const dirname = path.dirname(fileURLToPath(import.meta.url));
+// Jest (CommonJS via babel-preset-expo) compiles `import.meta.url` to null;
+// there the module-scoped `__dirname` is the same directory.
+const metaUrl: string | null = import.meta.url;
+const dirname = metaUrl ? path.dirname(fileURLToPath(metaUrl)) : __dirname;
 const migrationsDir = path.join(dirname, 'migrations');
 
 /** Creates a fresh in-memory DB with the current schema applied. */

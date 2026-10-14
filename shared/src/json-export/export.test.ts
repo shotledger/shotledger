@@ -192,6 +192,7 @@ describe('exportSessionsToJson — firearms and licenses (#314)', () => {
     roundCount: 1200,
     maintenanceIntervalRounds: 500,
     roundsSinceMaintenance: 120,
+    archivedAt: null,
   };
   const license: LicenseExport = {
     id: 'l1',

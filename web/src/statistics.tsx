@@ -330,7 +330,9 @@ function TypeComparison({ rows, t }: { rows: readonly SessionTypeComparison[]; t
             </caption>
             <thead>
               <tr>
-                <th />
+                <th>
+                  <span className="sr-only">{t('web.statsMeasure')}</span>
+                </th>
                 <th>{t('sessionType.training')}</th>
                 <th>{t('sessionType.competition')}</th>
               </tr>

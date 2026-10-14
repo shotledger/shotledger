@@ -1,4 +1,4 @@
-# ShotLedger
+# ![ShotLedger](assets/shotledger-horizontal-light.svg#only-light){ width="360" }![ShotLedger](assets/shotledger-horizontal-dark.svg#only-dark){ width="360" }
 
 En skytteloggbok för pistolskyttar, byggd kring det som faktiskt händer på
 banan: en serie skjuts, skotten knappas in, nästa serie börjar.

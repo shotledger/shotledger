@@ -28,6 +28,7 @@ import type { PulledTables } from '../pull';
 import type { ReauthOutcome } from '../reauth';
 import { PhotoBadge, PhotoPanel } from '../sessions/photos';
 import { SignInAgain } from '../sign-in-again';
+import { pickableFirearms } from '../firearms/active';
 import { errorMessage, statusMessages, type Message } from './messages';
 import {
   addRow,
@@ -138,10 +139,10 @@ export function SessionEdit({
   const disciplineId = String(session?.discipline_id ?? '');
   const discipline = getDiscipline(disciplineId);
 
-  const firearms = useMemo(
-    () => options(tables.firearms, firearmLabel, opened?.initial.firearmId ?? null),
-    [tables, opened],
-  );
+  const firearms = useMemo(() => {
+    const stored = opened?.initial.firearmId ?? null;
+    return options(pickableFirearms(tables.firearms, stored), firearmLabel, stored);
+  }, [tables, opened]);
   const ammoLots = useMemo(
     () => options(tables.ammo_lots, (row) => String(row.label), opened?.initial.ammoLotId ?? null),
     [tables, opened],
