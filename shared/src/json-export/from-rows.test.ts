@@ -65,6 +65,7 @@ const firearm: ExportFirearmRow = {
   roundCount: 500,
   maintenanceIntervalRounds: 1000,
   roundsSinceMaintenance: 200,
+  archivedAt: '2026-10-01T00:00:00.000Z',
 };
 
 const empty: SessionExportRows = {
@@ -342,6 +343,7 @@ describe('firearmExportsFromRows', () => {
         roundCount: 500,
         maintenanceIntervalRounds: 1000,
         roundsSinceMaintenance: 200,
+        archivedAt: '2026-10-01T00:00:00.000Z',
       },
       expect.objectContaining({ id: 'F2', isOwn: false }),
     ]);

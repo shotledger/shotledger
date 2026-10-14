@@ -31,6 +31,7 @@ const APP_TEXT_MAX: Record<string, number> = {
   updated_at: 32,
   started_at: 32,
   performed_at: 32,
+  archived_at: 32,
   firearm_id: 36,
   ammo_lot_id: 36,
   session_id: 36,
