@@ -35,7 +35,7 @@ import {
 } from '@shotledger/shared';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
@@ -48,6 +48,7 @@ import { SegmentedControl } from '@/components/segmented-control';
 import { Slider } from '@/components/slider';
 import { StatTile } from '@/components/stat-tile';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { SessionStopwatch } from '@/features/session/session-stopwatch';
 import { FaltTimer } from '@/features/timer/falt-timer';
 import { LevelMeterBar } from '@/features/timer/level-meter-bar';
@@ -298,7 +299,7 @@ function Timer({ modeSelector }: { modeSelector: ReactNode }) {
             <ThemedText type="smallBold" style={styles.label}>
               {t('timer.fields.randomStart')}
             </ThemedText>
-            <Switch
+            <Toggle
               value={setup.randomStart}
               onValueChange={(randomStart) => update({ randomStart })}
               testID="timer-random-start"
@@ -375,7 +376,7 @@ function Timer({ modeSelector }: { modeSelector: ReactNode }) {
               {t('timer.shots.record')}
             </ThemedText>
             <TimerMenu />
-            <Switch
+            <Toggle
               value={setup.recordShots}
               onValueChange={(recordShots) => update({ recordShots })}
               testID="timer-record-shots"
@@ -533,7 +534,7 @@ function Timer({ modeSelector }: { modeSelector: ReactNode }) {
               <ThemedText type="small" style={styles.label}>
                 {t('timer.spokenPrompts')}
               </ThemedText>
-              <Switch
+              <Toggle
                 value={setup.spokenPrompts}
                 onValueChange={(spokenPrompts) => update({ spokenPrompts })}
                 testID="timer-spoken-prompts"
