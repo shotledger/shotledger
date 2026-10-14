@@ -21,6 +21,7 @@ import {
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { TextField } from '@/components/text-field';
@@ -215,7 +216,12 @@ export default function StationEntryScreen() {
 
       <PrimaryButton label={t('station.save')} onPress={onSave} testID="save-station" />
       {row && (
-        <PrimaryButton label={t('station.delete')} onPress={onDelete} testID="delete-station" />
+        <SecondaryButton
+          label={t('station.delete')}
+          tone="danger"
+          onPress={onDelete}
+          testID="delete-station"
+        />
       )}
     </Screen>
   );
