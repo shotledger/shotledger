@@ -608,7 +608,7 @@ export default function NewSessionScreen() {
 
       <DetailsDisclosure
         title={t('entryA.details')}
-        summary={t('entryA.detailsSummary')}
+        summary={t(features.ammoLots ? 'entryA.detailsSummary' : 'entryA.detailsSummaryNoAmmo')}
         testID="session-details"
       >
         {kindPicker}

@@ -1687,6 +1687,7 @@
     "seriesShortSighter": "S{{position}} {{total}} provserie",
     "details": "Detaljer",
     "detailsSummary": "Loggning, namn, plats, ammunition, taggar med mera",
+    "detailsSummaryNoAmmo": "Loggning, namn, plats, taggar med mera",
     "fromLastSession": "Gren och vapen från ditt senaste pass."
   },
   "homeA": {

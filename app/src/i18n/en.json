@@ -1687,6 +1687,7 @@
     "seriesShortSighter": "S{{position}} {{total}} sighter",
     "details": "Details",
     "detailsSummary": "Logging, name, location, ammo, tags and more",
+    "detailsSummaryNoAmmo": "Logging, name, location, tags and more",
     "fromLastSession": "Discipline and firearm from your last session."
   },
   "homeA": {

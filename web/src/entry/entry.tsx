@@ -641,7 +641,9 @@ export function Entry({
           <details className="card entry-details">
             <summary>
               <strong>{t('entryA.details')}</strong>
-              <span className="muted">{t('entryA.detailsSummary')}</span>
+              <span className="muted">
+                {t(profile.showAmmoLots ? 'entryA.detailsSummary' : 'entryA.detailsSummaryNoAmmo')}
+              </span>
             </summary>
             <div className="entry-fields">
               <KindPicker form={form} edit={edit} />
