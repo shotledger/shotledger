@@ -11,6 +11,7 @@ import { MigrationGate } from '@/db/migration-gate';
 import { setMaintenanceDueListener } from '@/db/queries/maintenance-due';
 import { rewriteSeriesPhotoUris } from '@/db/queries/series';
 import { EvaluationGate } from '@/features/evaluation/evaluation-gate';
+import { MaintenanceReminders } from '@/features/firearms/maintenance-reminders';
 import { SyncTriggers } from '@/features/sync/sync-triggers';
 import { useResolvedThemeName, useTheme } from '@/hooks/use-theme';
 import '@/i18n';
@@ -91,6 +92,10 @@ function RootStack() {
       <Stack.Screen
         name="ammo/[id]/index"
         options={{ presentation: 'modal', headerShown: true, title: t('ammo.editLot') }}
+      />
+      <Stack.Screen
+        name="compliance"
+        options={{ headerShown: true, title: t('compliance.check.title') }}
       />
       <Stack.Screen
         name="timer"
@@ -198,6 +203,7 @@ function ThemedApp() {
       <AnimatedSplashOverlay />
       <EvaluationGate>
         <SyncTriggers />
+        <MaintenanceReminders />
         <RootStack />
       </EvaluationGate>
     </ThemeProvider>

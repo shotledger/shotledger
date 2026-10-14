@@ -110,7 +110,6 @@ const firearm = (id: string, roundCount: number) => ({
   notes: null,
   round_count: roundCount,
   maintenance_interval_rounds: null,
-  rounds_since_maintenance: roundCount,
 });
 
 const shot = (id: string, seriesId: string, position: number) => ({
@@ -313,7 +312,6 @@ describe('the web session edit path', () => {
     }
     expect(rows.get('firearms:f1')?.payload).toMatchObject({
       round_count: 95,
-      rounds_since_maintenance: 95,
     });
     // The tag link is left as the phone's delete leaves it.
     expect(rows.get('session_tags:l1')?.deletedAt).toBeNull();

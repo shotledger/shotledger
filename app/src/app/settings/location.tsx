@@ -8,13 +8,14 @@
 import { Stack } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { InfoButton } from '@/components/info-button';
 import { Screen } from '@/components/screen';
 import { ScreenTitle } from '@/components/screen-title';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { db } from '@/db/client';
 import { getSetting, setSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { Spacing } from '@/theme/tokens';
@@ -49,7 +50,7 @@ export default function LocationSettingsScreen() {
         </View>
         <View style={styles.switchRow}>
           <ThemedText type="small">{t('settings.locationLookupOnline')}</ThemedText>
-          <Switch
+          <Toggle
             value={onlineLocationLookup}
             onValueChange={onToggle}
             testID="online-location-lookup"

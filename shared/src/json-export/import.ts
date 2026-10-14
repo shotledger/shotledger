@@ -12,11 +12,13 @@ import {
   firearmExportSchema,
   JSON_EXPORT_VERSION,
   licenseExportSchema,
+  maintenanceEventExportSchema,
   sessionExportSchema,
   type FirearmExport,
   type ImportError,
   type ImportErrorCode,
   type LicenseExport,
+  type MaintenanceEventExport,
   type SeriesExport,
   type SessionExport,
 } from './types';
@@ -25,6 +27,7 @@ export interface ImportResult {
   sessions: SessionExport[];
   firearms: FirearmExport[];
   licenses: LicenseExport[];
+  maintenanceEvents: MaintenanceEventExport[];
   /** Entries that were skipped, with why. Empty on a clean file. */
   errors: ImportError[];
 }
@@ -81,7 +84,14 @@ export function importSessionsFromJson(text: string): ImportResult | ImportError
   const firearms = collect(envelope.data.firearms, firearmExportSchema, 'invalid-firearm', errors);
   const licenses = collect(envelope.data.licenses, licenseExportSchema, 'invalid-license', errors);
 
-  return { sessions, firearms, licenses, errors };
+  const maintenanceEvents = collect(
+    envelope.data.maintenanceEvents,
+    maintenanceEventExportSchema,
+    'invalid-maintenance-event',
+    errors,
+  );
+
+  return { sessions, firearms, licenses, maintenanceEvents, errors };
 }
 
 /** One entry at a time, for the same reason a session is parsed one at a time:

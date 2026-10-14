@@ -6,13 +6,24 @@ import {
   exportSessionsToJson,
   firearmExportsFromRows,
   licenseExportsFromRows,
+  maintenanceEventExportsFromRows,
   sessionExportsFromRows,
   type FirearmExport,
   type LicenseExport,
+  type MaintenanceEventExport,
   type SessionExport,
 } from '@shotledger/shared';
 
-import { ammoLots, faltStations, firearms, licenses, series, sessions, shots } from '../schema';
+import {
+  ammoLots,
+  faltStations,
+  firearms,
+  licenses,
+  maintenanceEvents,
+  series,
+  sessions,
+  shots,
+} from '../schema';
 import type { Database } from '../types';
 import { listTagsBySession } from '../queries/tags';
 
@@ -43,11 +54,19 @@ export function buildLicenseExports(db: Database): LicenseExport[] {
   return licenseExportsFromRows(db.select().from(licenses).where(isNull(licenses.deletedAt)).all());
 }
 
+/** Every non-deleted maintenance event, adjustments included (#727 M6). */
+export function buildMaintenanceEventExports(db: Database): MaintenanceEventExport[] {
+  return maintenanceEventExportsFromRows(
+    db.select().from(maintenanceEvents).where(isNull(maintenanceEvents.deletedAt)).all(),
+  );
+}
+
 /** Builds the full export text for every non-deleted session in the DB. */
 export function buildExportJson(db: Database, appVersion: string): string {
   return exportSessionsToJson(buildSessionExports(db), {
     appVersion,
     firearms: buildFirearmExports(db),
     licenses: buildLicenseExports(db),
+    maintenanceEvents: buildMaintenanceEventExports(db),
   });
 }

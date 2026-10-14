@@ -1,7 +1,7 @@
 import { disciplineSeriesLength } from '../disciplines';
 import { sessionVolume } from '../scoring/volume';
 import type { SessionImportGroup } from './import';
-import type { FirearmExport, LicenseExport } from './types';
+import type { FirearmExport, LicenseExport, MaintenanceEventExport } from './types';
 
 export interface ExistingIndex {
   /** ids of non-deleted sessions already in the target DB. */
@@ -41,11 +41,13 @@ export interface DryRunPlan {
   tags: NamedPlanItem[];
 }
 
-/** The file's firearm and license arrays, which a session references by id.
- *  Optional: a file written before they existed carries neither. */
+/** The file's firearm, license and maintenance arrays, which a session or
+ *  entry references by id. Optional: a file written before they existed
+ *  carries none of them. */
 export interface ImportRecords {
   firearms?: readonly FirearmExport[];
   licenses?: readonly LicenseExport[];
+  maintenanceEvents?: readonly MaintenanceEventExport[];
 }
 
 /** Rounds fired in a session from a file, counted as `sessionVolume` counts it. */

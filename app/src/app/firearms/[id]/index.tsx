@@ -7,14 +7,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import {
   canonicalCaliber,
   licenseExpiryNotifications,
+  localDayStartIso,
   parseLocalDay,
   resolveActiveSightSetting,
   selectableWeaponGroups,
-  shouldNotifyMaintenanceDue,
   sightTurnsBetween,
   weaponGroupLabel,
   type ParsedLicenseCard,
@@ -26,17 +26,22 @@ import { ScreenTitle } from '@/components/screen-title';
 import { CaliberPicker } from '@/components/caliber-picker';
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
+import { ConfirmSheet } from '@/components/confirm-sheet';
 import { InfoButton } from '@/components/info-button';
 import { ListRow } from '@/components/list-row';
 import { OptionPicker } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
+import { TextButton } from '@/components/text-button';
 import { Screen } from '@/components/screen';
 import { Slider } from '@/components/slider';
 import { licenseActivityKey } from '@/features/compliance/activity-key';
+import { nextSessionDeadline } from '@/features/compliance/next-session';
 import { missingFirearmFields, requiresLicense } from '@/features/firearms/completeness';
 import { Stepper } from '@/components/stepper';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { db } from '@/db/client';
 import { addFirearmCaliber, softDeleteFirearmCaliber } from '@/db/queries/firearm-calibers';
 import { addFirearmGroup, setDefaultFirearmGroup } from '@/db/queries/firearm-groups';
@@ -51,11 +56,20 @@ import {
 } from '@/db/queries/sight-settings';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 import {
+  archiveFirearmAndReminders,
+  restoreFirearmAndReminders,
+} from '@/features/firearms/archive-firearm';
+import {
+  firearmMaintenanceDue,
+  refreshMaintenanceTimeReminders,
+} from '@/features/firearms/maintenance';
+import {
   maintenanceEventLines,
   maintenanceEventTitle,
 } from '@/features/firearms/maintenance-event-lines';
 import {
   parseMaintenanceInterval,
+  parseMaintenanceIntervalMonths,
   parseRoundAdjustment,
   roundAdjustmentErrors,
 } from '@/features/firearms/round-adjustment';
@@ -157,7 +171,9 @@ export default function FirearmDetailScreen() {
   const [adjustAttempted, setAdjustAttempted] = useState(false);
 
   const [intervalInput, setIntervalInput] = useState<string | null>(null);
+  const [monthsInput, setMonthsInput] = useState<string | null>(null);
   const [intervalStatus, setIntervalStatus] = useState<'idle' | 'saved' | 'invalid'>('idle');
+  const [intervalInvalid, setIntervalInvalid] = useState({ rounds: false, months: false });
 
   const [showSightForm, setShowSightForm] = useState(false);
   const [editingSightId, setEditingSightId] = useState<string | null>(null);
@@ -170,6 +186,8 @@ export default function FirearmDetailScreen() {
   // one setting is being edited — see expandedSightWindow.
   const [windageWindow, setWindageWindow] = useState(SIGHT_SLIDER_WINDOW_STEP);
   const [sightNotes, setSightNotes] = useState('');
+
+  const [confirmArchive, setConfirmArchive] = useState(false);
 
   const { firearm } = detail;
   if (!firearm) {
@@ -184,6 +202,7 @@ export default function FirearmDetailScreen() {
   const availableGroups = ALL_GROUPS.filter((g) => !usedGroupIds.has(g.id));
   const newGroupLabel = availableGroups.find((g) => g.id === newGroupId)?.label ?? null;
   const intervalValue = intervalInput ?? String(firearm.maintenanceIntervalRounds ?? '');
+  const monthsValue = monthsInput ?? String(firearm.maintenanceIntervalMonths ?? '');
   const adjustErrors = roundAdjustmentErrors(adjustDelta, adjustReason);
 
   // A firearm that isn't the shooter's own needs no license of theirs, so a
@@ -197,6 +216,18 @@ export default function FirearmDetailScreen() {
   const currentSightSetting = resolveActiveSightSetting(detail.sightSettings);
   const editingIsCurrentSightSetting =
     editingSightId != null && currentSightSetting?.id === editingSightId;
+  const isArchived = firearm.archivedAt != null;
+
+  async function onConfirmArchive() {
+    setConfirmArchive(false);
+    await archiveFirearmAndReminders(firearm!.id);
+    refresh();
+  }
+
+  async function onRestore() {
+    await restoreFirearmAndReminders(firearm!.id);
+    refresh();
+  }
 
   function onAddCaliber() {
     if (!newCaliber) return;
@@ -334,6 +365,8 @@ export default function FirearmDetailScreen() {
       kind: eventKind.trim(),
       notes: eventNotes.trim() || null,
     });
+    // Maintenance restarts the time interval, so the reminder moves with it.
+    void refreshMaintenanceTimeReminders({ request: false });
     setEventKind('');
     setEventNotes('');
     setEventPerformedAt(new Date().toISOString());
@@ -356,20 +389,40 @@ export default function FirearmDetailScreen() {
   }
 
   function onSaveInterval() {
-    const previous = firearm!.roundsSinceMaintenance;
     const parsed = parseMaintenanceInterval(intervalValue);
-    if (!parsed.ok) {
+    const parsedMonths = parseMaintenanceIntervalMonths(monthsValue);
+    if (!parsed.ok || !parsedMonths.ok) {
+      setIntervalInvalid({ rounds: !parsed.ok, months: !parsedMonths.ok });
       setIntervalStatus('invalid');
       return;
     }
-    updateFirearm(db, firearm!.id, { maintenanceIntervalRounds: parsed.interval });
+    const next = {
+      ...firearm!,
+      maintenanceIntervalRounds: parsed.interval,
+      maintenanceIntervalMonths: parsedMonths.months,
+    };
+    updateFirearm(db, firearm!.id, {
+      maintenanceIntervalRounds: next.maintenanceIntervalRounds,
+      maintenanceIntervalMonths: next.maintenanceIntervalMonths,
+    });
+    // An interval saved already reached notifies at once, as a counter
+    // crossing it would; one still ahead by time is scheduled (#800). An
+    // archived firearm stays quiet (#799).
+    const changed =
+      next.maintenanceIntervalRounds !== firearm!.maintenanceIntervalRounds ||
+      next.maintenanceIntervalMonths !== firearm!.maintenanceIntervalMonths;
     if (
-      parsed.interval !== firearm!.maintenanceIntervalRounds &&
-      shouldNotifyMaintenanceDue(0, previous, parsed.interval)
+      changed &&
+      firearm!.archivedAt == null &&
+      firearmMaintenanceDue(next, detail.roundsSinceMaintenance, detail.lastMaintenanceAt)
+        .status === 'red'
     ) {
       void notifyMaintenanceDue(`${firearm!.make} ${firearm!.model}`);
     }
+    void refreshMaintenanceTimeReminders({ request: true });
     setIntervalInput(null);
+    setMonthsInput(null);
+    setIntervalInvalid({ rounds: false, months: false });
     setIntervalStatus('saved');
     refresh();
   }
@@ -454,6 +507,25 @@ export default function FirearmDetailScreen() {
         </View>
       </View>
 
+      {/* Archived (#799): hidden from the list and the session pickers, its
+          history kept. Said here, with the way back, so the screen never
+          looks like an ordinary firearm that went missing from the list. */}
+      {isArchived && (
+        <Card>
+          <ThemedText type="smallBold" testID="firearm-archived-title">
+            {t('firearms.archivedTitle')}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary" testID="firearm-archived-body">
+            {t('firearms.archivedBody', { date: dates.date(firearm.archivedAt!) })}
+          </ThemedText>
+          <SecondaryButton
+            label={t('firearms.restore')}
+            onPress={() => void onRestore()}
+            testID="restore-firearm"
+          />
+        </Card>
+      )}
+
       <PrimaryButton
         label={t('common.edit')}
         onPress={() => router.push(`/firearms/${firearm.id}/edit`)}
@@ -489,7 +561,7 @@ export default function FirearmDetailScreen() {
           </View>
           <View>
             <ThemedText type="subtitle" testID="rounds-since-maintenance">
-              {firearm.roundsSinceMaintenance}
+              {detail.roundsSinceMaintenance}
             </ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
               {t('firearms.roundsSinceMaintenance')}
@@ -503,10 +575,36 @@ export default function FirearmDetailScreen() {
             tone={MAINTENANCE_TONE[detail.maintenanceStatus]}
           />
         )}
+        {/* What made it due: the rounds, the months, or both (#800). */}
+        {detail.maintenanceDue.reasons.includes('rounds') && (
+          <ThemedText type="small" themeColor="textSecondary" testID="maintenance-due-rounds">
+            {t('firearms.maintenanceDueRounds', { count: firearm.maintenanceIntervalRounds ?? 0 })}
+          </ThemedText>
+        )}
+        {detail.maintenanceDue.reasons.includes('time') && (
+          <ThemedText type="small" themeColor="textSecondary" testID="maintenance-due-time">
+            {t(
+              detail.lastMaintenanceAt !== undefined
+                ? 'firearms.maintenanceDueTime'
+                : 'firearms.maintenanceDueTimeSinceAdded',
+              { count: firearm.maintenanceIntervalMonths ?? 0 },
+            )}
+          </ThemedText>
+        )}
+        {detail.maintenanceDue.dueDay !== null &&
+          !detail.maintenanceDue.reasons.includes('time') && (
+            <ThemedText type="small" themeColor="textSecondary" testID="maintenance-due-by">
+              {t('firearms.maintenanceDueBy', {
+                date: dates.date(localDayStartIso(detail.maintenanceDue.dueDay)),
+              })}
+            </ThemedText>
+          )}
       </Card>
 
-      {/* M6 (§6.6): hidden entirely when the compliance profile is 'none'. */}
-      {profile && detail.licenseActivities.length > 0 && (
+      {/* M6 (§6.6): hidden entirely when the compliance profile is 'none'.
+          Also for an archived firearm (#799): a firearm the shooter no longer
+          has needs no activity to keep its licence. */}
+      {profile && !isArchived && detail.licenseActivities.length > 0 && (
         <Card>
           <ThemedText type="smallBold">{t('compliance.licenseActivityTitle')}</ThemedText>
           <View style={styles.chipsRow}>
@@ -522,7 +620,7 @@ export default function FirearmDetailScreen() {
               />
             ))}
           </View>
-          {detail.licenseActivities.map((b) => (
+          {detail.licenseActivities.map((b, index) => (
             <View key={`detail-${licenseActivityKey(b)}`}>
               <ThemedText
                 type="small"
@@ -548,6 +646,11 @@ export default function FirearmDetailScreen() {
                       count: b.skippedSessionCount,
                     })}
               </ThemedText>
+              <NextSessionLine
+                lapseIso={detail.licenseActivityLapses[index]}
+                labelKey="compliance.nextSessionBy"
+                testID={`firearm-barometer-next-session-${licenseActivityKey(b)}`}
+              />
             </View>
           ))}
           {/* Which case is in effect is never silently applied — it is on
@@ -566,11 +669,12 @@ export default function FirearmDetailScreen() {
       {/* The two "Intyget avser" boxes that cover THIS firearm (#329). Shown
           separately from License Activity above because they are a different
           claim: that one counts every session whatever it was shot with, these
-          count only sessions logged with this gun. */}
-      {profile && detail.firearmCriteria.length > 0 && (
+          count only sessions logged with this gun. Not for an archived
+          firearm (#799): it is neither held nor up for renewal. */}
+      {profile && !isArchived && detail.firearmCriteria.length > 0 && (
         <Card>
           <ThemedText type="smallBold">{t('compliance.firearmCriteriaTitle')}</ThemedText>
-          {detail.firearmCriteria.map((criterion) => (
+          {detail.firearmCriteria.map((criterion, index) => (
             <View key={criterion.criterionId} style={styles.criterionBlock}>
               <View style={styles.chipsRow}>
                 <Chip
@@ -597,6 +701,11 @@ export default function FirearmDetailScreen() {
                   })}
                 </ThemedText>
               ))}
+              <NextSessionLine
+                lapseIso={detail.firearmCriteriaLapses[index]}
+                labelKey="compliance.criterionNextSessionBy"
+                testID={`firearm-criterion-next-session-${criterion.criterionId}`}
+              />
               <ThemedText type="small" themeColor="textSecondary">
                 {t(`compliance.criterionHint.${criterion.criterionId}`)}
               </ThemedText>
@@ -642,11 +751,20 @@ export default function FirearmDetailScreen() {
           <ThemedText type="smallBold" style={styles.headerLabel}>
             {t('firearms.calibersTitle')}
           </ThemedText>
-          <InfoButton
-            title={t('firearms.calibersTitle')}
-            body={t('firearms.calibersHint')}
-            testID="calibers-info"
-          />
+          <View style={styles.headerActions}>
+            <InfoButton
+              title={t('firearms.calibersTitle')}
+              body={t('firearms.calibersHint')}
+              testID="calibers-info"
+            />
+            {!showAddCaliber && (
+              <TextButton
+                label={t('firearms.addCaliber')}
+                onPress={() => setShowAddCaliber(true)}
+                testID="add-caliber"
+              />
+            )}
+          </View>
         </View>
         <ListRow
           title={firearm.caliber ?? t('firearms.noChambering')}
@@ -670,26 +788,20 @@ export default function FirearmDetailScreen() {
             }
           />
         ))}
-        {showAddCaliber ? (
+        {showAddCaliber && (
           <>
             <CaliberPicker
               label={t('firearms.caliber')}
               value={newCaliber}
               onChange={setNewCaliber}
             />
-            <PrimaryButton
+            <SecondaryButton
               label={t('firearms.addCaliber')}
               onPress={onAddCaliber}
               disabled={!newCaliber}
               testID="save-caliber"
             />
           </>
-        ) : (
-          <PrimaryButton
-            label={t('firearms.addCaliber')}
-            onPress={() => setShowAddCaliber(true)}
-            testID="add-caliber"
-          />
         )}
       </Card>
 
@@ -699,11 +811,20 @@ export default function FirearmDetailScreen() {
           <ThemedText type="smallBold" style={styles.headerLabel}>
             {t('firearms.groupsTitle')}
           </ThemedText>
-          <InfoButton
-            title={t('firearms.groupsTitle')}
-            body={t('firearms.groupsHint')}
-            testID="groups-info"
-          />
+          <View style={styles.headerActions}>
+            <InfoButton
+              title={t('firearms.groupsTitle')}
+              body={t('firearms.groupsHint')}
+              testID="groups-info"
+            />
+            {!showAddGroup && (
+              <TextButton
+                label={t('firearms.addGroup')}
+                onPress={() => setShowAddGroup(true)}
+                testID="add-group"
+              />
+            )}
+          </View>
         </View>
         {detail.groups.length === 0 ? (
           <ThemedText type="small" themeColor="textSecondary">
@@ -732,7 +853,7 @@ export default function FirearmDetailScreen() {
             />
           ))
         )}
-        {showAddGroup ? (
+        {showAddGroup && (
           <>
             <OptionPicker
               label={t('firearms.group')}
@@ -750,21 +871,15 @@ export default function FirearmDetailScreen() {
                   ? t('firearms.defaultForGroup', { group: newGroupLabel })
                   : t('firearms.defaultForThisGroup')}
               </ThemedText>
-              <Switch value={newGroupDefault} onValueChange={setNewGroupDefault} />
+              <Toggle value={newGroupDefault} onValueChange={setNewGroupDefault} />
             </View>
-            <PrimaryButton
+            <SecondaryButton
               label={t('firearms.addGroup')}
               onPress={onAddGroup}
               disabled={!newGroupId}
               testID="save-group"
             />
           </>
-        ) : (
-          <PrimaryButton
-            label={t('firearms.addGroup')}
-            onPress={() => setShowAddGroup(true)}
-            testID="add-group"
-          />
         )}
       </Card>
 
@@ -774,11 +889,20 @@ export default function FirearmDetailScreen() {
           <ThemedText type="smallBold" style={styles.headerLabel}>
             {t('firearms.sightSettingsTitle')}
           </ThemedText>
-          <InfoButton
-            title={t('firearms.sightSettingsTitle')}
-            body={t('firearms.sightSettingsHint')}
-            testID="sight-settings-info"
-          />
+          <View style={styles.headerActions}>
+            <InfoButton
+              title={t('firearms.sightSettingsTitle')}
+              body={t('firearms.sightSettingsHint')}
+              testID="sight-settings-info"
+            />
+            {!showSightForm && (
+              <TextButton
+                label={t('firearms.addSightSetting')}
+                onPress={onAddSightSetting}
+                testID="add-sight-setting"
+              />
+            )}
+          </View>
         </View>
         {detail.sightSettings.length === 0 ? (
           <ThemedText type="small" themeColor="textSecondary">
@@ -810,7 +934,7 @@ export default function FirearmDetailScreen() {
             );
           })
         )}
-        {showSightForm ? (
+        {showSightForm && (
           <>
             <ThemedText type="small">{t('firearms.sightLabel')}</ThemedText>
             <TextField
@@ -898,32 +1022,27 @@ export default function FirearmDetailScreen() {
               maxLength={TEXT_LIMITS.sight_settings.notes}
               testID="sight-notes"
             />
-            <PrimaryButton
+            <SecondaryButton
               label={t('common.save')}
               onPress={onSaveSightSetting}
               testID="save-sight-setting"
             />
             {editingSightId && !editingIsCurrentSightSetting ? (
-              <PrimaryButton
+              <SecondaryButton
                 label={t('firearms.sightSetCurrent')}
                 onPress={onSetCurrentSightSetting}
                 testID="sight-set-current"
               />
             ) : null}
             {editingSightId ? (
-              <PrimaryButton
+              <SecondaryButton
+                tone="danger"
                 label={t('firearms.sightDelete')}
                 onPress={onDeleteSightSetting}
                 testID="sight-delete"
               />
             ) : null}
           </>
-        ) : (
-          <PrimaryButton
-            label={t('firearms.addSightSetting')}
-            onPress={onAddSightSetting}
-            testID="add-sight-setting"
-          />
         )}
       </Card>
 
@@ -935,14 +1054,27 @@ export default function FirearmDetailScreen() {
               "No License" would name a gap that does not exist (#365). The
               card stays, because a powerful air rifle above the limit does
               need one and the app cannot tell them apart. */}
-          <Chip
-            testID="license-status"
-            label={
-              licenseExempt
-                ? t('firearms.licenseNotRequired')
-                : t(`firearms.licenseStatus${capitalize(detail.licenseStatus)}`)
-            }
-          />
+          <View style={styles.headerActions}>
+            {/* Chip pins itself to the top of its row; its own View centres it
+                beside the text button. */}
+            <View>
+              <Chip
+                testID="license-status"
+                label={
+                  licenseExempt
+                    ? t('firearms.licenseNotRequired')
+                    : t(`firearms.licenseStatus${capitalize(detail.licenseStatus)}`)
+                }
+              />
+            </View>
+            {!showAddLicense && (
+              <TextButton
+                label={t('firearms.addLicense')}
+                onPress={() => setShowAddLicense(true)}
+                testID="add-license"
+              />
+            )}
+          </View>
         </View>
         {detail.licenses.length === 0 ? (
           <ThemedText type="small" themeColor="textSecondary">
@@ -960,7 +1092,7 @@ export default function FirearmDetailScreen() {
             />
           ))
         )}
-        {showAddLicense ? (
+        {showAddLicense && (
           <>
             {SCAN_SUPPORTED ? (
               <>
@@ -968,13 +1100,13 @@ export default function FirearmDetailScreen() {
                 <ThemedText type="small" themeColor="textSecondary">
                   {t('firearms.scanHint')}
                 </ThemedText>
-                <PrimaryButton
+                <SecondaryButton
                   label={t('firearms.scanFromCamera')}
                   onPress={() => void onScanCard('camera')}
                   disabled={scan.status === 'busy'}
                   testID="scan-card-camera"
                 />
-                <PrimaryButton
+                <SecondaryButton
                   label={t('firearms.scanFromLibrary')}
                   onPress={() => void onScanCard('library')}
                   disabled={scan.status === 'busy'}
@@ -1005,7 +1137,7 @@ export default function FirearmDetailScreen() {
                             details: scanFirearmSummary(scan.parsed),
                           })}
                         </ThemedText>
-                        <Switch
+                        <Toggle
                           value={applyFirearmDetails}
                           onValueChange={setApplyFirearmDetails}
                           testID="scan-apply-firearm"
@@ -1061,24 +1193,29 @@ export default function FirearmDetailScreen() {
               onChangeText={setAuthority}
               maxLength={TEXT_LIMITS.licenses.authority}
             />
-            <PrimaryButton
+            <SecondaryButton
               label={t('common.save')}
               onPress={() => void onAddLicense()}
               testID="save-license"
             />
           </>
-        ) : (
-          <PrimaryButton
-            label={t('firearms.addLicense')}
-            onPress={() => setShowAddLicense(true)}
-            testID="add-license"
-          />
         )}
       </Card>
 
       {/* Maintenance */}
       <Card>
-        <ThemedText type="smallBold">{t('firearms.maintenanceTitle')}</ThemedText>
+        <View style={styles.sectionHeader}>
+          <ThemedText type="smallBold" style={styles.headerLabel}>
+            {t('firearms.maintenanceTitle')}
+          </ThemedText>
+          {!showLogEvent && (
+            <TextButton
+              label={t('firearms.logEvent')}
+              onPress={() => setShowLogEvent(true)}
+              testID="log-maintenance"
+            />
+          )}
+        </View>
         <ThemedText type="small">{t('firearms.maintenanceInterval')}</ThemedText>
         <TextField
           value={intervalValue}
@@ -1089,12 +1226,30 @@ export default function FirearmDetailScreen() {
           keyboardType="number-pad"
           testID="maintenance-interval"
         />
-        {intervalStatus === 'invalid' ? (
+        {intervalStatus === 'invalid' && intervalInvalid.rounds ? (
           <ThemedText type="small" themeColor="danger" testID="interval-error">
             {t('firearms.intervalInvalid')}
           </ThemedText>
         ) : null}
-        <PrimaryButton label={t('common.save')} onPress={onSaveInterval} testID="save-interval" />
+        <ThemedText type="small">{t('firearms.maintenanceIntervalMonths')}</ThemedText>
+        <TextField
+          value={monthsValue}
+          onChangeText={(text) => {
+            setMonthsInput(text);
+            setIntervalStatus('idle');
+          }}
+          keyboardType="number-pad"
+          testID="maintenance-interval-months"
+        />
+        {intervalStatus === 'invalid' && intervalInvalid.months ? (
+          <ThemedText type="small" themeColor="danger" testID="interval-months-error">
+            {t('firearms.intervalMonthsInvalid')}
+          </ThemedText>
+        ) : null}
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('firearms.maintenanceIntervalMonthsHelp')}
+        </ThemedText>
+        <SecondaryButton label={t('common.save')} onPress={onSaveInterval} testID="save-interval" />
         {intervalStatus === 'saved' ? (
           <ThemedText
             type="small"
@@ -1120,10 +1275,10 @@ export default function FirearmDetailScreen() {
           ))
         )}
 
-        {showLogEvent ? (
+        {showLogEvent && (
           <>
             <ThemedText type="small">{t('firearms.eventDate')}</ThemedText>
-            <PrimaryButton
+            <SecondaryButton
               label={dates.date(eventPerformedAt)}
               onPress={() => setEventDatePickerOpen(true)}
               testID="event-date"
@@ -1155,14 +1310,8 @@ export default function FirearmDetailScreen() {
               onChangeText={setEventNotes}
               maxLength={TEXT_LIMITS.maintenance_events.notes}
             />
-            <PrimaryButton label={t('common.save')} onPress={onLogEvent} testID="save-event" />
+            <SecondaryButton label={t('common.save')} onPress={onLogEvent} testID="save-event" />
           </>
-        ) : (
-          <PrimaryButton
-            label={t('firearms.logEvent')}
-            onPress={() => setShowLogEvent(true)}
-            testID="log-maintenance"
-          />
         )}
 
         {showAdjust ? (
@@ -1193,20 +1342,44 @@ export default function FirearmDetailScreen() {
                 {t('firearms.adjustReasonRequired')}
               </ThemedText>
             ) : null}
-            <PrimaryButton
+            <SecondaryButton
               label={t('firearms.adjustSave')}
               onPress={onAdjust}
               testID="save-adjust"
             />
           </>
         ) : (
-          <PrimaryButton
+          <SecondaryButton
             label={t('firearms.adjustRoundCount')}
             onPress={() => setShowAdjust(true)}
             testID="adjust-round-count"
           />
         )}
       </Card>
+
+      {!isArchived && (
+        <>
+          <SecondaryButton
+            label={t('firearms.archive')}
+            onPress={() => setConfirmArchive(true)}
+            testID="archive-firearm"
+          />
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('firearms.archiveHint')}
+          </ThemedText>
+        </>
+      )}
+
+      <ConfirmSheet
+        visible={confirmArchive}
+        title={t('firearms.archiveConfirmTitle')}
+        body={t('firearms.archiveConfirmBody')}
+        confirmLabel={t('firearms.archive')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={() => void onConfirmArchive()}
+        onCancel={() => setConfirmArchive(false)}
+        testID="archive-firearm-confirm"
+      />
     </Screen>
   );
 }
@@ -1215,6 +1388,26 @@ export default function FirearmDetailScreen() {
  *  row. Empty when the card gave none — the row is then not offered. */
 function scanFirearmSummary(parsed: ParsedLicenseCard): string {
   return [parsed.make, parsed.model, parsed.caliber, parsed.vapenId].filter(Boolean).join(' · ');
+}
+
+/** "Next session by …" under a met requirement; nothing when it is not met (#795). */
+function NextSessionLine({
+  lapseIso,
+  labelKey,
+  testID,
+}: {
+  lapseIso: string | null | undefined;
+  labelKey: 'compliance.nextSessionBy' | 'compliance.criterionNextSessionBy';
+  testID: string;
+}) {
+  const { t } = useTranslation();
+  const dates = useDateFormat();
+  if (!lapseIso) return null;
+  return (
+    <ThemedText type="small" themeColor="textSecondary" testID={testID}>
+      {t(labelKey, { date: dates.date(nextSessionDeadline(lapseIso)) })}
+    </ThemedText>
+  );
 }
 
 function capitalize(value: string): string {
@@ -1242,6 +1435,11 @@ const styles = StyleSheet.create({
   },
   headerLabel: {
     flexShrink: 1,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
   },
   switchRow: {
     flexDirection: 'row',

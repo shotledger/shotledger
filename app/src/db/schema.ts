@@ -37,7 +37,15 @@ export const firearms = sqliteTable('firearms', {
   notes: text('notes'),
   roundCount: integer('round_count').notNull().default(0),
   maintenanceIntervalRounds: integer('maintenance_interval_rounds'),
-  roundsSinceMaintenance: integer('rounds_since_maintenance').notNull().default(0),
+  // Calendar months between maintenance (#800); due when either interval is
+  // reached. NULL = no time reminder. No default: the user sets it.
+  maintenanceIntervalMonths: integer('maintenance_interval_months'),
+  /**
+   * When the shooter archived it — sold, returned or retired (#799). NULL is
+   * active. Archiving only hides the firearm from lists and pickers: its
+   * sessions, licences and maintenance stay, unlike `deleted_at`.
+   */
+  archivedAt: text('archived_at'),
 });
 
 export const licenses = sqliteTable('licenses', {
@@ -356,7 +364,9 @@ export const maintenanceEvents = sqliteTable('maintenance_events', {
     .references(() => firearms.id),
   performedAt: text('performed_at').notNull(),
   kind: text('kind').notNull(), // free text the user typed; '' on an adjustment
-  roundCountAt: integer('round_count_at'),
+  // The firearm's round count when logged; rounds since maintenance counts
+  // from it (#727 PR B), so it is always known.
+  roundCountAt: integer('round_count_at').notNull(),
   notes: text('notes'),
   // A manual round-count correction with a reason, not maintenance performed
   // (#727): replaces the reserved kind 'adjustment' a user could also type.

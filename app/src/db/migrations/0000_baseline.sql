@@ -81,7 +81,8 @@ CREATE TABLE `firearms` (
 	`notes` text,
 	`round_count` integer DEFAULT 0 NOT NULL,
 	`maintenance_interval_rounds` integer,
-	`rounds_since_maintenance` integer DEFAULT 0 NOT NULL
+	`maintenance_interval_months` integer,
+	`archived_at` text
 );
 --> statement-breakpoint
 CREATE TABLE `licenses` (
@@ -107,7 +108,7 @@ CREATE TABLE `maintenance_events` (
 	`firearm_id` text NOT NULL,
 	`performed_at` text NOT NULL,
 	`kind` text NOT NULL,
-	`round_count_at` integer,
+	`round_count_at` integer NOT NULL,
 	`notes` text,
 	`is_adjustment` integer DEFAULT 0 NOT NULL,
 	FOREIGN KEY (`firearm_id`) REFERENCES `firearms`(`id`) ON UPDATE no action ON DELETE no action

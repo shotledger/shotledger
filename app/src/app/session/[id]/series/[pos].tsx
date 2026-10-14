@@ -11,16 +11,18 @@ import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { createKeypadState, enteredShots, type KeypadState } from '@shotledger/shared';
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { ScoreKeypad } from '@/components/score-keypad';
 import type { Celebration } from '@/components/series-celebration';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { db } from '@/db/client';
 import { saveSeriesShots } from '@/db/queries/round-count';
 import {
@@ -241,7 +243,7 @@ export default function SeriesEntryScreen() {
         </Pressable>
       )}
 
-      <PrimaryButton
+      <SecondaryButton
         label={t(photoUri ? 'session.replacePhoto' : 'session.addPhoto')}
         onPress={() => void onAttachPhoto()}
         testID="attach-photo"
@@ -251,7 +253,7 @@ export default function SeriesEntryScreen() {
         <Card>
           <View style={styles.switchRow}>
             <ThemedText type="small">{t('session.sighterOnThisSeries')}</ThemedText>
-            <Switch value={isSighter} onValueChange={setIsSighter} testID="series-sighter-toggle" />
+            <Toggle value={isSighter} onValueChange={setIsSighter} testID="series-sighter-toggle" />
           </View>
         </Card>
       )}

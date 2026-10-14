@@ -1,5 +1,8 @@
 // Spec: docs/specs/analytics-charts-spec.md. Each `TC-n` is the criterion.
+import { DataViz } from '@shotledger/shared/src/design-tokens';
+
 import {
+  CHART_LINE_COLORS,
   axisNeedsYear,
   groupByDiscipline,
   timeExtent,
@@ -199,5 +202,10 @@ describe('groupByDiscipline', () => {
     expect(lines.map((l) => l.key)).not.toContain('d8');
     expect(lines.map((l) => l.key)).not.toContain('d9');
     expect(new Set(lines.map((l) => l.color)).size).toBe(8);
+  });
+
+  it("draws the lines in the design tokens' categorical chart colours", () => {
+    expect(CHART_LINE_COLORS.light).toEqual(DataViz.light.categorical);
+    expect(CHART_LINE_COLORS.dark).toEqual(DataViz.dark.categorical);
   });
 });

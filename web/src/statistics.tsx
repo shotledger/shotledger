@@ -205,7 +205,7 @@ function Sections({
           {record(
             t('stats.recordSessionScore'),
             data.bestSessionScore,
-            score(data.bestSessionScore?.value ?? null),
+            formatTotalScore(data.bestSessionScore?.value ?? null),
           )}
           {record(
             t('stats.recordInnerTens'),
@@ -296,7 +296,11 @@ function TypeComparison({ rows, t }: { rows: readonly SessionTypeComparison[]; t
       label: t('stats.typeComparisonMedian'),
       value: (s) => score(s.medianSeriesTenths),
     },
-    { key: 'best', label: t('stats.typeComparisonBest'), value: (s) => score(s.bestSeriesTenths) },
+    {
+      key: 'best',
+      label: t('stats.typeComparisonBest'),
+      value: (s) => formatTotalScore(s.bestSeriesTenths),
+    },
     { key: 'sd', label: t('stats.statsSeriesSd'), value: (s) => score(s.seriesSdTenths, 2) },
     {
       key: 'x',
@@ -326,7 +330,9 @@ function TypeComparison({ rows, t }: { rows: readonly SessionTypeComparison[]; t
             </caption>
             <thead>
               <tr>
-                <th />
+                <th>
+                  <span className="sr-only">{t('web.statsMeasure')}</span>
+                </th>
                 <th>{t('sessionType.training')}</th>
                 <th>{t('sessionType.competition')}</th>
               </tr>
