@@ -128,6 +128,8 @@ function hasTimeLimitedPermit(firearm: FirearmFact): boolean {
 const SE_FIREARM_CRITERIA: FirearmComplianceRule[] = [
   {
     criterionId: SE_CRITERION_ADDITIONAL_HANDGUN,
+    // "Ytterligare enhandsvapen": the box for acquiring another handgun.
+    purpose: 'purchase',
     windowMonths: SE_ADDITIONAL_HANDGUN_WINDOW_MONTHS,
     windowCount: 1,
     requiredActivities: SE_ADDITIONAL_HANDGUN_REQUIRED,
@@ -136,6 +138,8 @@ const SE_FIREARM_CRITERIA: FirearmComplianceRule[] = [
   },
   {
     criterionId: SE_CRITERION_RENEWAL,
+    // "Förnyelse av tidsbegränsat tillstånd".
+    purpose: 'renewal',
     windowMonths: SE_RENEWAL_WINDOW_MONTHS,
     windowCount: SE_RENEWAL_WINDOW_COUNT,
     requiredActivities: SE_RENEWAL_REQUIRED_PER_WINDOW,

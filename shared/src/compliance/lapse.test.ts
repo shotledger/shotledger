@@ -57,6 +57,7 @@ function firearm(overrides: Partial<FirearmFact> = {}): FirearmFact {
 function additionalRule(overrides: Partial<FirearmComplianceRule> = {}): FirearmComplianceRule {
   return {
     criterionId: 'additional',
+    purpose: 'purchase',
     windowMonths: 6,
     windowCount: 1,
     requiredActivities: 2,
