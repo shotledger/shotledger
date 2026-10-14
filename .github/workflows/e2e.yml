@@ -141,9 +141,9 @@ jobs:
           api-level: 34
           target: google_apis
           arch: x86_64
-          # A phone-sized screen: without a profile the AVD is 320x640, and
-          # elements a real phone shows above the fold need scrolling.
-          profile: pixel_6
+          # No hardware profile, so the screen is 320x640: flows scroll to
+          # what they check. A pixel_6 profile (1080x2400) never showed the
+          # app's Home screen in any flow on this runner (2026-10-14).
           disable-animations: true
           working-directory: app
           script: |

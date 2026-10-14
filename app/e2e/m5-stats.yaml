@@ -48,20 +48,33 @@ appId: app.shotledger
 - takeScreenshot: m5-01-stats-default
 - assertVisible:
     id: 'stats-headline-chart'
-- assertVisible:
-    id: 'stat-mean'
-- assertVisible:
-    id: 'stat-sd'
-- assertVisible:
-    id: 'stat-x-percent'
+# The CI emulator's screen is small (320x640), so each figure is scrolled to.
+- scrollUntilVisible:
+    element:
+      id: 'stat-mean'
+    direction: DOWN
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: 'stat-sd'
+    direction: DOWN
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: 'stat-x-percent'
+    direction: DOWN
+    timeout: 15000
 # The counts card sits below the headline, detail and distribution cards.
 - scrollUntilVisible:
     element:
       id: 'stat-total-shots'
     direction: DOWN
     timeout: 15000
-- assertVisible:
-    id: 'stat-sessions'
+- scrollUntilVisible:
+    element:
+      id: 'stat-sessions'
+    direction: DOWN
+    timeout: 15000
 - scrollUntilVisible:
     element:
       id: 'stat-gold-series-count'
