@@ -101,9 +101,43 @@ export function periodRange(
   };
 }
 
-/** The form state as the pure engine's filter. */
-export function toAnalyticsFilter(state: AnalyticsFilterState, nowMs?: number): AnalyticsFilter {
-  const range = periodRange(state, nowMs);
+/**
+ * The period of equal length just before the filter's own, which the
+ * Statistics headline compares against (#822). `null` when there is no such
+ * period: all time, or a custom range missing an end.
+ *
+ * A rolling period ends now, so the one before it is the same length ending
+ * where it starts; a custom range of whole days is followed back by the same
+ * number of whole days. Both bounds are inclusive in the engine, so the
+ * earlier period ends a millisecond before the later one starts and no
+ * session lands in both.
+ */
+export function previousPeriodRange(
+  filters: Pick<AnalyticsFilterState, 'period' | 'customFrom' | 'customTo'>,
+  nowMs: number = Date.now(),
+): PeriodRange | null {
+  if (filters.period === 'all') return null;
+  const current = periodRange(filters, nowMs);
+  if (current.fromIso === null) return null;
+  const fromMs = Date.parse(current.fromIso);
+  const toMs = current.toIso === null ? nowMs : Date.parse(current.toIso) + 1;
+  if (!(toMs > fromMs)) return null;
+  return {
+    fromIso: new Date(fromMs - (toMs - fromMs)).toISOString(),
+    toIso: new Date(fromMs - 1).toISOString(),
+  };
+}
+
+/**
+ * The form state as the pure engine's filter. `range` replaces the period's
+ * own bounds — how the previous period is composed with every other filter
+ * kept.
+ */
+export function toAnalyticsFilter(
+  state: AnalyticsFilterState,
+  nowMs?: number,
+  range: PeriodRange = periodRange(state, nowMs),
+): AnalyticsFilter {
   return {
     fromIso: range.fromIso,
     toIso: range.toIso,
@@ -191,6 +225,8 @@ export interface AnalyticsReportData {
   hasAnyData: boolean;
   hasMatches: boolean;
   totals: AnalyticsTotals;
+  /** Competition sessions among the matched ones (Home's lifetime count, filtered). */
+  competitionCount: number;
   sdTenths: number | null;
   /**
    * SPSF guldserier in the filtered set. Federation-specific, so the report
@@ -233,8 +269,10 @@ export function composeAnalyticsReport(
     birthYear: number | null;
   },
   nowMs?: number,
+  /** Bounds that replace the period's own; see `toAnalyticsFilter`. */
+  range?: PeriodRange,
 ): AnalyticsReportData {
-  const filter = toAnalyticsFilter(state, nowMs);
+  const filter = toAnalyticsFilter(state, nowMs, range);
   const faltMatched = filterFaltSessions([...inputs.falt], filter);
   // The sighter scope is a scoring question, not a membership one, so it
   // rides on the aggregations rather than on the filter.
@@ -261,6 +299,8 @@ export function composeAnalyticsReport(
     // Unscored extra rounds ride on the session (spec A1 §A1.3 A-X3); every
     // score statistic is computed from shots/series and cannot see them.
     totals: set.totals,
+    competitionCount: set.sessions.filter((session) => session.sessionType === 'competition')
+      .length,
     sdTenths: sampleStandardDeviationTenths(shots),
     // No sighter scope: a sighter always counts towards a guldserie
     // (maintainer, 2026-09-17; spec §2.3).
