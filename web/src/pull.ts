@@ -3,7 +3,8 @@
 // through entry/ (ADR 0019).
 import type { PullRequest, PullResponse, SyncTableName } from '@shotledger/shared/src/sync';
 
-/** The tables the pages read: Statistics, the account download, Enter Series. */
+/** The tables the pages read: Statistics, the account download (which carries
+ *  the maintenance log, #727 M6), Enter Series. */
 export const WEB_TABLES = [
   'sessions',
   'series',
@@ -13,6 +14,7 @@ export const WEB_TABLES = [
   'firearms',
   'firearm_groups',
   'licenses',
+  'maintenance_events',
   'ammo_lots',
   'session_tags',
   'settings',

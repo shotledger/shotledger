@@ -9,7 +9,9 @@ import { createTestDb } from '../test-db';
 import { wipeDemoData } from '../seed';
 import { addStation } from '../queries/falt';
 import { applyRoundCountDelta } from '../queries/round-count';
-import { createFirearm, getFirearm } from '../queries/firearms';
+import { createFirearm, getFirearm, updateFirearm } from '../queries/firearms';
+import { getRoundsSinceMaintenance } from '../queries/maintenance-counter';
+import { listMaintenanceEvents, logMaintenanceEvent } from '../queries/maintenance-events';
 import { addSeries } from '../queries/series';
 import { createSession } from '../queries/sessions';
 import { addShot } from '../queries/shots';
@@ -65,19 +67,17 @@ function wipeSessions(db: Database) {
   for (const table of [shots, series, sessionTags, sessions]) db.delete(table).run();
 }
 
-/** Resets the counters the seeding itself moved, so a test starts from zero. */
+/** Resets the counter the seeding itself moved, so a test starts from zero. */
 function zeroCounters(db: Database, firearmId: string) {
-  db.update(firearms)
-    .set({ roundCount: 0, roundsSinceMaintenance: 0 })
-    .where(eq(firearms.id, firearmId))
-    .run();
+  db.update(firearms).set({ roundCount: 0 }).where(eq(firearms.id, firearmId)).run();
 }
 
+/** The lifetime counter and the figure derived from it (#727 M2). */
 function counters(db: Database, firearmId: string) {
   const firearm = getFirearm(db, firearmId);
   return {
     roundCount: firearm?.roundCount,
-    roundsSinceMaintenance: firearm?.roundsSinceMaintenance,
+    roundsSinceMaintenance: firearm ? getRoundsSinceMaintenance(db, firearm) : undefined,
   };
 }
 
@@ -240,16 +240,23 @@ function logRingSession(db: Database, firearmId: string, shotCount: number, extr
   applyRoundCountDelta(db, firearmId, shotCount + extraRounds);
 }
 
-/** A firearm with history before this device, so the two counters differ. */
+/** A firearm with history before this device, cleaned at 1080 rounds, so the
+ *  lifetime count and rounds since maintenance differ. */
 function makeFirearmWithHistory(db: Database) {
-  return createFirearm(db, {
+  const firearm = createFirearm(db, {
     make: 'Glock',
     model: '17',
     caliber: '9 mm',
-    roundCount: 1200,
+    roundCount: 1080,
     maintenanceIntervalRounds: 500,
-    roundsSinceMaintenance: 120,
   });
+  logMaintenanceEvent(db, {
+    firearmId: firearm.id,
+    performedAt: '2026-04-01T10:00:00.000Z',
+    kind: 'Rengöring',
+  });
+  updateFirearm(db, firearm.id, { roundCount: 1200 });
+  return firearm;
 }
 
 describe("a full restore keeps the file's firearm counters (#511)", () => {
@@ -312,8 +319,62 @@ describe("a full restore keeps the file's firearm counters (#511)", () => {
     reimportWithRecords(db, json);
     reimportWithRecords(db, json);
 
-    expect(counters(db, local.id)).toEqual({ roundCount: 57, roundsSinceMaintenance: 7 });
+    // The file's cleaning (at 1080 rounds) attaches to the matched gun and
+    // counts from the file's counter, not this one: a known limit (#727 spec
+    // §3), as licenses attach the same way.
+    expect(counters(db, local.id)).toEqual({ roundCount: 57, roundsSinceMaintenance: 0 });
     expect(getFirearm(db, firearm.id)).toBeUndefined();
+  });
+
+  it('RC-13: rounds since maintenance survives export, wipe and import (#727 M6)', () => {
+    const db = createTestDb();
+    const firearm = makeFirearmWithHistory(db);
+    // A second, newer cleaning, then an adjustment: the figure counts from the
+    // cleaning and moves with the adjustment.
+    logRingSession(db, firearm.id, 7, 3);
+    logMaintenanceEvent(db, {
+      firearmId: firearm.id,
+      performedAt: '2026-05-01T10:00:00.000Z',
+      kind: 'Service',
+    });
+    logRingSession(db, firearm.id, 5, 0);
+    const original = counters(db, firearm.id);
+    expect(original).toEqual({ roundCount: 1215, roundsSinceMaintenance: 5 });
+    const events = listMaintenanceEvents(db, firearm.id);
+
+    restore(db, buildExportJson(db, '1.0.0'));
+
+    expect(counters(db, firearm.id)).toEqual(original);
+    expect(listMaintenanceEvents(db, firearm.id)).toEqual(
+      events.map((e) => ({ ...e, createdAt: expect.any(String), updatedAt: expect.any(String) })),
+    );
+  });
+
+  it('RC-14: an event naming a firearm the file does not carry is dropped', () => {
+    const db = createTestDb();
+    const firearm = makeFirearmWithHistory(db);
+    const json = JSON.parse(buildExportJson(db, '1.0.0')) as {
+      maintenanceEvents: { firearmId: string }[];
+    };
+    json.maintenanceEvents.push({
+      ...json.maintenanceEvents[0]!,
+      id: 'orphan',
+      firearmId: 'nope',
+    } as never);
+
+    restore(db, JSON.stringify(json));
+
+    expect(listMaintenanceEvents(db, firearm.id)).toHaveLength(1);
+    expect(counters(db, firearm.id)).toEqual({ roundCount: 1200, roundsSinceMaintenance: 120 });
+  });
+
+  it('RC-15: importing the same events twice updates them in place', () => {
+    const db = createTestDb();
+    const firearm = makeFirearmWithHistory(db);
+    const json = buildExportJson(db, '1.0.0');
+    restore(db, json);
+    reimportWithRecords(db, json);
+    expect(listMaintenanceEvents(db, firearm.id)).toHaveLength(1);
   });
 });
 

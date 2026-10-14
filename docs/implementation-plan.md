@@ -102,8 +102,9 @@ firearms        make TEXT NOT NULL, model TEXT NOT NULL, caliber TEXT,
                 load_system TEXT,              -- laddsystem, e.g. halvautomat
                 notes TEXT,
                 round_count INTEGER NOT NULL DEFAULT 0,
-                maintenance_interval_rounds INTEGER,   -- nullable
-                rounds_since_maintenance INTEGER NOT NULL DEFAULT 0
+                maintenance_interval_rounds INTEGER    -- nullable; rounds since
+                                               -- maintenance is derived from
+                                               -- maintenance_events (#727)
 
 licenses        firearm_id FK NOT NULL,        -- one row per ISSUED license;
                                                -- a renewal appends a new row,
@@ -220,7 +221,7 @@ shots           series_id FK NOT NULL, position INTEGER NOT NULL,
 
 maintenance_events firearm_id FK, performed_at TEXT NOT NULL,
                    kind TEXT NOT NULL,         -- free text v1
-                   round_count_at INTEGER, notes TEXT
+                   round_count_at INTEGER NOT NULL, notes TEXT
 
 sight_settings  firearm_id FK NOT NULL,
                 label TEXT NOT NULL,           -- free text; the same aiming

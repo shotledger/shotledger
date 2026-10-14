@@ -18,10 +18,9 @@ beforeEach(() => {
 });
 
 describe('createFirearm', () => {
-  it('defaults round counters to 0', () => {
+  it('defaults the round counter to 0', () => {
     const f = createFirearm(db, { make: 'Pardini', model: 'K22' });
     expect(f.roundCount).toBe(0);
-    expect(f.roundsSinceMaintenance).toBe(0);
     expect(f.deletedAt).toBeNull();
   });
 });

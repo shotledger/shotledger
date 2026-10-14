@@ -60,12 +60,7 @@ const link = (id: string, sessionId: string, tagId: string, deletedAt: string | 
   tag_id: tagId,
 });
 
-const firearm = (
-  id: string,
-  roundCount: number,
-  sinceMaintenance: number,
-  fields: Payload = {},
-) => ({
+const firearm = (id: string, roundCount: number, fields: Payload = {}) => ({
   id,
   created_at: OLD,
   updated_at: OLD,
@@ -74,7 +69,6 @@ const firearm = (
   model: id,
   is_own: true,
   round_count: roundCount,
-  rounds_since_maintenance: sinceMaintenance,
   ...fields,
 });
 
@@ -130,10 +124,10 @@ function logbook(): BulkContext {
       link('l4', 's4', 't1', OLD),
     ),
     firearms: byId(
-      firearm('f1', 100, 15),
-      firearm('f2', 5, 2),
-      firearm('f3', 50, 0),
-      firearm('fx', 9, 9, { deleted_at: OLD }),
+      firearm('f1', 100),
+      firearm('f2', 5),
+      firearm('f3', 50),
+      firearm('fx', 9, { deleted_at: OLD }),
     ),
     series: byId(
       seriesRow('r1', 's1'),
@@ -344,27 +338,26 @@ describe('buildBulkEdit — firearm', () => {
     ]);
     // f1 loses s1 (21) + s2 (12); f2 loses s3 (4); f3 gains 37.
     expect(payloadOf(changes, 'firearms', 'f1')).toEqual({
-      ...firearm('f1', 67, 0),
+      ...firearm('f1', 67),
       updated_at: NOW,
     });
     expect(payloadOf(changes, 'firearms', 'f2')).toEqual({
-      ...firearm('f2', 1, 0),
+      ...firearm('f2', 1),
       updated_at: NOW,
     });
     expect(payloadOf(changes, 'firearms', 'f3')).toEqual({
-      ...firearm('f3', 87, 37),
+      ...firearm('f3', 87),
       updated_at: NOW,
     });
-    const f1 = firearm('f1', 10, 40);
+    const f1 = firearm('f1', 10);
     const low = okOf(
       build({ kind: 'setFirearm', firearmId: 'f3' }, ['s1', 's2'], {
         ...logbook(),
-        firearms: byId(f1, firearm('f3', 0, 0)),
+        firearms: byId(f1, firearm('f3', 0)),
       }),
     );
     expect(payloadOf(low.changes, 'firearms', 'f1')).toMatchObject({
       round_count: 0,
-      rounds_since_maintenance: 7,
     });
   });
 
@@ -393,15 +386,11 @@ describe('buildBulkEdit — firearm', () => {
     const blank = okOf(
       build({ kind: 'setFirearm', firearmId: 'f3' }, ['s3'], {
         ...logbook(),
-        firearms: byId(
-          firearm('f2', 5, 2),
-          firearm('f3', 0, 0, { round_count: null, rounds_since_maintenance: undefined }),
-        ),
+        firearms: byId(firearm('f2', 5), firearm('f3', 0, { round_count: null })),
       }),
     );
     expect(payloadOf(blank.changes, 'firearms', 'f3')).toMatchObject({
       round_count: 4,
-      rounds_since_maintenance: 4,
     });
   });
 
@@ -643,10 +632,10 @@ const worldArb: fc.Arbitrary<World> = fc
       tags: byId(tag('t1', 'KM'), tag('t1b', 'KM'), tag('t2', 'Club'), tag('tGone', 'Gone', OLD)),
       sessionTags: new Map(),
       firearms: byId(
-        firearm('f1', counters[0], counters[1]),
-        firearm('f2', counters[1], counters[2]),
-        firearm('f3', counters[2], counters[0]),
-        firearm('fx', 5, 5, { deleted_at: OLD }),
+        firearm('f1', counters[0]),
+        firearm('f2', counters[1]),
+        firearm('f3', counters[2]),
+        firearm('fx', 5, { deleted_at: OLD }),
       ),
       series: new Map(),
       shots: new Map(),
@@ -755,11 +744,8 @@ describe('buildBulkEdit — property', () => {
           }
         }
         // The counters equal the phone's one-session-at-a-time walk.
-        const expected = new Map<string, [number, number]>(
-          [...context.firearms].map(([id, f]) => [
-            id,
-            [f.round_count as number, f.rounds_since_maintenance as number],
-          ]),
+        const expected = new Map<string, number>(
+          [...context.firearms].map(([id, f]) => [id, f.round_count as number]),
         );
         if (action.kind === 'setFirearm') {
           for (const id of live) {
@@ -768,17 +754,15 @@ describe('buildBulkEdit — property', () => {
             const rounds = roundsOf(context, id);
             const step = (firearmId: string | null, delta: number) => {
               if (firearmId === null || !isLive(context.firearms.get(firearmId))) return;
-              const [total, since] = expected.get(firearmId)!;
-              expected.set(firearmId, [Math.max(0, total + delta), Math.max(0, since + delta)]);
+              expected.set(firearmId, Math.max(0, expected.get(firearmId)! + delta));
             };
             step(before, -rounds);
             step(action.firearmId, rounds);
           }
         }
-        for (const [id, [total, since]] of expected) {
+        for (const [id, total] of expected) {
           expect(after.firearms.get(id)).toMatchObject({
             round_count: total,
-            rounds_since_maintenance: since,
           });
         }
       }),
