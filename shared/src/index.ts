@@ -35,6 +35,7 @@ export * from './tags';
 export * from './analytics-rows';
 export * from './sync';
 export * from './sync-client';
+export * from './features';
 export * from './timer';
 export * from './target-scoring';
 export * from './backup';

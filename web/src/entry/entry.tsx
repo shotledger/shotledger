@@ -606,20 +606,23 @@ export function Entry({
                 ))}
               </select>
             </label>
-            <label className="field">
-              {t('session.ammoLot')}
-              <select
-                value={form.ammoLotId ?? ''}
-                onChange={(event) => set('ammoLotId', event.target.value || null)}
-              >
-                <option value="">{t('session.none')}</option>
-                {ammoLots.map((lot) => (
-                  <option key={lot.id} value={lot.id}>
-                    {lot.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {/* Hidden with the area, as New Session on the phone (#801). */}
+            {profile.showAmmoLots && (
+              <label className="field">
+                {t('session.ammoLot')}
+                <select
+                  value={form.ammoLotId ?? ''}
+                  onChange={(event) => set('ammoLotId', event.target.value || null)}
+                >
+                  <option value="">{t('session.none')}</option>
+                  {ammoLots.map((lot) => (
+                    <option key={lot.id} value={lot.id}>
+                      {lot.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             {isSeries && decimalShown(form) && (
               <label className="field check">
                 <input
@@ -717,13 +720,15 @@ export function Entry({
                       {t('session.sighter')}
                     </label>
                   )}
-                  <SeriesPhoto
-                    rowLabel={label}
-                    pick={photos.picks.get(row.key)}
-                    error={photos.errors.get(row.key)}
-                    onFile={(file) => void photos.choose(row.key, file)}
-                    onRemove={() => photos.remove(row.key)}
-                  />
+                  {profile.showPhotos && (
+                    <SeriesPhoto
+                      rowLabel={label}
+                      pick={photos.picks.get(row.key)}
+                      error={photos.errors.get(row.key)}
+                      onFile={(file) => void photos.choose(row.key, file)}
+                      onRemove={() => photos.remove(row.key)}
+                    />
+                  )}
                   {rowError && <p className="danger row-error">{rowError}</p>}
                 </div>
               );

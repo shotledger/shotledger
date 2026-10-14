@@ -120,6 +120,7 @@ plugins:
             Statistics: Statistik
             Scoring from a photo: Räkna från foto
             Timers: Timers
+            Hiding features you don't use: Dölja funktioner du inte använder
             Firearms and ammunition: Vapen och ammunition
             License activity: Skjutaktivitet
             External sites: Externa webbplatser
@@ -158,6 +159,7 @@ nav:
       - Statistics: guides/statistics.md
       - Scoring from a photo: guides/scoring-from-a-photo.md
       - Timers: guides/timers.md
+      - Hiding features you don't use: guides/hiding-features.md
       - Firearms and ammunition: guides/firearms-and-ammunition.md
       - License activity: guides/license-activity.md
       - External sites:

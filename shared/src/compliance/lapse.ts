@@ -3,12 +3,12 @@
 // docs/specs/compliance-next-session-spec.md.
 //
 // The lapse is defined by the status functions themselves, never by a second
-// formula: it is the first instant after `now` at which the same function, on
-// the same sessions, no longer says "met". So it inherits their window
-// arithmetic exactly, month-end clamping included.
+// formula: it is the first local midnight after `now` at which the same
+// function, on the same sessions, no longer says "met". So it inherits their
+// window arithmetic exactly, month-end clamping included.
 import { computeFirearmCriterion } from './firearm-criteria';
 import { applicableRules, computeRuleLicenseActivity } from './license-activity';
-import { firstInstantWhere } from './scan';
+import { firstDayWhere } from './scan';
 import type {
   ComplianceRule,
   ComplianceSession,
@@ -18,20 +18,18 @@ import type {
 } from './types';
 
 /**
- * The first instant after `now` at which `met` turns false, or `null` when it
- * is not met at `now` or never turns false. A met requirement only lapses when
- * a session leaves a window, never when one enters, so the scan's candidates
- * are complete for it.
+ * The first local midnight after `now` at which `met` turns false, or `null`
+ * when it is not met at `now` or never turns false.
  */
 function firstLapse(
   sessions: readonly ComplianceSession[],
-  edgeMonths: readonly number[],
+  reachMonths: number,
   now: Date,
   met: (t: Date) => boolean,
 ): string | null {
   if (!met(now)) return null;
   const times = sessions.map((s) => new Date(s.startedAt).getTime());
-  return firstInstantWhere(times, edgeMonths, now.getTime(), (t) => !met(t));
+  return firstDayWhere(times, reachMonths, now.getTime(), (t) => !met(t));
 }
 
 /** When a 5 §/6 § rule stops being green with no further session logged. */
@@ -42,7 +40,7 @@ export function computeRuleLapse(
 ): string | null {
   return firstLapse(
     sessions,
-    [rule.windowMonths],
+    rule.windowMonths,
     now,
     (t) => computeRuleLicenseActivity(sessions, rule, t).status === 'green',
   );
@@ -55,13 +53,9 @@ export function computeFirearmCriterionLapse(
   firearm: FirearmFact,
   now: Date = new Date(),
 ): string | null {
-  const edgeMonths = Array.from(
-    { length: rule.windowCount },
-    (_, n) => rule.windowMonths * (n + 1),
-  );
   return firstLapse(
     sessions,
-    edgeMonths,
+    rule.windowMonths * rule.windowCount,
     now,
     (t) => computeFirearmCriterion(sessions, rule, firearm, t).met,
   );

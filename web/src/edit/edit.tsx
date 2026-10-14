@@ -12,6 +12,7 @@ import {
 } from '@shotledger/shared/src/disciplines';
 import { tenthsToScore } from '@shotledger/shared/src/scoring/totals';
 import { TEXT_LIMITS } from '@shotledger/shared/src/sync';
+import { readAccountSettings } from '@shotledger/shared/src/sync-client/account-settings';
 import type { TFunction } from 'i18next';
 import { useMemo, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -147,6 +148,8 @@ export function SessionEdit({
     () => options(tables.ammo_lots, (row) => String(row.label), opened?.initial.ammoLotId ?? null),
     [tables, opened],
   );
+  // As the phone's Edit Session (#801): a hidden area's field stays for a lot already set.
+  const { showAmmoLots } = useMemo(() => readAccountSettings(tables.settings), [tables]);
 
   if (opened === null || form === null || session === undefined) {
     return (
@@ -397,20 +400,22 @@ export function SessionEdit({
                 ))}
               </select>
             </label>
-            <label className="field">
-              {t('session.ammoLot')}
-              <select
-                value={form.ammoLotId ?? ''}
-                onChange={(e) => set('ammoLotId', e.target.value || null)}
-              >
-                <option value="">{t('session.none')}</option>
-                {ammoLots.map((lot) => (
-                  <option key={lot.id} value={lot.id}>
-                    {lot.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {(showAmmoLots || opened.initial.ammoLotId !== null) && (
+              <label className="field">
+                {t('session.ammoLot')}
+                <select
+                  value={form.ammoLotId ?? ''}
+                  onChange={(e) => set('ammoLotId', e.target.value || null)}
+                >
+                  <option value="">{t('session.none')}</option>
+                  {ammoLots.map((lot) => (
+                    <option key={lot.id} value={lot.id}>
+                      {lot.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             {opened.editsRounds && (
               <label className="field">
                 {t('session.roundsFired')}

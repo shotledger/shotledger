@@ -6,6 +6,11 @@ Builds on [`compliance-next-session-spec.md`](compliance-next-session-spec.md)
 (#795), whose lapse it reuses, and on the specs that one builds on. The source,
 the numbers and the windows are unchanged.
 
+**Amended by [`compliance-local-days-spec.md`](compliance-local-days-spec.md)
+(#816):** windows count whole local days, so the lapse and the first day a
+criterion can be met are local midnights, and a period's end is its last day.
+The scan below is replaced by a day-by-day one.
+
 **Spec approval: approved** by the maintainer on 2026-10-13.
 
 **Tier 2.** No new regulatory value: every number is read from the rules the

@@ -20,6 +20,7 @@ import { db } from '@/db/client';
 import { listSightSettings } from '@/db/queries/sight-settings';
 import { SessionSightsSheet } from '@/features/session/session-sights-sheet';
 import { SessionStopwatch } from '@/features/session/session-stopwatch';
+import { useFeatures } from '@/features/settings/feature-visibility';
 import { Spacing } from '@/theme/tokens';
 
 export interface SessionToolsRowProps {
@@ -33,6 +34,8 @@ type OpenSheet = 'none' | 'stopwatch' | 'sights';
 export function SessionToolsRow({ sessionId, sightsFirearmId }: SessionToolsRowProps) {
   const { t } = useTranslation();
   const [sheet, setSheet] = useState<OpenSheet>('none');
+  // Sight settings hidden (#801): the stopwatch alone.
+  const { sightSettings: showSights } = useFeatures();
   const [sightSettings, setSightSettings] = useState<ReturnType<typeof listSightSettings>>([]);
 
   function loadSights() {
@@ -51,16 +54,18 @@ export function SessionToolsRow({ sessionId, sightsFirearmId }: SessionToolsRowP
           style={styles.button}
           testID="session-open-stopwatch"
         />
-        <SecondaryButton
-          label={t('session.menuSights')}
-          onPress={() => {
-            loadSights();
-            setSheet('sights');
-          }}
-          disabled={sightsFirearmId === null}
-          style={styles.button}
-          testID="session-open-sights"
-        />
+        {showSights && (
+          <SecondaryButton
+            label={t('session.menuSights')}
+            onPress={() => {
+              loadSights();
+              setSheet('sights');
+            }}
+            disabled={sightsFirearmId === null}
+            style={styles.button}
+            testID="session-open-sights"
+          />
+        )}
       </View>
 
       {/* The stopwatch keeps running when the sheet closes — it is the

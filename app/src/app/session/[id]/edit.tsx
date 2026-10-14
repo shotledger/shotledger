@@ -57,6 +57,7 @@ import {
   type CompetitionLevel,
 } from '@/features/session/labels';
 import { withLocalDay } from '@/features/session/with-local-day';
+import { useFeatures } from '@/features/settings/feature-visibility';
 import { readTrackedInputs } from '@/features/settings/tracked-inputs';
 import { Spacing } from '@/theme/tokens';
 import { useDateFormat } from '@/features/dates/use-date-format';
@@ -93,6 +94,9 @@ export default function EditSessionScreen() {
       : 'none',
   );
   const tracked = useMemo(() => readTrackedInputs(db), []);
+  const features = useFeatures();
+  // Hidden areas (#801) keep a value already stored on the session editable.
+  const showAmmoPicker = features.ammoLots || session?.ammoLotId != null;
   const [weaponGroup, setWeaponGroup] = useState<string | null>(session?.weaponGroup ?? null);
   const [shooterClass, setShooterClass] = useState<string | null>(session?.shooterClass ?? null);
   const [eventId, setEventId] = useState<string | null>(session?.eventId ?? null);
@@ -330,21 +334,24 @@ export default function EditSessionScreen() {
         </Card>
       )}
 
-      <Card>
-        <SegmentedControl<SeriesEntryMode>
-          options={[
-            { value: 'ask', label: t('session.entryMode.ask') },
-            { value: 'manual', label: t('session.entryMode.manual') },
-            { value: 'photo', label: t('session.entryMode.photo') },
-          ]}
-          value={seriesEntryMode}
-          onChange={setSeriesEntryMode}
-          testID="edit-series-entry-mode"
-        />
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('session.entryModeHint')}
-        </ThemedText>
-      </Card>
+      {/* Photo or keypad is a photo-scoring choice (#801). */}
+      {features.photos && (
+        <Card>
+          <SegmentedControl<SeriesEntryMode>
+            options={[
+              { value: 'ask', label: t('session.entryMode.ask') },
+              { value: 'manual', label: t('session.entryMode.manual') },
+              { value: 'photo', label: t('session.entryMode.photo') },
+            ]}
+            value={seriesEntryMode}
+            onChange={setSeriesEntryMode}
+            testID="edit-series-entry-mode"
+          />
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('session.entryModeHint')}
+          </ThemedText>
+        </Card>
+      )}
 
       {(showGroupPicker || showClassPicker || showEventPicker) && (
         <Card>
@@ -401,16 +408,18 @@ export default function EditSessionScreen() {
           onChange={setFirearmId}
           emptyLabel={t('session.none')}
         />
-        <OptionPicker
-          label={t('session.ammoLot')}
-          options={toOptions(
-            ammoLots.map((lot) => ({ value: lot.id, label: lot.label })),
-            'edit-ammo',
-          )}
-          value={ammoLotId}
-          onChange={setAmmoLotId}
-          emptyLabel={t('session.none')}
-        />
+        {showAmmoPicker && (
+          <OptionPicker
+            label={t('session.ammoLot')}
+            options={toOptions(
+              ammoLots.map((lot) => ({ value: lot.id, label: lot.label })),
+              'edit-ammo',
+            )}
+            value={ammoLotId}
+            onChange={setAmmoLotId}
+            emptyLabel={t('session.none')}
+          />
+        )}
       </Card>
 
       <Card>

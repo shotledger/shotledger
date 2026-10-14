@@ -1,7 +1,8 @@
 // What a requirement that is not met still needs (#804). Spec:
 // docs/specs/compliance-license-check-spec.md.
 import { computeFirearmCriterion } from './firearm-criteria';
-import { firstInstantWhere } from './scan';
+import { localDayStart } from './months';
+import { firstDayWhere } from './scan';
 import type {
   ComplianceSession,
   FirearmComplianceRule,
@@ -27,8 +28,8 @@ export interface FirearmCriterionShortfall {
   olderPeriods: ShortPeriod[];
   /**
    * `null` when met now; now when logging `recentNeeded` sessions would meet
-   * it; otherwise the first instant it can be met if the shooter keeps
-   * logging sessions with this firearm.
+   * it; otherwise the local midnight starting the first day it can be met if
+   * the shooter keeps logging sessions with this firearm.
    */
   metFromIso: string | null;
 }
@@ -65,17 +66,15 @@ export function computeFirearmCriterionShortfall(
   if (current.met) return { ...shortfall, metFromIso: null };
   if (olderPeriods.length === 0) return { ...shortfall, metFromIso: now.toISOString() };
 
-  // Every earlier window at `t` either has what it needs already, or ends
-  // after now so that a session logged from now on can still land in it. The
-  // most recent window ends at `t` itself and always can.
+  // Every earlier window on day `t` either has what it needs already, or its
+  // last day is today or later, so that a session logged from today on can
+  // still land in it. The most recent window ends on `t` itself and always can.
+  const todayMs = localDayStart(now).getTime();
   const canBeMet = (t: Date) =>
     computeFirearmCriterion(sessions, rule, firearm, t)
       .periods.slice(1)
-      .every((period) => period.met || Date.parse(period.endIso) > nowMs);
-  const edgeMonths = Array.from(
-    { length: rule.windowCount },
-    (_, n) => rule.windowMonths * (n + 1),
-  );
-  const times = [nowMs, ...sessions.map((s) => new Date(s.startedAt).getTime())];
-  return { ...shortfall, metFromIso: firstInstantWhere(times, edgeMonths, nowMs, canBeMet) };
+      .every((period) => period.met || Date.parse(period.endIso) >= todayMs);
+  const times = sessions.map((s) => new Date(s.startedAt).getTime());
+  const reachMonths = rule.windowMonths * rule.windowCount;
+  return { ...shortfall, metFromIso: firstDayWhere(times, reachMonths, nowMs, canBeMet) };
 }

@@ -21,6 +21,14 @@ import type {
 } from './types';
 
 const NOW = new Date('2026-10-13T12:00:00Z');
+
+/**
+ * Local midnight starting the given day, as ISO: every lapse is one since
+ * windows count whole local days (#816). Vitest runs in Europe/Stockholm.
+ */
+function lm(y: number, m: number, d: number): string {
+  return new Date(y, m - 1, d).toISOString();
+}
 const GUN = 'firearm-1';
 
 function rule(overrides: Partial<ComplianceRule> = {}): ComplianceRule {
@@ -86,7 +94,7 @@ describe('computeRuleLapse', () => {
     expect(computeRuleLapse(sessions, rule(), NOW)).toBeNull();
   });
 
-  it('L2: exactly the required count lapses one millisecond after the oldest leaves', () => {
+  it("L2: exactly the required count lapses the day after the oldest's last day in", () => {
     const sessions = [
       '2026-10-01T10:00:00Z',
       '2026-09-01T10:00:00Z',
@@ -95,7 +103,7 @@ describe('computeRuleLapse', () => {
       '2026-06-01T10:00:00Z',
       '2026-05-10T10:00:00Z',
     ].map((d) => at(d));
-    expect(computeRuleLapse(sessions, rule(), NOW)).toBe('2026-11-10T10:00:00.001Z');
+    expect(computeRuleLapse(sessions, rule(), NOW)).toBe(lm(2026, 11, 11));
   });
 
   it('L3: the sixth-newest session decides; older ones do not move it', () => {
@@ -110,7 +118,7 @@ describe('computeRuleLapse', () => {
       '2026-05-20T08:00:00Z',
       '2026-05-01T08:00:00Z',
     ].map((d) => at(d));
-    expect(computeRuleLapse(sessions, rule(), NOW)).toBe('2027-01-02T08:00:00.001Z');
+    expect(computeRuleLapse(sessions, rule(), NOW)).toBe(lm(2027, 1, 3));
   });
 
   it('L4: a weighted competition keeps it met until the competition itself leaves', () => {
@@ -119,25 +127,23 @@ describe('computeRuleLapse', () => {
       at('2026-06-10T00:00:00Z', { type: 'competition' }),
       at('2026-09-01T00:00:00Z'),
     ];
-    expect(computeRuleLapse(sessions, weighted, NOW)).toBe('2026-12-10T00:00:00.001Z');
+    expect(computeRuleLapse(sessions, weighted, NOW)).toBe(lm(2026, 12, 11));
   });
 
   it('L5: follows the window arithmetic exactly, month-end clamping included', () => {
     const monthly = rule({ windowMonths: 1, requiredActivities: 1 });
     const sessions = [at('2026-03-01T12:00:00Z')];
     const now = new Date('2026-03-15T00:00:00Z');
-    // 2026-03-29 minus one month is "Feb 29", which a non-leap year rolls over
-    // to Mar 1 — so the session leaves on the 29th, not on Apr 1.
-    expect(computeRuleLapse(sessions, monthly, now)).toBe('2026-03-29T12:00:00.001Z');
+    // 29-31 March minus one month clamp to 28 February (1930:173), so the
+    // session stays in through 1 April and leaves on 2 April.
+    expect(computeRuleLapse(sessions, monthly, now)).toBe(lm(2026, 4, 2));
     expect(
-      computeRuleLicenseActivity(sessions, monthly, new Date('2026-03-29T12:00:00.000Z')).status,
+      computeRuleLicenseActivity(sessions, monthly, new Date(2026, 3, 1, 23, 59, 59, 999)).status,
     ).toBe('green');
-    expect(
-      computeRuleLicenseActivity(sessions, monthly, new Date('2026-03-29T12:00:00.001Z')).status,
-    ).toBe('red');
+    expect(computeRuleLicenseActivity(sessions, monthly, new Date(2026, 3, 2)).status).toBe('red');
   });
 
-  it('L5: a session on the 1st leaves on the last day of the month, as the window does', () => {
+  it('L5: a session on the 1st stays in through the 1st six months later', () => {
     const sessions = [
       '2026-10-01T10:00:00Z',
       '2026-09-01T10:00:00Z',
@@ -146,17 +152,16 @@ describe('computeRuleLapse', () => {
       '2026-06-01T10:00:00Z',
       '2026-05-01T10:00:00Z',
     ].map((d) => at(d));
-    // Oct 31 minus six months is "Apr 31", which rolls over to May 1.
-    expect(computeRuleLapse(sessions, rule(), NOW)).toBe('2026-10-31T10:00:00.001Z');
+    // Oct 31 minus six months clamps to Apr 30, and Nov 1 gives May 1.
+    expect(computeRuleLapse(sessions, rule(), NOW)).toBe(lm(2026, 11, 2));
   });
 
-  it('L5: a forward jump of the window at midnight lapses at that midnight', () => {
+  it('L5: a session on 31 March leaves once the window starts after it', () => {
     const monthly = rule({ windowMonths: 1, requiredActivities: 1 });
-    // Apr 30 − 1 month is Mar 30, May 1 − 1 month is Apr 1: Mar 31 is skipped,
-    // and a session on it leaves at the stroke of midnight.
+    // Apr 30 − 1 month is Mar 30, May 1 − 1 month is Apr 1.
     const sessions = [at('2026-03-31T12:00:00Z')];
     expect(computeRuleLapse(sessions, monthly, new Date('2026-04-15T00:00:00Z'))).toBe(
-      '2026-05-01T00:00:00.000Z',
+      lm(2026, 5, 1),
     );
   });
 
@@ -164,16 +169,16 @@ describe('computeRuleLapse', () => {
     const monthly = rule({ windowMonths: 1, requiredActivities: 1 });
     const sessions = [at('2026-07-15T12:00:00Z')];
     expect(computeRuleLapse(sessions, monthly, new Date('2026-07-16T00:00:00Z'))).toBe(
-      '2026-08-15T12:00:00.001Z',
+      lm(2026, 8, 16),
     );
   });
 
-  it('returns the earlier of two exits on the same day, whatever the session order', () => {
+  it('two sessions on the same day leave together, whatever the session order', () => {
     const two = rule({ requiredActivities: 2 });
     const early = at('2026-06-10T08:00:00Z');
     const late = at('2026-06-10T20:00:00Z');
-    expect(computeRuleLapse([late, early], two, NOW)).toBe('2026-12-10T08:00:00.001Z');
-    expect(computeRuleLapse([early, late], two, NOW)).toBe('2026-12-10T08:00:00.001Z');
+    expect(computeRuleLapse([late, early], two, NOW)).toBe(lm(2026, 12, 11));
+    expect(computeRuleLapse([early, late], two, NOW)).toBe(lm(2026, 12, 11));
   });
 
   it('L6: a rule requiring nothing never lapses', () => {
@@ -190,20 +195,20 @@ describe('computeRuleLapse', () => {
       at('2026-06-01T00:00:00Z', { weaponGroup: 'spsf:C' }),
       at('2026-10-01T00:00:00Z', { weaponGroup: 'spsf:B' }),
     ];
-    expect(computeRuleLapse(sessions, grouped, NOW)).toBe('2026-12-01T00:00:00.001Z');
+    expect(computeRuleLapse(sessions, grouped, NOW)).toBe(lm(2026, 12, 2));
   });
 
-  it('L8: a future-dated session counts from its own instant on', () => {
+  it('L8: a future-dated session counts from its own day on', () => {
     const one = rule({ requiredActivities: 1 });
     const sessions = [at('2026-06-01T00:00:00Z'), at('2026-11-01T00:00:00Z')];
-    expect(computeRuleLapse(sessions, one, NOW)).toBe('2027-05-01T00:00:00.001Z');
+    expect(computeRuleLapse(sessions, one, NOW)).toBe(lm(2027, 5, 2));
   });
 
-  it('a session already leaving at now + 1 ms lapses then', () => {
+  it("a session on the window's first day lapses tomorrow", () => {
     const one = rule({ requiredActivities: 1 });
-    // The window at NOW starts exactly at this session.
+    // The window today starts on this session's day.
     const sessions = [at('2026-04-13T12:00:00Z')];
-    expect(computeRuleLapse(sessions, one, NOW)).toBe('2026-10-13T12:00:00.001Z');
+    expect(computeRuleLapse(sessions, one, NOW)).toBe(lm(2026, 10, 14));
   });
 
   it('defaults now to the current time', () => {
@@ -224,7 +229,7 @@ describe('computeFirearmCriterionLapse', () => {
   it('C2: two sessions with the firearm lapse when the older one leaves', () => {
     const sessions = [at('2026-07-10T00:00:00Z'), at('2026-08-01T00:00:00Z')];
     expect(computeFirearmCriterionLapse(sessions, additionalRule(), firearm(), NOW)).toBe(
-      '2027-01-10T00:00:00.001Z',
+      lm(2027, 1, 11),
     );
   });
 
@@ -242,7 +247,7 @@ describe('computeFirearmCriterionLapse', () => {
       '2026-06-01',
     ].map((d) => at(`${d}T00:00:00Z`));
     expect(computeFirearmCriterionLapse(sessions, renewalRule(), firearm(), NOW)).toBe(
-      '2026-11-05T00:00:00.001Z',
+      lm(2026, 11, 6),
     );
   });
 
@@ -258,7 +263,7 @@ describe('computeFirearmCriterionLapse', () => {
       '2026-04-10',
     ].map((d) => at(`${d}T00:00:00Z`));
     expect(computeFirearmCriterionLapse(sessions, renewalRule(), firearm(), NOW)).toBe(
-      '2027-01-10T00:00:00.001Z',
+      lm(2027, 1, 11),
     );
   });
 
@@ -270,7 +275,7 @@ describe('computeFirearmCriterionLapse', () => {
       at('2026-09-20T00:00:00Z', { firearmId: null }),
     ];
     expect(computeFirearmCriterionLapse(sessions, additionalRule(), firearm(), NOW)).toBe(
-      '2027-01-10T00:00:00.001Z',
+      lm(2027, 1, 11),
     );
   });
 
@@ -305,9 +310,9 @@ describe('computeOverallLapse', () => {
       at('2026-07-10T00:00:00Z', { weaponGroup: 'spsf:C' }),
     ];
     const p = profile([shooterRule, groupRule]);
-    expect(computeOverallLapse(sessions, p, ['spsf:C'], NOW)).toBe('2027-01-10T00:00:00.001Z');
+    expect(computeOverallLapse(sessions, p, ['spsf:C'], NOW)).toBe(lm(2027, 1, 11));
     // Without the group the shooter holds, only the shooter rule applies.
-    expect(computeOverallLapse(sessions, p, [], NOW)).toBe('2027-03-01T00:00:00.001Z');
+    expect(computeOverallLapse(sessions, p, [], NOW)).toBe(lm(2027, 3, 2));
   });
 
   it('O2: the earliest lapse whichever order the profile lists the rules in', () => {
@@ -316,14 +321,14 @@ describe('computeOverallLapse', () => {
       at('2026-07-10T00:00:00Z', { weaponGroup: 'spsf:C' }),
     ];
     expect(computeOverallLapse(sessions, profile([groupRule, shooterRule]), ['spsf:C'], NOW)).toBe(
-      '2027-01-10T00:00:00.001Z',
+      lm(2027, 1, 11),
     );
   });
 
   it('a rule that never lapses does not hide the one that does', () => {
     const sessions = [at('2026-09-01T00:00:00Z')];
     const p = profile([rule({ requiredActivities: 0 }), shooterRule]);
-    expect(computeOverallLapse(sessions, p, [], NOW)).toBe('2027-03-01T00:00:00.001Z');
+    expect(computeOverallLapse(sessions, p, [], NOW)).toBe(lm(2027, 3, 2));
   });
 
   it('a profile with no applicable rule has no lapse', () => {
@@ -351,10 +356,10 @@ describe('list helpers, aligned with what the firearm screen shows', () => {
     const sessions = [at('2026-09-01T00:00:00Z', { weaponGroup: 'spsf:B' })];
     expect(
       computeFirearmLicenseLapses(sessions, profile([shooterRule, groupRule]), ['spsf:C'], NOW),
-    ).toEqual(['2027-03-01T00:00:00.001Z', null]);
+    ).toEqual([lm(2027, 3, 2), null]);
     expect(
       computeFirearmLicenseLapses(sessions, profile([shooterRule, groupRule]), [], NOW),
-    ).toEqual(['2027-03-01T00:00:00.001Z']);
+    ).toEqual([lm(2027, 3, 2)]);
   });
 
   it('computeFirearmCriteriaLapses covers only the criteria that apply to the firearm', () => {
@@ -367,12 +372,12 @@ describe('list helpers, aligned with what the firearm screen shows', () => {
     };
     const sessions = [at('2026-07-10T00:00:00Z'), at('2026-08-01T00:00:00Z')];
     expect(computeFirearmCriteriaLapses(sessions, p, firearm(), NOW)).toEqual([
-      '2027-01-10T00:00:00.001Z',
+      lm(2027, 1, 11),
       null,
     ]);
     expect(
       computeFirearmCriteriaLapses(sessions, p, firearm({ hasTimeLimitedPermit: false }), NOW),
-    ).toEqual(['2027-01-10T00:00:00.001Z']);
+    ).toEqual([lm(2027, 1, 11)]);
     expect(computeFirearmCriteriaLapses(sessions, null, firearm(), NOW)).toEqual([]);
   });
 
@@ -498,11 +503,11 @@ describe('properties', () => {
  *
  * @SVCs SVC_COMPL_003
  */
-it('gives the first instant a met requirement is no longer met, and nothing when not met', () => {
+it('gives the first day a met requirement is no longer met, and nothing when not met', () => {
   const one = rule({ requiredActivities: 1 });
   const sessions = [at('2026-06-10T09:30:00Z')];
   const lapse = computeRuleLapse(sessions, one, NOW);
-  expect(lapse).toBe('2026-12-10T09:30:00.001Z');
+  expect(lapse).toBe(lm(2026, 12, 11));
   const status = (ms: number) => computeRuleLicenseActivity(sessions, one, new Date(ms)).status;
   expect(status(Date.parse(lapse!) - 1)).toBe('green');
   expect(status(Date.parse(lapse!))).toBe('red');

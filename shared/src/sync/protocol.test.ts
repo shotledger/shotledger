@@ -260,16 +260,32 @@ describe('session_tags and settings (sync-tags-settings spec)', () => {
     }
   });
 
-  it('P2 the settings allowlist is exactly the five account keys', () => {
+  it('P2 the settings allowlist is exactly the five account keys and the six feature switches', () => {
     expect([...SYNCED_SETTING_KEYS]).toEqual([
       'birthYear',
       'skillClass',
       'competesInWomensClasses',
       'complianceProfile',
       'complianceProfileVariant',
+      'showLicenseActivity',
+      'showPhotos',
+      'showTimer',
+      'showSightSettings',
+      'showAmmoLots',
+      'showMaintenance',
     ]);
     for (const key of SYNCED_SETTING_KEYS) expect(isSyncedSettingKey(key)).toBe(true);
-    for (const key of ['backupFolder', 'flagOverrides', 'theme', 'language', '', 'BIRTHYEAR']) {
+    for (const key of [
+      'backupFolder',
+      'flagOverrides',
+      'theme',
+      'language',
+      '',
+      'BIRTHYEAR',
+      'trackHandloads',
+      'photoTrainingConsent',
+      'showphotos',
+    ]) {
       expect(isSyncedSettingKey(key)).toBe(false);
     }
   });

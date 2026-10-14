@@ -52,6 +52,8 @@ device to device, the same ones as on the phone:
   chosen, the page shows the one worked out from your firearms, as the phone
   does. With no profile chosen yet, none is marked and your phone uses the
   one for its language; choose one here to store it for every device.
+- **Features**: which parts of the app you show (the phone's Settings →
+  Features, see [Hiding features you don't use](hiding-features.md)).
 
 Change what you need, then **Save**. Changing a birth year that was already
 set asks first, as on the phone. Your phones pick the change up on their next

@@ -1005,6 +1005,29 @@ fieldset.field legend {
   background: var(--background-selected);
 }
 
+.bulk-merge h2 {
+  margin-top: 0;
+}
+
+.bulk-merge .bulk-action {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.bulk-merge fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.bulk-merge-confirm {
+  grid-column: 1 / -1;
+}
+
+.bulk-merge-confirm p {
+  margin-top: 0;
+}
+
 @media (max-width: 720px) {
   .series-rows .series-row {
     grid-template-columns: 72px minmax(0, 1fr);

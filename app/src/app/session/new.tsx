@@ -65,6 +65,7 @@ import {
   matchFormatLabel,
   type CompetitionLevel,
 } from '@/features/session/labels';
+import { useFeatures } from '@/features/settings/feature-visibility';
 import { readTrackedInputs } from '@/features/settings/tracked-inputs';
 import { TagSelect } from '@/features/tags/tag-select';
 import { Spacing } from '@/theme/tokens';
@@ -102,6 +103,8 @@ export default function NewSessionScreen() {
 
   const [type, setType] = useState<SessionType>('training');
   const tracked = useMemo(() => readTrackedInputs(db), []);
+  // Ammunition lots hidden (#801): no picker, so the session records no lot.
+  const features = useFeatures();
   const [kind, setKind] = useState<SessionKind>('series');
   // One regelverk at a time (maintainer, 2026-09-12: pick the regulation
   // first). With a single one enabled it is not a choice, so the picker stays
@@ -563,16 +566,18 @@ export default function NewSessionScreen() {
           onChange={setFirearmId}
           emptyLabel={t('session.none')}
         />
-        <OptionPicker
-          label={t('session.ammoLot')}
-          options={toOptions(
-            ammoLots.map((lot) => ({ value: lot.id, label: lot.label })),
-            'ammo',
-          )}
-          value={ammoLotId}
-          onChange={setAmmoLotId}
-          emptyLabel={t('session.none')}
-        />
+        {features.ammoLots && (
+          <OptionPicker
+            label={t('session.ammoLot')}
+            options={toOptions(
+              ammoLots.map((lot) => ({ value: lot.id, label: lot.label })),
+              'ammo',
+            )}
+            value={ammoLotId}
+            onChange={setAmmoLotId}
+            emptyLabel={t('session.none')}
+          />
+        )}
       </Card>
 
       {showDecimalToggle && (

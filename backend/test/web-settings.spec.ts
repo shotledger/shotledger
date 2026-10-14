@@ -94,6 +94,8 @@ function webEdit(
 }
 
 let web: ReturnType<typeof client>;
+let webToken = '';
+const webTokenOf = () => webToken;
 let deviceB: ReturnType<typeof client>;
 let accountSeq = 0;
 
@@ -108,8 +110,9 @@ beforeEach(async () => {
   const signedUp = await client(() => null).account.signUp(email, PASSWORD, 'Test Shooter');
   const tokenB = signedUp.token;
   deviceB = client(() => tokenB);
-  const webToken = (await client(() => null).account.signIn(email, PASSWORD)).token;
-  web = client(() => webToken);
+  const signedIn = (await client(() => null).account.signIn(email, PASSWORD)).token;
+  webToken = signedIn;
+  web = client(() => signedIn);
 
   // Device B has a birth year and a class.
   await deviceB.transport.push({
@@ -149,6 +152,12 @@ describe('the web settings write path', () => {
       competesInWomensClasses: true,
       complianceProfile: 'se',
       complianceProfileVariant: null,
+      showLicenseActivity: true,
+      showPhotos: true,
+      showTimer: true,
+      showSightSettings: true,
+      showAmmoLots: true,
+      showMaintenance: true,
     });
     // The phone's row kept its created_at.
     expect(rows.get('birthYear')?.payload).toMatchObject({
@@ -199,5 +208,37 @@ describe('the web settings write path', () => {
     const after = await pullSettings(deviceB.transport);
     expect([...after.values()].map((r) => r.seq)).toEqual([...before.values()].map((r) => r.seq));
     expect(readAccountSettings(payloads(after)).birthYear).toBe(1975);
+  });
+
+  it('S6 a feature switch the web hides reaches device B; a device-local key is still refused', async () => {
+    const changes = webEdit(payloads(await pullSettings(web.transport)), {
+      showPhotos: false,
+      showAmmoLots: false,
+      showMaintenance: false,
+    });
+    expect(changes.map((c) => c.rowId)).toEqual(['showPhotos', 'showAmmoLots', 'showMaintenance']);
+    await expect(pushChanges(web.transport, PROTOCOL_VERSION, changes)).resolves.toEqual({
+      kind: 'saved',
+    });
+    expect(readAccountSettings(payloads(await pullSettings(deviceB.transport)))).toMatchObject({
+      showLicenseActivity: true,
+      showPhotos: false,
+      showTimer: true,
+      showSightSettings: true,
+      showAmmoLots: false,
+      showMaintenance: false,
+    });
+
+    // The Optional Fields switches stay on each phone (spec §1).
+    const local = await fetchApp(`${BASE_URL}/sync/push`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${webTokenOf()}` },
+      body: JSON.stringify({
+        protocolVersion: PROTOCOL_VERSION,
+        changes: [phoneRow('trackHandloads', false, NOW)],
+      }),
+    });
+    expect(local.status).toBe(400);
+    expect(await local.json()).toMatchObject({ error: 'setting_not_synced' });
   });
 });

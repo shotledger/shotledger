@@ -15,6 +15,7 @@ export * from './tag-rows';
 export * from './entry-tags';
 export * from './falt-entry';
 export * from './direct-push';
+export * from './ammo-lot-merge';
 export * from './bulk-edit';
 export * from './session-edit';
 export * from './volume-rows';
