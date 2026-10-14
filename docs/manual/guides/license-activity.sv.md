@@ -34,6 +34,27 @@ pekar oftast på en uppgift som saknas på ett vapen snarare än på fallet sjä
 Vapen som saknar vapentyp, kaliber eller licens märks som **Ofullständig** på
 vapenfliken, och att fylla i dem kan flytta förslaget av sig självt.
 
+## Att se var du står
+
+Tryck på statusen på **Hem** för att öppna **Licenskontroll**. Där finns alla
+krav på föreningens intyg, grupperade efter vad du ansöker om:
+
+- **Nyförvärv**: aktivitetskravet för ditt fall, och rutan för ytterligare
+  enhandsvapen för varje pistol eller revolver som är markerad som din egen.
+- **Förnyelse**: rutan för förnyelse för varje vapen vars licens har ett
+  slutdatum.
+
+Varje krav visar om det är uppfyllt. Är det uppfyllt står det när du senast ska
+skjuta nästa gång. Är det inte uppfyllt står det hur många pass till som behövs,
+och med vilket vapen när det spelar roll. Tryck på ett vapens namn för att öppna
+det.
+
+Om ett tidigare år i förnyelserutan inte räcker kan pass du loggar i dag inte
+rätta till det, och kontrollen säger det. Den visar också från vilket datum
+rutan kan bli uppfylld om du fortsätter logga pass med vapnet. [Varför ett
+passerat år inte kan tas igen](../explanation/license-activity.sv.md#ett-ar-som-redan-har-tagit-slut)
+förklarar det.
+
 ## Att veta när du ska skjuta nästa gång
 
 När ett krav är uppfyllt visar appen senast vilket datum du behöver logga nästa

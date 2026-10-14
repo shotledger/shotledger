@@ -98,17 +98,26 @@ export default function HomeScreen() {
         />
       </View>
 
+      {/* The status opens the License Check, which says what to do about it (#804). */}
       {profile && overall && (
-        <Chip
-          testID="home-barometer"
-          label={t(`compliance.licenseActivity${capitalize(overall)}`)}
-          tone={LICENSE_ACTIVITY_TONE[overall]}
-        />
-      )}
-      {profile && lapseIso && (
-        <ThemedText type="small" themeColor="textSecondary" testID="home-next-session">
-          {t('compliance.nextSessionBy', { date: dates.date(nextSessionDeadline(lapseIso)) })}
-        </ThemedText>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('compliance.check.open')}
+          onPress={() => router.push('/compliance')}
+          testID="home-license-check"
+          style={styles.licenseStatus}
+        >
+          <Chip
+            testID="home-barometer"
+            label={t(`compliance.licenseActivity${capitalize(overall)}`)}
+            tone={LICENSE_ACTIVITY_TONE[overall]}
+          />
+          {lapseIso && (
+            <ThemedText type="small" themeColor="textSecondary" testID="home-next-session">
+              {t('compliance.nextSessionBy', { date: dates.date(nextSessionDeadline(lapseIso)) })}
+            </ThemedText>
+          )}
+        </Pressable>
       )}
 
       {latestSessions.length === 0 ? (
@@ -219,6 +228,9 @@ const styles = StyleSheet.create({
     borderRadius: Radius.medium,
   },
   seeAllPressed: { opacity: 0.6 },
+  licenseStatus: {
+    gap: Spacing.one,
+  },
   statsRow: {
     flexDirection: 'row',
     gap: Spacing.two,

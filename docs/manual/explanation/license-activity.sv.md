@@ -73,6 +73,21 @@ den 1 maj kan därför falla ur den 31 oktober i stället för den 1 november.
 Datumet kan alltså bli en dag eller två tidigare än om du räknar månader på
 fingrarna, aldrig senare.
 
+## Ett år som redan har tagit slut
+
+Förnyelserutan kräver fyra aktiviteter under vart och ett av de två senaste
+åren. Det äldre av de två åren tog slut för ett år sedan, så ett pass du loggar
+i dag hamnar i det senaste året och kan aldrig räknas till det äldre.
+
+Det som ändrar det äldre året är tiden. Allteftersom dagarna går flyttas båda
+åren framåt tillsammans: pass från början av ditt senaste år går över till det
+äldre, och de äldsta passen faller ur det. Ett äldre år som inte räcker nu kan
+alltså fyllas på senare, antingen av pass du redan har loggat eller av pass du
+loggar från och med nu när de har blivit ett år gamla. Datumet appen visar är
+den första dag då alla år kan ligga på fyra, förutsatt att du fortsätter logga
+pass med vapnet. Det är det tidigaste rutan kan kryssas i, inte ett löfte om att
+den blir det.
+
 ## Vad som räknas, och vad det här inte är
 
 **Alla pass räknas, oavsett vad du sköt med.** 5 § och 6 § är krav på _dig_,
