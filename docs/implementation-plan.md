@@ -470,6 +470,10 @@ already is the sighter can un-set itself.)
       decision date, validity, conditions; renewals append, history
       kept); local notifications at 90/30/7 days before valid_until
       (VERIFY preferred lead times with maintainer)
+- [x] License expiry reminders rebuilt as one set from the latest license of
+      each active firearm (#847) at app start, on the foreground, after a
+      sync, a JSON import or demo data, so licenses that did not come in
+      through the firearm screen get them too
 - [x] Ammo lots CRUD incl. handload recipe fields (powder, charge,
       bullet, primer, brass, COL); session links lot; per-lot usage
       count; lot-vs-lot comparison stays v3

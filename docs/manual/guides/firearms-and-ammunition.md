@@ -84,6 +84,14 @@ A firearm accumulates:
 Sight settings are reachable from the session itself, so a correction between
 series does not mean leaving what you are doing.
 
+### License expiry reminders
+
+When a firearm's latest license has an end date, the phone reminds you ahead
+of it. The reminders follow what is stored, however it got there: a license you
+added, one from an import, demo data, or another device by sync. A renewed
+license replaces the old one's reminders. The phone asks for permission to
+notify you when you save a license; until you allow it, there are none.
+
 ### Archiving a firearm you no longer have
 
 When you sell, return or retire a firearm, open it and tap **Archive Firearm**
