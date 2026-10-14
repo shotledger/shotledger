@@ -365,7 +365,16 @@
     "sightWindageDecrease": "Minska sida",
     "sightWindageIncrease": "Öka sida",
     "licenseNotRequired": "Krävs inte",
-    "licenseNotRequiredBody": "Ett effektbegränsat luftvapen kräver ingen licens. Lägg ändå till en om ditt vapen kräver det."
+    "licenseNotRequiredBody": "Ett effektbegränsat luftvapen kräver ingen licens. Lägg ändå till en om ditt vapen kräver det.",
+    "archive": "Arkivera vapen",
+    "archiveHint": "För ett vapen du har sålt, lämnat tillbaka eller slutat använda. Det försvinner från listan och från formuläret för nytt pass, och dess pass, licenser och underhåll finns kvar.",
+    "archiveConfirmTitle": "Arkivera det här vapnet?",
+    "archiveConfirmBody": "Det döljs bland dina vapen och när du startar ett pass, och påminnelserna om licensen upphör. Dess pass, statistik, licenser och underhåll finns kvar. Du kan återställa det när som helst.",
+    "archivedTitle": "Arkiverat",
+    "archivedBody": "Arkiverat {{date}}. Det döljs bland dina vapen och när du startar ett pass. Historiken finns kvar.",
+    "restore": "Återställ vapen",
+    "showArchived": "Visa arkiverade ({{count}})",
+    "hideArchived": "Dölj arkiverade"
   },
   "ammo": {
     "newLot": "Nytt ammunitionsparti",
@@ -620,6 +629,25 @@
     },
     "criterionUnattributed_one": "{{count}} pass under perioden saknar vapen och räknas därför inte till något av kriterierna.",
     "criterionUnattributed_other": "{{count}} pass under perioden saknar vapen och räknas därför inte till något av kriterierna.",
+    "nextSessionBy": "Nästa pass senast {{date}} för att ligga kvar i fas.",
+    "criterionNextSessionBy": "Nästa pass med det här vapnet senast {{date}} för att det ska förbli uppfyllt.",
+    "check": {
+      "title": "Licenskontroll",
+      "off": "Skjutaktivitet är avstängt. Slå på det under Efterlevnad för att se var du står.",
+      "purchaseTitle": "Nyförvärv",
+      "purchaseHint": "Det din förening intygar när du ansöker om att få förvärva ett enhandsvapen.",
+      "renewalTitle": "Förnyelse",
+      "renewalHint": "Det din förening intygar när du förnyar ett tidsbegränsat tillstånd.",
+      "ruleNeeded_one": "{{count}} pass till behövs.",
+      "ruleNeeded_other": "{{count}} pass till behövs.",
+      "criterionNeeded_one": "{{count}} pass till med det här vapnet behövs.",
+      "criterionNeeded_other": "{{count}} pass till med det här vapnet behövs.",
+      "olderShort": "{{from}} till {{to}}: {{done}} av {{required}}. Pass du loggar nu kan inte räknas till den perioden.",
+      "metFrom": "Fortsätter du logga pass med det här vapnet kan kravet vara uppfyllt från {{date}}.",
+      "noHeldHandgun": "Ingen pistol eller revolver är markerad som din egen, så rutan för ytterligare enhandsvapen gäller inte.",
+      "noTimeLimited": "Inget vapen har en licens med slutdatum, så rutan för förnyelse gäller inte.",
+      "open": "Öppna licenskontroll"
+    },
     "criterionNotAttested": "Appen har räknat passen, men kan inte styrka dem. I en klubblogg blir en rad ett underlag först när någon har signerat den.",
     "pdfNow": "idag",
     "pdfGeneratedAt": "Genererad {{date}}",
@@ -1363,6 +1391,8 @@
     }
   },
   "web": {
+    "statsFilters": "Filter",
+    "statsMeasure": "Mått",
     "signInIntro": "Logga in med ditt ShotLedger-konto för att se dina pass, din statistik och ditt konto. Inget sparas när du stänger fliken.",
     "loading_one": "Hämtar loggboken… {{count}} rad",
     "loading_other": "Hämtar loggboken… {{count}} rader",
@@ -1407,6 +1437,7 @@
     },
     "shell": {
       "menu": "Huvudmeny",
+      "sidebar": "Sidofält",
       "skipToContent": "Hoppa till innehållet",
       "version": "Version",
       "sourceCode": "Källkod"

@@ -26,13 +26,16 @@ import { ScreenTitle } from '@/components/screen-title';
 import { CaliberPicker } from '@/components/caliber-picker';
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
+import { ConfirmSheet } from '@/components/confirm-sheet';
 import { InfoButton } from '@/components/info-button';
 import { ListRow } from '@/components/list-row';
 import { OptionPicker } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { Screen } from '@/components/screen';
 import { Slider } from '@/components/slider';
 import { licenseActivityKey } from '@/features/compliance/activity-key';
+import { nextSessionDeadline } from '@/features/compliance/next-session';
 import { missingFirearmFields, requiresLicense } from '@/features/firearms/completeness';
 import { Stepper } from '@/components/stepper';
 import { TextField } from '@/components/text-field';
@@ -50,6 +53,10 @@ import {
   updateSightSetting,
 } from '@/db/queries/sight-settings';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
+import {
+  archiveFirearmAndReminders,
+  restoreFirearmAndReminders,
+} from '@/features/firearms/archive-firearm';
 import {
   maintenanceEventLines,
   maintenanceEventTitle,
@@ -171,6 +178,8 @@ export default function FirearmDetailScreen() {
   const [windageWindow, setWindageWindow] = useState(SIGHT_SLIDER_WINDOW_STEP);
   const [sightNotes, setSightNotes] = useState('');
 
+  const [confirmArchive, setConfirmArchive] = useState(false);
+
   const { firearm } = detail;
   if (!firearm) {
     return (
@@ -197,6 +206,18 @@ export default function FirearmDetailScreen() {
   const currentSightSetting = resolveActiveSightSetting(detail.sightSettings);
   const editingIsCurrentSightSetting =
     editingSightId != null && currentSightSetting?.id === editingSightId;
+  const isArchived = firearm.archivedAt != null;
+
+  async function onConfirmArchive() {
+    setConfirmArchive(false);
+    await archiveFirearmAndReminders(firearm!.id);
+    refresh();
+  }
+
+  async function onRestore() {
+    await restoreFirearmAndReminders(firearm!.id);
+    refresh();
+  }
 
   function onAddCaliber() {
     if (!newCaliber) return;
@@ -454,6 +475,25 @@ export default function FirearmDetailScreen() {
         </View>
       </View>
 
+      {/* Archived (#799): hidden from the list and the session pickers, its
+          history kept. Said here, with the way back, so the screen never
+          looks like an ordinary firearm that went missing from the list. */}
+      {isArchived && (
+        <Card>
+          <ThemedText type="smallBold" testID="firearm-archived-title">
+            {t('firearms.archivedTitle')}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary" testID="firearm-archived-body">
+            {t('firearms.archivedBody', { date: dates.date(firearm.archivedAt!) })}
+          </ThemedText>
+          <SecondaryButton
+            label={t('firearms.restore')}
+            onPress={() => void onRestore()}
+            testID="restore-firearm"
+          />
+        </Card>
+      )}
+
       <PrimaryButton
         label={t('common.edit')}
         onPress={() => router.push(`/firearms/${firearm.id}/edit`)}
@@ -505,8 +545,10 @@ export default function FirearmDetailScreen() {
         )}
       </Card>
 
-      {/* M6 (§6.6): hidden entirely when the compliance profile is 'none'. */}
-      {profile && detail.licenseActivities.length > 0 && (
+      {/* M6 (§6.6): hidden entirely when the compliance profile is 'none'.
+          Also for an archived firearm (#799): a firearm the shooter no longer
+          has needs no activity to keep its licence. */}
+      {profile && !isArchived && detail.licenseActivities.length > 0 && (
         <Card>
           <ThemedText type="smallBold">{t('compliance.licenseActivityTitle')}</ThemedText>
           <View style={styles.chipsRow}>
@@ -522,7 +564,7 @@ export default function FirearmDetailScreen() {
               />
             ))}
           </View>
-          {detail.licenseActivities.map((b) => (
+          {detail.licenseActivities.map((b, index) => (
             <View key={`detail-${licenseActivityKey(b)}`}>
               <ThemedText
                 type="small"
@@ -548,6 +590,11 @@ export default function FirearmDetailScreen() {
                       count: b.skippedSessionCount,
                     })}
               </ThemedText>
+              <NextSessionLine
+                lapseIso={detail.licenseActivityLapses[index]}
+                labelKey="compliance.nextSessionBy"
+                testID={`firearm-barometer-next-session-${licenseActivityKey(b)}`}
+              />
             </View>
           ))}
           {/* Which case is in effect is never silently applied — it is on
@@ -566,11 +613,12 @@ export default function FirearmDetailScreen() {
       {/* The two "Intyget avser" boxes that cover THIS firearm (#329). Shown
           separately from License Activity above because they are a different
           claim: that one counts every session whatever it was shot with, these
-          count only sessions logged with this gun. */}
-      {profile && detail.firearmCriteria.length > 0 && (
+          count only sessions logged with this gun. Not for an archived
+          firearm (#799): it is neither held nor up for renewal. */}
+      {profile && !isArchived && detail.firearmCriteria.length > 0 && (
         <Card>
           <ThemedText type="smallBold">{t('compliance.firearmCriteriaTitle')}</ThemedText>
-          {detail.firearmCriteria.map((criterion) => (
+          {detail.firearmCriteria.map((criterion, index) => (
             <View key={criterion.criterionId} style={styles.criterionBlock}>
               <View style={styles.chipsRow}>
                 <Chip
@@ -597,6 +645,11 @@ export default function FirearmDetailScreen() {
                   })}
                 </ThemedText>
               ))}
+              <NextSessionLine
+                lapseIso={detail.firearmCriteriaLapses[index]}
+                labelKey="compliance.criterionNextSessionBy"
+                testID={`firearm-criterion-next-session-${criterion.criterionId}`}
+              />
               <ThemedText type="small" themeColor="textSecondary">
                 {t(`compliance.criterionHint.${criterion.criterionId}`)}
               </ThemedText>
@@ -1207,6 +1260,30 @@ export default function FirearmDetailScreen() {
           />
         )}
       </Card>
+
+      {!isArchived && (
+        <>
+          <SecondaryButton
+            label={t('firearms.archive')}
+            onPress={() => setConfirmArchive(true)}
+            testID="archive-firearm"
+          />
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('firearms.archiveHint')}
+          </ThemedText>
+        </>
+      )}
+
+      <ConfirmSheet
+        visible={confirmArchive}
+        title={t('firearms.archiveConfirmTitle')}
+        body={t('firearms.archiveConfirmBody')}
+        confirmLabel={t('firearms.archive')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={() => void onConfirmArchive()}
+        onCancel={() => setConfirmArchive(false)}
+        testID="archive-firearm-confirm"
+      />
     </Screen>
   );
 }
@@ -1215,6 +1292,26 @@ export default function FirearmDetailScreen() {
  *  row. Empty when the card gave none — the row is then not offered. */
 function scanFirearmSummary(parsed: ParsedLicenseCard): string {
   return [parsed.make, parsed.model, parsed.caliber, parsed.vapenId].filter(Boolean).join(' · ');
+}
+
+/** "Next session by …" under a met requirement; nothing when it is not met (#795). */
+function NextSessionLine({
+  lapseIso,
+  labelKey,
+  testID,
+}: {
+  lapseIso: string | null | undefined;
+  labelKey: 'compliance.nextSessionBy' | 'compliance.criterionNextSessionBy';
+  testID: string;
+}) {
+  const { t } = useTranslation();
+  const dates = useDateFormat();
+  if (!lapseIso) return null;
+  return (
+    <ThemedText type="small" themeColor="textSecondary" testID={testID}>
+      {t(labelKey, { date: dates.date(nextSessionDeadline(lapseIso)) })}
+    </ThemedText>
+  );
 }
 
 function capitalize(value: string): string {

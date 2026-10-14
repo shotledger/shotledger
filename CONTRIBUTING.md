@@ -59,6 +59,12 @@ compliance, CSV, sync — are developed evidence-first (see
 `docs/specs/`, 100% coverage enforced by `pnpm coverage`, and a mutation
 gate. `pnpm gauntlet` runs every layer.
 
+Everything else carries a coverage floor rather than a target: the total
+coverage when the floor was set, rounded down (`COVERAGE_FLOOR` in
+`vitest.config.ts`, `coverageThreshold` in `app/jest.config.js`). When a
+change raises coverage, raise the floor in the same PR; never lower it to
+get a change through.
+
 #### `scripts/`
 
 | Script                                              | Run by                                         | What it guards                                                                                          |

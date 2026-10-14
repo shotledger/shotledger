@@ -99,6 +99,12 @@ export interface FirearmFact extends FirearmOwnershipFact {
 export interface FirearmComplianceRule {
   /** Opaque here; the app maps it to an i18n label. */
   criterionId: string;
+  /**
+   * What the föreningsintyg is for when this box is ticked: acquiring another
+   * firearm, or renewing the permit for this one. Groups the licence check
+   * (#804). The 5 §/6 § rules are always `purchase`.
+   */
+  purpose: ComplianceRulePurpose;
   windowMonths: number;
   /**
    * How many consecutive windows of `windowMonths` are each checked. "Fyra
@@ -115,6 +121,8 @@ export interface FirearmComplianceRule {
   /** Which firearms this criterion covers at all. */
   appliesTo: (firearm: FirearmFact) => boolean;
 }
+
+export type ComplianceRulePurpose = 'purchase' | 'renewal';
 
 /** One window's worth of a criterion. */
 export interface FirearmCriterionPeriod {
