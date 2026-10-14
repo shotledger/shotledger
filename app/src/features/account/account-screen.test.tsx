@@ -27,6 +27,7 @@ jest.mock('@/features/account/use-account', () => ({
   }),
 }));
 
+jest.mock('expo-router', () => require('@/test-utils/router-mock').expoRouterMock);
 jest.mock('@/db/client', () => ({ db: {}, rawDb: {} }));
 jest.mock('@/db/queries/settings', () => ({
   SETTINGS_KEYS: { theme: 'theme', language: 'language' },

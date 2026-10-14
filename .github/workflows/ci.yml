@@ -16,7 +16,13 @@ concurrency:
 jobs:
   check:
     if: ${{ !github.event.pull_request.draft }}
-    runs-on: ubuntu-latest
+    # Every workflow takes its runner from the CI_RUNNER repository variable
+    # (Settings → Secrets and variables → Actions → Variables), so moving CI
+    # between GitHub-hosted and Blacksmith runners is a settings change, not a
+    # commit. Unset means ubuntu-latest; for Blacksmith set it to
+    # blacksmith-2vcpu-ubuntu-2404. Blacksmith only serves repositories owned
+    # by a GitHub organization.
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7.0.1
 

@@ -1,5 +1,6 @@
-// Ammo lot detail/edit (§4 M4 §5): usage stats (sessions x shots) at top,
-// then the same fields as new.tsx, editable in place. No separate detail vs
+// Ammo lot detail/edit (§4 M4 §5): usage (sessions x shots) at top, then
+// the same fields as new.tsx, editable in place — label, caliber and
+// quantity first, the optional rest folded under "Details" (#822). No separate detail vs
 // edit route — lot-vs-lot comparison stays v3, so a form is the whole screen.
 import { muzzleEnergyJoules, powerFactor, TEXT_LIMITS } from '@shotledger/shared';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -18,6 +19,7 @@ import { SecondaryButton } from '@/components/secondary-button';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { Toggle } from '@/components/toggle';
+import { DetailsDisclosure } from '@/features/session-entry/details-disclosure';
 import { db } from '@/db/client';
 import { getAmmoLot, listAmmoLots, mergeAmmoLots, updateAmmoLot } from '@/db/queries/ammo-lots';
 import { getAmmoLotUsage } from '@/db/queries/ammo-usage';
@@ -110,90 +112,123 @@ export default function AmmoLotDetailScreen() {
 
   return (
     <Screen>
-      <Card>
+      {/* One line, not a card: it groups nothing (#822). */}
+      <View style={styles.usage}>
         <ThemedText type="smallBold">{t('ammo.usage')}</ThemedText>
         <ThemedText testID="ammo-usage">
           {t('ammo.usageCount', { sessions: usage.sessionCount, shots: usage.shotCount })}
         </ThemedText>
-      </Card>
+      </View>
 
       <Card>
         <ThemedText type="smallBold">{t('ammo.label')}</ThemedText>
-        <TextField value={label} onChangeText={setLabel} maxLength={TEXT_LIMITS.ammo_lots.label} />
+        <TextField
+          accessibilityLabel={t('ammo.label')}
+          value={label}
+          onChangeText={setLabel}
+          maxLength={TEXT_LIMITS.ammo_lots.label}
+        />
         <CaliberPicker label={t('ammo.caliber')} value={caliber} onChange={setCaliber} />
         <ThemedText type="smallBold">{t('ammo.quantity')}</ThemedText>
-        <TextField value={quantity} onChangeText={setQuantity} keyboardType="number-pad" />
-        <ThemedText type="smallBold">{t('ammo.purchasedOn')}</ThemedText>
         <TextField
-          value={purchasedOn}
-          onChangeText={setPurchasedOn}
-          maxLength={TEXT_LIMITS.ammo_lots.purchased_on}
+          accessibilityLabel={t('ammo.quantity')}
+          placeholder={t('formsA.optional')}
+          value={quantity}
+          onChangeText={setQuantity}
+          keyboardType="number-pad"
         />
-        {/* Hidden by Optional Fields (#569) unless this lot already is one. */}
-        {(tracked.handloads || lot?.isHandload === 1) && (
-          <View style={styles.switchRow}>
-            <ThemedText type="small">{t('ammo.isHandload')}</ThemedText>
-            <Toggle value={isHandload} onValueChange={setIsHandload} />
-          </View>
-        )}
       </Card>
 
-      {!isHandload && (
-        <Card>
-          <ThemedText type="smallBold">{t('ammo.brand')}</ThemedText>
+      <DetailsDisclosure
+        title={t('formsA.details')}
+        summary={t(isHandload ? 'formsA.ammoDetailsSummaryHandload' : 'formsA.ammoDetailsSummary')}
+        testID="ammo-details"
+      >
+        <View style={styles.fields}>
+          <ThemedText type="smallBold">{t('ammo.purchasedOn')}</ThemedText>
           <TextField
-            value={brand}
-            onChangeText={setBrand}
-            maxLength={TEXT_LIMITS.ammo_lots.brand}
+            accessibilityLabel={t('ammo.purchasedOn')}
+            value={purchasedOn}
+            onChangeText={setPurchasedOn}
+            maxLength={TEXT_LIMITS.ammo_lots.purchased_on}
+            placeholder="YYYY-MM-DD"
           />
-          <ThemedText type="smallBold">{t('ammo.product')}</ThemedText>
-          <TextField
-            value={product}
-            onChangeText={setProduct}
-            maxLength={TEXT_LIMITS.ammo_lots.product}
-          />
-          <ThemedText type="smallBold">{t('ammo.lotNumber')}</ThemedText>
-          <TextField
-            value={lotNumber}
-            onChangeText={setLotNumber}
-            maxLength={TEXT_LIMITS.ammo_lots.lot_number}
-          />
-        </Card>
-      )}
+          {/* Hidden by Optional Fields (#569) unless this lot already is one. */}
+          {(tracked.handloads || lot?.isHandload === 1) && (
+            <View style={styles.switchRow}>
+              <ThemedText type="small">{t('ammo.isHandload')}</ThemedText>
+              <Toggle value={isHandload} onValueChange={setIsHandload} testID="handload-toggle" />
+            </View>
+          )}
 
-      <Card>
-        <ThemedText type="smallBold">{t('ammo.bulletMake')}</ThemedText>
-        <TextField
-          value={bulletMake}
-          onChangeText={setBulletMake}
-          maxLength={TEXT_LIMITS.ammo_lots.bullet_make}
-        />
-        <ThemedText type="smallBold">{t('ammo.bulletModel')}</ThemedText>
-        <TextField
-          value={bulletModel}
-          onChangeText={setBulletModel}
-          maxLength={TEXT_LIMITS.ammo_lots.bullet_model}
-        />
-        <ThemedText type="smallBold">{t('ammo.bulletWeightGr')}</ThemedText>
-        <TextField
-          value={bulletWeightGr}
-          onChangeText={setBulletWeightGr}
-          keyboardType="decimal-pad"
-        />
-        <ThemedText type="smallBold">{t('ammo.velocityMps')}</ThemedText>
-        <TextField
-          value={velocityMps}
-          onChangeText={setVelocityMps}
-          keyboardType="decimal-pad"
-          testID="ammo-velocity"
-        />
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('ammo.velocityHint')}
-        </ThemedText>
-        {derivedPowerFactor != null && (
-          <>
-            {/* Side by side: both come from the same weight and velocity, so
-                they are two readings of one load rather than two settings. */}
+          {!isHandload && (
+            <>
+              <ThemedText type="smallBold">{t('ammo.brand')}</ThemedText>
+              <TextField
+                placeholder={t('formsA.optional')}
+                accessibilityLabel={t('ammo.brand')}
+                value={brand}
+                onChangeText={setBrand}
+                maxLength={TEXT_LIMITS.ammo_lots.brand}
+              />
+              <ThemedText type="smallBold">{t('ammo.product')}</ThemedText>
+              <TextField
+                placeholder={t('formsA.optional')}
+                accessibilityLabel={t('ammo.product')}
+                value={product}
+                onChangeText={setProduct}
+                maxLength={TEXT_LIMITS.ammo_lots.product}
+              />
+              <ThemedText type="smallBold">{t('ammo.lotNumber')}</ThemedText>
+              <TextField
+                placeholder={t('formsA.optional')}
+                accessibilityLabel={t('ammo.lotNumber')}
+                value={lotNumber}
+                onChangeText={setLotNumber}
+                maxLength={TEXT_LIMITS.ammo_lots.lot_number}
+              />
+            </>
+          )}
+
+          <ThemedText type="smallBold">{t('ammo.bulletMake')}</ThemedText>
+          <TextField
+            placeholder={t('formsA.optional')}
+            accessibilityLabel={t('ammo.bulletMake')}
+            value={bulletMake}
+            onChangeText={setBulletMake}
+            maxLength={TEXT_LIMITS.ammo_lots.bullet_make}
+          />
+          <ThemedText type="smallBold">{t('ammo.bulletModel')}</ThemedText>
+          <TextField
+            placeholder={t('formsA.optional')}
+            accessibilityLabel={t('ammo.bulletModel')}
+            value={bulletModel}
+            onChangeText={setBulletModel}
+            maxLength={TEXT_LIMITS.ammo_lots.bullet_model}
+          />
+          <ThemedText type="smallBold">{t('ammo.bulletWeightGr')}</ThemedText>
+          <TextField
+            placeholder={t('formsA.optional')}
+            accessibilityLabel={t('ammo.bulletWeightGr')}
+            value={bulletWeightGr}
+            onChangeText={setBulletWeightGr}
+            keyboardType="decimal-pad"
+          />
+          <ThemedText type="smallBold">{t('ammo.velocityMps')}</ThemedText>
+          <TextField
+            placeholder={t('formsA.optional')}
+            accessibilityLabel={t('ammo.velocityMps')}
+            value={velocityMps}
+            onChangeText={setVelocityMps}
+            keyboardType="decimal-pad"
+            testID="ammo-velocity"
+          />
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('ammo.velocityHint')}
+          </ThemedText>
+          {derivedPowerFactor != null && (
+            // Side by side: both come from the same weight and velocity, so
+            // they are two readings of one load rather than two settings.
             <View style={styles.derivedRow}>
               <View style={styles.derivedCell}>
                 <ThemedText type="smallBold">{t('ammo.powerFactor')}</ThemedText>
@@ -206,53 +241,73 @@ export default function AmmoLotDetailScreen() {
                 </ThemedText>
               </View>
             </View>
-          </>
-        )}
-      </Card>
+          )}
 
-      {isHandload && (
-        <Card>
-          <ThemedText type="smallBold">{t('ammo.recipeTitle')}</ThemedText>
-          <ThemedText type="small">{t('ammo.powder')}</ThemedText>
-          <TextField
-            value={powder}
-            onChangeText={setPowder}
-            maxLength={TEXT_LIMITS.ammo_lots.powder}
-          />
-          <ThemedText type="small">{t('ammo.powderChargeGr')}</ThemedText>
-          <TextField
-            value={powderChargeGr}
-            onChangeText={setPowderChargeGr}
-            keyboardType="decimal-pad"
-          />
-          <ThemedText type="small">{t('ammo.primer')}</ThemedText>
-          <TextField
-            value={primer}
-            onChangeText={setPrimer}
-            maxLength={TEXT_LIMITS.ammo_lots.primer}
-          />
-          <ThemedText type="small">{t('ammo.brass')}</ThemedText>
-          <TextField
-            value={brass}
-            onChangeText={setBrass}
-            maxLength={TEXT_LIMITS.ammo_lots.brass}
-          />
-          <ThemedText type="small">{t('ammo.colMm')}</ThemedText>
-          <TextField value={colMm} onChangeText={setColMm} keyboardType="decimal-pad" />
-          <ThemedText type="small">{t('ammo.crimpMm')}</ThemedText>
-          <TextField value={crimpMm} onChangeText={setCrimpMm} keyboardType="decimal-pad" />
-        </Card>
-      )}
+          {isHandload && (
+            <View style={styles.group} testID="handload-recipe">
+              <ThemedText type="smallBold">{t('ammo.recipeTitle')}</ThemedText>
+              <ThemedText type="small">{t('ammo.powder')}</ThemedText>
+              <TextField
+                placeholder={t('formsA.optional')}
+                accessibilityLabel={t('ammo.powder')}
+                value={powder}
+                onChangeText={setPowder}
+                maxLength={TEXT_LIMITS.ammo_lots.powder}
+              />
+              <ThemedText type="small">{t('ammo.powderChargeGr')}</ThemedText>
+              <TextField
+                placeholder={t('formsA.optional')}
+                accessibilityLabel={t('ammo.powderChargeGr')}
+                value={powderChargeGr}
+                onChangeText={setPowderChargeGr}
+                keyboardType="decimal-pad"
+              />
+              <ThemedText type="small">{t('ammo.primer')}</ThemedText>
+              <TextField
+                placeholder={t('formsA.optional')}
+                accessibilityLabel={t('ammo.primer')}
+                value={primer}
+                onChangeText={setPrimer}
+                maxLength={TEXT_LIMITS.ammo_lots.primer}
+              />
+              <ThemedText type="small">{t('ammo.brass')}</ThemedText>
+              <TextField
+                placeholder={t('formsA.optional')}
+                accessibilityLabel={t('ammo.brass')}
+                value={brass}
+                onChangeText={setBrass}
+                maxLength={TEXT_LIMITS.ammo_lots.brass}
+              />
+              <ThemedText type="small">{t('ammo.colMm')}</ThemedText>
+              <TextField
+                placeholder={t('formsA.optional')}
+                accessibilityLabel={t('ammo.colMm')}
+                value={colMm}
+                onChangeText={setColMm}
+                keyboardType="decimal-pad"
+              />
+              <ThemedText type="small">{t('ammo.crimpMm')}</ThemedText>
+              <TextField
+                placeholder={t('formsA.optional')}
+                accessibilityLabel={t('ammo.crimpMm')}
+                value={crimpMm}
+                onChangeText={setCrimpMm}
+                keyboardType="decimal-pad"
+              />
+            </View>
+          )}
 
-      <Card>
-        <ThemedText type="smallBold">{t('ammo.notes')}</ThemedText>
-        <TextField
-          value={notes}
-          onChangeText={setNotes}
-          maxLength={TEXT_LIMITS.ammo_lots.notes}
-          multiline
-        />
-      </Card>
+          <ThemedText type="smallBold">{t('ammo.notes')}</ThemedText>
+          <TextField
+            placeholder={t('formsA.optional')}
+            accessibilityLabel={t('ammo.notes')}
+            value={notes}
+            onChangeText={setNotes}
+            maxLength={TEXT_LIMITS.ammo_lots.notes}
+            multiline
+          />
+        </View>
+      </DetailsDisclosure>
 
       <PrimaryButton label={t('ammo.save')} onPress={onSave} testID="save-ammo" />
 
@@ -299,6 +354,10 @@ export default function AmmoLotDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  // Label-to-field spacing inside the fold, as in the cards above it.
+  fields: {
+    gap: Spacing.two,
+  },
   derivedRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -309,6 +368,12 @@ const styles = StyleSheet.create({
   derivedCell: {
     flex: 1,
     gap: Spacing.one,
+  },
+  group: {
+    gap: Spacing.two,
+  },
+  usage: {
+    gap: Spacing.half,
   },
   switchRow: {
     flexDirection: 'row',

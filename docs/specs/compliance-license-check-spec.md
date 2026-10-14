@@ -1,7 +1,7 @@
 # License check: met or not, and what is still needed — executable spec
 
 Scope: `shared/src/compliance/**` (old-coder mandatory per CLAUDE.md) and a new
-phone screen. Issue [#804](https://github.com/jimisola/shotledger/issues/804).
+phone screen. Issue [#804](https://github.com/shotledger/shotledger/issues/804).
 Builds on [`compliance-next-session-spec.md`](compliance-next-session-spec.md)
 (#795), whose lapse it reuses, and on the specs that one builds on. The source,
 the numbers and the windows are unchanged.

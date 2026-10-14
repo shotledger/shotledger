@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://jimisola.github.io/shotledger/reference/v1/sessions-export.schema.json",
+  "$id": "https://shotledger.github.io/shotledger/reference/v1/sessions-export.schema.json",
   "$comment": "Generated from shared/src/json-export/types.ts by scripts/generate-export-schema.mjs. Do not hand-edit: `pnpm schema:check` fails when this file and that source disagree.",
   "title": "ShotLedger sessions export",
   "description": "The file produced by Settings → Export Sessions. `format` is always \"shotledger.sessions\". An importer must refuse a higher `formatVersion` rather than dropping fields it does not understand. This URL describes format version 1 and will not change meaning.",

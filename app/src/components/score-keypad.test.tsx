@@ -61,7 +61,7 @@ describe('ScoreKeypad, integer mode', () => {
   it('starts empty at a total of 0', async () => {
     await renderWithProviders(<Harness initial={fiveShots()} />);
 
-    expect(total()).toHaveTextContent('Series Total: 0');
+    expect(total()).toHaveTextContent('0');
     for (let n = 1; n <= 5; n++) expect(chip(n)).toHaveTextContent('–');
   });
 
@@ -70,12 +70,12 @@ describe('ScoreKeypad, integer mode', () => {
 
     await tap('9');
     expect(chip(1)).toHaveTextContent('9');
-    expect(total()).toHaveTextContent('Series Total: 9');
+    expect(total()).toHaveTextContent('9');
 
     await tap('10', 'X');
     expect(chip(2)).toHaveTextContent('10');
     expect(chip(3)).toHaveTextContent('X');
-    expect(total()).toHaveTextContent('Series Total: 29');
+    expect(total()).toHaveTextContent('29');
   });
 
   it('counts an inner ten as ten points and marks only it as inner', async () => {
@@ -84,7 +84,7 @@ describe('ScoreKeypad, integer mode', () => {
 
     await tap('X', '10');
 
-    expect(total()).toHaveTextContent('Series Total: 20');
+    expect(total()).toHaveTextContent('20');
     expect(enteredShots(last!)).toEqual([
       { valueTenths: 100, isInnerTen: true },
       { valueTenths: 100, isInnerTen: false },
@@ -95,11 +95,11 @@ describe('ScoreKeypad, integer mode', () => {
     await renderWithProviders(<Harness initial={fiveShots()} />);
 
     await tap('10', '10', '10', '10', '9');
-    expect(total()).toHaveTextContent('Series Total: 49');
+    expect(total()).toHaveTextContent('49');
 
     await tap('10', 'X', '5');
 
-    expect(total()).toHaveTextContent('Series Total: 49');
+    expect(total()).toHaveTextContent('49');
     expect(chip(5)).toHaveTextContent('9');
     expect(screen.queryByTestId('shot-6')).toBeNull();
   });
@@ -120,7 +120,7 @@ describe('ScoreKeypad, integer mode', () => {
 
     expect(chip(2)).toHaveTextContent('–');
     expect(chip(1)).toHaveTextContent('8');
-    expect(total()).toHaveTextContent('Series Total: 8');
+    expect(total()).toHaveTextContent('8');
   });
 
   it('delete on an empty series does nothing', async () => {
@@ -128,20 +128,20 @@ describe('ScoreKeypad, integer mode', () => {
 
     await tap('backspace');
 
-    expect(total()).toHaveTextContent('Series Total: 0');
+    expect(total()).toHaveTextContent('0');
   });
 
   it('a tapped chip is selected and the next key overwrites it', async () => {
     await renderWithProviders(<Harness initial={fiveShots()} />);
     await tap('10', '10', '10', '10', '10');
-    expect(total()).toHaveTextContent('Series Total: 50');
+    expect(total()).toHaveTextContent('50');
 
     await fireEvent.press(chip(2));
     expect(chip(2)).toBeSelected();
     await tap('6');
 
     expect(chip(2)).toHaveTextContent('6');
-    expect(total()).toHaveTextContent('Series Total: 46');
+    expect(total()).toHaveTextContent('46');
     expect(chip(2)).not.toBeSelected();
   });
 
@@ -162,7 +162,7 @@ describe('ScoreKeypad, integer mode', () => {
     expect(chip(1)).toHaveTextContent('X');
     expect(chip(2)).toHaveTextContent('7');
     expect(chip(3)).toBeSelected();
-    expect(total()).toHaveTextContent('Series Total: 17');
+    expect(total()).toHaveTextContent('17');
   });
 
   it('shows no decimal hint', async () => {
@@ -186,11 +186,11 @@ describe('ScoreKeypad, decimal mode', () => {
 
     await tap('10', '4');
     expect(chip(1)).toHaveTextContent('10.4');
-    expect(total()).toHaveTextContent('Series Total: 10.4');
+    expect(total()).toHaveTextContent('10.4');
 
     await tap('9', '7');
     expect(chip(2)).toHaveTextContent('9.7');
-    expect(total()).toHaveTextContent('Series Total: 20.1');
+    expect(total()).toHaveTextContent('20.1');
   });
 
   it('a half-entered shot is not a shot yet', async () => {
@@ -199,7 +199,7 @@ describe('ScoreKeypad, decimal mode', () => {
     await tap('9');
 
     expect(chip(1)).toHaveTextContent('–');
-    expect(total()).toHaveTextContent('Series Total: 0');
+    expect(total()).toHaveTextContent('0');
   });
 
   it('refuses a ten key as the tenth', async () => {
@@ -210,7 +210,7 @@ describe('ScoreKeypad, decimal mode', () => {
 
     await tap('3');
     expect(chip(1)).toHaveTextContent('9.3');
-    expect(total()).toHaveTextContent('Series Total: 9.3');
+    expect(total()).toHaveTextContent('9.3');
   });
 
   it('prints an inner ten in parentheses', async () => {
@@ -220,7 +220,7 @@ describe('ScoreKeypad, decimal mode', () => {
 
     expect(chip(1)).toHaveTextContent('(10.9)');
     expect(chip(2)).toHaveTextContent('10.9');
-    expect(total()).toHaveTextContent('Series Total: 21.8');
+    expect(total()).toHaveTextContent('21.8');
   });
 
   it('delete after the ring tap undoes only the ring', async () => {
@@ -231,6 +231,6 @@ describe('ScoreKeypad, decimal mode', () => {
 
     expect(chip(1)).toHaveTextContent('10.2');
     expect(chip(2)).toHaveTextContent('7.1');
-    expect(total()).toHaveTextContent('Series Total: 17.3');
+    expect(total()).toHaveTextContent('17.3');
   });
 });

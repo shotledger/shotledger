@@ -14,6 +14,16 @@ this screen that changes what the app asks of you elsewhere: owning a handgun
 is what decides which [license activity](license-activity.md) requirement you
 are measured against.
 
+The form asks for make and model, with caliber, weapon type and ownership
+beside them. Everything else is optional and folded under **Details**: serial
+number, national register ID, load system, the maintenance intervals and notes.
+Tap **Details** to open it; an empty optional field says **Optional**. **Edit**,
+at the top right of the firearm's page, opens the same form.
+
+On the Firearms list and the firearm's page, a status is a word with a
+coloured dot: green for **Valid** or **OK**, amber for **Expiring Soon** or
+**Due Soon**, red for **Expired** or **Maintenance Due**.
+
 ### Incomplete
 
 A firearm shows **Incomplete** while something the app needs is missing: the
@@ -84,6 +94,14 @@ A firearm accumulates:
 Sight settings are reachable from the session itself, so a correction between
 series does not mean leaving what you are doing.
 
+### License expiry reminders
+
+When a firearm's latest license has an end date, the phone reminds you ahead
+of it. The reminders follow what is stored, however it got there: a license you
+added, one from an import, demo data, or another device by sync. A renewed
+license replaces the old one's reminders. The phone asks for permission to
+notify you when you save a license; until you allow it, there are none.
+
 ### Archiving a firearm you no longer have
 
 When you sell, return or retire a firearm, open it and tap **Archive Firearm**
@@ -111,12 +129,16 @@ license and maintenance reminders start again.
 
 An ammunition lot is either factory ammunition or a handload.
 
+The form leads with the label, caliber and quantity. Purchase date, the
+handload switch, brand and lot number or the recipe, the bullet and its
+velocity, and notes are under **Details**.
+
 For a handload you can record bullet make, model and weight, powder and charge,
 primer, brass, cartridge overall length and crimp. Those exist so a load that
 shot well is reproducible, and a load that did not is identifiable.
 
 If you never handload, switch off **Settings → Optional Fields → Handloads** and
-the handload switch and recipe leave the ammunition form. A lot that is already
+the handload switch and recipe leave the ammunition form's Details. A lot that is already
 a handload keeps them.
 
 ### Merging two lots that are the same

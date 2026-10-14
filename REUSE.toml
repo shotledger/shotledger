@@ -4,7 +4,7 @@
 version = 1
 SPDX-PackageName = "ShotLedger"
 SPDX-PackageSupplier = "Jimisola Laursen"
-SPDX-PackageDownloadLocation = "https://github.com/jimisola/shotledger"
+SPDX-PackageDownloadLocation = "https://github.com/shotledger/shotledger"
 
 [[annotations]]
 path = "**"

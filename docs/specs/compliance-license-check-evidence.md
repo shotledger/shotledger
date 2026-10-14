@@ -1,7 +1,7 @@
 # License check — evidence report
 
 Spec: [`compliance-license-check-spec.md`](compliance-license-check-spec.md).
-Issue [#804](https://github.com/jimisola/shotledger/issues/804).
+Issue [#804](https://github.com/shotledger/shotledger/issues/804).
 
 **Spec approval: approved** by the maintainer on 2026-10-13.
 

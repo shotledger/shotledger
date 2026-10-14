@@ -36,20 +36,26 @@ vapenfliken, och att fylla i dem kan flytta förslaget av sig självt.
 
 ## Att se var du står
 
-Tryck på statusen på **Hem** för att öppna **Licenskontroll**. Där finns alla
-krav på föreningens intyg, grupperade efter vad du ansöker om:
+Tryck på statusen på **Hem** för att öppna **Licenskontroll**. Den svarar på
+två frågor:
 
-- **Nyförvärv**: aktivitetskravet för ditt fall, och rutan för ytterligare
-  enhandsvapen för varje pistol eller revolver som är markerad som din egen.
-- **Förnyelse**: rutan för förnyelse för varje vapen vars licens har ett
-  slutdatum.
+- **Nyförvärv**: kan du ansöka om att förvärva ett nytt enhandsvapen nu? Raden
+  **Nytt vapen** visar **Ja** eller **Nej**. Är svaret ja står det hur länge det
+  förblir ja om du inte loggar något mer; är det nej, hur många krav som inte
+  är uppfyllda.
+- **Förnyelse**: kan licensen för varje vapen förnyas nu? Varje vapen visas med
+  **Ja** eller **Nej**, eller **Behövs inte** när licensen saknar slutdatum.
+  Ett
+  [arkiverat](firearms-and-ammunition.sv.md#arkivera-ett-vapen-du-inte-langre-har)
+  vapen visas inte.
 
-Varje krav visar om det är uppfyllt. Är det uppfyllt står det när du senast ska
-skjuta nästa gång. Är det inte uppfyllt står det hur många pass till som behövs,
-och med vilket vapen när det spelar roll. Tryck på ett vapens namn för att öppna
-det. Ett
-[arkiverat](firearms-and-ammunition.sv.md#arkivera-ett-vapen-du-inte-langre-har)
-vapen visas inte.
+Tryck på en rad för att se kraven bakom svaret. **Nytt vapen** visar
+aktivitetskravet för ditt fall och rutan för ytterligare enhandsvapen för varje
+pistol eller revolver som är markerad som din egen. Ett vapen visar sin
+förnyelseruta, och sin ruta för ytterligare enhandsvapen när den gäller, med
+**Öppna vapnet** för att gå till själva vapnet. Varje ruta visar om den är
+uppfylld. Är den uppfylld står det när du senast ska skjuta nästa gång. Är den
+inte uppfylld står det hur många pass till som behövs.
 
 Om ett tidigare år i förnyelserutan inte räcker kan pass du loggar i dag inte
 rätta till det, och kontrollen säger det. Den visar också från vilket datum
@@ -102,3 +108,16 @@ PDF av loggen att skriva ut. Låt loggboken skrivas under efter hand, och
 använd appen för att se var du står.
 
 **Inställningar → Säkerhetskopiering och data** exporterar alla pass som data.
+
+## På webben
+
+Med synk påslagen visar **Statistik** i webbappen samma samlade status som
+startsidan på telefonen, högst upp på sidan: **Licensaktivitet** följt av
+**I fas**, **Halkar efter** eller **Inaktiv**. Den räknar alla pass på ditt
+konto, oavsett hur rapportens filter är inställda.
+
+Den syns när en profil är vald under **Inställningar → Efterlevnad**, på
+telefonen eller på webben. Webben kan inte se telefonens språk, så tills du
+väljer visas ingenting. Webben har ännu inga sidor för vapen, så ett vapens
+egna kriterier, och datumet då nästa pass senast ska skjutas för att du ska
+hålla dig i fas, finns än så länge bara på telefonen.

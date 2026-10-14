@@ -65,7 +65,7 @@ appId: app.shotledger
 - tapOn: 'Home'
 - extendedWaitUntil:
     visible:
-      id: 'home-barometer'
+      id: 'home-license-check'
     timeout: 15000
 - takeScreenshot: m6-02-home-license-activity
 

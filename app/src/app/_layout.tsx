@@ -95,7 +95,15 @@ function RootStack() {
         options={{ presentation: 'modal', headerShown: true, title: t('ammo.editLot') }}
       />
       <Stack.Screen
-        name="compliance"
+        name="compliance/index"
+        options={{ headerShown: true, title: t('compliance.check.title') }}
+      />
+      <Stack.Screen
+        name="compliance/new-firearm"
+        options={{ headerShown: true, title: t('compliance.check.newFirearm') }}
+      />
+      <Stack.Screen
+        name="compliance/firearm/[id]"
         options={{ headerShown: true, title: t('compliance.check.title') }}
       />
       <Stack.Screen
@@ -161,10 +169,6 @@ function RootStack() {
       <Stack.Screen
         name="stats/records"
         options={{ presentation: 'modal', headerShown: true, title: t('webshooter.recordsTitle') }}
-      />
-      <Stack.Screen
-        name="stats/report"
-        options={{ presentation: 'modal', headerShown: true, title: t('stats.reportTitle') }}
       />
       <Stack.Screen name="dev" />
     </Stack>

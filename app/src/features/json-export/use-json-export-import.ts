@@ -17,6 +17,7 @@ import { applyImport, dryRunImport } from '@/db/json-export/apply-import';
 import { buildExportJson } from '@/db/json-export/build-export';
 import { db } from '@/db/client';
 import { localDateStamp } from '@/features/export/local-date-stamp';
+import { refreshReminders } from '@/features/firearms/reminders';
 import { pickJsonText } from '@/platform/import-file';
 import { shareJson } from '@/platform/export-file';
 
@@ -64,6 +65,8 @@ export function useJsonExportImport(appVersion: string) {
    * the firearms/licenses that came with them. */
   function confirmImport(dryRun: ImportDryRunResult) {
     applyImport(db, dryRun.groups, dryRun.records);
+    // Imported licenses and maintenance get their reminders now (#847).
+    void refreshReminders();
     setStatus({ kind: 'import-success', sessionCount: dryRun.groups.length });
   }
 

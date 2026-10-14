@@ -470,6 +470,10 @@ already is the sighter can un-set itself.)
       decision date, validity, conditions; renewals append, history
       kept); local notifications at 90/30/7 days before valid_until
       (VERIFY preferred lead times with maintainer)
+- [x] License expiry reminders rebuilt as one set from the latest license of
+      each active firearm (#847) at app start, on the foreground, after a
+      sync, a JSON import or demo data, so licenses that did not come in
+      through the firearm screen get them too
 - [x] Ammo lots CRUD incl. handload recipe fields (powder, charge,
       bullet, primer, brass, COL); session links lot; per-lot usage
       count; lot-vs-lot comparison stays v3
@@ -675,6 +679,11 @@ from §6.5 automatically).
       on 31 March six months back is 30 September. The status changes only at
       local midnight; the next-session date and the License Check follow.
       Spec/evidence: `docs/specs/compliance-local-days-{spec,evidence}.md`.
+- [x] **License Check overview** — the screen answers two questions first:
+      can I apply for a new firearm (Yes/No), and can each firearm's license
+      be renewed (Yes/No, or Not Needed without an end date). Each row opens
+      its detail (`/compliance/new-firearm`, `/compliance/firearm/[id]`). UI
+      only; the compliance functions are unchanged. Also #848's wording fixes.
 - **Done when:** license-activity states unit-tested (boundary dates, tombstoned
   sessions excluded); PDF snapshot test of generated HTML.
   — both done. `shared/src/compliance/` was built under the old-coder loop
@@ -750,8 +759,7 @@ shows the chosen range next to the pickers. i18n: `stats.periodCustom`,
 | `/session/new`                             | new-session form (kind, name, location, tags)                                             | validation errors  |
 | `/session/[id]`                            | series list + stats toggle, add series                                                    | zero series        |
 | `/session/[id]/series/[pos]`               | keypad entry                                                                              | integer vs decimal |
-| `/stats`                                   | filter form (period, type, discipline, series length, tags)                               | no sessions at all |
-| `/stats/report`                            | generated report: records, sum + per-shot totals, charts, export                          | no data for filter |
+| `/stats`                                   | results for the Filter Bar's filter: headline + trend, detail, records, charts, export    | no sessions at all |
 | `/firearms`                                | list + license-activity chips                                                             | empty              |
 | `/firearms/[id]`                           | detail: classes, license, maintenance, ammo usage                                         | expired license    |
 | `/firearms/new`, `/firearms/[id]/edit`     | forms                                                                                     |                    |
@@ -1311,6 +1319,15 @@ restates §0 rules 1–6 verbatim.
 > vault's own "Add to vault" screen (Weapon license + Photo) also offers the
 > same scan, and can create a license record from it. See the updated
 > `docs/specs/license-card-ocr-spec.md`/`-evidence.md`.
+>
+> **#822 (direction A):** the tab opens on the results, and `/stats/report`
+> is gone. A Filter Bar (chips + sheet) holds the filter and applies it live;
+> the headline (average per series, or the hit rate for a hits discipline)
+> carries its trend against the previous equal period
+> (`previousPeriodRange` / `statsHeadline` in `shared/src/analytics-rows`).
+> Every number the report showed is still on the tab
+> (`app/src/features/stats/stats-results.tsx`), plus Home's session, shot and
+> competition counts for the filter. The web page follows the same order.
 
 > **The Vault has since been removed** (issue #276, maintainer 2026-09-16:
 > licenses are going digital, and a license picture — if it is ever needed

@@ -39,7 +39,7 @@ appId: app.shotledger
     visible: 'Home'
     timeout: 15000
 
-# --- Stats tab: default filters (6 months) -----------------------------
+# --- Stats tab: opens on results for the default filter (6 months) -----
 - tapOn: 'Statistics'
 - extendedWaitUntil:
     visible:
@@ -59,10 +59,12 @@ appId: app.shotledger
 - assertVisible:
     id: 'stat-gold-series-count'
 - assertVisible:
-    id: 'trend-chart'
+    id: 'stats-headline-chart'
 
-# --- Period filter: switch to All time, still live, no generate button ---
-- tapOn: 'All time'
+# --- Period filter: switch to Max in the Filter Bar's sheet, applied live ---
+- tapOn: 'Filters'
+- tapOn: 'Max'
+- tapOn: 'Close'
 - extendedWaitUntil:
     visible:
       id: 'stat-total-shots'
@@ -79,10 +81,10 @@ appId: app.shotledger
 - tapOn: 'Home'
 - extendedWaitUntil:
     visible:
-      id: 'home-session-0'
+      id: 'home-last-session'
     timeout: 15000
 - tapOn:
-    id: 'home-session-0'
+    id: 'home-last-session'
 - extendedWaitUntil:
     visible:
       id: 'session-total'

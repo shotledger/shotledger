@@ -13,6 +13,17 @@ på de vapen som inte är dina. Det är det enda på den här skärmen som ändr
 appen kräver av dig på annat håll: att du äger ett enhandsvapen är det som
 avgör vilket krav på [licensaktivitet](license-activity.sv.md) du mäts mot.
 
+Formuläret frågar efter tillverkare och modell, med kaliber, vapentyp och
+ägande bredvid. Resten är valfritt och ligger hopfällt under **Detaljer**:
+serienummer, vapenregister-id, laddsystem, underhållsintervallen och
+anteckningar. Tryck på **Detaljer** för att öppna det; ett tomt valfritt fält
+säger **Valfritt**. **Redigera**, uppe till höger på vapnets sida, öppnar samma
+formulär.
+
+I vapenlistan och på vapnets sida är en status ett ord med en färgad prick:
+grön för **Giltig** eller **OK**, gul för **Går snart ut** eller **Snart dags**,
+röd för **Utgången** eller **Underhåll behövs**.
+
 ### Ofullständig
 
 Ett vapen visar **Ofullständig** så länge något appen behöver saknas: vapentyp,
@@ -84,6 +95,14 @@ Till ett vapen samlas:
 Siktesinställningarna går att nå från passet självt, så en justering mellan
 serier innebär inte att du måste lämna det du håller på med.
 
+### Påminnelser om att licensen går ut
+
+När ett vapens senaste licens har ett slutdatum påminner telefonen dig i god tid
+före det. Påminnelserna följer det som är sparat, hur det än kom dit: en licens
+du lagt till, en från en import, demodata eller en annan enhet via synk. En
+förnyad licens ersätter den gamlas påminnelser. Telefonen ber om lov att ge
+notiser när du sparar en licens; tills du tillåter det kommer inga.
+
 ### Arkivera ett vapen du inte längre har
 
 När du har sålt, lämnat tillbaka eller slutat använda ett vapen öppnar du det
@@ -111,13 +130,17 @@ påminnelserna om licensen och underhållet börjar igen.
 
 En ammunitionssats är antingen fabriksammunition eller en handladdning.
 
+Formuläret börjar med namn, kaliber och antal. Inköpsdatum, reglaget
+Handladdning, märke och partinummer eller receptet, kulan och dess hastighet
+samt anteckningar ligger under **Detaljer**.
+
 För en handladdning kan du anteckna kulans fabrikat, modell och vikt, krut och
 laddning, tändhatt, hylsa, patronens totallängd och crimp. Det finns där för
 att en laddning som sköt bra ska gå att göra om, och en som inte gjorde det ska
 gå att känna igen.
 
 Laddar du aldrig själv stänger du av **Inställningar → Valfria fält → Handladdning**, så försvinner reglaget Handladdning och receptet ur
-ammunitionsformuläret. En sats som redan är en handladdning behåller dem.
+ammunitionsformulärets Detaljer. En sats som redan är en handladdning behåller dem.
 
 ### Slå ihop två partier som är samma
 

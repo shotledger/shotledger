@@ -4,12 +4,13 @@
 import { FEATURE_IDS } from '@shotledger/shared';
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { Screen } from '@/components/screen';
 import { ScreenTitle } from '@/components/screen-title';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { refreshMaintenanceTimeReminders } from '@/features/firearms/maintenance';
 import { setFeatureVisible, useFeatures } from '@/features/settings/feature-visibility';
 import { Spacing } from '@/theme/tokens';
@@ -32,7 +33,7 @@ export default function FeaturesSettingsScreen() {
             <ThemedText type="smallBold" style={styles.label}>
               {t(`settings.feature.${id}`)}
             </ThemedText>
-            <Switch
+            <Toggle
               value={features[id]}
               onValueChange={(next) => {
                 setFeatureVisible(id, next);

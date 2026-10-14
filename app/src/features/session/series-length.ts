@@ -9,3 +9,22 @@ export function resolveSeriesLength(
 ): number {
   return programShotsPerSeries ?? sessionSeriesLength ?? disciplineDefault ?? 5;
 }
+
+/**
+ * The most shots a typed series length may ask for: ten times the longest
+ * series any shipped discipline or program uses (10). The keypad lays out one
+ * cell per shot, so `1e6` would hang the screen rather than be a choice (#837).
+ */
+export const MAX_SERIES_LENGTH = 100;
+
+/**
+ * A series length as typed on New Session (and the web's Enter Series): whole
+ * digits from 1 to `MAX_SERIES_LENGTH`, else null, which falls back to the
+ * discipline's default. `1e2`, `5.0` and `5 5` are not.
+ */
+export function parseSeriesLength(text: string): number | null {
+  const trimmed = text.trim();
+  if (!/^\d{1,3}$/.test(trimmed)) return null;
+  const length = Number(trimmed);
+  return length >= 1 && length <= MAX_SERIES_LENGTH ? length : null;
+}

@@ -1,4 +1,4 @@
-import { resolveSeriesLength } from './series-length';
+import { MAX_SERIES_LENGTH, parseSeriesLength, resolveSeriesLength } from './series-length';
 
 describe('resolveSeriesLength', () => {
   it('lets a fixed format decide over the session and the discipline', () => {
@@ -15,5 +15,25 @@ describe('resolveSeriesLength', () => {
 
   it('falls back to 5 for an unknown discipline', () => {
     expect(resolveSeriesLength(undefined, null, undefined)).toBe(5);
+  });
+});
+
+describe('parseSeriesLength', () => {
+  it('takes whole digits from 1 to the cap', () => {
+    expect(parseSeriesLength('1')).toBe(1);
+    expect(parseSeriesLength(' 10 ')).toBe(10);
+    expect(parseSeriesLength(String(MAX_SERIES_LENGTH))).toBe(MAX_SERIES_LENGTH);
+  });
+
+  it('refuses what Number() would let through as a whole number', () => {
+    for (const text of ['1e20', '1e2', '5.0', '0x10', '+5', '5 5', ''])
+      expect(parseSeriesLength(text)).toBeNull();
+  });
+
+  it('refuses zero and anything over the cap', () => {
+    expect(parseSeriesLength('0')).toBeNull();
+    expect(parseSeriesLength('000')).toBeNull();
+    expect(parseSeriesLength(String(MAX_SERIES_LENGTH + 1))).toBeNull();
+    expect(parseSeriesLength('1'.repeat(400))).toBeNull();
   });
 });

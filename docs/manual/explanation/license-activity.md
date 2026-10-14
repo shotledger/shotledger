@@ -65,7 +65,7 @@ you told it — the weapon type and the
 The screen also says **why** it chose what it chose — "because no firearm on
 file is a pistol or revolver you own", say. That matters after an import: a
 firearm created by importing sessions arrives with no weapon type and no
-licence, so the app can see five handguns and still have nothing on file
+license, so the app can see five handguns and still have nothing on file
 saying they _are_ handguns. The proposal is then right about the data and
 wrong about you, and the reason line is what makes that visible instead of
 mysterious.
@@ -165,7 +165,7 @@ The app has no access to your licenses, so it works from what you told it:
   **pistol or revolver** and which you marked as **My Own** — the same reading
   of "handgun you hold" the 5 §/6 § proposal uses.
 - **Renewing a time-limited permit** is shown for any firearm whose most recent
-  licence has an **end date**. A licence with no end date is _tills vidare_ and
+  license has an **end date**. A license with no end date is _tills vidare_ and
   is not a time-limited permit. Weapon type is not part of it: the form's
   renewal box names none.
 
@@ -173,15 +173,15 @@ Neither is shown for an archived firearm. You no longer hold it, and you will
 not renew its permit.
 
 If a criterion is missing from a firearm you expected it on, that is the place
-to look — usually a missing weapon type or a licence recorded without its
+to look — usually a missing weapon type or a license recorded without its
 _giltighetstid_.
 
 !!! warning "Counted is not attested"
 
     On a club log a row becomes evidence when someone signs the _Uppg. styrkta
-    av_ column. The app has no equivalent and does not invent one. "6 of 4
-    activities with this firearm" means the app counted six sessions you
-    logged — not that anyone has attested them.
+    av_ column. The app has no equivalent and does not invent one. "6 activities
+    with this firearm" means the app counted six sessions you logged — not that
+    anyone has attested them.
 
 ## What the app does not track
 

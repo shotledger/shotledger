@@ -12,9 +12,9 @@ export function Toggle({ value, ...rest }: SwitchProps) {
   return (
     <Switch
       value={value}
-      trackColor={{ false: theme.border, true: theme.primary }}
+      trackColor={{ false: theme.backgroundSelected, true: theme.primary }}
       thumbColor={value ? theme.onPrimary : theme.textSecondary}
-      ios_backgroundColor={theme.border}
+      ios_backgroundColor={theme.backgroundSelected}
       // react-native-web paints the "on" thumb from its own prop and ignores
       // `thumbColor` there, defaulting to Material teal. Not in RN's types.
       {...({ activeThumbColor: theme.onPrimary } as Partial<SwitchProps>)}

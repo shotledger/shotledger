@@ -1,6 +1,6 @@
-// The Home tab against a real (in-memory) database: the header counts, the
-// latest-sessions list and what each row says, the shape filter, and the
-// empty state.
+// The Home tab against a real (in-memory) database (#822, direction A): the
+// Start action from the last session, the last session's result, the recent
+// list and what each row says, and the empty state.
 import { fireEvent, screen, within } from '@testing-library/react-native';
 
 import HomeScreen from '@/app/(tabs)/index';
@@ -8,6 +8,7 @@ import { createFirearm } from '@/db/queries/firearms';
 import { saveSeriesShots, setSessionExtraRounds } from '@/db/queries/round-count';
 import { addSeries } from '@/db/queries/series';
 import { createSession, type CreateSessionInput } from '@/db/queries/sessions';
+import { addSessionTag, getOrCreateTag } from '@/db/queries/tags';
 import type { Database } from '@/db/types';
 import { renderWithProviders } from '@/test-utils/render';
 import { mockRouter } from '@/test-utils/router-mock';
@@ -53,8 +54,8 @@ function series(sessionId: string, position: number, values: number[], inner = 0
   );
 }
 
-function stat(testID: string) {
-  return screen.getByTestId(testID);
+function tag(sessionId: string, name: string) {
+  addSessionTag(db, sessionId, getOrCreateTag(db, name).id);
 }
 
 describe('Home', () => {
@@ -62,58 +63,117 @@ describe('Home', () => {
     await renderWithProviders(<HomeScreen />);
 
     expect(screen.getByText('No Sessions Yet')).toBeOnTheScreen();
-    expect(stat('home-stat-shots-logged')).toHaveTextContent(/0/);
-    expect(stat('home-stat-sessions')).toHaveTextContent(/0/);
-    expect(screen.queryByText('Latest Sessions')).toBeNull();
+    expect(screen.queryByTestId('home-start')).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Log Your First Session' }));
     expect(mockRouter.push).toHaveBeenCalledWith('/session/new');
   });
 
-  it('counts shots, sessions and competitions', async () => {
-    const training = session('Tuesday training', '2026-06-02T16:00:00.000Z');
-    series(training.id, 1, [10, 9, 9, 8, 8]);
-    const match = session('Club match', '2026-06-06T08:00:00.000Z', { type: 'competition' });
-    series(match.id, 1, [10, 10, 9, 9, 9]);
-    const rounds = session('Plinking', '2026-06-07T08:00:00.000Z', { kind: 'rounds' });
-    setSessionExtraRounds(db, rounds.id, 50);
+  it('leads with Start on the last discipline and firearm', async () => {
+    const firearm = createFirearm(db, { make: 'Acme', model: 'Target 22', isOwn: true });
+    session('Older', '2026-06-01T16:00:00.000Z', { disciplineId: 'spsf-milsnabb' });
+    session('Latest', '2026-06-02T16:00:00.000Z', { firearmId: firearm.id });
 
     await renderWithProviders(<HomeScreen />);
 
-    expect(stat('home-stat-shots-logged')).toHaveTextContent('60Shots Logged');
-    expect(stat('home-stat-sessions')).toHaveTextContent('3Sessions');
-    expect(stat('home-stat-competitions')).toHaveTextContent('1Competitions');
+    await fireEvent.press(screen.getByRole('button', { name: 'Start Precision' }));
+    expect(mockRouter.push).toHaveBeenCalledWith('/session/new');
+    expect(screen.getByTestId('home-start-firearm')).toHaveTextContent('Acme Target 22');
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Change' }));
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/session/new');
   });
 
-  it('lists sessions newest first with total, series average and inner tens', async () => {
+  it('shows no lifetime totals and no floating New Session button', async () => {
+    session('Tuesday training', '2026-06-02T16:00:00.000Z');
+
+    await renderWithProviders(<HomeScreen />);
+
+    expect(screen.queryByText('Shots Logged')).toBeNull();
+    expect(screen.queryByText('Competitions')).toBeNull();
+    expect(screen.queryByText('New Session')).toBeNull();
+  });
+
+  it("shows the last session's result, inner tens included", async () => {
     const older = session('Tuesday training', '2026-06-02T16:00:00.000Z');
     series(older.id, 1, [10, 10, 9, 9, 8], 1);
-    series(older.id, 2, [10, 9, 9, 8, 8]);
     const newer = session('Club match', '2026-06-06T08:00:00.000Z', { type: 'competition' });
     series(newer.id, 1, [10, 10, 10, 9, 9], 2);
 
     await renderWithProviders(<HomeScreen />);
 
-    const first = screen.getByTestId('home-session-0');
-    expect(first).toHaveTextContent(/Club match/);
-    expect(first).toHaveTextContent(/48p · ⌀ 48\.0 · 2X/);
-    expect(within(first).getByText('Competition')).toBeOnTheScreen();
+    const last = screen.getByTestId('home-last-session');
+    expect(last).toHaveTextContent(/Last Session · .* · Competition/);
+    expect(last).toHaveTextContent(/Club match/);
+    expect(screen.getByTestId('home-last-session-total')).toHaveTextContent('48');
+    expect(screen.getByTestId('home-last-session-result')).toHaveTextContent(
+      '⌀ 48.0 per series · 2X',
+    );
 
-    const second = screen.getByTestId('home-session-1');
-    expect(second).toHaveTextContent(/Tuesday training/);
-    expect(second).toHaveTextContent(/90p · ⌀ 45\.0 · 1X/);
-    expect(within(second).getByText('Training')).toBeOnTheScreen();
+    await fireEvent.press(last);
+    expect(mockRouter.push).toHaveBeenCalledWith(`/session/${newer.id}`);
   });
 
-  it('omits average and inner tens for a session with nothing scored', async () => {
-    session('Empty evening', '2026-06-02T16:00:00.000Z');
+  it('lists the rest under Recent with total, average and inner tens, 0X included', async () => {
+    const older = session('Tuesday training', '2026-06-02T16:00:00.000Z');
+    series(older.id, 1, [10, 9, 9, 8, 8]);
+    series(older.id, 2, [10, 10, 9, 9, 8]);
+    session('Club match', '2026-06-06T08:00:00.000Z');
 
     await renderWithProviders(<HomeScreen />);
 
     const row = screen.getByTestId('home-session-0');
-    expect(row).toHaveTextContent(/0p/);
+    expect(row).toHaveTextContent(/Tuesday training/);
+    expect(row).toHaveTextContent(/⌀ 45\.0 per series · 0X/);
+    expect(screen.getByTestId('home-session-0-total')).toHaveTextContent('90');
+    expect(row).not.toHaveTextContent(/90p/);
+  });
+
+  it('prints no result for a session with nothing scored', async () => {
+    session('Empty evening', '2026-06-02T16:00:00.000Z');
+    session('Latest', '2026-06-03T16:00:00.000Z');
+
+    await renderWithProviders(<HomeScreen />);
+
+    const row = screen.getByTestId('home-session-0');
+    expect(row).toHaveTextContent(/Empty evening/);
     expect(row).not.toHaveTextContent(/⌀/);
-    expect(row).not.toHaveTextContent(/0X/);
+    expect(screen.queryByTestId('home-session-0-total')).toBeNull();
+  });
+
+  it("reports a rounds session's count", async () => {
+    const rounds = session('Plinking', '2026-06-02T16:00:00.000Z', { kind: 'rounds' });
+    setSessionExtraRounds(db, rounds.id, 50);
+    session('Latest', '2026-06-03T16:00:00.000Z');
+
+    await renderWithProviders(<HomeScreen />);
+
+    expect(screen.getByTestId('home-session-0')).toHaveTextContent(/50 rounds/);
+  });
+
+  it('drops the type when a tag already says it', async () => {
+    const tagged = session('Evening', '2026-06-02T16:00:00.000Z');
+    tag(tagged.id, 'Träning');
+    session('Untagged', '2026-06-01T16:00:00.000Z');
+    session('Latest', '2026-06-03T16:00:00.000Z');
+
+    await renderWithProviders(<HomeScreen />);
+
+    const taggedRow = screen.getByTestId('home-session-0');
+    expect(taggedRow).toHaveTextContent(/Träning/);
+    expect(taggedRow).not.toHaveTextContent(/Training/);
+    expect(screen.getByTestId('home-session-1')).toHaveTextContent(/Training/);
+  });
+
+  it('drops the date a generated name ends with', async () => {
+    session('Training — Jun 2, 2026', '2026-06-02T16:00:00.000Z');
+    session('Latest', '2026-06-03T16:00:00.000Z');
+
+    await renderWithProviders(<HomeScreen />);
+
+    const row = screen.getByTestId('home-session-0');
+    expect(within(row).getByText('Training')).toBeOnTheScreen();
+    expect(within(row).queryByText('Training — Jun 2, 2026')).toBeNull();
   });
 
   it('shows the ten latest and links to all of them', async () => {
@@ -123,53 +183,22 @@ describe('Home', () => {
 
     await renderWithProviders(<HomeScreen />);
 
-    expect(screen.getByTestId('home-session-0')).toHaveTextContent(/Session 12/);
-    expect(screen.getByTestId('home-session-9')).toHaveTextContent(/Session 3/);
-    expect(screen.queryByTestId('home-session-10')).toBeNull();
+    expect(screen.getByTestId('home-last-session')).toHaveTextContent(/Session 12/);
+    expect(screen.getByTestId('home-session-0')).toHaveTextContent(/Session 11/);
+    expect(screen.getByTestId('home-session-8')).toHaveTextContent(/Session 3/);
+    expect(screen.queryByTestId('home-session-9')).toBeNull();
 
-    await fireEvent.press(screen.getByRole('button', { name: 'See all 12' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'All Sessions' }));
     expect(mockRouter.push).toHaveBeenCalledWith('/sessions');
   });
 
-  it('opens a session when its row is tapped', async () => {
-    const only = session('Tuesday training', '2026-06-02T16:00:00.000Z');
+  it('opens a recent session when its row is tapped', async () => {
+    const older = session('Tuesday training', '2026-06-02T16:00:00.000Z');
+    session('Latest', '2026-06-03T16:00:00.000Z');
 
     await renderWithProviders(<HomeScreen />);
     await fireEvent.press(screen.getByTestId('home-session-0'));
 
-    expect(mockRouter.push).toHaveBeenCalledWith(`/session/${only.id}`);
-  });
-
-  it('filters the list by how the session was logged', async () => {
-    const scored = session('Scored evening', '2026-06-02T16:00:00.000Z');
-    series(scored.id, 1, [9, 9, 9, 9, 9]);
-    const firearm = createFirearm(db, { make: 'Acme', model: 'Target 22', isOwn: true });
-    const rounds = session('Plinking', '2026-06-03T16:00:00.000Z', {
-      kind: 'rounds',
-      firearmId: firearm.id,
-    });
-    setSessionExtraRounds(db, rounds.id, 100);
-
-    await renderWithProviders(<HomeScreen />);
-    expect(screen.getByTestId('home-session-1')).toBeOnTheScreen();
-
-    await fireEvent.press(screen.getByRole('radio', { name: 'Rounds' }));
-    expect(screen.getByTestId('home-session-0')).toHaveTextContent(/Plinking/);
-    expect(screen.queryByTestId('home-session-1')).toBeNull();
-
-    await fireEvent.press(screen.getByRole('radio', { name: 'Series' }));
-    expect(screen.getByTestId('home-session-0')).toHaveTextContent(/Scored evening/);
-    expect(screen.queryByTestId('home-session-1')).toBeNull();
-  });
-
-  it('says so when no session matches the filter', async () => {
-    const scored = session('Scored evening', '2026-06-02T16:00:00.000Z');
-    series(scored.id, 1, [9, 9, 9, 9, 9]);
-
-    await renderWithProviders(<HomeScreen />);
-    await fireEvent.press(screen.getByRole('radio', { name: 'Rounds' }));
-
-    expect(screen.getByText('No sessions match this filter')).toBeOnTheScreen();
-    expect(screen.queryByTestId('home-session-0')).toBeNull();
+    expect(mockRouter.push).toHaveBeenCalledWith(`/session/${older.id}`);
   });
 });
