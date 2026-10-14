@@ -17,6 +17,7 @@ import { createKeypadState, enteredShots, type KeypadState } from '@shotledger/s
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { ScoreKeypad } from '@/components/score-keypad';
 import type { Celebration } from '@/components/series-celebration';
 import { Screen } from '@/components/screen';
@@ -241,7 +242,7 @@ export default function SeriesEntryScreen() {
         </Pressable>
       )}
 
-      <PrimaryButton
+      <SecondaryButton
         label={t(photoUri ? 'session.replacePhoto' : 'session.addPhoto')}
         onPress={() => void onAttachPhoto()}
         testID="attach-photo"

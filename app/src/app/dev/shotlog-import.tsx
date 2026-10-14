@@ -21,6 +21,7 @@ import { EmptyState } from '@/components/empty-state';
 import { ListRow } from '@/components/list-row';
 import { OptionPicker } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
@@ -219,12 +220,12 @@ export default function ShotlogImportScreen() {
               </ThemedText>
             )}
             <View style={styles.actions}>
-              <PrimaryButton
+              <SecondaryButton
                 label={t('shotlog.selectNone')}
                 onPress={() => setAllSelected(false)}
                 testID="shotlog-select-none"
               />
-              <PrimaryButton
+              <SecondaryButton
                 label={t('shotlog.selectAll')}
                 onPress={() => setAllSelected(true)}
                 testID="shotlog-select-all"
@@ -303,7 +304,7 @@ export default function ShotlogImportScreen() {
                         onChange={(value) => editRow(row.line, { firearmId: value })}
                         emptyLabel={t('shotlog.noFirearms')}
                       />
-                      <PrimaryButton
+                      <SecondaryButton
                         label={t('shotlog.applyToSimilar')}
                         onPress={() =>
                           applyToSimilar(row.line, {
@@ -322,7 +323,7 @@ export default function ShotlogImportScreen() {
           </View>
 
           {visible < plan.rows.length && (
-            <PrimaryButton
+            <SecondaryButton
               label={t('shotlog.showMore', {
                 shown: visible,
                 total: plan.rows.length,

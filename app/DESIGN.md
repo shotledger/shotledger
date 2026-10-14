@@ -391,6 +391,12 @@ ornament, and state changes that are unmistakable but never loud.
   hover state — this is a touch platform.
 - **The One Primary Action Rule.** `PrimaryButton` is the single most important
   action on a screen. A screen with three of them has no primary action.
+- **Secondary:** `SecondaryButton`, a 1px Signal Lavender outline with a
+  lavender label, for every other full-size action: an alternative beside the
+  primary, an inline form's own Save, a per-item action in a list. Its
+  `danger` tone draws a destructive action, which is never primary.
+- **Text:** `TextButton`, a lavender label with no fill or outline (48dp touch
+  target), for a section's own "Add …" in that section's header row.
 
 ### Chips
 
