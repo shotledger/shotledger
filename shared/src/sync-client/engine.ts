@@ -30,6 +30,12 @@ export interface SyncCycleDeps {
   /** Injected so no module in `shared/` generates ids or reads a clock. */
   newId: () => string;
   pushBatchMax?: number;
+  /**
+   * Called once per `invalid_payload` refusal, as its outbox entry clears.
+   * The entry is gone at that point, so a batch that fails later in the
+   * cycle must not take the refusal with it (spec §2.3, C3).
+   */
+  onRefused?: () => void;
 }
 
 export interface SyncCycleResult {
@@ -155,6 +161,7 @@ async function runPush(deps: SyncCycleDeps): Promise<{
       // Every ack the protocol defines clears the entry: applied and
       // duplicate are on the server, and a rejection can never be accepted.
       await deps.store.clearOutboxEntry(entry);
+      if (ack.reason === REJECTED_INVALID_PAYLOAD) deps.onRefused?.();
     }
   }
 

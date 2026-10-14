@@ -451,6 +451,95 @@ describe('runSyncCycle — push', () => {
     expect(fake.outbox).toHaveLength(0);
   });
 
+  // Round-2 verification: a refusal is cleared as its ack arrives, so it is
+  // reported then, not only in the result a later failing batch never returns.
+  it('reports each refusal as it clears, even when a later batch fails the cycle', async () => {
+    const fake = createFakeStore({
+      outbox: [
+        { tableName: 'series', rowId: 'a', rev: 1, clientChangeId: null },
+        { tableName: 'series', rowId: 'b', rev: 2, clientChangeId: null },
+      ],
+      rows: new Map([
+        ['series:a', row({ id: 'a' })],
+        ['series:b', row({ id: 'b' })],
+      ]),
+    });
+    let calls = 0;
+    const transport = createTransport({
+      push: async (request) => {
+        calls += 1;
+        if (calls > 1) throw new Error('network');
+        return {
+          protocolVersion: request.protocolVersion,
+          acks: request.changes.map((c) => ({
+            clientChangeId: c.clientChangeId,
+            status: 'rejected' as const,
+            reason: 'invalid_payload',
+          })),
+        };
+      },
+    });
+    const refused: string[] = [];
+
+    await expect(
+      runSyncCycle({
+        store: fake.store,
+        transport,
+        newId: ids(),
+        pushBatchMax: 1,
+        onRefused: () => refused.push(`after ${fake.outbox.length} left`),
+      }),
+    ).rejects.toThrow('network');
+
+    // Reported once, after its entry was cleared; b is still queued.
+    expect(refused).toEqual(['after 1 left']);
+    expect(fake.outbox.map((e) => e.rowId)).toEqual(['b']);
+  });
+
+  it('reports a replayed refusal and not an applied or rejected change', async () => {
+    const fake = createFakeStore({
+      outbox: [
+        { tableName: 'series', rowId: 'a', rev: 1, clientChangeId: null },
+        { tableName: 'series', rowId: 'b', rev: 2, clientChangeId: null },
+        { tableName: 'series', rowId: 'c', rev: 3, clientChangeId: null },
+      ],
+      rows: new Map([
+        ['series:a', row({ id: 'a' })],
+        ['series:b', row({ id: 'b' })],
+        ['series:c', row({ id: 'c' })],
+      ]),
+    });
+    const transport = createTransport({
+      push: async (request) => ({
+        protocolVersion: request.protocolVersion,
+        acks: request.changes.map((c) =>
+          c.rowId === 'a'
+            ? { clientChangeId: c.clientChangeId, status: 'applied' as const, seq: 1 }
+            : c.rowId === 'b'
+              ? { clientChangeId: c.clientChangeId, status: 'rejected' as const, reason: 'other' }
+              : {
+                  clientChangeId: c.clientChangeId,
+                  status: 'duplicate' as const,
+                  reason: 'invalid_payload',
+                },
+        ),
+      }),
+    });
+    let refused = 0;
+
+    const result = await runSyncCycle({
+      store: fake.store,
+      transport,
+      newId: ids(),
+      onRefused: () => {
+        refused += 1;
+      },
+    });
+
+    expect(refused).toBe(1);
+    expect(result).toMatchObject({ invalid: 1, pushed: 1, rejected: 1 });
+  });
+
   it('sends a null payload for a tombstoned row', async () => {
     const fake = createFakeStore({
       outbox: [{ tableName: 'shots', rowId: 'del', rev: 1, clientChangeId: null }],

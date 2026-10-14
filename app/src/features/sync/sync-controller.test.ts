@@ -201,6 +201,23 @@ describe('a successful cycle', () => {
   });
 });
 
+// docs/specs/sync-payload-validation-spec.md §2.3: a refusal reaches the
+// screen as it clears, even when the cycle then fails.
+describe('a refused change', () => {
+  it('counts each refusal the engine reports, though the cycle fails after it', async () => {
+    mockRunSyncCycle.mockImplementationOnce(async (deps: { onRefused: () => void }) => {
+      deps.onRefused();
+      deps.onRefused();
+      throw new Error('network down');
+    });
+    const { controller } = load();
+
+    await controller.requestSync();
+
+    expect(controller.getSyncStatus()).toMatchObject({ state: 'error', refusedCount: 2 });
+  });
+});
+
 describe('the single loop', () => {
   it('re-runs exactly once however many triggers arrive mid-cycle', async () => {
     const { controller } = load();

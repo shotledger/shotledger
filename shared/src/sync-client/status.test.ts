@@ -68,21 +68,21 @@ describe('reduceSyncStatus', () => {
   });
 
   // docs/specs/sync-payload-validation-spec.md P12.
-  it('adds up the changes the server refused, across cycles, and a failure keeps the sum', () => {
+  it('adds up the refusals as they arrive; no cycle outcome changes the sum', () => {
     const at = '2026-09-02T10:00:00.000Z';
-    let status = reduceSyncStatus(initialSyncStatus, {
+    let status = reduceSyncStatus(initialSyncStatus, { type: 'refused' });
+    status = reduceSyncStatus(status, { type: 'refused' });
+    expect(status.refusedCount).toBe(2);
+    expect(status.state).toBe('idle');
+    // The result's own count is reported already, refusal by refusal.
+    status = reduceSyncStatus(status, {
       type: 'succeeded',
       at,
       result: { ...ok, invalid: 2 },
       pendingCount: 0,
     });
-    status = reduceSyncStatus(status, {
-      type: 'succeeded',
-      at,
-      result: { ...ok, invalid: 1 },
-      pendingCount: 0,
-    });
-    expect(status.refusedCount).toBe(3);
+    expect(status.refusedCount).toBe(2);
+    status = reduceSyncStatus(status, { type: 'refused' });
     status = reduceSyncStatus(status, { type: 'failed', errorKey: 'network' });
     status = reduceSyncStatus(status, { type: 'started' });
     status = reduceSyncStatus(status, { type: 'pendingChanged', pendingCount: 2 });

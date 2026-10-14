@@ -37,6 +37,8 @@ export type SyncEvent =
   | { type: 'started' }
   | { type: 'succeeded'; at: string; result: SyncCycleResult; pendingCount: number }
   | { type: 'failed'; errorKey: SyncErrorKey }
+  /** One `invalid_payload` refusal, reported as its entry clears (C3). */
+  | { type: 'refused' }
   | { type: 'pendingChanged'; pendingCount: number };
 
 export function reduceSyncStatus(status: SyncStatus, event: SyncEvent): SyncStatus {
@@ -54,11 +56,15 @@ export function reduceSyncStatus(status: SyncStatus, event: SyncEvent): SyncStat
         pendingCount: event.pendingCount,
         errorKey: null,
         attempt: 0,
-        refusedCount: status.refusedCount + event.result.invalid,
+        // Counted refusal by refusal ('refused'), so a cycle that fails
+        // after one still shows it; the result's `invalid` is not added again.
+        refusedCount: status.refusedCount,
       };
     case 'failed':
       return { ...status, state: 'error', errorKey: event.errorKey, attempt: status.attempt + 1 };
     case 'pendingChanged':
       return { ...status, pendingCount: event.pendingCount };
+    case 'refused':
+      return { ...status, refusedCount: status.refusedCount + 1 };
   }
 }
