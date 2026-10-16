@@ -470,7 +470,10 @@ Feature: the phone holds a refused row's family across pushes
 - **Revision 2 (2026-10-16), during implementation.** Items 1–5 approved by
   the maintainer, 2026-10-16: "Approve, file issue", answering "Approve the
   implementation corrections (Revision 2) to the #856 spec?"; item 4's web
-  message is tracked in #863. Items 6–8 are not yet approved:
+  message is tracked in #863. Items 7 and 8 approved by the maintainer,
+  2026-10-16: "Fix, check again", answering "Fix the two new #856 sync bugs
+  as proposed, then run a third independent check?" (that answer also
+  approves a third verification round). Item 6 is not yet approved:
   each item below is a place where the approved text was wrong or silent,
   and is stated here so it shows in the diff rather than drifting.
   1. **N3 and P8 conflict.** N3 says the payload-validation scenarios pass
