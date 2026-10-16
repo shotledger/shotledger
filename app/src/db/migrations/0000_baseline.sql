@@ -247,6 +247,13 @@ CREATE TABLE `sync_outbox` (
 	`row_id` text NOT NULL,
 	`rev` integer NOT NULL,
 	`client_change_id` text,
+	`held` integer DEFAULT 0 NOT NULL,
+	PRIMARY KEY(`table_name`, `row_id`)
+);
+--> statement-breakpoint
+CREATE TABLE `sync_refused` (
+	`table_name` text NOT NULL,
+	`row_id` text NOT NULL,
 	PRIMARY KEY(`table_name`, `row_id`)
 );
 --> statement-breakpoint

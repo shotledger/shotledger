@@ -1311,6 +1311,7 @@
     "lastSynced": "Last synced: {{when}}",
     "pendingChanges": "{{count}} change(s) waiting to upload",
     "refusedChanges": "{{count}} change(s) refused by the server and not synced",
+    "heldChanges": "{{count}} change(s) waiting on a refused change",
     "server": "Server: {{url}}",
     "deleteTitle": "Delete Account",
     "deleteSubtitle": "Removes your account and everything synced to the server",

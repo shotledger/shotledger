@@ -1,5 +1,10 @@
 import { SYNC_TABLE_NAMES, type ChangeRow } from '@shotledger/shared';
+import Database from 'better-sqlite3';
 import { eq } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
@@ -12,10 +17,12 @@ import {
   shots,
   syncControl,
   syncOutbox,
+  syncRefused,
   syncState,
 } from '../schema';
+import * as schema from '../schema';
 import { createTestDb } from '../test-db';
-import type { Database } from '../types';
+import type { Database as Db } from '../types';
 import { createFirearm, softDeleteFirearm, updateFirearm } from './firearms';
 import { createSession } from './sessions';
 import { getSetting, SETTINGS_KEYS, setSetting } from './settings';
@@ -29,7 +36,7 @@ import {
 } from './sync-store';
 import { addSessionTag, getOrCreateTag, listTags, listTagsForSession, softDeleteTag } from './tags';
 
-let db: Database;
+let db: Db;
 let store: ReturnType<typeof createSyncStore>;
 
 beforeEach(() => {
@@ -401,7 +408,7 @@ describe('resetSyncBookkeeping', () => {
     const firearm = createFirearm(db, { make: 'Walther', model: 'GSP' });
 
     expect(outboxRows()).toEqual([
-      { tableName: 'firearms', rowId: firearm.id, rev: 1, clientChangeId: null },
+      { tableName: 'firearms', rowId: firearm.id, rev: 1, clientChangeId: null, held: 0 },
     ]);
   });
 
@@ -535,5 +542,120 @@ describe('session_tags and settings', () => {
       expect.objectContaining({ id: 'complianceProfile', value: '"se"', deleted_at: null }),
     );
     expect(row?.deletedAt).toBeNull();
+  });
+});
+
+// docs/specs/sync-family-refusal-spec.md §2.3, C5: held entries and the
+// refused set live in the outbox and in sync_refused.
+describe('held entries and the refused set', () => {
+  async function heldSession() {
+    const session = createSession(db, {
+      name: 'S',
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      startedAt: '2026-10-14T10:00:00.000Z',
+    });
+    const entry = (await store.readOutbox(10))[0]!;
+    await store.assignClientChangeId(entry, '11111111-1111-4111-8111-111111111111');
+    return { session, entry: (await store.readOutbox(10))[0]! };
+  }
+
+  it('readOutbox skips a held entry; heldCount and pendingCount still see it', async () => {
+    const { entry } = await heldSession();
+    createFirearm(db, { make: 'Pardini', model: 'SP' });
+
+    await store.holdOutboxEntry(entry, false);
+
+    expect((await store.readOutbox(10)).map((e) => e.tableName)).toEqual(['firearms']);
+    expect(await store.heldCount()).toBe(1);
+    expect(await store.pendingCount()).toBe(2);
+    expect(outboxRows().find((r) => r.tableName === 'sessions')).toMatchObject({
+      held: 1,
+      clientChangeId: '11111111-1111-4111-8111-111111111111',
+    });
+  });
+
+  it('a family_refused hold also resets the change id', async () => {
+    const { entry } = await heldSession();
+    await store.holdOutboxEntry(entry, true);
+    expect(outboxRows()[0]).toMatchObject({ held: 1, clientChangeId: null });
+  });
+
+  it('holds only while the rev still matches', async () => {
+    const { session, entry } = await heldSession();
+    db.update(sessions).set({ name: 'S2' }).where(eq(sessions.id, session.id)).run();
+    await store.holdOutboxEntry(entry, true);
+    expect(outboxRows()[0]).toMatchObject({ held: 0, clientChangeId: null });
+  });
+
+  it('an edit of a held row keeps it held, with a new rev and no id (§2.3)', async () => {
+    const { session, entry } = await heldSession();
+    await store.holdOutboxEntry(entry, false);
+    db.update(sessions).set({ name: 'S2' }).where(eq(sessions.id, session.id)).run();
+    const [row] = outboxRows();
+    expect(row).toMatchObject({ held: 1, clientChangeId: null });
+    expect(row!.rev).toBeGreaterThan(entry.rev);
+  });
+
+  it('releaseHeld un-holds every entry', async () => {
+    const { entry } = await heldSession();
+    await store.holdOutboxEntry(entry, false);
+    await store.releaseHeld();
+    expect(await store.heldCount()).toBe(0);
+    expect(await store.readOutbox(10)).toHaveLength(1);
+  });
+
+  it('adds, reads and removes refused rows; adding twice keeps one', async () => {
+    await store.addRefused({ tableName: 'sessions', rowId: 's1' });
+    await store.addRefused({ tableName: 'sessions', rowId: 's1' });
+    await store.addRefused({ tableName: 'shots', rowId: 't1' });
+    await store.addRefused({ tableName: 'licenses', rowId: 's1' });
+    expect(await store.readRefused()).toHaveLength(3);
+
+    await store.removeRefused([
+      { tableName: 'sessions', rowId: 's1' },
+      { tableName: 'shots', rowId: 'gone' },
+    ]);
+    expect((await store.readRefused()).map((r) => `${r.tableName}:${r.rowId}`).sort()).toEqual([
+      'licenses:s1',
+      'shots:t1',
+    ]);
+  });
+
+  it('H11 the held count survives a restart', async () => {
+    // Its own database, typed as better-sqlite3's, so it can be copied to a file.
+    const live = createTestDb();
+    const liveStore = createSyncStore(live);
+    for (let i = 0; i < 3; i += 1) {
+      createFirearm(live, { make: 'Pardini', model: `SP${i}` });
+    }
+    for (const entry of await liveStore.readOutbox(10)) {
+      await liveStore.holdOutboxEntry(entry, false);
+    }
+
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sl-856-'));
+    try {
+      const file = path.join(dir, 'restart.sqlite3');
+      live.$client.prepare('VACUUM INTO ?').run(file);
+      const reopened = new Database(file);
+      try {
+        const after = createSyncStore(drizzle(reopened, { schema }) as unknown as Db);
+        expect(await after.heldCount()).toBe(3);
+      } finally {
+        reopened.close();
+      }
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('sign-out and a backup reset both empty the refused set', async () => {
+    await store.addRefused({ tableName: 'sessions', rowId: 's1' });
+    resetSyncState(db);
+    expect(db.select().from(syncRefused).all()).toEqual([]);
+
+    await store.addRefused({ tableName: 'sessions', rowId: 's1' });
+    resetSyncBookkeeping(db);
+    expect(db.select().from(syncRefused).all()).toEqual([]);
   });
 });

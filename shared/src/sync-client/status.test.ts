@@ -10,6 +10,7 @@ const ok: SyncCycleResult = {
   pushed: 1,
   rejected: 0,
   invalid: 0,
+  held: 0,
   duplicates: 0,
 };
 
@@ -28,6 +29,7 @@ describe('reduceSyncStatus', () => {
       at: '2026-09-02T10:00:00.000Z',
       result: ok,
       pendingCount: 0,
+      heldCount: 0,
     });
     expect(done).toEqual({
       state: 'idle',
@@ -36,6 +38,7 @@ describe('reduceSyncStatus', () => {
       errorKey: null,
       attempt: 0,
       refusedCount: 0,
+      heldCount: 0,
     });
   });
 
@@ -53,6 +56,7 @@ describe('reduceSyncStatus', () => {
       at: '2026-09-02T10:00:00.000Z',
       result: ok,
       pendingCount: 0,
+      heldCount: 0,
     });
     const errored = reduceSyncStatus(done, { type: 'failed', errorKey: 'network' });
     expect(errored.lastSyncedAt).toBe('2026-09-02T10:00:00.000Z');
@@ -62,6 +66,7 @@ describe('reduceSyncStatus', () => {
     const updated = reduceSyncStatus(initialSyncStatus, {
       type: 'pendingChanged',
       pendingCount: 4,
+      heldCount: 0,
     });
     expect(updated.pendingCount).toBe(4);
     expect(updated.state).toBe('idle');
@@ -80,16 +85,42 @@ describe('reduceSyncStatus', () => {
       at,
       result: { ...ok, invalid: 2 },
       pendingCount: 0,
+      heldCount: 0,
     });
     expect(status.refusedCount).toBe(2);
     status = reduceSyncStatus(status, { type: 'refused' });
     status = reduceSyncStatus(status, { type: 'failed', errorKey: 'network' });
     status = reduceSyncStatus(status, { type: 'started' });
-    status = reduceSyncStatus(status, { type: 'pendingChanged', pendingCount: 2 });
+    status = reduceSyncStatus(status, { type: 'pendingChanged', pendingCount: 2, heldCount: 0 });
     expect(status.refusedCount).toBe(3);
   });
 
   it('starts with nothing refused', () => {
     expect(initialSyncStatus.refusedCount).toBe(0);
+  });
+
+  // docs/specs/sync-family-refusal-spec.md §2.4, C5: the held count is read
+  // from the outbox, so each event carries it whole rather than adding to it.
+  it('takes the held count from each succeeded cycle and each pending refresh', () => {
+    expect(initialSyncStatus.heldCount).toBe(0);
+    let status = reduceSyncStatus(initialSyncStatus, {
+      type: 'pendingChanged',
+      pendingCount: 5,
+      heldCount: 3,
+    });
+    expect(status).toMatchObject({ pendingCount: 5, heldCount: 3 });
+    status = reduceSyncStatus(status, { type: 'started' });
+    status = reduceSyncStatus(status, { type: 'failed', errorKey: 'network' });
+    expect(status.heldCount).toBe(3);
+    status = reduceSyncStatus(status, {
+      type: 'succeeded',
+      at: '2026-10-14T10:00:00.000Z',
+      result: { ...ok, held: 1 },
+      pendingCount: 1,
+      heldCount: 1,
+    });
+    expect(status).toMatchObject({ pendingCount: 1, heldCount: 1 });
+    status = reduceSyncStatus(status, { type: 'pendingChanged', pendingCount: 0, heldCount: 0 });
+    expect(status.heldCount).toBe(0);
   });
 });

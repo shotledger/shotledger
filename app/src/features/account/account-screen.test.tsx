@@ -1,6 +1,7 @@
 // The refused-changes line on the Account & Sync screen (app/account.tsx)
 // (docs/specs/sync-payload-validation-spec.md C3, P12): shown with its count
-// once the server has refused a change, and absent until then.
+// once the server has refused a change, and absent until then. The held line
+// beside it is docs/specs/sync-family-refusal-spec.md §2.4.
 import { render, screen } from '@testing-library/react-native';
 import type { SyncStatus } from '@shotledger/shared';
 import { initialSyncStatus } from '@shotledger/shared';
@@ -66,5 +67,33 @@ describe('the refused-changes line', () => {
     expect(screen.getByTestId('sync-refused')).toHaveTextContent(
       '2 change(s) refused by the server and not synced',
     );
+  });
+});
+
+// docs/specs/sync-family-refusal-spec.md §2.4, H1, H11: a second line while
+// any queued change waits on a refused one.
+describe('the held-changes line', () => {
+  it('is absent while nothing is held', async () => {
+    mockStatus.value = { ...initialSyncStatus, refusedCount: 1 };
+    await renderAccount();
+    expect(screen.queryByTestId('sync-held')).toBeNull();
+  });
+
+  it('shows the count beside the refused line', async () => {
+    mockStatus.value = { ...initialSyncStatus, refusedCount: 1, heldCount: 3 };
+    await renderAccount();
+    expect(screen.getByTestId('sync-held')).toHaveTextContent(
+      '3 change(s) waiting on a refused change',
+    );
+    expect(screen.getByTestId('sync-refused')).toBeTruthy();
+  });
+
+  it('shows it after a restart, when the refused line is gone (C5)', async () => {
+    mockStatus.value = { ...initialSyncStatus, heldCount: 3 };
+    await renderAccount();
+    expect(screen.getByTestId('sync-held')).toHaveTextContent(
+      '3 change(s) waiting on a refused change',
+    );
+    expect(screen.queryByTestId('sync-refused')).toBeNull();
   });
 });

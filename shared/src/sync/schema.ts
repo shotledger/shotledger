@@ -429,7 +429,7 @@ export const settings = sqliteTable('settings', {
 });
 
 // ---------------------------------------------------------------------------
-// Client-only sync bookkeeping (docs/specs/sync-app-spec.md §2). These four
+// Client-only sync bookkeeping (docs/specs/sync-app-spec.md §2). These five
 // tables never leave the device and are absent from SYNC_TABLE_NAMES.
 // ---------------------------------------------------------------------------
 
@@ -445,6 +445,22 @@ export const syncOutbox = sqliteTable(
     // landing mid-push keeps the entry queued.
     rev: integer('rev').notNull(),
     clientChangeId: text('client_change_id'),
+    // 1 while a row of the entry's family is refused: it stays queued but
+    // readOutbox skips it (docs/specs/sync-family-refusal-spec.md §2.3, C5).
+    // The triggers' upsert leaves it as it is, so an edit stays held.
+    held: integer('held').notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.tableName, t.rowId] })],
+);
+
+// A row whose latest pushed version the server refused as `invalid_payload`;
+// it holds back its family's later changes until an edit, a delete or a pull
+// replaces it (docs/specs/sync-family-refusal-spec.md §2.3).
+export const syncRefused = sqliteTable(
+  'sync_refused',
+  {
+    tableName: text('table_name').notNull(),
+    rowId: text('row_id').notNull(),
   },
   (t) => [primaryKey({ columns: [t.tableName, t.rowId] })],
 );

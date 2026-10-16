@@ -61,9 +61,12 @@ export function canSync(): boolean {
   return getSessionTokenCache() !== null;
 }
 
+/** Re-reads the queued and held counts from the outbox (held survives a restart). */
 export async function refreshPendingCount(): Promise<void> {
-  const pendingCount = await createSyncStore(db).pendingCount();
-  emit({ type: 'pendingChanged', pendingCount });
+  const store = createSyncStore(db);
+  const pendingCount = await store.pendingCount();
+  const heldCount = await store.heldCount();
+  emit({ type: 'pendingChanged', pendingCount, heldCount });
 }
 
 function cancelRetry(): void {
@@ -91,6 +94,7 @@ async function runOnce(): Promise<SyncCycleResult['status'] | null> {
       at: new Date().toISOString(),
       result,
       pendingCount: await store.pendingCount(),
+      heldCount: await store.heldCount(),
     });
     // Photos move after the rows that reference them, and never block a
     // cycle: a failed upload is the queue's problem, not sync's.

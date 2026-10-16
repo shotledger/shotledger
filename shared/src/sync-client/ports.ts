@@ -6,6 +6,7 @@ import type {
   PushResponse,
   SyncTableName,
 } from '../sync/protocol';
+import type { RowRef } from '../sync/family';
 
 /**
  * The two I/O seams of the client sync engine (docs/specs/sync-app-spec.md
@@ -40,6 +41,11 @@ export interface LocalStore {
    * suppressed, so applying never re-queues what we just received.
    */
   applyChanges(changes: ChangeRow[]): Promise<void>;
+  /**
+   * Queued entries in `rev` order, up to `limit`. A **held** entry is
+   * skipped: it stays queued, unsent, until `releaseHeld`
+   * (docs/specs/sync-family-refusal-spec.md §2.3).
+   */
   readOutbox(limit: number): Promise<OutboxEntry[]>;
   /**
    * `${tableName}:${rowId}` for every queued change — the set a pulled page
@@ -52,6 +58,23 @@ export interface LocalStore {
   /** Deletes only when the entry's `rev` still matches (spec §2). */
   clearOutboxEntry(entry: OutboxEntry): Promise<void>;
   pendingCount(): Promise<number>;
+
+  // Family refusal (docs/specs/sync-family-refusal-spec.md §2.3): local
+  // state, never synced.
+  /** Rows whose latest pushed version the server refused as `invalid_payload`. */
+  readRefused(): Promise<RowRef[]>;
+  addRefused(ref: RowRef): Promise<void>;
+  removeRefused(refs: readonly RowRef[]): Promise<void>;
+  /**
+   * Marks the entry held, only while its `rev` still matches (a write that
+   * landed mid-push already reset it). `resetClientChangeId` also clears its
+   * id, so it is sent as a new change once released.
+   */
+  holdOutboxEntry(entry: OutboxEntry, resetClientChangeId: boolean): Promise<void>;
+  /** Un-holds every held entry, to be judged again on the next read. */
+  releaseHeld(): Promise<void>;
+  /** Held entries; what Account & Sync shows as waiting on a refused change. */
+  heldCount(): Promise<number>;
 }
 
 export interface SyncTransport {

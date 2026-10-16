@@ -24,6 +24,7 @@ import {
   type LocalRowSnapshot,
   type LocalStore,
   type OutboxEntry,
+  type RowRef,
   type SyncTableName,
 } from '@shotledger/shared';
 
@@ -57,6 +58,9 @@ class Device {
   readonly rows = new Map<string, Record<string, unknown>>();
   readonly outbox = new Map<string, OutboxEntry>();
   readonly cursors = new Map<SyncTableName, number>();
+  /** sync_outbox.held and sync_refused (sync-family-refusal-spec.md §2.3). */
+  readonly held = new Set<string>();
+  readonly refused = new Map<string, RowRef>();
   private lastRev = 0;
   private token: string | null = null;
 
@@ -121,7 +125,10 @@ class Device {
         }
       },
       readOutbox: async (limit) =>
-        [...this.outbox.values()].sort((a, b) => a.rev - b.rev).slice(0, limit),
+        [...this.outbox.values()]
+          .filter((e) => !this.held.has(this.key(e.tableName, e.rowId)))
+          .sort((a, b) => a.rev - b.rev)
+          .slice(0, limit),
       readRow: async (tableName, rowId): Promise<LocalRowSnapshot | undefined> => {
         const row = this.rows.get(this.key(tableName, rowId));
         if (!row) return undefined;
@@ -138,8 +145,29 @@ class Device {
       clearOutboxEntry: async (entry) => {
         const key = this.key(entry.tableName, entry.rowId);
         const current = this.outbox.get(key);
-        if (current && current.rev === entry.rev) this.outbox.delete(key);
+        if (current && current.rev === entry.rev) {
+          this.outbox.delete(key);
+          this.held.delete(key);
+        }
       },
+      readRefused: async () => [...this.refused.values()],
+      addRefused: async (ref) => {
+        this.refused.set(this.key(ref.tableName, ref.rowId), ref);
+      },
+      removeRefused: async (refs) => {
+        for (const ref of refs) this.refused.delete(this.key(ref.tableName, ref.rowId));
+      },
+      holdOutboxEntry: async (entry, resetClientChangeId) => {
+        const key = this.key(entry.tableName, entry.rowId);
+        const current = this.outbox.get(key);
+        if (!current || current.rev !== entry.rev) return;
+        this.held.add(key);
+        if (resetClientChangeId) current.clientChangeId = null;
+      },
+      releaseHeld: async () => {
+        this.held.clear();
+      },
+      heldCount: async () => [...this.outbox.keys()].filter((key) => this.held.has(key)).length,
       pendingRowKeys: async () =>
         new Set([...this.outbox.values()].map((e) => rowKey(e.tableName, e.rowId))),
       pendingCount: async () => this.outbox.size,
@@ -558,5 +586,216 @@ describe('session tags and account settings travel between devices', () => {
     await deviceB.sync();
     expect(canonicalTags(tagsOn(deviceB))).toEqual([{ id: 't2', name: 'KM' }]);
     expect(taggedOn(deviceB)).toEqual(['s1:KM']);
+  });
+});
+
+// docs/specs/sync-family-refusal-spec.md H1–H10: the phone holds a refused
+// row's family across pushes. H11 (restart) is the SQLite adapter's
+// (app/src/db/queries/sync-store.test.ts); H12 is the web's
+// (sync-family-refusal.spec.ts).
+describe('the phone holds a refused row’s family across pushes', () => {
+  const T0 = '2026-10-14T10:00:00.000Z';
+  const T1 = '2026-10-14T11:00:00.000Z';
+  const badSession = (id: string, at = T0) =>
+    row('sessions', id, at, { ...sessionRow(id, 'x', at), name: null });
+  const shotRow = (id: string, seriesId: string, value: number | null = 90, at = T0) =>
+    row('shots', id, at, { created_at: at, series_id: seriesId, position: 1, value_tenths: value });
+  const firearmRow = (id: string, make: string | null, at = T0) =>
+    row('firearms', id, at, { make, model: 'M', is_own: true });
+  const licenseRow = (id: string, firearmId: string, purpose: unknown = 'Målskjutning') =>
+    row('licenses', id, T0, { firearm_id: firearmId, purpose });
+
+  /** Runs one cycle on `device`, recording what each push carried. */
+  async function syncRecording(device: Device) {
+    const pushes: string[][] = [];
+    const inner = device.transport();
+    const result = await runSyncCycle({
+      store: device.store(),
+      transport: {
+        pull: (request) => inner.pull(request),
+        push: (request) => {
+          pushes.push(request.changes.map((c) => `${c.tableName}:${c.rowId}`));
+          return inner.push(request);
+        },
+      },
+      newId: uuid,
+    });
+    return { result, pushes, sent: pushes.flat() };
+  }
+
+  const heldOn = (device: Device) => device.store().heldCount();
+
+  /** H1's setup: s1 pushed alone and refused, then R1, T1, T2 entered. */
+  async function refusedSessionWithFamily() {
+    deviceA.write('sessions', badSession('s1'));
+    await expect(deviceA.sync()).resolves.toMatchObject({ invalid: 1 });
+    deviceA.write('series', seriesRow('r1', 's1', 1, T0));
+    deviceA.write('shots', shotRow('t1', 'r1'));
+    deviceA.write('shots', shotRow('t2', 'r1'));
+  }
+
+  it('H1 rows recorded after a refused session row are held', async () => {
+    await refusedSessionWithFamily();
+
+    const { result, sent } = await syncRecording(deviceA);
+
+    expect(sent).toEqual([]);
+    expect(result).toMatchObject({ status: 'ok', held: 3, pushed: 0 });
+    expect(await heldOn(deviceA)).toBe(3);
+    await expect(deviceB.sync()).resolves.toMatchObject({ pulled: 0 });
+  });
+
+  it('H2 fixing the refused row sends the family', async () => {
+    await refusedSessionWithFamily();
+    await deviceA.sync();
+
+    deviceA.write('sessions', sessionRow('s1', 'Fixed', T1));
+    const { result, pushes } = await syncRecording(deviceA);
+
+    expect(pushes).toEqual([['series:r1', 'shots:t1', 'shots:t2', 'sessions:s1']]);
+    expect(result).toMatchObject({ pushed: 4, held: 0, invalid: 0 });
+    expect(await heldOn(deviceA)).toBe(0);
+    await deviceB.sync();
+    expect(deviceB.get('sessions', 's1')).toMatchObject({ name: 'Fixed' });
+    expect(deviceB.get('shots', 't2')).toBeDefined();
+  });
+
+  it('H3 rows refused as family are held, not lost', async () => {
+    deviceA.write('sessions', badSession('s1'));
+    deviceA.write('series', seriesRow('r1', 's1', 1, T0));
+    deviceA.write('shots', shotRow('t1', 'r1'));
+    deviceA.write('shots', shotRow('t2', 'r1'));
+
+    const first = await syncRecording(deviceA);
+    expect(first.result).toMatchObject({ invalid: 1, held: 3, rejected: 0 });
+    const queued = [...deviceA.outbox.values()];
+    expect(queued.map((e) => e.rowId)).toEqual(['r1', 't1', 't2']);
+    expect(queued.every((e) => e.clientChangeId === null)).toBe(true);
+    expect(await heldOn(deviceA)).toBe(3);
+
+    deviceA.write('sessions', sessionRow('s1', 'Fixed', T1));
+    const second = await syncRecording(deviceA);
+    expect(second.result).toMatchObject({ pushed: 4, duplicates: 0, held: 0 });
+    await deviceB.sync();
+    expect(deviceB.get('shots', 't1')).toBeDefined();
+  });
+
+  it('H4 a refused shot freezes the session on other devices', async () => {
+    deviceA.write('sessions', sessionRow('s1', 'Before', T0));
+    deviceA.write('series', seriesRow('r1', 's1', 1, T0));
+    deviceA.write('shots', shotRow('t1', 'r1'));
+    await deviceA.sync();
+    await deviceB.sync();
+    deviceA.write('shots', shotRow('t2', 'r1', null));
+    await expect(deviceA.sync()).resolves.toMatchObject({ invalid: 1 });
+
+    deviceA.write('shots', shotRow('t3', 'r1'));
+    deviceA.write('sessions', sessionRow('s1', 'Renamed', T1));
+    const { sent } = await syncRecording(deviceA);
+
+    expect(sent).toEqual([]);
+    await deviceB.sync();
+    expect(deviceB.get('sessions', 's1')).toMatchObject({ name: 'Before' });
+    expect(deviceB.get('shots', 't1')).toBeDefined();
+    expect(deviceB.get('shots', 't3')).toBeUndefined();
+  });
+
+  it('H5 a refused firearm holds its rows; a session shot with it is pushed', async () => {
+    deviceA.write('firearms', firearmRow('f1', null));
+    await expect(deviceA.sync()).resolves.toMatchObject({ invalid: 1 });
+
+    deviceA.write('licenses', licenseRow('l1', 'f1'));
+    deviceA.write(
+      'sessions',
+      row('sessions', 's1', T0, { ...sessionRow('s1', 'S', T0), firearm_id: 'f1' }),
+    );
+    const { sent } = await syncRecording(deviceA);
+
+    expect(sent).toEqual(['sessions:s1']);
+    expect(await heldOn(deviceA)).toBe(1);
+  });
+
+  it('H6 a refused license holds only itself', async () => {
+    deviceA.write('firearms', firearmRow('f1', 'Pardini'));
+    await deviceA.sync();
+    deviceA.write('licenses', licenseRow('l1', 'f1', 42));
+    await expect(deviceA.sync()).resolves.toMatchObject({ invalid: 1 });
+
+    deviceA.write('firearms', firearmRow('f1', 'Walther', T1));
+    deviceA.write('firearm_groups', row('firearm_groups', 'g1', T0, { firearm_id: 'f1' }));
+    const { sent, result } = await syncRecording(deviceA);
+
+    expect(sent).toEqual(['firearms:f1', 'firearm_groups:g1']);
+    expect(result).toMatchObject({ pushed: 2, held: 0 });
+  });
+
+  it('H7 deleting the refused row releases the family', async () => {
+    await refusedSessionWithFamily();
+    await deviceA.sync();
+
+    deviceA.softDelete('sessions', 's1', T1);
+    const { result, sent } = await syncRecording(deviceA);
+
+    expect(sent).toContain('sessions:s1');
+    expect(result).toMatchObject({ held: 0, invalid: 0, rejected: 0 });
+    expect(await heldOn(deviceA)).toBe(0);
+    expect(deviceA.outbox.size).toBe(0);
+  });
+
+  it('H8 a pull that replaces the refused row releases the family', async () => {
+    deviceA.write('sessions', sessionRow('s1', 'S', T0));
+    deviceA.write('series', seriesRow('r1', 's1', 1, T0));
+    await deviceA.sync();
+    await deviceB.sync();
+    deviceA.write('shots', shotRow('t2', 'r1', null));
+    await deviceA.sync();
+    deviceA.write('shots', shotRow('t3', 'r1'));
+    await deviceA.sync();
+    expect(await heldOn(deviceA)).toBe(1);
+
+    deviceB.write('shots', shotRow('t2', 'r1', 80, T1));
+    await deviceB.sync();
+    const { sent } = await syncRecording(deviceA);
+
+    expect(deviceA.refused.size).toBe(0);
+    expect(deviceA.get('shots', 't2')).toMatchObject({ value_tenths: 80 });
+    expect(sent).toEqual(['shots:t3']);
+    expect(await heldOn(deviceA)).toBe(0);
+  });
+
+  it('H9 held entries never stall the outbox', async () => {
+    deviceA.write('sessions', badSession('s1'));
+    await deviceA.sync();
+    deviceA.write('series', seriesRow('r1', 's1', 1, T0));
+    for (let i = 0; i < 599; i += 1) deviceA.write('shots', shotRow(`t${i}`, 'r1'));
+    await expect(deviceA.sync()).resolves.toMatchObject({ status: 'ok', held: 600 });
+
+    for (let i = 0; i < 10; i += 1) {
+      deviceA.write('tags', row('tags', `g${i}`, T0, { name: `Tag ${i}` }));
+    }
+    const { result, pushes } = await syncRecording(deviceA);
+
+    expect(pushes).toHaveLength(1);
+    expect(pushes[0]).toHaveLength(10);
+    expect(result).toMatchObject({ status: 'ok', pushed: 10 });
+    expect(await heldOn(deviceA)).toBe(600);
+  });
+
+  it('H10 tombstones are never held', async () => {
+    deviceA.write('sessions', sessionRow('s1', 'S', T0));
+    deviceA.write('series', seriesRow('r1', 's1', 1, T0));
+    deviceA.write('shots', shotRow('t1', 'r1'));
+    await deviceA.sync();
+    await deviceB.sync();
+    deviceA.write('sessions', badSession('s1', T1));
+    await expect(deviceA.sync()).resolves.toMatchObject({ invalid: 1 });
+
+    deviceA.softDelete('shots', 't1', T1);
+    const { sent, result } = await syncRecording(deviceA);
+
+    expect(sent).toEqual(['shots:t1']);
+    expect(result).toMatchObject({ pushed: 1, held: 0 });
+    await deviceB.sync();
+    expect(deviceB.get('shots', 't1')).toMatchObject({ deleted_at: T1 });
   });
 });

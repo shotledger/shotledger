@@ -36,6 +36,7 @@ import {
   type LocalRowSnapshot,
   type LocalStore,
   type OutboxEntry,
+  type RowRef,
   type PhotoQueueAction,
   type PhotoQueueEntry,
   type PhotoTaskOutcome,
@@ -93,6 +94,9 @@ class Device {
   readonly rows = new Map<string, Record<string, unknown>>();
   readonly outbox = new Map<string, OutboxEntry>();
   readonly cursors = new Map<SyncTableName, number>();
+  /** sync_outbox.held and sync_refused (sync-family-refusal-spec.md §2.3). */
+  readonly held = new Set<string>();
+  readonly refused = new Map<string, RowRef>();
   private lastRev = 0;
   token: string | null = null;
   fetchImpl: FetchLike = fetchApp;
@@ -152,7 +156,10 @@ class Device {
         }
       },
       readOutbox: async (limit) =>
-        [...this.outbox.values()].sort((a, b) => a.rev - b.rev).slice(0, limit),
+        [...this.outbox.values()]
+          .filter((e) => !this.held.has(this.key(e.tableName, e.rowId)))
+          .sort((a, b) => a.rev - b.rev)
+          .slice(0, limit),
       readRow: async (tableName, rowId): Promise<LocalRowSnapshot | undefined> => {
         const row = this.rows.get(this.key(tableName, rowId));
         if (!row) return undefined;
@@ -169,8 +176,29 @@ class Device {
       clearOutboxEntry: async (entry) => {
         const key = this.key(entry.tableName, entry.rowId);
         const current = this.outbox.get(key);
-        if (current && current.rev === entry.rev) this.outbox.delete(key);
+        if (current && current.rev === entry.rev) {
+          this.outbox.delete(key);
+          this.held.delete(key);
+        }
       },
+      readRefused: async () => [...this.refused.values()],
+      addRefused: async (ref) => {
+        this.refused.set(this.key(ref.tableName, ref.rowId), ref);
+      },
+      removeRefused: async (refs) => {
+        for (const ref of refs) this.refused.delete(this.key(ref.tableName, ref.rowId));
+      },
+      holdOutboxEntry: async (entry, resetClientChangeId) => {
+        const key = this.key(entry.tableName, entry.rowId);
+        const current = this.outbox.get(key);
+        if (!current || current.rev !== entry.rev) return;
+        this.held.add(key);
+        if (resetClientChangeId) current.clientChangeId = null;
+      },
+      releaseHeld: async () => {
+        this.held.clear();
+      },
+      heldCount: async () => [...this.outbox.keys()].filter((key) => this.held.has(key)).length,
       pendingRowKeys: async () =>
         new Set([...this.outbox.values()].map((e) => rowKey(e.tableName, e.rowId))),
       pendingCount: async () => this.outbox.size,

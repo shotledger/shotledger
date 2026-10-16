@@ -17,7 +17,7 @@ import {
 
 import { SYNC_TABLES } from '@shotledger/shared/src/sync/tables';
 
-import { photoQueue, syncControl, syncOutbox, syncState } from '../schema';
+import { photoQueue, syncControl, syncOutbox, syncRefused, syncState } from '../schema';
 import type { Database } from '../types';
 
 /** Protocol table name -> Drizzle table; lives in shared/ so the server's
@@ -116,18 +116,22 @@ export function createSyncStore(db: Database): LocalStore {
     },
 
     async readOutbox(limit) {
-      return db
-        .select()
-        .from(syncOutbox)
-        .orderBy(syncOutbox.rev)
-        .limit(limit)
-        .all()
-        .map((row) => ({
-          tableName: row.tableName as SyncTableName,
-          rowId: row.rowId,
-          rev: row.rev,
-          clientChangeId: row.clientChangeId,
-        }));
+      return (
+        db
+          .select()
+          .from(syncOutbox)
+          // A held entry stays queued, unsent (sync-family-refusal-spec.md §2.3).
+          .where(eq(syncOutbox.held, 0))
+          .orderBy(syncOutbox.rev)
+          .limit(limit)
+          .all()
+          .map((row) => ({
+            tableName: row.tableName as SyncTableName,
+            rowId: row.rowId,
+            rev: row.rev,
+            clientChangeId: row.clientChangeId,
+          }))
+      );
     },
 
     async readRow(tableName, rowId): Promise<LocalRowSnapshot | undefined> {
@@ -156,6 +160,43 @@ export function createSyncStore(db: Database): LocalStore {
 
     async pendingCount() {
       return db.select().from(syncOutbox).all().length;
+    },
+
+    async readRefused() {
+      return db
+        .select()
+        .from(syncRefused)
+        .all()
+        .map((row) => ({ tableName: row.tableName as SyncTableName, rowId: row.rowId }));
+    },
+
+    async addRefused(ref) {
+      db.insert(syncRefused).values(ref).onConflictDoNothing().run();
+    },
+
+    async removeRefused(refs) {
+      db.transaction((tx) => {
+        for (const ref of refs) {
+          tx.delete(syncRefused)
+            .where(and(eq(syncRefused.tableName, ref.tableName), eq(syncRefused.rowId, ref.rowId)))
+            .run();
+        }
+      });
+    },
+
+    async holdOutboxEntry(entry, resetClientChangeId) {
+      db.update(syncOutbox)
+        .set(resetClientChangeId ? { held: 1, clientChangeId: null } : { held: 1 })
+        .where(matches(entry))
+        .run();
+    },
+
+    async releaseHeld() {
+      db.update(syncOutbox).set({ held: 0 }).where(eq(syncOutbox.held, 1)).run();
+    },
+
+    async heldCount() {
+      return db.select().from(syncOutbox).where(eq(syncOutbox.held, 1)).all().length;
     },
   };
 }
@@ -206,7 +247,7 @@ function setApplying(db: Database, value: 0 | 1): void {
 }
 
 /**
- * Returns the four client-only sync tables to a fresh install's state, so the
+ * Returns the five client-only sync tables to a fresh install's state, so the
  * next sync pushes nothing stale and re-pulls from cursor 0. Run on a backup's
  * copy and on a restored database, never on the live one in use
  * (docs/specs/backup-sync-bookkeeping-spec.md).
@@ -214,6 +255,7 @@ function setApplying(db: Database, value: 0 | 1): void {
 export function resetSyncBookkeeping(db: Database): void {
   db.transaction((tx) => {
     tx.delete(syncOutbox).run();
+    tx.delete(syncRefused).run();
     tx.delete(syncState).run();
     tx.delete(photoQueue).run();
     // Written, never deleted: the outbox triggers read `applying` from row 0,
@@ -228,5 +270,6 @@ export function resetSyncBookkeeping(db: Database): void {
 /** Drops every queued change and cursor — used when signing out. */
 export function resetSyncState(db: Database): void {
   db.delete(syncOutbox).run();
+  db.delete(syncRefused).run();
   db.delete(syncState).run();
 }

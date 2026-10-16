@@ -11,6 +11,7 @@ import {
 } from '../sync/protocol';
 import { MAX_PULL_ITERATIONS, MAX_PUSH_ITERATIONS, runSyncCycle } from './engine';
 import { APPLY_ORDER } from './order';
+import type { RowRef } from '../sync/family';
 import type { LocalRowSnapshot, LocalStore, OutboxEntry, SyncTransport } from './ports';
 
 function emptyCursors(): Record<SyncTableName, number> {
@@ -22,6 +23,8 @@ interface FakeStoreOptions {
   outbox?: OutboxEntry[];
   rows?: Map<string, LocalRowSnapshot>;
   applyThrows?: boolean;
+  held?: string[];
+  refused?: RowRef[];
 }
 
 function createFakeStore(options: FakeStoreOptions = {}) {
@@ -31,6 +34,15 @@ function createFakeStore(options: FakeStoreOptions = {}) {
   const applied: ChangeRow[][] = [];
   const cleared: OutboxEntry[] = [];
   const assigned: { entry: OutboxEntry; id: string }[] = [];
+  // Family refusal (sync-family-refusal-spec.md §2.3): held entry keys and
+  // the refused set, as the SQLite adapter keeps them.
+  const held = new Set<string>(options.held ?? []);
+  const refused = new Map<string, RowRef>(
+    (options.refused ?? []).map((ref) => [`${ref.tableName}:${ref.rowId}`, ref]),
+  );
+  const holds: { entry: OutboxEntry; resetClientChangeId: boolean }[] = [];
+  let releases = 0;
+  const keyOf = (e: { tableName: string; rowId: string }) => `${e.tableName}:${e.rowId}`;
 
   const store: LocalStore = {
     readCursors: async () => ({ ...cursors }),
@@ -41,7 +53,7 @@ function createFakeStore(options: FakeStoreOptions = {}) {
       if (options.applyThrows) throw new Error('apply failed');
       applied.push(changes);
     },
-    readOutbox: async (limit) => outbox.slice(0, limit),
+    readOutbox: async (limit) => outbox.filter((e) => !held.has(keyOf(e))).slice(0, limit),
     readRow: async (tableName, rowId) => rows.get(`${tableName}:${rowId}`),
     assignClientChangeId: async (entry, id) => {
       assigned.push({ entry, id });
@@ -57,9 +69,39 @@ function createFakeStore(options: FakeStoreOptions = {}) {
     },
     pendingRowKeys: async () => new Set(outbox.map((e) => `${e.tableName}:${e.rowId}`)),
     pendingCount: async () => outbox.length,
+    readRefused: async () => [...refused.values()],
+    addRefused: async (ref) => {
+      refused.set(keyOf(ref), ref);
+    },
+    removeRefused: async (refs) => {
+      for (const ref of refs) refused.delete(keyOf(ref));
+    },
+    holdOutboxEntry: async (entry, resetClientChangeId) => {
+      holds.push({ entry, resetClientChangeId });
+      const found = outbox.find((e) => keyOf(e) === keyOf(entry) && e.rev === entry.rev);
+      if (!found) return;
+      held.add(keyOf(found));
+      if (resetClientChangeId) found.clientChangeId = null;
+    },
+    releaseHeld: async () => {
+      releases += 1;
+      held.clear();
+    },
+    heldCount: async () => outbox.filter((e) => held.has(keyOf(e))).length,
   };
 
-  return { store, cursors, outbox, applied, cleared, assigned };
+  return {
+    store,
+    cursors,
+    outbox,
+    applied,
+    cleared,
+    assigned,
+    held,
+    refused,
+    holds,
+    releases: () => releases,
+  };
 }
 
 function emptyPull(request: PullRequest): PullResponse {
@@ -147,6 +189,7 @@ describe('runSyncCycle — pull', () => {
       pushed: 0,
       rejected: 0,
       invalid: 0,
+      held: 0,
       duplicates: 0,
     });
   });
@@ -693,5 +736,409 @@ describe('runSyncCycle — push', () => {
     expect(push).not.toHaveBeenCalled();
     expect(result.status).toBe('ok');
     expect(fake.outbox).toHaveLength(0);
+  });
+});
+
+// docs/specs/sync-family-refusal-spec.md §2.3. The same scenarios run end to
+// end against the real Worker in backend/test/sync-client.spec.ts (H1–H10).
+describe('runSyncCycle — family refusal', () => {
+  const entry = (tableName: SyncTableName, rowId: string, rev: number): OutboxEntry => ({
+    tableName,
+    rowId,
+    rev,
+    clientChangeId: null,
+  });
+  const ref = (tableName: SyncTableName, rowId: string): RowRef => ({ tableName, rowId });
+
+  /** s1 with series r1 holding shot t1; firearm f1 with license l1 and group g1. */
+  function localRows(): Map<string, LocalRowSnapshot> {
+    return new Map([
+      ['sessions:s1', row({ id: 's1', firearm_id: 'f1' })],
+      ['series:r1', row({ id: 'r1', session_id: 's1' })],
+      ['shots:t1', row({ id: 't1', series_id: 'r1' })],
+      ['shots:t2', row({ id: 't2', series_id: 'r1' })],
+      ['sessions:s2', row({ id: 's2' })],
+      ['series:r2', row({ id: 'r2', session_id: 's2' })],
+      ['firearms:f1', row({ id: 'f1' })],
+      ['licenses:l1', row({ id: 'l1', firearm_id: 'f1' })],
+      ['firearm_groups:g1', row({ id: 'g1', firearm_id: 'f1' })],
+      ['tags:tag1', row({ id: 'tag1' })],
+    ]);
+  }
+
+  function recordingTransport(reason: (change: { rowId: string }) => string | undefined) {
+    const pushes: PushRequest[] = [];
+    const transport = createTransport({
+      push: async (request) => {
+        pushes.push(request);
+        return {
+          protocolVersion: request.protocolVersion,
+          acks: request.changes.map((c) => {
+            const why = reason(c);
+            return why === undefined
+              ? { clientChangeId: c.clientChangeId, status: 'applied' as const, seq: 1 }
+              : { clientChangeId: c.clientChangeId, status: 'rejected' as const, reason: why };
+          }),
+        };
+      },
+    });
+    const sent = () => pushes.flatMap((p) => p.changes.map((c) => `${c.tableName}:${c.rowId}`));
+    return { transport, pushes, sent };
+  }
+
+  it('remembers an invalid_payload refusal as refused (step 3)', async () => {
+    const fake = createFakeStore({ outbox: [entry('sessions', 's1', 1)], rows: localRows() });
+    const { transport } = recordingTransport(() => 'invalid_payload');
+
+    const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+    expect(result).toMatchObject({ invalid: 1, held: 0, rejected: 0 });
+    expect([...fake.refused.values()]).toEqual([ref('sessions', 's1')]);
+    expect(fake.outbox).toHaveLength(0);
+  });
+
+  it('remembers a replayed invalid_payload refusal too', async () => {
+    const fake = createFakeStore({ outbox: [entry('shots', 't1', 1)], rows: localRows() });
+    const transport = createTransport({
+      push: async (request) => ({
+        protocolVersion: request.protocolVersion,
+        acks: request.changes.map((c) => ({
+          clientChangeId: c.clientChangeId,
+          status: 'duplicate' as const,
+          reason: 'invalid_payload',
+        })),
+      }),
+    });
+    await runSyncCycle({ store: fake.store, transport, newId: ids() });
+    expect([...fake.refused.keys()]).toEqual(['shots:t1']);
+  });
+
+  it.each([['rejected' as const], ['duplicate' as const]])(
+    'holds a family_refused (%s) entry with its id reset, never clearing it (step 4, H3)',
+    async (status) => {
+      const fake = createFakeStore({ outbox: [entry('series', 'r1', 1)], rows: localRows() });
+      const transport = createTransport({
+        push: async (request) => ({
+          protocolVersion: request.protocolVersion,
+          acks: request.changes.map((c) => ({
+            clientChangeId: c.clientChangeId,
+            status,
+            reason: 'family_refused',
+          })),
+        }),
+      });
+
+      const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(result).toMatchObject({
+        status: 'ok',
+        held: 1,
+        rejected: 0,
+        invalid: 0,
+        duplicates: 0,
+        pushed: 0,
+      });
+      expect(fake.cleared).toEqual([]);
+      expect(fake.outbox).toEqual([entry('series', 'r1', 1)]);
+      expect([...fake.held]).toEqual(['series:r1']);
+      expect(fake.holds[0]).toMatchObject({ resetClientChangeId: true });
+      expect(fake.holds[0]?.entry.clientChangeId).not.toBeNull();
+      expect(fake.refused.size).toBe(0);
+    },
+  );
+
+  it('leaves an entry rewritten mid-push unheld after a family_refused ack (rev-matched)', async () => {
+    const fake = createFakeStore({ outbox: [entry('series', 'r1', 1)], rows: localRows() });
+    const pushes: PushRequest[] = [];
+    const transport = createTransport({
+      push: async (request) => {
+        pushes.push(request);
+        // The first push: a local write lands while it is in flight, so the
+        // trigger bumps rev and resets the id.
+        if (pushes.length === 1) fake.outbox[0] = entry('series', 'r1', 2);
+        return {
+          protocolVersion: request.protocolVersion,
+          acks: request.changes.map((c) =>
+            pushes.length === 1
+              ? {
+                  clientChangeId: c.clientChangeId,
+                  status: 'rejected' as const,
+                  reason: 'family_refused',
+                }
+              : { clientChangeId: c.clientChangeId, status: 'applied' as const, seq: 1 },
+          ),
+        };
+      },
+    });
+
+    const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+    // The hold named rev 1 and missed; rev 2 went out as a new change.
+    expect(fake.holds.map((h) => h.entry.rev)).toEqual([1]);
+    expect(pushes).toHaveLength(2);
+    expect(pushes[1]?.changes[0]?.clientChangeId).not.toBe(pushes[0]?.changes[0]?.clientChangeId);
+    expect(fake.outbox).toHaveLength(0);
+    expect(result).toMatchObject({ held: 1, pushed: 1 });
+  });
+
+  it('holds every live row of a refused session’s family and sends the rest (step 2, H1)', async () => {
+    const fake = createFakeStore({
+      outbox: [
+        entry('series', 'r1', 1),
+        entry('shots', 't1', 2),
+        entry('series', 'r2', 3),
+        entry('tags', 'tag1', 4),
+      ],
+      rows: localRows(),
+      refused: [ref('sessions', 's1')],
+    });
+    const { transport, sent } = recordingTransport(() => undefined);
+
+    const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+    expect(sent()).toEqual(['series:r2', 'tags:tag1']);
+    expect([...fake.held].sort()).toEqual(['series:r1', 'shots:t1']);
+    expect(fake.holds.every((h) => !h.resetClientChangeId)).toBe(true);
+    expect(result).toMatchObject({ status: 'ok', held: 2, pushed: 2 });
+  });
+
+  it('a refused shot holds its siblings, its series and its session (H4)', async () => {
+    const fake = createFakeStore({
+      outbox: [entry('shots', 't2', 1), entry('sessions', 's1', 2), entry('series', 'r1', 3)],
+      rows: localRows(),
+      refused: [ref('shots', 't1')],
+    });
+    const { transport, sent } = recordingTransport(() => undefined);
+    await runSyncCycle({ store: fake.store, transport, newId: ids() });
+    expect(sent()).toEqual([]);
+    expect(fake.held.size).toBe(3);
+  });
+
+  it('never holds a tombstone (H10)', async () => {
+    const rows = localRows();
+    rows.set('shots:t1', row({ id: 't1', series_id: 'r1' }, '2026-10-14T12:00:00.000Z'));
+    const fake = createFakeStore({
+      outbox: [entry('shots', 't1', 1)],
+      rows,
+      refused: [ref('sessions', 's1')],
+    });
+    const { transport, sent } = recordingTransport(() => undefined);
+    await runSyncCycle({ store: fake.store, transport, newId: ids() });
+    expect(sent()).toEqual(['shots:t1']);
+    expect(fake.held.size).toBe(0);
+  });
+
+  it('a refused firearm holds its rows, not the sessions shot with it (H5)', async () => {
+    const fake = createFakeStore({
+      outbox: [entry('licenses', 'l1', 1), entry('sessions', 's1', 2)],
+      rows: localRows(),
+      refused: [ref('firearms', 'f1')],
+    });
+    const { transport, sent } = recordingTransport(() => undefined);
+    await runSyncCycle({ store: fake.store, transport, newId: ids() });
+    expect(sent()).toEqual(['sessions:s1']);
+    expect([...fake.held]).toEqual(['licenses:l1']);
+  });
+
+  it('a refused license holds only itself: the firearm and its group are sent (H6)', async () => {
+    const fake = createFakeStore({
+      outbox: [entry('firearms', 'f1', 1), entry('firearm_groups', 'g1', 2)],
+      rows: localRows(),
+      refused: [ref('licenses', 'l1')],
+    });
+    const { transport, sent } = recordingTransport(() => undefined);
+    await runSyncCycle({ store: fake.store, transport, newId: ids() });
+    expect(sent()).toEqual(['firearms:f1', 'firearm_groups:g1']);
+  });
+
+  it('a firearm row with no firearm id is not held by a refused firearm', async () => {
+    const rows = localRows();
+    rows.set('licenses:l9', row({ id: 'l9', firearm_id: null }));
+    const fake = createFakeStore({
+      outbox: [entry('licenses', 'l9', 1)],
+      rows,
+      refused: [ref('firearms', 'f1')],
+    });
+    const { transport, sent } = recordingTransport(() => undefined);
+    await runSyncCycle({ store: fake.store, transport, newId: ids() });
+    expect(sent()).toEqual(['licenses:l9']);
+  });
+
+  it('holds a refused row written mid-cycle, then releases it with its family next cycle', async () => {
+    // The refused session itself is queued again but reaches step 2 before
+    // step 1 sees it: it is held, and released at the next cycle's step 1.
+    const fake = createFakeStore({ outbox: [entry('series', 'r1', 1)], rows: localRows() });
+    let calls = 0;
+    const { transport: inner } = recordingTransport(() => undefined);
+    const transport = createTransport({
+      push: async (request) => {
+        calls += 1;
+        if (calls === 1) {
+          fake.refused.set('sessions:s1', ref('sessions', 's1'));
+          fake.outbox.push(entry('sessions', 's1', 2));
+          return {
+            protocolVersion: request.protocolVersion,
+            acks: request.changes.map((c) => ({
+              clientChangeId: c.clientChangeId,
+              status: 'rejected' as const,
+              reason: 'family_refused',
+            })),
+          };
+        }
+        return inner.push(request);
+      },
+    });
+    const first = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+    expect(first.held).toBe(2);
+    expect(fake.held.size).toBe(2);
+
+    const second = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+    expect(second).toMatchObject({ pushed: 2, held: 0 });
+    expect(fake.refused.size).toBe(0);
+    expect(fake.outbox).toHaveLength(0);
+  });
+
+  it('releases the family when the refused row is queued again (step 1, H2)', async () => {
+    const fake = createFakeStore({
+      outbox: [entry('series', 'r1', 1), entry('shots', 't1', 2), entry('sessions', 's1', 3)],
+      rows: localRows(),
+      refused: [ref('sessions', 's1'), ref('licenses', 'l1')],
+      held: ['series:r1', 'shots:t1'],
+    });
+    const { transport, sent, pushes } = recordingTransport(() => undefined);
+
+    const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+    expect(pushes).toHaveLength(1);
+    expect(sent()).toEqual(['series:r1', 'shots:t1', 'sessions:s1']);
+    expect([...fake.refused.keys()]).toEqual(['licenses:l1']);
+    expect(fake.releases()).toBe(1);
+    expect(result).toMatchObject({ pushed: 3, held: 0 });
+  });
+
+  it('releases the family when a pull replaces the refused row (H8)', async () => {
+    const fake = createFakeStore({
+      outbox: [entry('shots', 't2', 1)],
+      rows: localRows(),
+      refused: [ref('shots', 't1')],
+      held: ['shots:t2'],
+    });
+    const { transport: pushing, sent } = recordingTransport(() => undefined);
+    const transport = createTransport({
+      push: (request) => pushing.push(request),
+      pull: async (request) => ({
+        ...emptyPull(request),
+        changes: [
+          {
+            tableName: 'shots',
+            rowId: 't1',
+            seq: 5,
+            payload: { id: 't1', series_id: 'r1' },
+            deletedAt: null,
+            updatedAt: 'u',
+          },
+        ],
+      }),
+    });
+
+    await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+    expect(fake.refused.size).toBe(0);
+    expect(fake.releases()).toBe(1);
+    expect(sent()).toEqual(['shots:t2']);
+  });
+
+  it('a pull of an unrelated row releases nothing', async () => {
+    const fake = createFakeStore({
+      rows: localRows(),
+      refused: [ref('shots', 't1')],
+      held: ['shots:t2'],
+    });
+    const transport = createTransport({
+      pull: async (request) => ({
+        ...emptyPull(request),
+        changes: [
+          {
+            tableName: 'shots',
+            rowId: 't9',
+            seq: 5,
+            payload: {},
+            deletedAt: null,
+            updatedAt: 'u',
+          },
+        ],
+      }),
+    });
+    await runSyncCycle({ store: fake.store, transport, newId: ids() });
+    expect(fake.refused.size).toBe(1);
+    expect(fake.releases()).toBe(0);
+  });
+
+  it('held entries never stall the outbox (H9)', async () => {
+    const outbox: OutboxEntry[] = [];
+    const held: string[] = [];
+    const rows = new Map<string, LocalRowSnapshot>();
+    for (let i = 0; i < 610; i += 1) {
+      outbox.push(entry('tags', `g${i}`, i + 1));
+      rows.set(`tags:g${i}`, row({ id: `g${i}` }));
+      if (i < 600) held.push(`tags:g${i}`);
+    }
+    const fake = createFakeStore({ outbox, rows, held });
+    const { transport, pushes } = recordingTransport(() => undefined);
+
+    const result = await runSyncCycle({
+      store: fake.store,
+      transport,
+      newId: ids(),
+      pushBatchMax: 500,
+    });
+
+    expect(pushes).toHaveLength(1);
+    expect(pushes[0]?.changes).toHaveLength(10);
+    expect(result).toMatchObject({ status: 'ok', pushed: 10 });
+    expect(await fake.store.heldCount()).toBe(600);
+  });
+
+  it('with nothing refused, reads no extra rows and releases nothing (N4)', async () => {
+    const fake = createFakeStore({ outbox: [entry('shots', 't1', 1)], rows: localRows() });
+    const reads: string[] = [];
+    const { store } = fake;
+    const inner = { ...store };
+    store.readRow = async (tableName, rowId) => {
+      reads.push(`${tableName}:${rowId}`);
+      return inner.readRow(tableName, rowId);
+    };
+    const { transport, sent } = recordingTransport(() => undefined);
+
+    await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+    expect(reads).toEqual(['shots:t1']);
+    expect(sent()).toEqual(['shots:t1']);
+    expect(fake.releases()).toBe(0);
+  });
+
+  it('an orphan whose parent is missing locally forms its own family (§9)', async () => {
+    const rows = localRows();
+    rows.set('shots:o1', row({ id: 'o1', series_id: 'missing' }));
+    rows.set('shots:o2', row({ id: 'o2', series_id: 'missing' }));
+    const fake = createFakeStore({
+      outbox: [entry('shots', 'o2', 1), entry('shots', 't1', 2)],
+      rows,
+      refused: [ref('shots', 'o1')],
+    });
+    const { transport, sent } = recordingTransport(() => undefined);
+    await runSyncCycle({ store: fake.store, transport, newId: ids() });
+    expect(sent()).toEqual(['shots:o2', 'shots:t1']);
+  });
+
+  it('a refused row that is gone locally blocks only its own id', async () => {
+    const fake = createFakeStore({
+      outbox: [entry('sessions', 's1', 1)],
+      rows: localRows(),
+      refused: [ref('series', 'vanished')],
+    });
+    const { transport, sent } = recordingTransport(() => undefined);
+    await runSyncCycle({ store: fake.store, transport, newId: ids() });
+    expect(sent()).toEqual(['sessions:s1']);
   });
 });
