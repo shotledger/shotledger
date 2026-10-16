@@ -1324,6 +1324,7 @@ describe('runSyncCycle — family refusal', () => {
     expect(sent()).toEqual(['tags:tag1']);
     expect([...fake.held]).toEqual(['series:r1']);
     expect(result).toMatchObject({ pushed: 1, held: 1 });
+    expect(fake.releases()).toBe(0);
   });
 
   it('a refused row whose session is deleted here blocks nothing (Revision 2 item 7)', async () => {
@@ -1403,6 +1404,54 @@ describe('runSyncCycle — family refusal', () => {
     expect(reads.slice(-3)).toEqual(['series:r2', 'sessions:s2', 'sessions:s1']);
     expect([...fake.held].sort()).toEqual(['series:r2', 'sessions:s1']);
     expect(fake.releases()).toBe(0);
+  });
+
+  it('releases a held entry whose row is gone, and step 2 clears it', async () => {
+    const fake = createFakeStore({
+      outbox: [entry('shots', 't9', 1)],
+      rows: localRows(),
+      held: ['shots:t9'],
+      refused: [ref('shots', 't1')],
+    });
+    const { transport, sent } = recordingTransport(() => undefined);
+    const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+    expect(sent()).toEqual([]);
+    expect(fake.outbox).toEqual([]);
+    expect(result).toMatchObject({ held: 0 });
+  });
+
+  it('releases a held entry whose row is deleted, and step 2 sends the tombstone', async () => {
+    const rows = localRows();
+    rows.set('shots:t2', row({ id: 't2', series_id: 'r1' }, '2026-10-14T12:00:00.000Z'));
+    const fake = createFakeStore({
+      outbox: [entry('shots', 't2', 1)],
+      rows,
+      held: ['shots:t2'],
+      refused: [ref('shots', 't1')],
+    });
+    const { transport, sent } = recordingTransport(() => undefined);
+    const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+    expect(sent()).toEqual(['shots:t2']);
+    expect(result).toMatchObject({ pushed: 1, held: 0 });
+  });
+
+  it('with nothing held, step 1 reads no rows', async () => {
+    const fake = createFakeStore({
+      outbox: [entry('tags', 'tag1', 1)],
+      rows: localRows(),
+      refused: [ref('series', 'r1')],
+    });
+    const reads: string[] = [];
+    const { store } = fake;
+    const inner = { ...store };
+    store.readRow = async (tableName, rowId) => {
+      reads.push(`${tableName}:${rowId}`);
+      return inner.readRow(tableName, rowId);
+    };
+    const { transport } = recordingTransport(() => undefined);
+    await runSyncCycle({ store, transport, newId: ids() });
+    // Step 2 alone: the refused row, its root, the root again (deleted?), the tag.
+    expect(reads).toEqual(['series:r1', 'sessions:s1', 'sessions:s1', 'tags:tag1']);
   });
 
   it('counts the entries still held after step 1 as held this cycle', async () => {
