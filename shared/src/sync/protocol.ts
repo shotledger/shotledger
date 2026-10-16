@@ -26,6 +26,15 @@ export const PUSH_BATCH_MAX = 500;
 export const MAX_PAYLOAD_BYTES = 16_384;
 
 /**
+ * The range the server accepts in a `real` column: drizzle-zod bounds a
+ * SQLite real to a signed 48-bit integer's range
+ * (docs/specs/sync-payload-validation-spec.md §2.1). A screen that turns
+ * typed text into a real holds it to this, or the row never syncs.
+ */
+export const REAL_MIN = -140_737_488_355_328;
+export const REAL_MAX = 140_737_488_355_327;
+
+/**
  * Tables that follow the id/updated_at/deleted_at sync convention
  * (docs/implementation-plan.md §3). `settings` syncs only the keys in
  * SYNCED_SETTING_KEYS (docs/specs/sync-tags-settings-spec.md §2.3).

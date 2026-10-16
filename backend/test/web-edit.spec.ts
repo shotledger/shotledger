@@ -29,6 +29,7 @@ import {
 
 import { ALL_MIGRATIONS } from '../src/db/migrations';
 import app from '../src/index';
+import { row } from './rows';
 
 const BASE_URL = 'https://localhost';
 const PASSWORD = 'correct horse battery staple';
@@ -252,7 +253,7 @@ beforeEach(async () => {
       clientChangeId: uuid(4)(),
       tableName,
       rowId: payload.id as string,
-      payload,
+      payload: row(tableName, payload.id as string, OLD, payload),
       deletedAt: null,
       updatedAt: OLD,
     })),

@@ -15,6 +15,11 @@ export interface EnterableStation {
   isScratched?: boolean;
 }
 
+/** A count a device can store and sync: a safe, non-negative integer (#837). */
+function isCount(value: number): boolean {
+  return Number.isSafeInteger(value) && value >= 0;
+}
+
 /**
  * Why no station could have produced these numbers, or null. Only a station
  * that still scores is checked: a scratched one records what went wrong, and
@@ -42,8 +47,11 @@ export function stationProblem(station: EnterableStation): string | null {
   if (figureCount != null && figuresHit > figureCount) {
     return `${where}: ${figuresHit} figures hit of ${figureCount}`;
   }
-  if (points != null && (!Number.isInteger(points) || points < 0)) {
+  if (points != null && !isCount(points)) {
     return `${where}: points must be a non-negative integer or null, got ${points}`;
+  }
+  if (pointsMax != null && !isCount(pointsMax)) {
+    return `${where}: pointsMax must be a non-negative integer or null, got ${pointsMax}`;
   }
   if (pointsMax != null && points != null && points > pointsMax) {
     return `${where}: ${points} points on a poängmål worth ${pointsMax}`;
@@ -68,11 +76,12 @@ export function clampFiguresHit(current: number, hits: number, figureCount: numb
 export type StationPoints =
   { ok: true; points: number | null; pointsMax: number | null } | { ok: false };
 
-/** A whole number from a text field, or null when it is empty or not one. */
+/** A whole number from a text field, or null when it is empty, not one, or not a safe integer. */
 function parseCount(text: string): number | null {
   const trimmed = text.trim();
   if (!/^\d+$/.test(trimmed)) return null;
-  return Number(trimmed);
+  const count = Number(trimmed);
+  return isCount(count) ? count : null;
 }
 
 /** The two points fields; the max is dropped when no points were entered. */

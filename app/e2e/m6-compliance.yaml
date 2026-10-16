@@ -52,7 +52,18 @@ appId: app.shotledger
       id: 'compliance-profile-picker'
     timeout: 15000
 - tapOn: 'Sweden (FAP 551-3)'
-- assertVisible: 'Activity requirements are unverified placeholders, pending confirmation against FAP 551-3 or a real föreningsintyg.'
+# The Swedish profile is verified, so no unverified-defaults hint; it offers
+# the FAP 551-3 5 § / 6 § case and cites its source.
+- scrollUntilVisible:
+    element:
+      id: 'compliance-case-picker'
+    direction: DOWN
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: 'compliance-source'
+    direction: DOWN
+    timeout: 15000
 - takeScreenshot: m6-01-settings-compliance
 # Back out of the drill-down before the tab bar is used again.
 - pressKey: Back
@@ -62,7 +73,8 @@ appId: app.shotledger
     timeout: 15000
 
 # --- Home: overall License Activity chip visible --------------------------------
-- tapOn: 'Home'
+# Not tapOn 'Home': it can match Android's own Home button and leave the app.
+- openLink: 'shotledger://'
 - extendedWaitUntil:
     visible:
       id: 'home-license-check'
@@ -84,12 +96,14 @@ appId: app.shotledger
     visible: 'Firearms'
     timeout: 15000
 
-# --- Stats: Custom period ------------------------------------------------
+# --- Stats: Custom period, set in the Filter Bar's sheet ----------------
 - tapOn: 'Statistics'
 - extendedWaitUntil:
     visible:
-      id: 'stat-total-shots'
+      id: 'stats-filter-bar-open'
     timeout: 15000
+- tapOn:
+    id: 'stats-filter-bar-open'
 - tapOn: 'Custom'
 - extendedWaitUntil:
     visible:
@@ -112,8 +126,9 @@ appId: app.shotledger
     visible: 'OK'
     timeout: 10000
 - tapOn: 'OK'
+- tapOn: 'Close'
+# The header names the applied range: "<from> – <to> · <n> sessions".
 - extendedWaitUntil:
-    visible:
-      id: 'stats-custom-range-label'
+    visible: '.+ – .+ · .*'
     timeout: 15000
 - takeScreenshot: m6-05-stats-custom-applied

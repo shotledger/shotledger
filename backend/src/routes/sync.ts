@@ -10,6 +10,7 @@ import {
   type PullResponse,
   type PushResponse,
 } from '@shotledger/shared/src/sync';
+import { validatePayload } from '@shotledger/shared/src/sync/payload-schemas';
 
 import type { Authenticator } from '../auth';
 import { applyPush, createDb, pullTablePage } from '../db/queries';
@@ -112,10 +113,22 @@ export function createSyncRoutes(authenticatorFor: (env: Env) => Authenticator) 
       );
     }
 
+    // A row every device could not apply is refused per change, inside the
+    // batch, so one bad row does not hold back the rest (C6). The log names
+    // the table and the failing columns, never a value or an id (N6).
+    const invalid = new Set<number>();
+    for (const [index, change] of parsed.data.changes.entries()) {
+      const verdict = validatePayload(change);
+      if (verdict.ok) continue;
+      invalid.add(index);
+      const columns = verdict.issues.map((issue) => `${issue.path || '(row)'}:${issue.code}`);
+      console.warn(`sync push: refused ${change.tableName} payload (${columns.join(', ')})`);
+    }
+
     const db = createDb(c.env.DB);
     const userId = c.get('userId');
 
-    const acks = await applyPush(db, userId, parsed.data.changes);
+    const acks = await applyPush(db, userId, parsed.data.changes, invalid);
 
     const response: PushResponse = { protocolVersion: PROTOCOL_VERSION, acks };
     return c.json(response);

@@ -63,6 +63,17 @@ och skickar ingenting från filen av sig själv.
   ihop de två. Telefonen hämtar det inloggade kontots data och skickar
   ingenting från filen.
 
+### När servern avvisar en ändring
+
+Om **Konto & synk** säger att ändringar avvisades av servern, hittade servern
+något i dem som den inte kan lagra. Det är ett fel i appen, inte något du har
+gjort. Ändringarna finns kvar på telefonen tills vidare, men de finns inte på
+dina andra enheter eller i webbappen. Om du ändrar samma sak på en annan enhet
+eller i webbappen ersätter den ändringen den avvisade på telefonen. Om du ändrar
+samma sak igen på telefonen skickas den igen. Om raden fortsätter att komma
+tillbaka, rapportera det, och gör en säkerhetskopia innan du loggar ut eller
+återställer.
+
 ## Hur ofta
 
 När det skulle irritera dig att förlora det du loggat sedan förra gången. För

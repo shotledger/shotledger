@@ -7,6 +7,7 @@ import type { ResultRow } from '@shotledger/shared/src/integrations/webshooter';
 import { localDayOf } from '@shotledger/shared/src/dates';
 
 import { createTestDb } from '../test-db';
+import { unsyncableRows } from '../sync-conformance';
 import type { Database } from '../types';
 import { createSession, getSession, updateSession } from './sessions';
 import { faltSessionResult, listStationsForSession } from './falt';
@@ -244,6 +245,8 @@ describe('importResultRow — fresh import', () => {
     expect(seriesRows.every((s) => s.isTotalOverride === 1)).toBe(true);
     expect(seriesRows.every((s) => s.totalOverrideShotCount === 5)).toBe(true);
     expect(seriesRows[0]!.totalOverrideTenths).toBe(470); // 47 points -> 470 tenths
+    // Every row the import wrote is one the sync server accepts (#697).
+    expect(unsyncableRows(db)).toEqual([]);
   });
 
   it('maps results_finals to isFinal series and results_distinguish to a särskjutning note (§A.6)', () => {
@@ -259,6 +262,8 @@ describe('importResultRow — fresh import', () => {
     const distinguishSeries = seriesRows.find((s) => s.isShootOff === 1);
     expect(finalSeries?.totalOverrideTenths).toBe(500);
     expect(distinguishSeries?.totalOverrideTenths).toBe(100);
+    // Every row the import wrote is one the sync server accepts (#697).
+    expect(unsyncableRows(db)).toEqual([]);
   });
 
   it('does not adjust extra_rounds by default (§A.7 default unchecked)', () => {
@@ -292,6 +297,8 @@ describe('importResultRow — fresh import', () => {
     // Seven total-only series of five (#512, one-volume-figure-spec A8) plus
     // the five sighter rounds.
     expect(getFirearm(db, firearm.id)?.roundCount).toBe(40);
+    // Every row the import wrote is one the sync server accepts (#697).
+    expect(unsyncableRows(db)).toEqual([]);
   });
 
   it('never overwrites an already-assigned firearm on re-import', () => {
@@ -492,6 +499,8 @@ describe('importResultRow — fält (#352)', () => {
       [3, 4, 2, null, 0],
       [4, 3, 2, null, 1],
     ]);
+    // Every row the import wrote is one the sync server accepts (#697).
+    expect(unsyncableRows(db)).toEqual([]);
   });
 
   it('gives the same round total Webshooter reports, with the shoot-off left out', () => {

@@ -76,7 +76,7 @@ import {
   matchFormatLabel,
   type CompetitionLevel,
 } from '@/features/session/labels';
-import { parseSeriesLength } from '@/features/session/series-length';
+import { MAX_SERIES_LENGTH, parseSeriesLength } from '@/features/session/series-length';
 import { useFeatures } from '@/features/settings/feature-visibility';
 import { readTrackedInputs } from '@/features/settings/tracked-inputs';
 import { TagSelect } from '@/features/tags/tag-select';
@@ -659,7 +659,7 @@ export default function NewSessionScreen() {
               </ThemedText>
               <InfoButton
                 title={t('session.seriesLength')}
-                body={t('session.seriesLengthHint')}
+                body={t('session.seriesLengthHint', { max: MAX_SERIES_LENGTH })}
                 testID="series-length-info"
               />
             </View>

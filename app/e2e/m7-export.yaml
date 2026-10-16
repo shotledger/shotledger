@@ -1,0 +1,133 @@
+# M7 flow (§4 M7 "Done when"), now on the JSON sessions export that replaced
+# CSV (#170): seeds demo data, exports from Settings → Backup & Data
+# (asserting the share sheet opens and the app's own success status is
+# shown), wipes data via the dev menu, then opens the import picker. No
+# inputText (CLAUDE.md Maestro gotchas note) — navigation, taps on fixed
+# labels/testIDs only.
+#
+# The import half is best effort. The export is written to the app's private
+# cache (app/src/platform/share-file.ts) for the share sheet, and a SAF picker
+# cannot browse there, so with no receiving app on the emulator the file is
+# not offered. The round trip itself is proven by
+# app/src/db/json-export/round-trip.test.ts through the real query layer.
+appId: app.shotledger
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: 'Home'
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: 'settle-before-open-link'
+    timeout: 4000
+    optional: true
+- openLink: 'shotledger://dev'
+- extendedWaitUntil:
+    visible: 'Dev'
+    timeout: 8000
+    optional: true
+- runFlow:
+    when:
+      notVisible: 'Dev'
+    commands:
+      - openLink: 'shotledger://dev'
+- extendedWaitUntil:
+    visible: 'Dev'
+    timeout: 15000
+- tapOn:
+    id: 'load-demo-data'
+- openLink: 'shotledger://'
+- extendedWaitUntil:
+    visible: 'Home'
+    timeout: 15000
+- takeScreenshot: m7-01-home-seeded
+
+# --- Settings → Backup & Data: export sessions ----------------------------
+- tapOn: 'Settings'
+- scrollUntilVisible:
+    element:
+      id: 'settings-open-data'
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: 'settings-open-data'
+- scrollUntilVisible:
+    element:
+      id: 'settings-export-json'
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: 'settings-export-json'
+# The native share sheet blocks the app until dismissed — back out of it.
+- extendedWaitUntil:
+    visible:
+      id: 'json-export-status'
+    timeout: 15000
+    optional: true
+- pressKey: Back
+- scrollUntilVisible:
+    element:
+      id: 'json-export-status'
+    direction: DOWN
+    timeout: 15000
+- takeScreenshot: m7-02-export-status
+
+# --- Dev menu: wipe data ---------------------------------------------------
+- openLink: 'shotledger://dev'
+- extendedWaitUntil:
+    visible: 'Dev'
+    timeout: 15000
+- tapOn:
+    id: 'wipe-data'
+- openLink: 'shotledger://'
+- extendedWaitUntil:
+    visible: 'Home'
+    timeout: 15000
+- assertVisible: 'No sessions yet'
+- takeScreenshot: m7-03-home-wiped
+
+# --- Settings → Backup & Data: import (best effort, see the header) --------
+- tapOn: 'Settings'
+- scrollUntilVisible:
+    element:
+      id: 'settings-open-data'
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: 'settings-open-data'
+- scrollUntilVisible:
+    element:
+      id: 'settings-import-json'
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: 'settings-import-json'
+# The file name prefix comes from exportFilename() in
+# app/src/features/json-export/use-json-export-import.ts.
+- extendedWaitUntil:
+    visible: 'shotledger-export.*'
+    timeout: 10000
+    optional: true
+- tapOn:
+    text: 'shotledger-export.*'
+    optional: true
+- extendedWaitUntil:
+    visible: 'Import'
+    timeout: 8000
+    optional: true
+- tapOn:
+    text: 'Import'
+    optional: true
+- takeScreenshot: m7-04-import-picker
+# Close the picker (still open if the file wasn't found above).
+- pressKey: Back
+- pressKey: Back
+
+# --- Home: reachable after the import attempt ------------------------------
+- openLink: 'shotledger://'
+- extendedWaitUntil:
+    visible: 'Home'
+    timeout: 15000
+    optional: true
+- takeScreenshot: m7-05-home-after-import

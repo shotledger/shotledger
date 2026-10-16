@@ -15,49 +15,14 @@ import {
   type SyncTableName,
 } from '@shotledger/shared';
 
-import {
-  ammoLots,
-  faltStations,
-  firearmCalibers,
-  firearmGroups,
-  firearms,
-  licenses,
-  maintenanceEvents,
-  photoQueue,
-  series,
-  sessionTags,
-  sessions,
-  settings,
-  shots,
-  sightSettings,
-  syncControl,
-  syncOutbox,
-  syncState,
-  tags,
-} from '../schema';
+import { SYNC_TABLES } from '@shotledger/shared/src/sync/tables';
+
+import { photoQueue, syncControl, syncOutbox, syncState } from '../schema';
 import type { Database } from '../types';
 
-/**
- * Protocol table name -> Drizzle table. Keys are exactly SYNC_TABLE_NAMES;
- * completeness is asserted in sync-store.test.ts, so a table added to the
- * protocol cannot silently bypass the client.
- */
-export const SYNC_TABLES: Record<SyncTableName, SQLiteTable> = {
-  firearms,
-  licenses,
-  firearm_groups: firearmGroups,
-  firearm_calibers: firearmCalibers,
-  ammo_lots: ammoLots,
-  sessions,
-  series,
-  shots,
-  falt_stations: faltStations,
-  maintenance_events: maintenanceEvents,
-  tags,
-  sight_settings: sightSettings,
-  session_tags: sessionTags,
-  settings,
-};
+/** Protocol table name -> Drizzle table; lives in shared/ so the server's
+ * payload schemas read the same map (sync-payload-validation-spec §2.1). */
+export { SYNC_TABLES };
 
 /**
  * The wire payload uses the DB's own column names (snake_case), not Drizzle's

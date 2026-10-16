@@ -2,9 +2,9 @@
 // top-down, can I apply for a new firearm, and can each firearm's license be
 // renewed; each row opens the requirements behind its answer. Opened from the
 // license-activity line on Statistics, as the phone's from the line on Home.
-//
-// The phone's rows that open a firearm's own page are left out: the web has no
-// firearm pages (docs/manual/guides/license-activity.md, "On the web").
+// A firearm's rows open its page under Firearms, as the phone's "Open Firearm"
+// row and the firearm rows of New Firearm do (`FirearmCheckScreen` and
+// `CriterionBlock`, app/src/app/compliance/ and app/src/features/compliance/).
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -23,7 +23,7 @@ import { showDate } from './dates';
 import { licenseCheck, licenseProfile } from './license-activity';
 import type { PulledTables } from './pull';
 import { PageTitle } from './shell/shell';
-import { licenseCheckHash, type LicenseCheckView } from './shell/route';
+import { firearmHash, licenseCheckHash, type LicenseCheckView } from './shell/route';
 
 const until = (lapseIso: string) => showDate(nextSessionDeadline(lapseIso));
 
@@ -41,7 +41,7 @@ function Row({
   href: string;
   title: string;
   subtitle?: string;
-  value: string;
+  value?: string;
 }) {
   return (
     <a className="check-row" href={href}>
@@ -49,7 +49,7 @@ function Row({
         <span>{title}</span>
         {subtitle && <span className="muted">{subtitle}</span>}
       </span>
-      <span className="check-row-value">{value}</span>
+      {value && <span className="check-row-value">{value}</span>}
       <span aria-hidden="true">›</span>
     </a>
   );
@@ -60,7 +60,7 @@ function Off() {
   return (
     <section className="card check-card">
       <p className="muted">{t('compliance.check.off')}</p>
-      <Row href="#settings" title={t('compliance.settingsTitle')} value="" />
+      <Row href="#settings" title={t('compliance.settingsTitle')} />
     </section>
   );
 }
@@ -159,13 +159,13 @@ function RuleBlock({ check }: { check: RuleCheck }) {
   );
 }
 
-/** One föreningsintyg box for one firearm; `showFirearm` names the firearm above it. */
+/** One föreningsintyg box for one firearm; `showFirearm` adds a row that opens the firearm. */
 function CriterionBlock({ check, showFirearm }: { check: CriterionCheck; showFirearm: boolean }) {
   const { t } = useTranslation();
   const { criterion, shortfall } = check;
   return (
     <div className="check-block">
-      {showFirearm && <h3>{check.firearmName}</h3>}
+      {showFirearm && <Row href={firearmHash(check.firearmId)} title={check.firearmName} />}
       <Badge
         label={t(criterion.met ? 'compliance.criterionMet' : 'compliance.criterionNotMet', {
           name: t(`compliance.criterion.${criterion.criterionId}`),
@@ -238,6 +238,9 @@ function Firearm({ firearm }: { firearm: FirearmSummary }) {
   const { t } = useTranslation();
   return (
     <>
+      <section className="card check-card">
+        <Row href={firearmHash(firearm.id)} title={t('compliance.check.openFirearm')} />
+      </section>
       <section className="card check-card">
         <h2>{t('compliance.check.renewalTitle')}</h2>
         <p className="muted">{t('compliance.check.renewalHint')}</p>

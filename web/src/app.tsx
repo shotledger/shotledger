@@ -10,6 +10,7 @@ import { currentAccount, hasSession, loadAccount, signOut } from './api';
 import { BulkEdit } from './bulk/bulk';
 import { SessionEdit, type Done } from './edit/edit';
 import { Entry } from './entry/entry';
+import { Firearms } from './firearms/firearms';
 import { LicenseCheck } from './license-check';
 import { type PulledTables } from './pull';
 import { afterReauth, type LoadedAccount, type ReauthOutcome } from './reauth';
@@ -202,6 +203,9 @@ export function App() {
           filter={statsFilter}
           onFilterChange={setStatsFilter}
         />
+      )}
+      {state.kind === 'ready' && page === 'firearms' && (
+        <Firearms key={generation} tables={state.tables} firearmId={route.firearmId} />
       )}
       {state.kind === 'ready' && page === 'entry' && (
         <Entry

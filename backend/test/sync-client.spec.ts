@@ -29,6 +29,7 @@ import {
 
 import { ALL_MIGRATIONS } from '../src/db/migrations';
 import app from '../src/index';
+import { row } from './rows';
 
 const BASE_URL = 'https://localhost';
 
@@ -163,32 +164,26 @@ function accountApi(getToken: () => string | null) {
 }
 
 function sessionRow(id: string, name: string, updatedAt: string) {
-  return {
-    id,
+  return row('sessions', id, updatedAt, {
     created_at: updatedAt,
-    updated_at: updatedAt,
-    deleted_at: null,
     name,
     type: 'training',
     discipline_id: 'spsf:precision',
     started_at: updatedAt,
     is_championship: 0,
     decimal_scoring: 0,
-  };
+  });
 }
 
 function seriesRow(id: string, sessionId: string, position: number, updatedAt: string) {
-  return {
-    id,
+  return row('series', id, updatedAt, {
     created_at: updatedAt,
-    updated_at: updatedAt,
-    deleted_at: null,
     session_id: sessionId,
     position,
     is_sighter: 0,
     is_final: 0,
     is_total_override: 0,
-  };
+  });
 }
 
 beforeAll(async () => {
@@ -332,6 +327,31 @@ describe('I6 accounts are isolated', () => {
     const result = await stranger.sync();
     expect(result.pulled).toBe(0);
     expect(stranger.rows.size).toBe(0);
+  });
+});
+
+// docs/specs/sync-payload-validation-spec.md P7.
+describe('P7 a refused row is counted and cleared, and stays on the phone', () => {
+  const firearm = (make: string | null, updatedAt: string) =>
+    row('firearms', 'f-p7', updatedAt, { make, model: 'P7', is_own: true });
+
+  it('counts the refusal, clears the entry, keeps the row; an edit sends it again', async () => {
+    const broken = firearm(null, '2026-09-02T10:00:00.000Z');
+    deviceA.write('firearms', broken);
+
+    await expect(deviceA.sync()).resolves.toMatchObject({ invalid: 1, rejected: 0, pushed: 0 });
+    expect(deviceA.outbox.size).toBe(0);
+    expect(deviceA.get('firearms', 'f-p7')).toEqual(broken);
+
+    await deviceB.sync();
+    expect(deviceB.get('firearms', 'f-p7')).toBeUndefined();
+
+    const fixed = firearm('Anschutz', '2026-09-02T11:00:00.000Z');
+    deviceA.write('firearms', fixed);
+    await expect(deviceA.sync()).resolves.toMatchObject({ invalid: 0, pushed: 1, duplicates: 0 });
+
+    await deviceB.sync();
+    expect(deviceB.get('firearms', 'f-p7')).toEqual(fixed);
   });
 });
 
