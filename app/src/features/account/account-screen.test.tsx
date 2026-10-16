@@ -96,4 +96,12 @@ describe('the held-changes line', () => {
     );
     expect(screen.queryByTestId('sync-refused')).toBeNull();
   });
+
+  it('shows a single held change', async () => {
+    mockStatus.value = { ...initialSyncStatus, heldCount: 1 };
+    await renderAccount();
+    expect(screen.getByTestId('sync-held')).toHaveTextContent(
+      '1 change(s) waiting on a refused change',
+    );
+  });
 });
