@@ -467,7 +467,10 @@ Feature: the phone holds a refused row's family across pushes
 
 - **Revision 1 (2026-10-14).** First draft, before implementation.
 - **Approved (2026-10-16).** Q1–Q4 answered as recommended.
-- **Revision 2 (2026-10-16), during implementation. Not yet approved:**
+- **Revision 2 (2026-10-16), during implementation.** Items 1–5 approved by
+  the maintainer, 2026-10-16: "Approve, file issue", answering "Approve the
+  implementation corrections (Revision 2) to the #856 spec?"; item 4's web
+  message is tracked in #863. Items 6–8 are not yet approved:
   each item below is a place where the approved text was wrong or silent,
   and is stated here so it shows in the diff rather than drifting.
   1. **N3 and P8 conflict.** N3 says the payload-validation scenarios pass
