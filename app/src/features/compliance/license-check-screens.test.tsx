@@ -24,13 +24,40 @@ let db: Database;
 let pistolId: string;
 let rifleId: string;
 
+// The dates below follow from "today", so fake only the clock: the firearms are
+// created on 2026-10-14 and the timers the screens use stay real.
+const TODAY = new Date('2026-10-14T10:00:00.000Z');
+
 beforeEach(() => {
+  jest.useFakeTimers({
+    now: TODAY,
+    doNotFake: [
+      'hrtime',
+      'nextTick',
+      'performance',
+      'queueMicrotask',
+      'requestAnimationFrame',
+      'cancelAnimationFrame',
+      'requestIdleCallback',
+      'cancelIdleCallback',
+      'setImmediate',
+      'clearImmediate',
+      'setInterval',
+      'clearInterval',
+      'setTimeout',
+      'clearTimeout',
+    ],
+  });
   jest.clearAllMocks();
   db = resetTestDb();
   setSetting(db, SETTINGS_KEYS.complianceProfile, 'se');
   pistolId = createFirearm(db, { make: 'Demo', model: 'Pistol', weaponType: 'pistol' }).id;
   rifleId = createFirearm(db, { make: 'Demo', model: 'Rifle', weaponType: 'rifle' }).id;
   addLicense(db, { firearmId: rifleId, validUntil: '2030-01-01' });
+});
+
+afterEach(() => {
+  jest.useRealTimers();
 });
 
 describe('License Check overview', () => {
