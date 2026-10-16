@@ -201,6 +201,8 @@ class Device {
         this.held.clear();
       },
       heldCount: async () => [...this.outbox.keys()].filter((key) => this.held.has(key)).length,
+      readHeld: async () =>
+        [...this.outbox.entries()].filter(([key]) => this.held.has(key)).map(([, e]) => e),
       pendingRowKeys: async () =>
         new Set([...this.outbox.values()].map((e) => rowKey(e.tableName, e.rowId))),
       pendingCount: async () => this.outbox.size,

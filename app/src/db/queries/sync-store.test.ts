@@ -605,6 +605,16 @@ describe('held entries and the refused set', () => {
     expect(row!.rev).toBeGreaterThan(entry.rev);
   });
 
+  it('readHeld returns the held entries only (Revision 2 item 8)', async () => {
+    const { entry } = await heldSession();
+    createFirearm(db, { make: 'Pardini', model: 'SP' });
+    expect(await store.readHeld()).toEqual([]);
+
+    await store.holdOutboxEntry(entry, true);
+
+    expect(await store.readHeld()).toEqual([{ ...entry, clientChangeId: null }]);
+  });
+
   it('releaseHeld un-holds every entry', async () => {
     const { entry } = await heldSession();
     await store.holdOutboxEntry(entry, false);

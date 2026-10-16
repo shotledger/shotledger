@@ -11,6 +11,10 @@ import type { OutboxEntry } from './ports';
  * no error anywhere. So a pulled change for a row with a pending outbox entry
  * is dropped: the local version stays, is pushed later in the same cycle, and
  * the server's own last-write-wins makes it the winner for everyone.
+ *
+ * A **held** entry (docs/specs/sync-family-refusal-spec.md §2.3) is not
+ * pushed in the same cycle, so it does not shadow: the engine drops it before
+ * this filter runs, and the pulled change is applied (Revision 2 item 8).
  */
 
 export function rowKey(tableName: SyncTableName, rowId: string): string {

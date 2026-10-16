@@ -170,6 +170,8 @@ class Device {
         this.held.clear();
       },
       heldCount: async () => [...this.outbox.keys()].filter((key) => this.held.has(key)).length,
+      readHeld: async () =>
+        [...this.outbox.entries()].filter(([key]) => this.held.has(key)).map(([, e]) => e),
       pendingRowKeys: async () =>
         new Set([...this.outbox.values()].map((e) => rowKey(e.tableName, e.rowId))),
       pendingCount: async () => this.outbox.size,
@@ -875,5 +877,60 @@ describe('the phone holds a refused row’s family across pushes', () => {
     expect(sent).toEqual(['shots:t2']);
     expect(result).toMatchObject({ pushed: 1, held: 0 });
     expect(await heldOn(deviceA)).toBe(0);
+  });
+
+  // Revision 2 item 8 (verifier round 2, B-2): a held edit is not pushed in
+  // the cycle that pulls, so it must not shadow another device's later
+  // change, or it overwrites that change everywhere once released.
+  describe('a held edit does not shadow a pull', () => {
+    const T2 = '2026-10-14T12:00:00.000Z';
+    const T3 = '2026-10-14T13:00:00.000Z';
+
+    /** s1 with R1 and T1 on both devices; then A's T2 refused and A's rename of s1 held. */
+    async function heldRenameOnA() {
+      deviceA.write('sessions', sessionRow('s1', 'Before', T0));
+      deviceA.write('series', seriesRow('r1', 's1', 1, T0));
+      deviceA.write('shots', shotRow('t1', 'r1'));
+      await deviceA.sync();
+      await deviceB.sync();
+      deviceA.write('shots', shotRow('t2', 'r1', null, T1));
+      await expect(deviceA.sync()).resolves.toMatchObject({ invalid: 1 });
+      deviceA.write('sessions', sessionRow('s1', 'A-name', T1));
+      await expect(deviceA.sync()).resolves.toMatchObject({ held: 1 });
+    }
+
+    it('H14 another device’s later rename of a held row wins on both devices', async () => {
+      await heldRenameOnA();
+      deviceB.write('sessions', sessionRow('s1', 'B-name', T2));
+      await deviceB.sync();
+
+      await expect(deviceA.sync()).resolves.toMatchObject({ pulled: 1, shadowed: 0, held: 0 });
+      expect(deviceA.get('sessions', 's1')).toMatchObject({ name: 'B-name' });
+      expect(await heldOn(deviceA)).toBe(0);
+
+      // A fixes T2: only T2 goes out, and B-name stays everywhere.
+      deviceA.write('shots', shotRow('t2', 'r1', 80, T3));
+      const { pushes } = await syncRecording(deviceA);
+      expect(pushes).toEqual([['shots:t2']]);
+      await deviceB.sync();
+      await deviceA.sync();
+      expect(deviceA.get('sessions', 's1')).toMatchObject({ name: 'B-name' });
+      expect(deviceB.get('sessions', 's1')).toMatchObject({ name: 'B-name' });
+      expect(deviceB.get('shots', 't2')).toMatchObject({ value_tenths: 80 });
+    });
+
+    it('H15 another device’s deletion of a held row arrives at once', async () => {
+      await heldRenameOnA();
+      deviceB.softDelete('sessions', 's1', T2);
+      deviceB.softDelete('series', 'r1', T2);
+      await deviceB.sync();
+
+      await expect(deviceA.sync()).resolves.toMatchObject({ shadowed: 0, held: 0 });
+
+      expect(deviceA.get('sessions', 's1')).toMatchObject({ deleted_at: T2 });
+      expect(deviceA.get('series', 'r1')).toMatchObject({ deleted_at: T2 });
+      expect(await heldOn(deviceA)).toBe(0);
+      expect(deviceA.outbox.size).toBe(0);
+    });
   });
 });

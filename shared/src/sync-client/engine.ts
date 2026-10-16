@@ -142,8 +142,22 @@ async function runPull(
     };
     const response = await deps.transport.pull(request);
 
+    // A held edit is not sent this cycle, so it cannot win by arriving
+    // later: a pulled change for its row replaces it, and the entry is
+    // dropped, as if it had been sent on time and lost to the later write
+    // (Revision 2 item 8). Dropped before the apply: a crash between the
+    // two leaves the cursor where it was, and the page is pulled again.
+    const pulledKeys = new Set(response.changes.map((c) => rowKey(c.tableName, c.rowId)));
+    for (const entry of await deps.store.readHeld()) {
+      if (pulledKeys.has(rowKey(entry.tableName, entry.rowId))) {
+        await deps.store.clearOutboxEntry(entry);
+      }
+    }
+
     // A row with an unsent local edit keeps that edit; the push later in
-    // this cycle sends it and the server's LWW settles it (shadow.ts).
+    // this cycle sends it and the server's LWW settles it (shadow.ts). An
+    // entry rewritten since it was read above is pending again, so it
+    // shadows.
     const pendingKeys = await deps.store.pendingRowKeys();
     const applicable = filterShadowedChanges(response.changes, pendingKeys);
     shadowed += response.changes.length - applicable.length;

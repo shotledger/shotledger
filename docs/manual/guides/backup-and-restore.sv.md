@@ -82,7 +82,10 @@ vapen dess licenser, grupper, kalibrar, underhåll och siktinställningar, men
 inte de pass som skjutits med det. Raderingar hålls aldrig tillbaka. De
 tillbakahållna ändringarna finns kvar på telefonen och går inte förlorade: om
 du ändrar eller raderar den avvisade posten på telefonen, eller ändrar den på
-en annan enhet, skickas de med den vid nästa synk. Andra enheter visar passet
+en annan enhet, skickas de med den vid nästa synk. Ett undantag: om en annan
+enhet ändrar samma post medan ändringen här hålls tillbaka vinner den enhetens
+version, och den tillbakahållna ändringen tas bort, som om den hade synkats i
+tid. Andra enheter visar passet
 som det var före den avvisade ändringen. Om passet raderas på en annan enhet
 hålls ingenting längre tillbaka: de tillbakahållna ändringarna skickas som de
 är.

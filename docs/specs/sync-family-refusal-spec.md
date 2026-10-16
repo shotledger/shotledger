@@ -401,6 +401,7 @@ Feature: the phone holds a refused row's family across pushes
 | A family member slips through within a push           | F1–F3, F6; property over generated session trees                   |
 | A held row is never released                          | H2, H3, H7, H8; H13 (Revision 2 item 7)                            |
 | A held entry spins the push loop                      | H9                                                                 |
+| A held edit overwrites another device's later change  | H14, H15 (Revision 2 item 8)                                       |
 | A held row is lost (cleared without being sent)       | H3; engine tests on rev-matched hold                               |
 | A new foreign key ships unclassified                  | F11                                                                |
 | Seq consumed or half-write on a family refusal        | F1 `last_seq`; atomicity suite unchanged                           |
@@ -538,4 +539,41 @@ Feature: the phone holds a refused row's family across pushes
        Given T1 of s1 is refused and T2 of s1 is held
        When A pulls B's deletion of s1
        Then T2 is pushed in the same cycle, and nothing is held
+     ```
+
+  8. **A held entry does not shadow a pull (verifier round 2, B-2); the
+     resolution is pending the maintainer.** Shadowing (`shadow.ts`, the
+     sync-app spec §5a) drops a pulled change for a row with a queued
+     edit, on the promise that the edit is pushed later in the same cycle
+     and wins by arriving last. A held edit is not pushed, and the cursor
+     moves past the pulled change, so once the hold is released the older
+     held edit overwrites the other device's later one everywhere (A
+     renames s1 at T1, held; B renames it at T2; both devices end with A's
+     name, where without the refusal both end with B's). Another device's
+     deletion is delayed the same way. Approved text says nothing about it.
+     The resolution: a pulled change for a row whose entry is held at pull
+     time is applied, and the held entry is dropped (rev-matched, before
+     the apply), the outcome the held edit would have had if it had been
+     sent on time and lost to the later write. An unheld queued edit still
+     shadows, the refused row itself has no entry (it was cleared) unless
+     it is queued again, unheld, and a pulled tombstone of a session
+     releases its family through item 7. New port:
+     `LocalStore.readHeld()`. One case comes out differently from "sent on
+     time": a change that reached the server between this device's last
+     pull and the push that first held the edit, which that push would
+     have beaten; it now wins. In its own commit, so it can be reverted.
+
+     ```gherkin
+     Scenario: H14 another device's later edit of a held row wins
+       Given T2 of s1 is refused on A, and A's rename of s1 to "A-name" is held
+       And B then renames s1 to "B-name" and syncs
+       When A syncs
+       Then A applies "B-name", nothing is shadowed, and nothing is held
+       And when A fixes T2, only T2 is pushed, and both devices show "B-name"
+
+     Scenario: H15 another device's deletion of a held row arrives at once
+       Given H14's first line
+       And B deletes s1 and R1 and syncs
+       When A syncs
+       Then s1 and R1 are deleted on A, and nothing is held or queued
      ```

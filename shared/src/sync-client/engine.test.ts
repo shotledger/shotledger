@@ -88,6 +88,7 @@ function createFakeStore(options: FakeStoreOptions = {}) {
       held.clear();
     },
     heldCount: async () => outbox.filter((e) => held.has(keyOf(e))).length,
+    readHeld: async () => outbox.filter((e) => held.has(keyOf(e))),
   };
 
   return {
@@ -1103,6 +1104,107 @@ describe('runSyncCycle — family refusal', () => {
     expect(fake.refused.size).toBe(0);
     expect(fake.releases()).toBe(1);
     expect(sent()).toEqual(['shots:t2']);
+  });
+
+  /** A pull that delivers `changes` once, then nothing. */
+  function pullingOnce(changes: ChangeRow[]) {
+    let delivered = false;
+    return async (request: PullRequest): Promise<PullResponse> => {
+      const response = { ...emptyPull(request), changes: delivered ? [] : changes };
+      delivered = true;
+      return response;
+    };
+  }
+  const pulledSession = (deletedAt: string | null = null): ChangeRow => ({
+    tableName: 'sessions',
+    rowId: 's1',
+    seq: 7,
+    payload: deletedAt === null ? { id: 's1', name: 'B-name' } : null,
+    deletedAt,
+    updatedAt: '2026-10-14T12:00:00.000Z',
+  });
+
+  it('a pulled change for a held row is applied and drops its entry (Revision 2 item 8)', async () => {
+    const fake = createFakeStore({
+      outbox: [entry('sessions', 's1', 1)],
+      rows: localRows(),
+      held: ['sessions:s1'],
+      refused: [ref('shots', 't1')],
+    });
+    const { transport: pushing, sent } = recordingTransport(() => undefined);
+    const transport = createTransport({
+      push: (request) => pushing.push(request),
+      pull: pullingOnce([pulledSession()]),
+    });
+
+    const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+    expect(fake.applied.flat().map((c) => `${c.tableName}:${c.rowId}`)).toEqual(['sessions:s1']);
+    expect(fake.cleared).toEqual([entry('sessions', 's1', 1)]);
+    expect(fake.outbox).toEqual([]);
+    expect(sent()).toEqual([]);
+    expect(result).toMatchObject({ pulled: 1, shadowed: 0 });
+  });
+
+  it('a pulled tombstone of a held row is applied and drops its entry', async () => {
+    const fake = createFakeStore({
+      outbox: [entry('sessions', 's1', 1)],
+      rows: localRows(),
+      held: ['sessions:s1'],
+      refused: [ref('shots', 't1')],
+    });
+    const transport = createTransport({
+      pull: pullingOnce([pulledSession('2026-10-14T12:00:00.000Z')]),
+    });
+
+    const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+    expect(fake.applied.flat()).toEqual([pulledSession('2026-10-14T12:00:00.000Z')]);
+    expect(fake.outbox).toEqual([]);
+    expect(result).toMatchObject({ pulled: 1, shadowed: 0 });
+  });
+
+  it('an unheld queued edit still shadows a pull of its row, held rows beside it or not', async () => {
+    const fake = createFakeStore({
+      outbox: [entry('sessions', 's1', 1), entry('series', 'r1', 2)],
+      rows: localRows(),
+      held: ['series:r1'],
+    });
+    const { transport: pushing, sent } = recordingTransport(() => undefined);
+    const transport = createTransport({
+      push: (request) => pushing.push(request),
+      pull: pullingOnce([pulledSession()]),
+    });
+
+    const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+    expect(fake.applied.flat()).toEqual([]);
+    expect(result).toMatchObject({ pulled: 0, shadowed: 1 });
+    expect(sent()).toEqual(['sessions:s1', 'series:r1']);
+  });
+
+  it('a held entry rewritten after it was read shadows the pull (rev-matched drop)', async () => {
+    const fake = createFakeStore({
+      outbox: [entry('sessions', 's1', 1)],
+      rows: localRows(),
+      held: ['sessions:s1'],
+      refused: [ref('shots', 't1')],
+    });
+    const { store } = fake;
+    const inner = { ...store };
+    store.readHeld = async () => {
+      const heldNow = await inner.readHeld();
+      // A local write lands after the read: the trigger bumps rev.
+      fake.outbox[0] = entry('sessions', 's1', 2);
+      return heldNow;
+    };
+    const transport = createTransport({ pull: pullingOnce([pulledSession()]) });
+
+    const result = await runSyncCycle({ store, transport, newId: ids() });
+
+    expect(fake.applied.flat()).toEqual([]);
+    expect(fake.outbox).toEqual([entry('sessions', 's1', 2)]);
+    expect(result).toMatchObject({ pulled: 0, shadowed: 1 });
   });
 
   it('a pull of an unrelated row releases nothing', async () => {

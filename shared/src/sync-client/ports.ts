@@ -75,6 +75,11 @@ export interface LocalStore {
   releaseHeld(): Promise<void>;
   /** Held entries; what Account & Sync shows as waiting on a refused change. */
   heldCount(): Promise<number>;
+  /**
+   * The held entries themselves. A pulled change for a held row replaces it
+   * and drops its entry, instead of being shadowed (Revision 2 item 8).
+   */
+  readHeld(): Promise<OutboxEntry[]>;
 }
 
 export interface SyncTransport {

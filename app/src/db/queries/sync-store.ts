@@ -198,6 +198,21 @@ export function createSyncStore(db: Database): LocalStore {
     async heldCount() {
       return db.select().from(syncOutbox).where(eq(syncOutbox.held, 1)).all().length;
     },
+
+    async readHeld() {
+      return db
+        .select()
+        .from(syncOutbox)
+        .where(eq(syncOutbox.held, 1))
+        .orderBy(syncOutbox.rev)
+        .all()
+        .map((row) => ({
+          tableName: row.tableName as SyncTableName,
+          rowId: row.rowId,
+          rev: row.rev,
+          clientChangeId: row.clientChangeId,
+        }));
+    },
   };
 }
 
