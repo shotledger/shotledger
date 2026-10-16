@@ -350,6 +350,8 @@ describe('P6 a tombstone is never payload-validated', () => {
 });
 
 describe('P8 the web sees the refusal', () => {
+  // The series belongs to s1, so since #856 the session goes with it as
+  // family_refused (sync-family-refusal-spec.md §2.2, Revision 2 item 1).
   it('pushChanges reports partlyRejected with the invalid series and its reason', async () => {
     const session = live('sessions', 's1', row('sessions', 's1', T0, { name: 'Training' }));
     const series = live(
@@ -362,9 +364,12 @@ describe('P8 the web sees the refusal', () => {
       pushChanges(transport, PROTOCOL_VERSION, [session, series]),
     ).resolves.toStrictEqual({
       kind: 'partlyRejected',
-      rejected: [{ tableName: 'series', rowId: 'ser-1', reason: 'invalid_payload' }],
+      rejected: [
+        { tableName: 'sessions', rowId: 's1', reason: 'family_refused' },
+        { tableName: 'series', rowId: 'ser-1', reason: 'invalid_payload' },
+      ],
     });
-    expect(await storedRow('sessions', 's1')).not.toBeNull();
+    expect(await storedRow('sessions', 's1')).toBeNull();
     expect(await storedRow('series', 'ser-1')).toBeNull();
   });
 });

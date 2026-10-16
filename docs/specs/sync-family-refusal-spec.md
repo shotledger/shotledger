@@ -466,3 +466,38 @@ Feature: the phone holds a refused row's family across pushes
 
 - **Revision 1 (2026-10-14).** First draft, before implementation.
 - **Approved (2026-10-16).** Q1–Q4 answered as recommended.
+- **Revision 2 (2026-10-16), during implementation. Not yet approved:**
+  each item below is a place where the approved text was wrong or silent,
+  and is stated here so it shows in the diff rather than drifting.
+  1. **N3 and P8 conflict.** N3 says the payload-validation scenarios pass
+     with unchanged assertions, but P8's test pushes a valid session `s1`
+     with an invalid series of `s1`, which is F2's shape: under §2.2 the
+     session is now `family_refused` and not stored. P8's assertion is
+     updated to the §2.2 outcome (both rows rejected, nothing stored) in its
+     own commit, so it can be reverted alone if the maintainer prefers
+     another resolution (for example a series of another session, which
+     would keep P8 about payload validation alone). Every other P scenario
+     and every atomicity scenario passes unchanged.
+  2. **The invalid shot in §4.** `value: -1` is not refused: the payload
+     schema checks NOT NULL and type, not range. The tests use
+     `value_tenths: null`.
+  3. **"A new migration".** The repo keeps exactly one baseline,
+     regenerated in place (hard rule 8; `migrations.test.ts` fails on a
+     second migration). The change is a baseline edit: `sync_outbox.held`,
+     the `sync_refused` table, the snapshot, the hash line and a new
+     journal `when`, so a backup from the old baseline is refused rather
+     than restored without the new table.
+  4. **H12's page half.** §2.4 says every web save tells the user a
+     rejected save did not land. The entry page does not: on a
+     `partlyRejected` outcome it shows "Saved" unless a firearm row was
+     rejected (`web/src/entry/save.ts`, `entry.tsx` `statusText`). The web
+     is unchanged, as §2.4 says; H12 pins only that `pushChanges` reports
+     `partlyRejected` with both reasons. Whether the entry page should say
+     otherwise is left to the maintainer.
+  5. **Silent, decided by the existing pattern:** sign-out
+     (`resetSyncState`) and a backup's bookkeeping reset
+     (`resetSyncBookkeeping`) also empty `sync_refused`, as they empty the
+     outbox; `SyncCycleResult` gains `held` (entries held this cycle) next
+     to `invalid`, and a `family_refused` ack is counted there rather than
+     as `rejected`; F11 lives in the backend suite as §7 says, and the
+     edge lists are also pinned by value in `family.test.ts`.
