@@ -1,7 +1,8 @@
 # Refuse a refused row's whole family (#856)
 
-**Spec approval: not obtained yet.** The maintainer approves this spec before
-any implementation is written (old-coder, Tier 3: the sync engine's push path).
+**Spec approved by the maintainer, 2026-10-16**, before implementation:
+"Approve all", answering "Approve the #856 spec (PR #857) with my recommended
+answers to Q1–Q4?" (old-coder, Tier 3: the sync engine's push path).
 
 Follow-up to #697 (PR #813): `sync-payload-validation-spec.md` §10 and Q7.
 
@@ -464,3 +465,4 @@ Feature: the phone holds a refused row's family across pushes
 ## Revisions
 
 - **Revision 1 (2026-10-14).** First draft, before implementation.
+- **Approved (2026-10-16).** Q1–Q4 answered as recommended.
