@@ -1310,7 +1310,7 @@
     "neverSynced": "aldrig",
     "lastSynced": "Senast synkad: {{when}}",
     "pendingChanges": "{{count}} ändring(ar) väntar på uppladdning",
-    "refusedChanges": "{{count}} ändring(ar) avvisades av servern och synkades inte",
+    "refusedChanges": "{{count}} ändring(ar) nekades av servern och synkades inte",
     "heldChanges": "{{count}} ändring(ar) väntar på en nekad ändring",
     "server": "Server: {{url}}",
     "deleteTitle": "Radera konto",

@@ -63,31 +63,31 @@ och skickar ingenting från filen av sig själv.
   ihop de två. Telefonen hämtar det inloggade kontots data och skickar
   ingenting från filen.
 
-### När servern avvisar en ändring
+### När servern nekar en ändring
 
-Om **Konto & synk** säger att ändringar avvisades av servern, hittade servern
+Om **Konto & synk** säger att ändringar nekades av servern, hittade servern
 något i dem som den inte kan lagra. Det är ett fel i appen, inte något du har
 gjort. Ändringarna finns kvar på telefonen tills vidare, men de finns inte på
 dina andra enheter eller i webbappen. Om du ändrar samma sak på en annan enhet
-eller i webbappen ersätter den ändringen den avvisade på telefonen. Om du ändrar
+eller i webbappen ersätter den ändringen den nekade på telefonen. Om du ändrar
 samma sak igen på telefonen skickas den igen. Om raden fortsätter att komma
 tillbaka, rapportera det, och gör en säkerhetskopia innan du loggar ut eller
 återställer.
 
-En avvisad ändring håller också tillbaka de ändringar som hör ihop med den, så
+En nekad ändring håller också tillbaka de ändringar som hör ihop med den, så
 att dina andra enheter aldrig ser ett halvt pass. Medan den gör det visar
 **Konto & synk** "n ändring(ar) väntar på en nekad ändring". För ett pass
 gäller det varje serie, skott och station i det, och själva passet; för ett
 vapen dess licenser, grupper, kalibrar, underhåll och siktinställningar, men
 inte de pass som skjutits med det. Raderingar hålls aldrig tillbaka. De
 tillbakahållna ändringarna finns kvar på telefonen och går inte förlorade: om
-du ändrar eller raderar den avvisade posten på telefonen, eller ändrar den på
+du ändrar eller raderar den nekade posten på telefonen, eller ändrar den på
 en annan enhet, skickas de med den vid nästa synk. Ett undantag: om en annan
 enhet ändrar samma post senare än den tillbakahållna ändringen här vinner den
 enhetens version, och den tillbakahållna ändringen tas bort. Vilken ändring som
 är senare avgörs av de två enheternas klockor. En radering på en annan enhet
 vinner alltid. Andra enheter visar passet
-som det var före den avvisade ändringen. Om passet raderas på en annan enhet
+som det var före den nekade ändringen. Om passet raderas på en annan enhet
 hålls ingenting längre tillbaka: de tillbakahållna ändringarna skickas som de
 är.
 
