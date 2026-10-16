@@ -13,7 +13,7 @@
 > - After reading SHB F.6.11.3 p. 181 (precision särskjutning exists): "let's
 >   not support särskjutning in precision for now."
 >
-> **Approval status:** awaiting the maintainer.
+> **Approval status:** approved by the maintainer, 2026-10-16 ("go").
 
 - **Tier: 3.** It changes the synced `sessions` and `series` rows, the JSON
   export and the Webshooter import. A mistake shows a wrong inner-ten count or

@@ -2,7 +2,7 @@
 
 Spec: `docs/specs/shoot-off-and-ten-counts-727-spec.md`.
 
-**Spec approval: awaiting the maintainer.** The PR does not merge before it.
+**Spec approval: approved by the maintainer, 2026-10-16 ("go").**
 
 The first version of this PR modelled a precision särskjutning as its own
 section and result part. The maintainer rejected that on 2026-10-14 ("There is
