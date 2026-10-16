@@ -1,6 +1,6 @@
 // Manual mutation testing for the sync push path (backend/src/db/queries.ts
 // and backend/src/routes/sync.ts; docs/specs/sync-push-atomicity-spec.md §8,
-// sync-payload-validation-spec.md §7). Stryker runs in the root Node
+// sync-payload-validation-spec.md §7, sync-family-refusal-spec.md §7). Stryker runs in the root Node
 // vitest pool and cannot reach code that only runs in workerd.
 //
 // FAILS CLOSED. The unmutated suite must pass first; a mutant whose pattern
@@ -81,30 +81,72 @@ const MUTANTS = [
   // sync-payload-validation-spec.md: the payload verdict inside the batch.
   {
     name: 'the batch ignores the payload verdict',
-    find: 'const ok = sql`(${valid ? 1 : 0} = 1 AND ${notTombstoned})`;',
+    find: 'const ok = sql`(${reason} IS NULL AND ${notTombstoned})`;',
     replace: 'const ok = notTombstoned;',
   },
   {
     name: 'an invalid payload is reported as tombstoned',
-    find: 'WHEN ${notTombstoned} THEN ${REJECTED_INVALID_PAYLOAD}',
+    find: 'WHEN ${notTombstoned} THEN ${reason}',
     replace: 'WHEN ${notTombstoned} THEN ${REJECTED_TOMBSTONED}',
   },
   {
     name: 'an invalid payload outranks a tombstone',
-    find: 'WHEN ${notTombstoned} THEN ${REJECTED_INVALID_PAYLOAD}\n            ELSE ${REJECTED_TOMBSTONED} END',
+    find: 'WHEN ${notTombstoned} THEN ${reason}\n            ELSE ${REJECTED_TOMBSTONED} END',
     replace:
-      'WHEN ${valid ? 0 : 1} = 1 THEN ${REJECTED_INVALID_PAYLOAD}\n            ELSE ${REJECTED_TOMBSTONED} END',
+      'WHEN ${reason} IS NOT NULL THEN ${reason}\n            ELSE ${REJECTED_TOMBSTONED} END',
   },
   {
     name: 'applyPush marks every change valid',
-    find: 'changeStatements(db, userId, change, !invalid.has(index)),',
-    replace: 'changeStatements(db, userId, change, true),',
+    find: 'changeStatements(db, userId, change, refusals[index] ?? null),',
+    replace: 'changeStatements(db, userId, change, null),',
   },
   {
     name: 'the route does not pass its verdicts on',
     file: ROUTE,
-    find: 'applyPush(db, userId, parsed.data.changes, invalid)',
+    find: 'applyPush(db, userId, parsed.data.changes, refusals)',
     replace: 'applyPush(db, userId, parsed.data.changes)',
+  },
+  // sync-family-refusal-spec.md §2.2: the family verdict.
+  {
+    name: 'the route ignores the family verdict',
+    file: ROUTE,
+    find: 'family.has(index) ? REJECTED_FAMILY : null',
+    replace: 'null',
+  },
+  {
+    name: 'a family refusal is reported as invalid_payload',
+    file: ROUTE,
+    find: 'family.has(index) ? REJECTED_FAMILY : null',
+    replace: 'family.has(index) ? REJECTED_INVALID_PAYLOAD : null',
+  },
+  {
+    name: 'an invalid change is reported as family_refused',
+    file: ROUTE,
+    find: 'invalid.has(index) ? REJECTED_INVALID_PAYLOAD : family.has(index)',
+    replace: 'invalid.has(index) ? REJECTED_FAMILY : family.has(index)',
+  },
+  {
+    name: 'the route takes the family verdict from the invalid set alone',
+    file: ROUTE,
+    find: 'const family = familyRefusals(parsed.data.changes, invalid);',
+    replace: 'const family = new Set<number>();',
+  },
+  {
+    name: 'the family log line names row ids',
+    file: ROUTE,
+    find: 'parsed.data.changes[i]!.tableName',
+    replace: 'parsed.data.changes[i]!.rowId',
+  },
+  {
+    name: 'the family refusal is not logged',
+    file: ROUTE,
+    find: 'if (family.size > 0) {',
+    replace: 'if (family.size < 0) {',
+  },
+  {
+    name: 'the batch records every refusal as invalid_payload',
+    find: 'WHEN ${notTombstoned} THEN ${reason}',
+    replace: 'WHEN ${notTombstoned} THEN ${REJECTED_INVALID_PAYLOAD}',
   },
   {
     name: 'the route skips validating settings',
@@ -126,6 +168,7 @@ const TESTS = [
   'test/sync.spec.ts',
   'test/sync-client.spec.ts',
   'test/sync-payload-validation.spec.ts',
+  'test/sync-family-refusal.spec.ts',
 ];
 
 /** Runs the backend sync suites; returns 'pass', 'fail' (a test failed) or 'error'. */

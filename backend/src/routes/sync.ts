@@ -2,18 +2,21 @@ import { Hono } from 'hono';
 
 import {
   checkProtocolVersion,
+  familyRefusals,
   isSyncableSettingRow,
   MAX_PAYLOAD_BYTES,
   PROTOCOL_VERSION,
   PullRequestSchema,
   PushRequestSchema,
+  REJECTED_FAMILY,
+  REJECTED_INVALID_PAYLOAD,
   type PullResponse,
   type PushResponse,
 } from '@shotledger/shared/src/sync';
 import { validatePayload } from '@shotledger/shared/src/sync/payload-schemas';
 
 import type { Authenticator } from '../auth';
-import { applyPush, createDb, pullTablePage } from '../db/queries';
+import { applyPush, createDb, pullTablePage, type PushRefusal } from '../db/queries';
 
 export interface SyncEnv {
   Bindings: Env;
@@ -125,10 +128,25 @@ export function createSyncRoutes(authenticatorFor: (env: Env) => Authenticator) 
       console.warn(`sync push: refused ${change.tableName} payload (${columns.join(', ')})`);
     }
 
+    // The rows of a refused row's family in this push go with it, so a
+    // session reaches other devices whole or not at all
+    // (sync-family-refusal-spec.md §2.2). One line per push: the count and
+    // the tables, never an id or a value (N6).
+    const family = familyRefusals(parsed.data.changes, invalid);
+    if (family.size > 0) {
+      const tables = [...new Set([...family].map((i) => parsed.data.changes[i]!.tableName))];
+      console.warn(
+        `sync push: refused ${family.size} with their family (${tables.sort().join(', ')})`,
+      );
+    }
+    const refusals = parsed.data.changes.map((_change, index): PushRefusal | null =>
+      invalid.has(index) ? REJECTED_INVALID_PAYLOAD : family.has(index) ? REJECTED_FAMILY : null,
+    );
+
     const db = createDb(c.env.DB);
     const userId = c.get('userId');
 
-    const acks = await applyPush(db, userId, parsed.data.changes, invalid);
+    const acks = await applyPush(db, userId, parsed.data.changes, refusals);
 
     const response: PushResponse = { protocolVersion: PROTOCOL_VERSION, acks };
     return c.json(response);
