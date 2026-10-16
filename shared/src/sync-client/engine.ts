@@ -72,7 +72,7 @@ async function forgetRefusals(store: LocalStore, keys: ReadonlySet<string>): Pro
   const fixed = (await store.readRefused()).filter((ref) =>
     keys.has(rowKey(ref.tableName, ref.rowId)),
   );
-  if (fixed.length > 0) await store.removeRefused(fixed);
+  await store.removeRefused(fixed);
 }
 
 /**
@@ -93,11 +93,7 @@ async function readBlocked(
     // A session deleted here (a pulled tombstone) can no longer be reached
     // to fix the refused row, so it blocks nothing: its live rows go out, as
     // they did before family refusal (Revision 2 item 7).
-    const rootRow =
-      root.tableName === ref.tableName && root.rowId === ref.rowId
-        ? row
-        : await store.readRow(root.tableName, root.rowId);
-    if (rootRow?.deletedAt != null) continue;
+    if ((await store.readRow(root.tableName, root.rowId))?.deletedAt != null) continue;
     sessions.add(rowKey(root.tableName, root.rowId));
   }
   return { sessions, firearms };
