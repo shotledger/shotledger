@@ -951,6 +951,63 @@ describe('runSyncCycle — family refusal', () => {
     expect(sent()).toEqual(['firearms:f1', 'firearm_groups:g1']);
   });
 
+  it('only a refused firearm blocks a firearm’s rows, not another row with its id', async () => {
+    const fake = createFakeStore({
+      outbox: [entry('licenses', 'l1', 1)],
+      rows: localRows(),
+      refused: [ref('sessions', 'f1')],
+    });
+    const { transport, sent } = recordingTransport(() => undefined);
+    await runSyncCycle({ store: fake.store, transport, newId: ids() });
+    expect(sent()).toEqual(['licenses:l1']);
+  });
+
+  it('a refused row of a firearm costs no walk for a session entry', async () => {
+    const fake = createFakeStore({
+      outbox: [entry('shots', 't1', 1)],
+      rows: localRows(),
+      refused: [ref('licenses', 'l1')],
+    });
+    const reads: string[] = [];
+    const { store } = fake;
+    const inner = { ...store };
+    store.readRow = async (tableName, rowId) => {
+      reads.push(`${tableName}:${rowId}`);
+      return inner.readRow(tableName, rowId);
+    };
+    const { transport, sent } = recordingTransport(() => undefined);
+    await runSyncCycle({ store, transport, newId: ids() });
+    expect(reads).toEqual(['shots:t1']);
+    expect(sent()).toEqual(['shots:t1']);
+  });
+
+  it('holds a refused firearm’s own entry written after step 1', async () => {
+    const fake = createFakeStore({ outbox: [entry('tags', 'tag1', 1)], rows: localRows() });
+    let calls = 0;
+    const transport = createTransport({
+      push: async (request) => {
+        calls += 1;
+        if (calls === 1) {
+          // Refused earlier in the cycle, and written again before the next read.
+          fake.refused.set('firearms:f1', ref('firearms', 'f1'));
+          fake.outbox.push(entry('firearms', 'f1', 2));
+        }
+        return {
+          protocolVersion: request.protocolVersion,
+          acks: request.changes.map((c) => ({
+            clientChangeId: c.clientChangeId,
+            status: 'applied' as const,
+            seq: 1,
+          })),
+        };
+      },
+    });
+    const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+    expect(calls).toBe(1);
+    expect([...fake.held]).toEqual(['firearms:f1']);
+    expect(result).toMatchObject({ pushed: 1, held: 1 });
+  });
+
   it('a firearm row with no firearm id is not held by a refused firearm', async () => {
     const rows = localRows();
     rows.set('licenses:l9', row({ id: 'l9', firearm_id: null }));

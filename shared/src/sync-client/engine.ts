@@ -210,7 +210,9 @@ async function runPush(deps: SyncCycleDeps): Promise<{
       // tombstone always goes (C3).
       if (
         change.deletedAt === null &&
-        (await isBlocked(deps.store, entry, change.payload, blocked))
+        // The local row's payload, which a tombstone keeps: its family is
+        // known, and the deletedAt check alone is what lets it through.
+        (await isBlocked(deps.store, entry, row!.payload, blocked))
       ) {
         await deps.store.holdOutboxEntry(entry, false);
         held += 1;

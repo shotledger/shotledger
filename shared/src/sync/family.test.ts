@@ -147,6 +147,12 @@ describe('familyRefusals', () => {
     expect(sorted(familyRefusals(changes, new Set([2])))).toEqual([]);
   });
 
+  it('a tombstone links nothing even when it carries a payload', () => {
+    const tomb = { ...series('r1', 's1'), deletedAt: 'd' };
+    const changes = [session('s1'), tomb, shot('t1', 'r1')];
+    expect(sorted(familyRefusals(changes, new Set([0])))).toEqual([]);
+  });
+
   it('never returns an invalid change, even one in another invalid change’s family', () => {
     const changes = [session('s1'), series('r1', 's1'), shot('t1', 'r1')];
     expect(sorted(familyRefusals(changes, new Set([0, 2])))).toEqual([1]);
