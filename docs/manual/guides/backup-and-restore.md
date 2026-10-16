@@ -71,6 +71,16 @@ device or in the web app, that change replaces the refused one on this phone.
 Changing the same thing again on this phone sends it again. If the line keeps
 coming back, report it, and make a backup before you sign out or restore.
 
+A refused change also holds back the changes that belong with it, so your other
+devices never see half a session. While it does, **Account & Sync** shows
+"n change(s) waiting on a refused change". For a session that means every
+series, shot and station of it, and the session itself; for a firearm, its
+licenses, groups, calibers, maintenance and sight settings, but not the
+sessions shot with it. Deletions are never held. The held changes stay on this
+phone and are not lost: editing or deleting the refused entry on this phone, or
+changing it on another device, sends them with it at the next sync. Other
+devices show the session as it was before the refused change.
+
 ## How often
 
 Whenever losing what you have logged since the last one would annoy you. For

@@ -74,6 +74,17 @@ samma sak igen på telefonen skickas den igen. Om raden fortsätter att komma
 tillbaka, rapportera det, och gör en säkerhetskopia innan du loggar ut eller
 återställer.
 
+En avvisad ändring håller också tillbaka de ändringar som hör ihop med den, så
+att dina andra enheter aldrig ser ett halvt pass. Medan den gör det visar
+**Konto & synk** "n ändring(ar) väntar på en nekad ändring". För ett pass
+gäller det varje serie, skott och station i det, och själva passet; för ett
+vapen dess licenser, grupper, kalibrar, underhåll och siktinställningar, men
+inte de pass som skjutits med det. Raderingar hålls aldrig tillbaka. De
+tillbakahållna ändringarna finns kvar på telefonen och går inte förlorade: om
+du ändrar eller raderar den avvisade posten på telefonen, eller ändrar den på
+en annan enhet, skickas de med den vid nästa synk. Andra enheter visar passet
+som det var före den avvisade ändringen.
+
 ## Hur ofta
 
 När det skulle irritera dig att förlora det du loggat sedan förra gången. För
