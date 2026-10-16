@@ -35,14 +35,14 @@ precision for now"), and this version replaces it.
 
 All from runs after the last code edit.
 
-| Layer        | Command                                                                                                                   | Result                                                                    |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Full suite   | `pnpm check`                                                                                                              | exit 0; vitest 243 files, 4255 tests; jest 106 suites, 1023 tests         |
-| Schema       | `cd app && npx drizzle-kit generate`                                                                                      | "No schema changes, nothing to migrate"                                   |
-| Mutation     | `stryker run --mutate` `webshooter/mapping.ts`, `json-export/from-rows.ts`, `json-export/types.ts`, `sync-client/rows.ts` | 96.62% (314 killed, 11 survived); none of the survivors on a changed line |
-| Backend      | `cd backend && pnpm test -- --testTimeout=60000`                                                                          | 28 files, 231 tests passed                                                |
-| Docs         | `mkdocs build --strict`, `docs-translation-check`, `docs-anchor-check`                                                    | pass                                                                      |
-| Dependencies | none added or removed                                                                                                     | n/a                                                                       |
+| Layer        | Command                                                                                                                   | Result                                                                               |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Full suite   | `pnpm check`                                                                                                              | exit 0 after merging main; vitest 248 files, 4430 tests; jest 111 suites, 1061 tests |
+| Schema       | `cd app && npx drizzle-kit generate`                                                                                      | "No schema changes, nothing to migrate"                                              |
+| Mutation     | `stryker run --mutate` `webshooter/mapping.ts`, `json-export/from-rows.ts`, `json-export/types.ts`, `sync-client/rows.ts` | 96.62% (314 killed, 11 survived); none of the survivors on a changed line            |
+| Backend      | `cd backend && pnpm test -- --testTimeout=60000`                                                                          | 29 files, 263 tests passed                                                           |
+| Docs         | `mkdocs build --strict`, `docs-translation-check`, `docs-anchor-check`                                                    | pass                                                                                 |
+| Dependencies | none added or removed                                                                                                     | n/a                                                                                  |
 
 ### Mutation survivors
 

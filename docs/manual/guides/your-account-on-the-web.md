@@ -44,6 +44,24 @@ each with its series or station result and session. **Remove** takes one out;
 **Clear**, or **Clear All** on the comparison, empties the selection. The
 selection is forgotten when you sign out, reload or close the tab.
 
+## Firearms
+
+**Firearms** in the menu lists your firearms as the phone's Firearms tab does,
+ordered by make: each with its weapon type and the same status lines for its
+license, maintenance, missing details and license activity. Firearms you have
+archived are under **Show Archived**.
+
+Open a firearm to read it, in the same order as on the phone: its weapon type,
+ownership, chambering and national register ID, its round count and
+maintenance status, its own **License Activity** card and **Föreningsintyg
+Criteria** with the date to log your next session by, then its calibers,
+weapon groups, sight settings, licenses and maintenance log. What you have
+switched off under **Settings → Features** is left out, as on the phone.
+
+The web only shows your firearms. Adding or changing a firearm, a license,
+maintenance or a sight setting, and archiving one, is done on the phone. The
+phone's ammunition lots are not on the web.
+
 ## Settings
 
 **Settings** in the menu holds the settings that follow your account from

@@ -661,8 +661,9 @@ from §6.5 automatically).
       a met 5 §/6 § rule or Föreningsintyg criterion met. The date is the first
       day the same status function stops saying "met" with nothing more
       logged (`shared/src/compliance/lapse.ts`), so it can never disagree with
-      the status shown. No new regulatory value. The web shows no licence
-      activity yet (#796). Spec/evidence:
+      the status shown. No new regulatory value. The web shows the same
+      dates on Statistics, License Check and its firearm pages (#796).
+      Spec/evidence:
       `docs/specs/compliance-next-session-{spec,evidence}.md`.
 - [x] **License Check** screen (issue #804) — opened from the Home status; every
       requirement on the föreningsintyg grouped by purpose (New Purchase: the
@@ -1252,6 +1253,13 @@ restates §0 rules 1–6 verbatim.
 > dependency was added on the app side. The `VERIFY:` in
 > `sync-protocol-spec.md` §1 about `settings` and `session_tags` was resolved
 > on 2026-10-06 (ADR 0019): both sync, `settings` for an allowlist only.
+>
+> **The server now refuses a row a device could not apply** (#697, spec and
+> evidence: `docs/specs/sync-payload-validation-*`). `/sync/push` checks each
+> live change against its table's schema, derived from the Drizzle tables
+> with `drizzle-zod` (the tables moved to `shared/src/sync/schema.ts`, ADR
+> 0021), and answers `rejected` / `invalid_payload`; Account & Sync counts
+> the refusals, and `sync_rows.payload` gains a JSON check.
 
 > **All three timers have since shipped.** The time-limit/interval timer
 > (`feat/shot-timer`, `shared/src/timer/engine.ts`), the IPSC-style

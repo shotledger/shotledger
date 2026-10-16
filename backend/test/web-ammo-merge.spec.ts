@@ -24,6 +24,7 @@ import {
 
 import { ALL_MIGRATIONS } from '../src/db/migrations';
 import app from '../src/index';
+import { row } from './rows';
 
 const BASE_URL = 'https://localhost';
 const PASSWORD = 'correct horse battery staple';
@@ -76,28 +77,30 @@ async function webContext(transport: Client['transport']): Promise<AmmoLotMergeC
   return { sessions: table('sessions'), ammoLots: table('ammo_lots') };
 }
 
-const common = (id: string) => ({ id, created_at: OLD, updated_at: OLD, deleted_at: null });
+// Whole rows (sync-payload-validation-spec N4): the push route refuses a
+// partial row.
+const lot = (id: string, quantity: number) =>
+  row('ammo_lots', id, OLD, {
+    created_at: OLD,
+    label: `Lot ${id}`,
+    caliber: '.22 LR',
+    quantity,
+    purchased_on: null,
+    is_handload: 0,
+    notes: `${id} notes`,
+  });
 
-const lot = (id: string, quantity: number) => ({
-  ...common(id),
-  label: `Lot ${id}`,
-  caliber: '.22 LR',
-  quantity,
-  purchased_on: null,
-  is_handload: false,
-  notes: `${id} notes`,
-});
-
-const session = (id: string, ammoLotId: string | null) => ({
-  ...common(id),
-  name: `Session ${id}`,
-  type: 'training',
-  kind: 'series',
-  discipline_id: 'spsf-precision',
-  ammo_lot_id: ammoLotId,
-  location: 'Range A',
-  started_at: '2026-05-01T10:00:00.000Z',
-});
+const session = (id: string, ammoLotId: string | null) =>
+  row('sessions', id, OLD, {
+    created_at: OLD,
+    name: `Session ${id}`,
+    type: 'training',
+    kind: 'series',
+    discipline_id: 'spsf-precision',
+    ammo_lot_id: ammoLotId,
+    location: 'Range A',
+    started_at: '2026-05-01T10:00:00.000Z',
+  });
 
 /** s1, s2 on the duplicate a1; s3 on the kept a2. */
 const LOGBOOK: [SyncTableName, Record<string, unknown>][] = [

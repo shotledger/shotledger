@@ -57,7 +57,9 @@ export default tseslint.config(
   },
   {
     // The Worker bundle is ELv2 and may only compile in the Apache-2.0
-    // protocol package, never the AGPL rest of shared/ (ADR 0017).
+    // protocol package, never the AGPL rest of shared/ (ADR 0017). The
+    // payload schemas are a subpath of it, kept out of the package barrel so
+    // drizzle-zod stays out of the app and web bundles (ADR 0021).
     files: ['backend/src/**/*.ts'],
     rules: {
       'no-restricted-imports': [
@@ -71,7 +73,7 @@ export default tseslint.config(
           ],
           patterns: [
             {
-              regex: '^@shotledger/shared/(?!src/sync$)',
+              regex: '^@shotledger/shared/(?!src/sync(/payload-schemas)?$)',
               message: 'backend/src may only import @shotledger/shared/src/sync (ADR 0017).',
             },
           ],
@@ -80,8 +82,10 @@ export default tseslint.config(
     },
   },
   {
-    // shared/src/sync is Apache-2.0 and must stay self-contained: zod and
-    // its own files only, so the backend never pulls AGPL code through it.
+    // shared/src/sync is Apache-2.0 and must stay self-contained: zod, the
+    // Apache-2.0 drizzle-orm and drizzle-zod (the table definitions and their
+    // payload schemas, ADR 0021), and its own files, so the backend never
+    // pulls AGPL code through it.
     files: ['shared/src/sync/**/*.ts'],
     ignores: ['shared/src/sync/**/*.test.ts'],
     rules: {
@@ -90,9 +94,9 @@ export default tseslint.config(
         {
           patterns: [
             {
-              regex: '^(?!zod$)(?!\\./)',
+              regex: '^(?!zod$|drizzle-orm$|drizzle-orm/sqlite-core$|drizzle-zod$)(?!\\./)',
               message:
-                'shared/src/sync may import only zod and files in its own directory (ADR 0017).',
+                'shared/src/sync may import only zod, drizzle-orm, drizzle-zod and files in its own directory (ADR 0017, ADR 0021).',
             },
           ],
         },
@@ -107,9 +111,10 @@ export default tseslint.config(
         {
           patterns: [
             {
-              regex: '^(?!zod$|vitest$|fast-check$)(?!\\./)',
+              regex:
+                '^(?!zod$|drizzle-orm$|drizzle-orm/sqlite-core$|drizzle-zod$|vitest$|fast-check$)(?!\\./)',
               message:
-                'shared/src/sync tests may import only zod, vitest, fast-check and files in this directory (ADR 0017).',
+                'shared/src/sync tests may import only zod, drizzle-orm, drizzle-zod, vitest, fast-check and files in this directory (ADR 0017, ADR 0021).',
             },
           ],
         },

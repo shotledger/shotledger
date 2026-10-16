@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import { buildLicenseCheck } from '../../app/src/features/compliance/license-check';
 import { getProfile, type ComplianceSession } from '@shotledger/shared/src/compliance';
-import { licenseCheck, overallLicenseActivity } from './license-activity';
+import { groupIds, licenseCheck, overallLicenseActivity } from './license-activity';
 
 const NOW = new Date('2026-09-16T12:00:00.000Z');
 const STAMP = '2026-01-01T00:00:00.000Z';
@@ -157,6 +157,12 @@ describe('the License Check on the web (#796)', () => {
         firearm('f3', 'Archived', 'Old', { archived_at: '2026-05-01' }),
         firearm('f4', 'Deleted', 'Gone', { deleted_at: STAMP }),
       ],
+      // The archived firearm's group is not the shooter's, as on the phone
+      // (`listAllFirearmGroupIds`).
+      groups: [
+        { id: 'g1', ...base, firearm_id: 'f1', group_id: 'spsf:C' },
+        { id: 'g3', ...base, firearm_id: 'f3', group_id: 'spsf:B' },
+      ],
       licenses: [
         // f2: the latest (highest time-ordered id) has an end date; an older one did not.
         license('0190-a', 'f2', null),
@@ -195,5 +201,34 @@ describe('the License Check on the web (#796)', () => {
     expect(check!.firearms.map((f) => f.id)).toEqual(['f1', 'f2']);
     // Only the time-limited permit has a renewal box.
     expect(check!.renewal.map((r) => r.firearmId)).toEqual(['f2']);
+  });
+});
+
+describe("the shooter's weapon groups on the web", () => {
+  it('come only from live, unarchived firearms, as listAllFirearmGroupIds', () => {
+    const firearm = (id: string, extra = {}) => ({ id, ...base, archived_at: null, ...extra });
+    const group = (id: string, firearmId: string, groupId: string, extra = {}) => ({
+      id,
+      ...base,
+      firearm_id: firearmId,
+      group_id: groupId,
+      ...extra,
+    });
+    const rows = tables({
+      firearms: [
+        firearm('f1'),
+        firearm('f2', { archived_at: '2026-05-01' }),
+        firearm('f3', { deleted_at: STAMP }),
+      ],
+      groups: [
+        group('g1', 'f1', 'spsf:C'),
+        group('g2', 'f1', 'spsf:C'),
+        group('g3', 'f1', 'spsf:A', { deleted_at: STAMP }),
+        group('g4', 'f2', 'spsf:B'),
+        group('g5', 'f3', 'spsf:R'),
+        group('g6', 'gone', 'spsf:M'),
+      ],
+    });
+    expect(groupIds(rows)).toEqual(['spsf:C']);
   });
 });

@@ -72,6 +72,7 @@ const OK_RESULT: SyncCycleResult = {
   shadowed: 0,
   pushed: 3,
   rejected: 0,
+  invalid: 0,
   duplicates: 0,
 };
 
@@ -154,6 +155,7 @@ describe('subscribeToSync', () => {
       pendingCount: 4,
       errorKey: null,
       attempt: 0,
+      refusedCount: 0,
     });
   });
 
@@ -194,7 +196,25 @@ describe('a successful cycle', () => {
       pendingCount: 1,
       errorKey: null,
       attempt: 0,
+      refusedCount: 0,
     });
+  });
+});
+
+// docs/specs/sync-payload-validation-spec.md §2.3: a refusal reaches the
+// screen as it clears, even when the cycle then fails.
+describe('a refused change', () => {
+  it('counts each refusal the engine reports, though the cycle fails after it', async () => {
+    mockRunSyncCycle.mockImplementationOnce(async (deps: { onRefused: () => void }) => {
+      deps.onRefused();
+      deps.onRefused();
+      throw new Error('network down');
+    });
+    const { controller } = load();
+
+    await controller.requestSync();
+
+    expect(controller.getSyncStatus()).toMatchObject({ state: 'error', refusedCount: 2 });
   });
 });
 

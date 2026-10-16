@@ -19,6 +19,7 @@ import { listSeriesPhotos } from './photos';
 import { listSeriesForSession } from './series';
 import { listShotsForSeries } from './shots';
 import { applyChangesSync } from './sync-store';
+import { serverRefusals } from '../sync-conformance';
 
 const NOW = '2026-10-07T10:00:00.000Z';
 
@@ -65,6 +66,7 @@ describe('a web-built series with a photo on the phone schema', () => {
     if (!result.ok) throw new Error(JSON.stringify(result.errors));
     sessionId = result.sessionId;
     photos = result.photos;
+    expect(serverRefusals(result.changes)).toEqual([]);
     const pulled: ChangeRow[] = result.changes.map((change, index) => ({
       tableName: change.tableName,
       rowId: change.rowId,

@@ -65,6 +65,10 @@ stations, which never count. The app has no ring särskjutning.
 
 - **A total-only series has no tens.** A Webshooter series carries a total
   and a shot count, no shots, so it adds no tens or inner tens, as today.
+- **Rows already on the sync server** that carry a dropped column are refused
+  if a client pushes them back unchanged: since #813 the server accepts
+  exactly the schema's columns. Pre-1.0 (hard rule 8) no compatibility path
+  is added; the phone is not signed in to sync.
 - **An existing imported särskjutning series** stays a plain series until the
   result is imported again. Pre-1.0, only the maintainer's data has one.
 

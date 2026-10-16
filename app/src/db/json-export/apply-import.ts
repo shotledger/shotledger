@@ -275,7 +275,9 @@ export function applyImport(
       const now = nowIso();
       const values = {
         firearmId,
-        performedAt: event.performedAt,
+        // Any ISO 8601 UTC instant the file names, stored in toISOString()'s
+        // shape as startedAt is: the sync server requires it (#697).
+        performedAt: new Date(event.performedAt).toISOString(),
         kind: event.kind,
         roundCountAt: event.roundCountAt,
         isAdjustment: event.isAdjustment ? 1 : 0,
@@ -425,7 +427,9 @@ export function applyImport(
         eventId: group.eventId,
         firearmId,
         ammoLotId,
-        startedAt: group.startedAt,
+        // The file may name any ISO 8601 UTC instant; store toISOString()'s
+        // shape, the one every writer uses and the sync server requires (#697).
+        startedAt: new Date(group.startedAt).toISOString(),
         location: group.location,
         notes: group.notes,
         decimalScoring: group.decimalScoring ? 1 : 0,

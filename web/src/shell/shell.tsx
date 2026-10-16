@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { version } from '../../../app/package.json';
 import {
   ChartIcon,
+  FirearmIcon,
   KeyboardIcon,
   ListChecksIcon,
   ListIcon,
@@ -51,6 +52,12 @@ export function Shell({
   const pages = [
     { id: 'sessions', label: t('sessions.title'), icon: <ListIcon />, groupStart: false },
     { id: 'statistics', label: t('stats.title'), icon: <ChartIcon />, groupStart: false },
+    {
+      id: 'firearms',
+      label: t('firearms.tabFirearms'),
+      icon: <FirearmIcon />,
+      groupStart: false,
+    },
     { id: 'entry', label: t('web.entry.title'), icon: <KeyboardIcon />, groupStart: false },
     { id: 'bulk', label: t('web.bulk.title'), icon: <ListChecksIcon />, groupStart: false },
     { id: 'settings', label: t('settings.title'), icon: <SlidersIcon />, groupStart: true },

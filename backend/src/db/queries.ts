@@ -4,6 +4,7 @@ import type { BatchItem } from 'drizzle-orm/batch';
 
 import {
   PULL_PAGE_SIZE,
+  REJECTED_INVALID_PAYLOAD,
   REJECTED_TOMBSTONED,
   type ClientChange,
   type PushAck,
@@ -83,19 +84,27 @@ const STATEMENTS_PER_CHANGE = 4;
 /**
  * The four statements of one change (docs/specs/sync-push-atomicity-spec.md
  * §3). Every decision is a SQL guard evaluated inside the batch's
- * transaction, so no read happens outside it. `ok` is mergeChange's R2: a
- * live edit over a tombstone is rejected; everything else applies.
+ * transaction, so no read happens outside it. `ok` is mergeChange's R2 (a
+ * live edit over a tombstone is rejected) and the route's payload verdict
+ * (sync-payload-validation-spec.md §2.2); a change failing both is reported
+ * as tombstoned, so the client still learns the tombstone (C11).
  */
-function changeStatements(db: Db, userId: string, change: ClientChange): BatchItem<'sqlite'>[] {
+function changeStatements(
+  db: Db,
+  userId: string,
+  change: ClientChange,
+  valid: boolean,
+): BatchItem<'sqlite'>[] {
   const { clientChangeId, tableName, rowId, deletedAt, updatedAt } = change;
   const payload =
     deletedAt === null && change.payload != null ? JSON.stringify(change.payload) : null;
 
   const notDuplicate = sql`NOT EXISTS (SELECT 1 FROM sync_idempotency
     WHERE user_id = ${userId} AND client_change_id = ${clientChangeId})`;
-  const ok = sql`(${deletedAt} IS NOT NULL OR NOT EXISTS (SELECT 1 FROM sync_rows
+  const notTombstoned = sql`(${deletedAt} IS NOT NULL OR NOT EXISTS (SELECT 1 FROM sync_rows
     WHERE user_id = ${userId} AND table_name = ${tableName} AND row_id = ${rowId}
       AND deleted_at IS NOT NULL))`;
+  const ok = sql`(${valid ? 1 : 0} = 1 AND ${notTombstoned})`;
   const lastSeq = sql`(SELECT last_seq FROM sync_sequence WHERE user_id = ${userId})`;
 
   return [
@@ -134,7 +143,9 @@ function changeStatements(db: Db, userId: string, change: ClientChange): BatchIt
         sql`SELECT ${userId}, ${clientChangeId},
           CASE WHEN ${ok} THEN 'applied' ELSE 'rejected' END,
           CASE WHEN ${ok} THEN ${lastSeq} END,
-          CASE WHEN ${ok} THEN NULL ELSE ${REJECTED_TOMBSTONED} END
+          CASE WHEN ${ok} THEN NULL
+            WHEN ${notTombstoned} THEN ${REJECTED_INVALID_PAYLOAD}
+            ELSE ${REJECTED_TOMBSTONED} END
           WHERE true`,
       )
       .onConflictDoNothing()
@@ -171,14 +182,19 @@ function toAck(
 /**
  * Applies one push request as a single D1 batch — one transaction — so seq
  * allocation, the row write and the idempotency record commit together, in
- * array order, and seq order equals commit order across devices.
+ * array order, and seq order equals commit order across devices. `invalid`
+ * names the changes (by index in `changes`) whose payload the route refused;
+ * each is recorded as rejected inside the same batch, consuming no seq.
  */
 export async function applyPush(
   db: Db,
   userId: string,
   changes: ClientChange[],
+  invalid: ReadonlySet<number> = new Set(),
 ): Promise<PushAck[]> {
-  const statements = changes.flatMap((change) => changeStatements(db, userId, change));
+  const statements = changes.flatMap((change, index) =>
+    changeStatements(db, userId, change, !invalid.has(index)),
+  );
   const [first, ...rest] = statements;
   if (!first) return [];
   const results = (await db.batch([first, ...rest])) as unknown[];

@@ -126,6 +126,12 @@ Ett arkiverat vapen:
 **Återställ vapen** på ett arkiverat vapen tar tillbaka det som det var, och
 påminnelserna om licensen och underhållet börjar igen.
 
+### På webben
+
+Med synk påslagen visar **Vapen** i webbappen samma lista och samma sidor för
+varje vapen, att läsa: se
+[Ditt konto på webben](your-account-on-the-web.md#vapen).
+
 ## Ammunition
 
 En ammunitionssats är antingen fabriksammunition eller en handladdning.

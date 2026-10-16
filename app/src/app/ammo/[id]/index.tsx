@@ -23,13 +23,9 @@ import { DetailsDisclosure } from '@/features/session-entry/details-disclosure';
 import { db } from '@/db/client';
 import { getAmmoLot, listAmmoLots, mergeAmmoLots, updateAmmoLot } from '@/db/queries/ammo-lots';
 import { getAmmoLotUsage } from '@/db/queries/ammo-usage';
+import { parseMeasure, parseQuantity } from '@/features/ammo/quantity';
 import { readTrackedInputs } from '@/features/settings/tracked-inputs';
 import { Spacing } from '@/theme/tokens';
-
-function numberOrNull(value: string): number | null {
-  const n = Number(value);
-  return value.trim() && Number.isFinite(n) ? n : null;
-}
 
 export default function AmmoLotDetailScreen() {
   const { t } = useTranslation();
@@ -69,8 +65,8 @@ export default function AmmoLotDetailScreen() {
   const [merging, setMerging] = useState(false);
   const [mergeTarget, setMergeTarget] = useState<string | null>(null);
 
-  const derivedPowerFactor = powerFactor(numberOrNull(bulletWeightGr), numberOrNull(velocityMps));
-  const derivedEnergy = muzzleEnergyJoules(numberOrNull(bulletWeightGr), numberOrNull(velocityMps));
+  const derivedPowerFactor = powerFactor(parseMeasure(bulletWeightGr), parseMeasure(velocityMps));
+  const derivedEnergy = muzzleEnergyJoules(parseMeasure(bulletWeightGr), parseMeasure(velocityMps));
 
   if (!lot) {
     return (
@@ -85,7 +81,7 @@ export default function AmmoLotDetailScreen() {
     updateAmmoLot(db, lot.id, {
       label: label.trim(),
       caliber,
-      quantity: numberOrNull(quantity),
+      quantity: parseQuantity(quantity),
       purchasedOn: purchasedOn.trim() || null,
       isHandload,
       brand: isHandload ? null : brand.trim() || null,
@@ -93,14 +89,14 @@ export default function AmmoLotDetailScreen() {
       lotNumber: isHandload ? null : lotNumber.trim() || null,
       bulletMake: bulletMake.trim() || null,
       bulletModel: bulletModel.trim() || null,
-      bulletWeightGr: numberOrNull(bulletWeightGr),
-      velocityMps: numberOrNull(velocityMps),
+      bulletWeightGr: parseMeasure(bulletWeightGr),
+      velocityMps: parseMeasure(velocityMps),
       powder: isHandload ? powder.trim() || null : null,
-      powderChargeGr: isHandload ? numberOrNull(powderChargeGr) : null,
+      powderChargeGr: isHandload ? parseMeasure(powderChargeGr) : null,
       primer: isHandload ? primer.trim() || null : null,
       brass: isHandload ? brass.trim() || null : null,
-      colMm: isHandload ? numberOrNull(colMm) : null,
-      crimpMm: isHandload ? numberOrNull(crimpMm) : null,
+      colMm: isHandload ? parseMeasure(colMm) : null,
+      crimpMm: isHandload ? parseMeasure(crimpMm) : null,
       notes: notes.trim() || null,
     });
     router.back();

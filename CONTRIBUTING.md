@@ -73,6 +73,19 @@ in `afterEach`. Tests do not wait on real time: ESLint rejects a
 `vi.setSystemTime`. `pnpm exec vitest run --sequence.shuffle` checks for
 order dependence.
 
+There are two test runners because each runs code the other cannot. Jest
+(`jest-expo`) runs `app/src`: React Native components and hooks need
+Metro's Babel transforms and Expo's native-module mocks, and `jest-expo` is
+the preset Expo supports. Vitest runs the plain TypeScript (`shared/`,
+`backend/`, `web/`, `app/src/db`): it is faster, the backend's Workers
+tests need its `workerd` pool, and the Stryker mutation gate uses its
+runner.
+
+The Maestro flows in `app/e2e/` run on an Android emulator in the E2E
+workflow (`.github/workflows/e2e.yml`), on pushes to `main` that touch the
+app and on pull requests labelled `e2e`. Add the label when a change alters
+a flow's screens; it costs far more Actions minutes than `check`.
+
 #### `scripts/`
 
 | Script                                              | Run by                                         | What it guards                                                                                          |
@@ -108,8 +121,9 @@ slow, so it is part of `pnpm gauntlet`, not of `pnpm check`.
 
 #### CI runners
 
-Every workflow job takes its runner from the `CI_RUNNER` repository
-variable (Settings → Secrets and variables → Actions → Variables):
+Every workflow job except the Android emulator run (`e2e.yml`, which
+needs KVM and stays on GitHub's `ubuntu-latest`) takes its runner from the
+`CI_RUNNER` repository variable (Settings → Secrets and variables → Actions → Variables):
 
 | `CI_RUNNER`                    | Jobs run on                                       |
 | ------------------------------ | ------------------------------------------------- |
@@ -164,11 +178,11 @@ The repository holds works under more than one license; the root
 [`LICENSE`](LICENSE) is the map and `REUSE.toml` is the per-file source of
 truth. A contribution is licensed under the terms of the directory it lands in:
 
-| Directory                          | Inbound terms                                                                                                                                                        |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `backend/`                         | Elastic License 2.0 (`LICENSES/Elastic-2.0.txt`)                                                                                                                     |
-| `shared/src/sync/`                 | Apache-2.0 (`LICENSES/Apache-2.0.txt`) — the sync protocol the backend compiles in; it may import only `zod` and its own files                                       |
-| `app/`, `shared/`, everything else | AGPL-3.0-or-later (`LICENSES/AGPL-3.0-or-later.txt`) **together with** the section 7 additional permissions in `LICENSES/LicenseRef-ShotLedger-AGPL-Permissions.txt` |
+| Directory                          | Inbound terms                                                                                                                                                                       |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `backend/`                         | Elastic License 2.0 (`LICENSES/Elastic-2.0.txt`)                                                                                                                                    |
+| `shared/src/sync/`                 | Apache-2.0 (`LICENSES/Apache-2.0.txt`) — the sync protocol and the Drizzle tables the backend compiles in; it may import only `zod`, `drizzle-orm`, `drizzle-zod` and its own files |
+| `app/`, `shared/`, everything else | AGPL-3.0-or-later (`LICENSES/AGPL-3.0-or-later.txt`) **together with** the section 7 additional permissions in `LICENSES/LicenseRef-ShotLedger-AGPL-Permissions.txt`                |
 
 "Together with" matters: a contribution to `app/` or `shared/` carries the
 same app-store and platform-library permissions as the rest of the code, so

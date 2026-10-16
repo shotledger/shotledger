@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { buildShotlogImportPlan, sumValueTenths, type ShotlogPlanRow } from '@shotledger/shared';
 
 import { createTestDb } from '../test-db';
+import { unsyncableRows } from '../sync-conformance';
 import { createFirearm, listFirearms } from './firearms';
 import type { Database } from '../types';
 import { listSeriesForSession } from './series';
@@ -100,6 +101,8 @@ describe('importShotlogRow', () => {
       [4, 90, 0],
       [5, 80, 0],
     ]);
+    // Every row the import wrote is one the sync server accepts (#697).
+    expect(unsyncableRows(db)).toEqual([]);
   });
 
   it('scores the session as the sum of its non-sighter series', () => {
@@ -165,6 +168,8 @@ describe('importShotlogRow', () => {
     expect(getSession(db, id)!.startedAt).toBe('2019-01-01T00:00:00.000Z');
     expect(listTagsForSession(db, id).map((tag) => tag.name)).toContain('shotlog:date-unknown');
     expect(getSession(db, id)!.notes).toContain('date unknown');
+    // Every row the import wrote is one the sync server accepts (#697).
+    expect(unsyncableRows(db)).toEqual([]);
   });
 
   it('falls back to the date when ShotLog gave the session no name', () => {

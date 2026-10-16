@@ -1,9 +1,11 @@
+import type { Ref } from 'react';
 import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
 
 import { Fonts, TabularNums, ThemeColor, Typography } from '@/theme/tokens';
 import { useTheme } from '@/hooks/use-theme';
 
 export type ThemedTextProps = TextProps & {
+  ref?: Ref<Text>;
   type?:
     | 'default'
     | 'title'

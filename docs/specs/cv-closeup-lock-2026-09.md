@@ -259,7 +259,7 @@ hole at half the calibre, above the cut. Their perspective stays within
 
 ### The hole-size check's cost
 
-Issue #528. The check ran the hole detector twice, and on a lock that passed
+The decision, and the options it rules out, are in ADR 0022. Issue #528. The check ran the hole detector twice, and on a lock that passed
 the guards the suggestions ran it a third time, at the calibre, on the same
 canvas. Two of those runs bought nothing, so it was cut to one without
 changing any guard's verdict (`holeSizeCheck`):
@@ -298,8 +298,8 @@ The suggestions are the same (one hole suggested in both). These are
 emulator numbers; the phone timing that #528 asks for is still to do.
 
 Not done: running the check only on tight crops. That drops the guard on
-every other lock, so its verdicts are not the same by construction; it
-belongs with #528's per-guard decision after a phone timing.
+every other lock, so its verdicts are not the same by construction. Rejected
+after the phone timing (ADR 0022).
 
 **Where the detector's time goes** (#648). `[scan-timing]` now logs whether
 the half-calibre run happened and, per detector run, its maps, peaks and

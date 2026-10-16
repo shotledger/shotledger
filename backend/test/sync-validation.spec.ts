@@ -15,6 +15,7 @@ import { MAX_PAYLOAD_BYTES, PUSH_BATCH_MAX } from '@shotledger/shared';
 import { devBearerAuthenticator } from '../src/auth';
 import { SYNC_MIGRATIONS } from '../src/db/migrations';
 import { createSyncRoutes } from '../src/routes/sync';
+import { wholeRow } from './rows';
 
 const app = new Hono<{ Bindings: Env }>();
 app.route(
@@ -67,9 +68,12 @@ async function storedIdempotencyKeys(): Promise<number> {
 }
 
 /** A payload whose `JSON.stringify` is exactly `bytes` UTF-8 bytes long. */
-function payloadOfBytes(bytes: number): { notes: string } {
-  const overhead = JSON.stringify({ notes: '' }).length;
-  return { notes: 'x'.repeat(bytes - overhead) };
+function payloadOfBytes(
+  bytes: number,
+  base: Record<string, unknown> = {},
+): Record<string, unknown> {
+  const overhead = JSON.stringify({ ...base, notes: '' }).length;
+  return { ...base, notes: 'x'.repeat(bytes - overhead) };
 }
 
 beforeAll(async () => {
@@ -167,10 +171,14 @@ describe('V2 /sync/push refuses a malformed request with 400 invalid_request and
 
 describe('V3 push payload size cap', () => {
   it('V3a accepts a payload of exactly MAX_PAYLOAD_BYTES', async () => {
-    const payload = payloadOfBytes(MAX_PAYLOAD_BYTES);
+    const draft = wholeRow(change());
+    const payload = payloadOfBytes(MAX_PAYLOAD_BYTES, draft.payload);
     expect(new TextEncoder().encode(JSON.stringify(payload)).byteLength).toBe(MAX_PAYLOAD_BYTES);
 
-    const result = await send('/sync/push', { protocolVersion: 1, changes: [change({ payload })] });
+    const result = await send('/sync/push', {
+      protocolVersion: 1,
+      changes: [{ ...draft, payload }],
+    });
     expect(result.status).toBe(200);
     expect(result.body.acks).toMatchObject([{ status: 'applied' }]);
     expect(await storedRows()).toBe(1);

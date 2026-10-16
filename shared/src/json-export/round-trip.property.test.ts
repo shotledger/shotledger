@@ -172,7 +172,14 @@ const licenseArb: fc.Arbitrary<LicenseExport> = fc.record({
 const maintenanceEventArb: fc.Arbitrary<MaintenanceEventExport> = fc.record({
   id: fc.string({ minLength: 1, maxLength: 8 }),
   firearmId: fc.string({ minLength: 1, maxLength: 8 }),
-  performedAt: fc.string({ minLength: 1, maxLength: 24 }),
+  // A UTC instant, as the format requires since #697.
+  performedAt: fc
+    .date({
+      min: new Date('1900-01-01T00:00:00Z'),
+      max: new Date('2199-12-31T23:59:59Z'),
+      noInvalidDate: true,
+    })
+    .map((d) => d.toISOString()),
   kind: textArb,
   roundCountAt: fc.integer({ min: 0, max: 100_000 }),
   isAdjustment: fc.boolean(),

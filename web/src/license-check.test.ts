@@ -12,8 +12,10 @@ import en from '../../app/src/i18n/en.json';
 import type { PulledTables } from './pull';
 import type { LicenseCheckView } from './shell/route';
 
-// The page's language, without the DOM that ./i18n writes to.
+// The page's language, without the DOM that ./i18n writes to. Files share a
+// worker's module cache (vitest.config.ts): reset it so the page sees the mock.
 vi.mock('./i18n', () => ({ default: { language: 'en' } }));
+vi.resetModules();
 vi.stubGlobal('navigator', { language: 'en-GB' });
 
 const { LicenseCheck } = await import('./license-check');
@@ -97,7 +99,8 @@ describe('License Check on the web', () => {
     const html = render({ view: 'newFirearm' });
     expect(html).toContain('What your club certifies when you apply to acquire a handgun.');
     expect(html).toMatch(/activities in the last \d+ months/);
-    expect(html).toContain('<h3>Walther GSP</h3>');
+    // Each firearm's box opens the firearm, as the phone's CriterionBlock row.
+    expect(html).toMatch(/href="#firearms\/f1"><span class="check-row-text"><span>Walther GSP</);
     expect(html).toContain('href="#license-check"');
   });
 
@@ -105,6 +108,8 @@ describe('License Check on the web', () => {
     const html = render({ view: 'firearm', firearmId: 'f1' });
     expect(html).toContain('What your club certifies when you renew a time-limited permit.');
     expect(html).toMatch(/activities with this firearm, .* to .*required/);
+    // The phone's "Open Firearm" row.
+    expect(html).toMatch(/href="#firearms\/f1"><span class="check-row-text"><span>Open Firearm</);
     const gone = render({ view: 'firearm', firearmId: 'nope' });
     expect(gone).not.toContain('Renewal');
     expect(gone).not.toContain('it cannot attest them');

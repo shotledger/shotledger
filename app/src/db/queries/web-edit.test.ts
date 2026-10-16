@@ -43,6 +43,7 @@ import { createSession, getSession, updateSession } from './sessions';
 import { listMarksForSeries, saveSeriesMarks } from './shot-marks';
 import { listShotsForSeries } from './shots';
 import { applyChangesSync, readRowSync, SYNC_TABLES } from './sync-store';
+import { serverRefusals } from '../sync-conformance';
 
 type Row = Record<string, unknown>;
 
@@ -98,6 +99,7 @@ function pulled(db: Database): EditContext {
 
 let seq = 1000;
 function apply(db: Database, changes: readonly ClientChange[]) {
+  expect(serverRefusals(changes)).toEqual([]);
   applyChangesSync(
     db,
     asApplied(

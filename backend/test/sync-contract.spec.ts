@@ -47,6 +47,7 @@ import {
 
 import { ALL_MIGRATIONS } from '../src/db/migrations';
 import app from '../src/index';
+import { row } from './rows';
 
 const BASE_URL = 'https://localhost';
 
@@ -299,31 +300,27 @@ function accountApi(getToken: () => string | null) {
 }
 
 function sessionRow(id: string, name: string, updatedAt: string) {
-  return {
-    id,
+  return row('sessions', id, updatedAt, {
     created_at: updatedAt,
-    updated_at: updatedAt,
-    deleted_at: null,
     name,
     type: 'training',
     discipline_id: 'spsf:precision',
     started_at: updatedAt,
     is_championship: 0,
     decimal_scoring: 0,
-  };
+  });
 }
 
 function seriesRow(id: string, sessionId: string, position: number, updatedAt: string) {
   return {
-    id,
-    created_at: updatedAt,
-    updated_at: updatedAt,
-    deleted_at: null,
-    session_id: sessionId,
-    position,
-    is_sighter: 0,
-    is_final: 0,
-    is_total_override: 0,
+    ...row('series', id, updatedAt, {
+      created_at: updatedAt,
+      session_id: sessionId,
+      position,
+      is_sighter: 0,
+      is_final: 0,
+      is_total_override: 0,
+    }),
     photo_uri: null as string | null,
   };
 }

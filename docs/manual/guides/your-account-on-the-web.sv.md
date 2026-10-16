@@ -45,6 +45,24 @@ ett med seriens eller stationens resultat och passet. **Ta bort** tar bort ett
 foto; **Rensa**, eller **Rensa alla** i jämförelsen, tömmer urvalet. Urvalet
 glöms när du loggar ut, laddar om eller stänger fliken.
 
+## Vapen
+
+**Vapen** i menyn listar dina vapen som telefonens vapenflik gör, sorterade
+efter tillverkare: vart och ett med sin vapentyp och samma statusrader för
+licens, underhåll, saknade uppgifter och licensaktivitet. Vapen du har
+arkiverat finns under **Visa arkiverade**.
+
+Öppna ett vapen för att läsa det, i samma ordning som på telefonen: vapentyp,
+ägande, kammare och vapenregister-id, antal skjutna skott och status för
+underhåll, dess eget kort **Licensaktivitet** och **Kriterier för
+föreningsintyg** med datumet då nästa pass senast ska loggas, sedan kalibrar,
+vapengrupper, siktinställningar, licenser och underhållslogg. Det du har
+stängt av under **Inställningar → Funktioner** lämnas bort, som på telefonen.
+
+Webben visar bara dina vapen. Att lägga till eller ändra ett vapen, en licens,
+underhåll eller en siktinställning, och att arkivera ett vapen, gör du i
+telefonen. Telefonens ammunitionspartier finns inte på webben.
+
 ## Inställningar
 
 **Inställningar** i menyn innehåller de inställningar som följer ditt konto
