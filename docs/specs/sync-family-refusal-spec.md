@@ -501,3 +501,11 @@ Feature: the phone holds a refused row's family across pushes
      to `invalid`, and a `family_refused` ack is counted there rather than
      as `rejected`; F11 lives in the backend suite as §7 says, and the
      edge lists are also pinned by value in `family.test.ts`.
+  6. **§2.3 vs C3 conflict: a deletion of a held row releases it (C3 wins);
+     pending the maintainer's answer.** §2.3 says a local edit of a held row
+     leaves `held` as it is, and `readOutbox` skips held entries, so a held
+     row that is then soft-deleted never reached step 2's tombstone guard:
+     the deletion stayed held (verifier round 1, finding B1). The outbox
+     triggers now set `held = 0` when the written row is a tombstone, and
+     keep it otherwise, so the deletion goes out on the next push. In its
+     own commit, so it can be reverted if the maintainer rules for §2.3.

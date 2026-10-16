@@ -116,6 +116,8 @@ class Device {
       rev: this.lastRev,
       clientChangeId: null,
     });
+    // As the trigger: an edit keeps `held`, a soft delete releases it (C3).
+    if (row.deleted_at != null) this.held.delete(this.key(tableName, rowId));
   }
 
   get(tableName: SyncTableName, rowId: string) {

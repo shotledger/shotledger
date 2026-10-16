@@ -83,6 +83,8 @@ class Device {
       rev: this.lastRev,
       clientChangeId: null,
     });
+    // As the trigger: an edit keeps `held`, a soft delete releases it (C3).
+    if (row.deleted_at != null) this.held.delete(this.key(tableName, rowId));
   }
 
   softDelete(tableName: SyncTableName, rowId: string, at: string): void {
@@ -797,5 +799,29 @@ describe('the phone holds a refused row’s family across pushes', () => {
     expect(result).toMatchObject({ pushed: 1, held: 0 });
     await deviceB.sync();
     expect(deviceB.get('shots', 't1')).toMatchObject({ deleted_at: T1 });
+  });
+
+  // Verifier round 1, B1: the deletion of a row that is already held.
+  it('H10 a tombstone of an already-held row is pushed', async () => {
+    deviceA.write('sessions', sessionRow('s1', 'S', T0));
+    deviceA.write('series', seriesRow('r1', 's1', 1, T0));
+    deviceA.write('shots', shotRow('t1', 'r1'));
+    await deviceA.sync();
+    await deviceB.sync();
+    deviceA.write('sessions', badSession('s1', T1));
+    await expect(deviceA.sync()).resolves.toMatchObject({ invalid: 1 });
+    deviceA.write('shots', shotRow('t1', 'r1', 80, T1));
+    await expect(deviceA.sync()).resolves.toMatchObject({ held: 1 });
+
+    const T2 = '2026-10-14T12:00:00.000Z';
+    deviceA.softDelete('shots', 't1', T2);
+    const { sent, result } = await syncRecording(deviceA);
+
+    expect(sent).toEqual(['shots:t1']);
+    expect(result).toMatchObject({ pushed: 1, held: 0 });
+    expect(await heldOn(deviceA)).toBe(0);
+    expect(deviceA.outbox.size).toBe(0);
+    await deviceB.sync();
+    expect(deviceB.get('shots', 't1')).toMatchObject({ deleted_at: T2 });
   });
 });

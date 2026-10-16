@@ -447,7 +447,9 @@ export const syncOutbox = sqliteTable(
     clientChangeId: text('client_change_id'),
     // 1 while a row of the entry's family is refused: it stays queued but
     // readOutbox skips it (docs/specs/sync-family-refusal-spec.md §2.3, C5).
-    // The triggers' upsert leaves it as it is, so an edit stays held.
+    // The triggers' upsert leaves it as it is, so an edit stays held; a soft
+    // delete sets it to 0, because a deletion is never held (C3, Revision 2
+    // item 6).
     held: integer('held').notNull().default(0),
   },
   (t) => [primaryKey({ columns: [t.tableName, t.rowId] })],

@@ -309,7 +309,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('firearms', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_firearms_update` AFTER UPDATE ON `firearms`
@@ -319,7 +320,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('firearms', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_licenses_insert` AFTER INSERT ON `licenses`
@@ -329,7 +331,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('licenses', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_licenses_update` AFTER UPDATE ON `licenses`
@@ -339,7 +342,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('licenses', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_firearm_groups_insert` AFTER INSERT ON `firearm_groups`
@@ -349,7 +353,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('firearm_groups', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_firearm_groups_update` AFTER UPDATE ON `firearm_groups`
@@ -359,7 +364,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('firearm_groups', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_ammo_lots_insert` AFTER INSERT ON `ammo_lots`
@@ -369,7 +375,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('ammo_lots', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_ammo_lots_update` AFTER UPDATE ON `ammo_lots`
@@ -379,7 +386,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('ammo_lots', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_sessions_insert` AFTER INSERT ON `sessions`
@@ -389,7 +397,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('sessions', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_sessions_update` AFTER UPDATE ON `sessions`
@@ -399,7 +408,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('sessions', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_series_insert` AFTER INSERT ON `series`
@@ -409,7 +419,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('series', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_series_update` AFTER UPDATE ON `series`
@@ -419,7 +430,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('series', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_shots_insert` AFTER INSERT ON `shots`
@@ -429,7 +441,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('shots', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_shots_update` AFTER UPDATE ON `shots`
@@ -439,7 +452,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('shots', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_maintenance_events_insert` AFTER INSERT ON `maintenance_events`
@@ -449,7 +463,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('maintenance_events', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_maintenance_events_update` AFTER UPDATE ON `maintenance_events`
@@ -459,7 +474,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('maintenance_events', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_tags_insert` AFTER INSERT ON `tags`
@@ -469,7 +485,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('tags', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_tags_update` AFTER UPDATE ON `tags`
@@ -479,7 +496,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('tags', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_sight_settings_insert` AFTER INSERT ON `sight_settings`
@@ -489,7 +507,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('sight_settings', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_sight_settings_update` AFTER UPDATE ON `sight_settings`
@@ -499,7 +518,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('sight_settings', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_falt_stations_insert` AFTER INSERT ON `falt_stations`
@@ -509,7 +529,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('falt_stations', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_falt_stations_update` AFTER UPDATE ON `falt_stations`
@@ -519,7 +540,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('falt_stations', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_firearm_calibers_insert` AFTER INSERT ON `firearm_calibers`
@@ -529,7 +551,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('firearm_calibers', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_firearm_calibers_update` AFTER UPDATE ON `firearm_calibers`
@@ -539,7 +562,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('firearm_calibers', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_session_tags_insert` AFTER INSERT ON `session_tags`
@@ -549,7 +573,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('session_tags', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_session_tags_update` AFTER UPDATE ON `session_tags`
@@ -559,7 +584,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('session_tags', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 -- Only the account settings sync (SYNCED_SETTING_KEYS in
@@ -572,7 +598,8 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('settings', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_settings_update` AFTER UPDATE ON `settings`
@@ -583,5 +610,6 @@ BEGIN
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('settings', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
-      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL,
+        `held` = CASE WHEN new.`deleted_at` IS NULL THEN `sync_outbox`.`held` ELSE 0 END;
 END;

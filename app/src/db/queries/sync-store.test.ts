@@ -1,4 +1,12 @@
-import { SYNC_TABLE_NAMES, type ChangeRow } from '@shotledger/shared';
+import {
+  familyRefusals,
+  runSyncCycle,
+  SYNC_TABLE_NAMES,
+  type ChangeRow,
+  type SyncTableName,
+  type SyncTransport,
+} from '@shotledger/shared';
+import { fullRow } from '@shotledger/shared/src/sync/payload-fixtures';
 import Database from 'better-sqlite3';
 import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
@@ -657,5 +665,139 @@ describe('held entries and the refused set', () => {
     await store.addRefused({ tableName: 'sessions', rowId: 's1' });
     resetSyncBookkeeping(db);
     expect(db.select().from(syncRefused).all()).toEqual([]);
+  });
+});
+
+// Verifier round 1, finding B1 (sync-family-refusal-spec.md Revision 2 item
+// 6): C3 wins over §2.3's "an edit keeps it held". A soft delete of a held
+// row releases it, so the deletion goes out on the next push.
+describe('a deletion of a held row is never held (C3)', () => {
+  /** The better-sqlite3 handle under the test database, for raw statements. */
+  const sqlite = () => (db as ReturnType<typeof createTestDb>).$client;
+  function insertRow(tableName: SyncTableName): string {
+    const id = tableName === 'settings' ? 'birthYear' : `${tableName}-1`;
+    const row = fullRow(tableName, id, tableName === 'settings' ? { value: '1980' } : {});
+    const columns = Object.keys(row);
+    sqlite()
+      .prepare(
+        `INSERT INTO "${tableName}" (${columns.map((c) => `"${c}"`).join(', ')}) VALUES (${columns
+          .map(() => '?')
+          .join(', ')})`,
+      )
+      .run(...columns.map((c) => (typeof row[c] === 'boolean' ? Number(row[c]) : row[c])));
+    return id;
+  }
+  const entryOf = (tableName: string, rowId: string) =>
+    outboxRows().find((r) => r.tableName === tableName && r.rowId === rowId);
+
+  it.each(SYNC_TABLE_NAMES.map((t) => [t]))(
+    '%s: an edit keeps the entry held, a soft delete releases it',
+    async (tableName) => {
+      sqlite().pragma('foreign_keys = OFF');
+      const id = insertRow(tableName);
+      const queued = (await store.readOutbox(10)).find((e) => e.rowId === id)!;
+      await store.holdOutboxEntry(queued, false);
+
+      sqlite()
+        .prepare(`UPDATE "${tableName}" SET "updated_at" = ? WHERE "id" = ?`)
+        .run('2026-10-16T10:00:00.000Z', id);
+      expect(entryOf(tableName, id)).toMatchObject({ held: 1 });
+
+      sqlite()
+        .prepare(`UPDATE "${tableName}" SET "deleted_at" = ?, "updated_at" = ? WHERE "id" = ?`)
+        .run('2026-10-16T11:00:00.000Z', '2026-10-16T11:00:00.000Z', id);
+      expect(entryOf(tableName, id)).toMatchObject({ held: 0, clientChangeId: null });
+      expect((await store.readOutbox(10)).map((e) => e.rowId)).toContain(id);
+    },
+  );
+
+  it('V1 a held shot deleted after its session was refused is pushed (real store and engine)', async () => {
+    const T0 = '2026-10-14T10:00:00.000Z';
+    const T1 = '2026-10-14T11:00:00.000Z';
+    const session = createSession(db, {
+      name: 'S',
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      startedAt: T0,
+    });
+    db.insert(series)
+      .values({ id: 'r1', sessionId: session.id, position: 1, createdAt: T0, updatedAt: T0 })
+      .run();
+    db.insert(shots)
+      .values({
+        id: 't1',
+        seriesId: 'r1',
+        position: 1,
+        valueTenths: 90,
+        createdAt: T0,
+        updatedAt: T0,
+      })
+      .run();
+
+    // A server that refuses the rows named in `invalid`, and their family.
+    const invalid = new Set<string>();
+    const pushes: string[][] = [];
+    let seq = 0;
+    const transport: SyncTransport = {
+      pull: async (request) => ({
+        protocolVersion: request.protocolVersion,
+        changes: [],
+        nextCursors: request.tables.map((t) => ({ ...t, hasMore: false })),
+      }),
+      push: async (request) => {
+        pushes.push(
+          request.changes.map((c) => `${c.tableName}:${c.rowId}:${c.deletedAt ? 'del' : 'live'}`),
+        );
+        const bad = new Set<number>();
+        request.changes.forEach((c, i) => {
+          if (c.deletedAt === null && invalid.has(`${c.tableName}:${c.rowId}`)) bad.add(i);
+        });
+        const family = familyRefusals(request.changes, bad);
+        return {
+          protocolVersion: request.protocolVersion,
+          acks: request.changes.map((c, i) =>
+            bad.has(i)
+              ? {
+                  clientChangeId: c.clientChangeId,
+                  status: 'rejected' as const,
+                  reason: 'invalid_payload',
+                }
+              : family.has(i)
+                ? {
+                    clientChangeId: c.clientChangeId,
+                    status: 'rejected' as const,
+                    reason: 'family_refused',
+                  }
+                : { clientChangeId: c.clientChangeId, status: 'applied' as const, seq: (seq += 1) },
+          ),
+        };
+      },
+    };
+    let n = 0;
+    const deps = {
+      store,
+      transport,
+      newId: () => `00000000-0000-4000-8000-${String((n += 1)).padStart(12, '0')}`,
+    };
+    await runSyncCycle(deps);
+    expect(await store.pendingCount()).toBe(0);
+
+    invalid.add(`sessions:${session.id}`);
+    db.update(sessions)
+      .set({ notes: 'bad', updatedAt: T1 })
+      .where(eq(sessions.id, session.id))
+      .run();
+    await expect(runSyncCycle(deps)).resolves.toMatchObject({ invalid: 1 });
+
+    db.update(shots).set({ valueTenths: 80, updatedAt: T1 }).where(eq(shots.id, 't1')).run();
+    await expect(runSyncCycle(deps)).resolves.toMatchObject({ held: 1 });
+
+    pushes.length = 0;
+    db.update(shots).set({ deletedAt: T1, updatedAt: T1 }).where(eq(shots.id, 't1')).run();
+    const result = await runSyncCycle(deps);
+
+    expect(pushes).toEqual([['shots:t1:del']]);
+    expect(result).toMatchObject({ pushed: 1, held: 0 });
+    expect(outboxRows()).toEqual([]);
   });
 });
