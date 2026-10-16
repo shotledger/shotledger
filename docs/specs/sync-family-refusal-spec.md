@@ -399,7 +399,7 @@ Feature: the phone holds a refused row's family across pushes
 | ----------------------------------------------------- | ------------------------------------------------------------------ |
 | A valid change refused because of a wrong family link | F4, F5, F7, N4; property: a push with no invalid row is unaffected |
 | A family member slips through within a push           | F1–F3, F6; property over generated session trees                   |
-| A held row is never released                          | H2, H3, H7, H8                                                     |
+| A held row is never released                          | H2, H3, H7, H8; H13 (Revision 2 item 7)                            |
 | A held entry spins the push loop                      | H9                                                                 |
 | A held row is lost (cleared without being sent)       | H3; engine tests on rev-matched hold                               |
 | A new foreign key ships unclassified                  | F11                                                                |
@@ -509,3 +509,33 @@ Feature: the phone holds a refused row's family across pushes
      triggers now set `held = 0` when the written row is a tombstone, and
      keep it otherwise, so the deletion goes out on the next push. In its
      own commit, so it can be reverted if the maintainer rules for §2.3.
+  7. **A held entry nothing blocks is released (verifier round 2, B-1);
+     pending the maintainer.** §2.3 releases held entries only when a
+     refused row leaves `sync_refused`. A `family_refused` ack whose
+     blocker never entered it stays held forever: the invalid row of the
+     push was acked `tombstoned` (C11 precedence: another device deleted
+     the session), so step 3 never ran for it. The same happens when a
+     pulled tombstone deletes the session of a refused row, which can then
+     no longer be reached to fix. Now step 1 releases every held entry each
+     push, after dropping re-queued refused rows, and step 2 judges each
+     again against the refused set as it is; a pull only drops refused rows
+     and no longer releases. A refused row whose root session is deleted
+     locally blocks nothing. Its family's live rows go out as they did
+     before this change; the server stores them under the deleted session
+     (N5). In its own commit, so it can be reverted.
+
+     ```gherkin
+     Scenario: H13 a held row whose blocker was acked tombstoned is released
+       Given A and B share s1, and B deletes s1 and syncs
+       And A, not synced, writes s1 with name null and adds R1 and T1
+       When A syncs
+       Then s1 is acked tombstoned and tombstoned on A, R1 and T1 are held,
+            and nothing is refused
+       And the next cycle pushes R1 and T1, and nothing is held
+
+     Scenario: H13 a refused row whose session another device deleted
+               holds nothing
+       Given T1 of s1 is refused and T2 of s1 is held
+       When A pulls B's deletion of s1
+       Then T2 is pushed in the same cycle, and nothing is held
+     ```

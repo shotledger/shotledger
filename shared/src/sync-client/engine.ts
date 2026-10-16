@@ -63,17 +63,16 @@ export interface SyncCycleResult {
 }
 
 /**
- * Drops from the refused set every refused row whose key is in `keys` (a
- * local write re-queued it, or a pull replaced it); if any left, every held
- * entry is released, to be judged again (§2.3 steps 1 and Pulls).
+ * Drops from the refused set every refused row whose key is in `keys`: a
+ * local write re-queued it, or a pull replaced it (§2.3 steps 1 and Pulls).
+ * Its family is released by the next push's step 1, which judges every held
+ * entry again.
  */
-async function releaseRefusals(store: LocalStore, keys: ReadonlySet<string>): Promise<void> {
+async function forgetRefusals(store: LocalStore, keys: ReadonlySet<string>): Promise<void> {
   const fixed = (await store.readRefused()).filter((ref) =>
     keys.has(rowKey(ref.tableName, ref.rowId)),
   );
-  if (fixed.length === 0) return;
-  await store.removeRefused(fixed);
-  await store.releaseHeld();
+  if (fixed.length > 0) await store.removeRefused(fixed);
 }
 
 /**
@@ -91,6 +90,14 @@ async function readBlocked(
     if (familyKind(ref.tableName) !== 'session') continue;
     const row = await store.readRow(ref.tableName, ref.rowId);
     const root = await familyRoot(ref, row?.payload, (parent) => readPayload(store, parent));
+    // A session deleted here (a pulled tombstone) can no longer be reached
+    // to fix the refused row, so it blocks nothing: its live rows go out, as
+    // they did before family refusal (Revision 2 item 7).
+    const rootRow =
+      root.tableName === ref.tableName && root.rowId === ref.rowId
+        ? row
+        : await store.readRow(root.tableName, root.rowId);
+    if (rootRow?.deletedAt != null) continue;
     sessions.add(rowKey(root.tableName, root.rowId));
   }
   return { sessions, firearms };
@@ -147,8 +154,8 @@ async function runPull(
     await deps.store.applyChanges(sortChangesForApply(applicable));
     pulled += applicable.length;
     // Another device's version replaced a refused row, and it is valid: the
-    // server stored it. Its family is released (§2.3, Pulls).
-    await releaseRefusals(
+    // server stored it. Its family is released at the push (§2.3, Pulls).
+    await forgetRefusals(
       deps.store,
       new Set(applicable.map((change) => rowKey(change.tableName, change.rowId))),
     );
@@ -183,8 +190,13 @@ async function runPush(deps: SyncCycleDeps): Promise<{
   let duplicates = 0;
 
   // Step 1: a refused row queued again (a local write since the refusal)
-  // leaves the refused set, and its family is released.
-  await releaseRefusals(deps.store, await deps.store.pendingRowKeys());
+  // leaves the refused set. Then every held entry is released, to be judged
+  // again at step 2 against the refused set as it is now. An entry is held
+  // only while a refused row still blocks its family: a `family_refused`
+  // ack whose blocker never entered the refused set (it was acked
+  // `tombstoned`) would otherwise stay held forever (Revision 2 item 7).
+  await forgetRefusals(deps.store, await deps.store.pendingRowKeys());
+  if ((await deps.store.heldCount()) > 0) await deps.store.releaseHeld();
 
   for (let iteration = 0; iteration < MAX_PUSH_ITERATIONS; iteration += 1) {
     const entries = await deps.store.readOutbox(batchMax);

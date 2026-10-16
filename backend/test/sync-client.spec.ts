@@ -824,4 +824,56 @@ describe('the phone holds a refused row’s family across pushes', () => {
     await deviceB.sync();
     expect(deviceB.get('shots', 't1')).toMatchObject({ deleted_at: T2 });
   });
+
+  // Revision 2 item 7 (verifier round 2, B-1): the invalid row is acked
+  // `tombstoned` (C11 precedence), so it never enters the refused set, and
+  // nothing refused is left to release its family_refused rows.
+  it('H13 a held row whose blocker was acked tombstoned is released and sent', async () => {
+    deviceA.write('sessions', sessionRow('s1', 'Before', T0));
+    await deviceA.sync();
+    await deviceB.sync();
+    deviceB.softDelete('sessions', 's1', T1);
+    await deviceB.sync();
+
+    // A, before it syncs: an invalid edit of s1, then a new series and shot.
+    const T2 = '2026-10-14T12:00:00.000Z';
+    deviceA.write('sessions', badSession('s1', T2));
+    deviceA.write('series', seriesRow('r1', 's1', 1, T2));
+    deviceA.write('shots', shotRow('t1', 'r1', 90, T2));
+    await expect(deviceA.sync()).resolves.toMatchObject({ rejected: 1, held: 2, invalid: 0 });
+    expect(deviceA.refused.size).toBe(0);
+    expect(deviceA.get('sessions', 's1')).toMatchObject({ deleted_at: T2 });
+
+    const { result, pushes } = await syncRecording(deviceA);
+
+    // They go out as they did before family refusal: the server has no
+    // foreign-key check (N5), and the session is deleted everywhere.
+    expect(pushes).toEqual([['series:r1', 'shots:t1']]);
+    expect(result).toMatchObject({ pushed: 2, held: 0 });
+    expect(await heldOn(deviceA)).toBe(0);
+    expect(deviceA.outbox.size).toBe(0);
+    await deviceB.sync();
+    expect(deviceB.get('sessions', 's1')).toMatchObject({ deleted_at: T1 });
+    expect(deviceB.get('shots', 't1')).toMatchObject({ value_tenths: 90 });
+  });
+
+  it('H13 a refused row whose session another device deleted holds nothing', async () => {
+    deviceA.write('sessions', sessionRow('s1', 'S', T0));
+    deviceA.write('series', seriesRow('r1', 's1', 1, T0));
+    await deviceA.sync();
+    await deviceB.sync();
+    deviceA.write('shots', shotRow('t1', 'r1', null));
+    await expect(deviceA.sync()).resolves.toMatchObject({ invalid: 1 });
+    deviceA.write('shots', shotRow('t2', 'r1'));
+    await expect(deviceA.sync()).resolves.toMatchObject({ held: 1 });
+
+    deviceB.softDelete('sessions', 's1', T1);
+    await deviceB.sync();
+    const { result, sent } = await syncRecording(deviceA);
+
+    expect(deviceA.get('sessions', 's1')).toMatchObject({ deleted_at: T1 });
+    expect(sent).toEqual(['shots:t2']);
+    expect(result).toMatchObject({ pushed: 1, held: 0 });
+    expect(await heldOn(deviceA)).toBe(0);
+  });
 });

@@ -1132,15 +1132,21 @@ describe('runSyncCycle — family refusal', () => {
   });
 
   it('held entries never stall the outbox (H9)', async () => {
+    // 600 held shots of a refused session (each judged again at step 1 and
+    // held again), then 10 tags.
     const outbox: OutboxEntry[] = [];
     const held: string[] = [];
-    const rows = new Map<string, LocalRowSnapshot>();
-    for (let i = 0; i < 610; i += 1) {
-      outbox.push(entry('tags', `g${i}`, i + 1));
-      rows.set(`tags:g${i}`, row({ id: `g${i}` }));
-      if (i < 600) held.push(`tags:g${i}`);
+    const rows = localRows();
+    for (let i = 0; i < 600; i += 1) {
+      outbox.push(entry('shots', `h${i}`, i + 1));
+      rows.set(`shots:h${i}`, row({ id: `h${i}`, series_id: 'r1' }));
+      held.push(`shots:h${i}`);
     }
-    const fake = createFakeStore({ outbox, rows, held });
+    for (let i = 0; i < 10; i += 1) {
+      outbox.push(entry('tags', `g${i}`, 601 + i));
+      rows.set(`tags:g${i}`, row({ id: `g${i}` }));
+    }
+    const fake = createFakeStore({ outbox, rows, held, refused: [ref('sessions', 's1')] });
     const { transport, pushes } = recordingTransport(() => undefined);
 
     const result = await runSyncCycle({
@@ -1154,6 +1160,69 @@ describe('runSyncCycle — family refusal', () => {
     expect(pushes[0]?.changes).toHaveLength(10);
     expect(result).toMatchObject({ status: 'ok', pushed: 10 });
     expect(await fake.store.heldCount()).toBe(600);
+  });
+
+  it('releases a held entry whose family no refused row blocks any more (Revision 2 item 7)', async () => {
+    // A family_refused ack whose blocker was acked `tombstoned`, so it never
+    // entered the refused set: nothing would ever release it.
+    const fake = createFakeStore({
+      outbox: [entry('series', 'r1', 1), entry('shots', 't1', 2)],
+      rows: localRows(),
+      held: ['series:r1', 'shots:t1'],
+    });
+    const { transport, sent } = recordingTransport(() => undefined);
+
+    const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+    expect(sent()).toEqual(['series:r1', 'shots:t1']);
+    expect(result).toMatchObject({ pushed: 2, held: 0 });
+    expect(await fake.store.heldCount()).toBe(0);
+  });
+
+  it('judges a held entry again each cycle: still blocked, it stays held and unsent', async () => {
+    const fake = createFakeStore({
+      outbox: [entry('series', 'r1', 1), entry('tags', 'tag1', 2)],
+      rows: localRows(),
+      held: ['series:r1'],
+      refused: [ref('shots', 't1')],
+    });
+    const { transport, sent } = recordingTransport(() => undefined);
+
+    const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+    expect(sent()).toEqual(['tags:tag1']);
+    expect([...fake.held]).toEqual(['series:r1']);
+    expect(result).toMatchObject({ pushed: 1, held: 1 });
+  });
+
+  it('a refused row whose session is deleted here blocks nothing (Revision 2 item 7)', async () => {
+    const rows = localRows();
+    rows.set('sessions:s1', row({ id: 's1' }, '2026-10-14T12:00:00.000Z'));
+    const fake = createFakeStore({
+      outbox: [entry('shots', 't2', 1)],
+      rows,
+      held: ['shots:t2'],
+      refused: [ref('shots', 't1')],
+    });
+    const { transport, sent } = recordingTransport(() => undefined);
+
+    const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+    expect(sent()).toEqual(['shots:t2']);
+    expect(result).toMatchObject({ pushed: 1, held: 0 });
+  });
+
+  it('a refused session deleted here blocks nothing either', async () => {
+    const rows = localRows();
+    rows.set('sessions:s1', row({ id: 's1' }, '2026-10-14T12:00:00.000Z'));
+    const fake = createFakeStore({
+      outbox: [entry('series', 'r1', 1)],
+      rows,
+      refused: [ref('sessions', 's1')],
+    });
+    const { transport, sent } = recordingTransport(() => undefined);
+    await runSyncCycle({ store: fake.store, transport, newId: ids() });
+    expect(sent()).toEqual(['series:r1']);
   });
 
   it('with nothing refused, reads no extra rows and releases nothing (N4)', async () => {
