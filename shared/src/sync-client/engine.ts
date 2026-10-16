@@ -121,6 +121,27 @@ async function isBlocked(
   return blocked.sessions.has(rowKey(root.tableName, root.rowId));
 }
 
+/**
+ * Releases every held entry no refused row blocks (§2.3 step 1, Revision 2
+ * items 7 and 10) and returns how many stay held. One call names them all,
+ * and a call that fails leaves every entry as it was, so it is safe to
+ * repeat. A held entry whose row is gone or deleted is released too: step 2
+ * clears or sends it.
+ */
+async function releaseUnblocked(store: LocalStore): Promise<number> {
+  const heldEntries = await store.readHeld();
+  if (heldEntries.length === 0) return 0;
+  const blocked = await readBlocked(store);
+  const unblocked: OutboxEntry[] = [];
+  for (const entry of heldEntries) {
+    const row = await store.readRow(entry.tableName, entry.rowId);
+    if (row === undefined || row.deletedAt !== null) unblocked.push(entry);
+    else if (!(await isBlocked(store, entry, row.payload, blocked))) unblocked.push(entry);
+  }
+  if (unblocked.length > 0) await store.releaseHeld(unblocked);
+  return heldEntries.length - unblocked.length;
+}
+
 async function runPull(
   deps: SyncCycleDeps,
 ): Promise<{ pulled: number; shadowed: number; drained: boolean }> {
@@ -203,13 +224,16 @@ async function runPush(deps: SyncCycleDeps): Promise<{
   let duplicates = 0;
 
   // Step 1: a refused row queued again (a local write since the refusal)
-  // leaves the refused set. Then every held entry is released, to be judged
-  // again at step 2 against the refused set as it is now. An entry is held
-  // only while a refused row still blocks its family: a `family_refused`
-  // ack whose blocker never entered the refused set (it was acked
-  // `tombstoned`) would otherwise stay held forever (Revision 2 item 7).
+  // leaves the refused set. Then every held entry is judged against the
+  // refused set as it is now, and only those no refused row blocks are
+  // released, to go out at step 2. An entry is held only while a refused
+  // row still blocks its family: a `family_refused` ack whose blocker never
+  // entered the refused set (it was acked `tombstoned`) would otherwise stay
+  // held forever (Revision 2 item 7). Nothing still blocked is ever
+  // released, so a push that fails before step 2 reaches an entry cannot
+  // leave it unheld to shadow the next pull (Revision 2 item 10).
   await forgetRefusals(deps.store, await deps.store.pendingRowKeys());
-  if ((await deps.store.heldCount()) > 0) await deps.store.releaseHeld();
+  held += await releaseUnblocked(deps.store);
 
   for (let iteration = 0; iteration < MAX_PUSH_ITERATIONS; iteration += 1) {
     const entries = await deps.store.readOutbox(batchMax);

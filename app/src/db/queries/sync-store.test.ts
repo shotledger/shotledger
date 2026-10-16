@@ -615,12 +615,20 @@ describe('held entries and the refused set', () => {
     expect(await store.readHeld()).toEqual([{ ...entry, clientChangeId: null }]);
   });
 
-  it('releaseHeld un-holds every entry', async () => {
-    const { entry } = await heldSession();
+  it('releaseHeld un-holds the named entries only, whatever their rev', async () => {
+    const { session, entry } = await heldSession();
+    createFirearm(db, { make: 'Pardini', model: 'SP' });
+    const firearm = (await store.readOutbox(10)).find((e) => e.tableName === 'firearms')!;
     await store.holdOutboxEntry(entry, false);
-    await store.releaseHeld();
-    expect(await store.heldCount()).toBe(0);
-    expect(await store.readOutbox(10)).toHaveLength(1);
+    await store.holdOutboxEntry(firearm, false);
+    // An edit since the entry was read: a new rev, still held.
+    db.update(sessions).set({ name: 'S2' }).where(eq(sessions.id, session.id)).run();
+
+    await store.releaseHeld([{ tableName: 'sessions', rowId: session.id }]);
+
+    expect(await store.heldCount()).toBe(1);
+    expect((await store.readOutbox(10)).map((e) => e.tableName)).toEqual(['sessions']);
+    expect((await store.readHeld()).map((e) => e.tableName)).toEqual(['firearms']);
   });
 
   it('adds, reads and removes refused rows; adding twice keeps one', async () => {

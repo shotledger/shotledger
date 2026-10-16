@@ -197,8 +197,8 @@ class Device {
         this.held.add(key);
         if (resetClientChangeId) current.clientChangeId = null;
       },
-      releaseHeld: async () => {
-        this.held.clear();
+      releaseHeld: async (refs) => {
+        for (const ref of refs) this.held.delete(this.key(ref.tableName, ref.rowId));
       },
       heldCount: async () => [...this.outbox.keys()].filter((key) => this.held.has(key)).length,
       readHeld: async () =>

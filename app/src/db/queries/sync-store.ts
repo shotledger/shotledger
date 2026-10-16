@@ -191,8 +191,15 @@ export function createSyncStore(db: Database): LocalStore {
         .run();
     },
 
-    async releaseHeld() {
-      db.update(syncOutbox).set({ held: 0 }).where(eq(syncOutbox.held, 1)).run();
+    async releaseHeld(refs) {
+      db.transaction((tx) => {
+        for (const ref of refs) {
+          tx.update(syncOutbox)
+            .set({ held: 0 })
+            .where(and(eq(syncOutbox.tableName, ref.tableName), eq(syncOutbox.rowId, ref.rowId)))
+            .run();
+        }
+      });
     },
 
     async heldCount() {

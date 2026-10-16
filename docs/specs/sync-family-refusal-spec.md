@@ -401,7 +401,7 @@ Feature: the phone holds a refused row's family across pushes
 | A family member slips through within a push           | F1–F3, F6; property over generated session trees                   |
 | A held row is never released                          | H2, H3, H7, H8; H13 (Revision 2 item 7)                            |
 | A held entry spins the push loop                      | H9                                                                 |
-| A held edit overwrites another device's later change  | H14, H15 (Revision 2 item 8)                                       |
+| A held edit overwrites another device's later change  | H14, H15 (Revision 2 item 8); H17 (Revision 2 item 10)             |
 | A held edit is dropped for an older pulled change     | H16, its control (Revision 2 item 9)                               |
 | A held row is lost (cleared without being sent)       | H3; engine tests on rev-matched hold; H16 (Revision 2 item 9)      |
 | A new foreign key ships unclassified                  | F11                                                                |
@@ -620,3 +620,30 @@ Feature: the phone holds a refused row's family across pushes
        Given the same steps with a valid T2
        Then both devices show "A2"
      ```
+
+  10. **Step 1 releases only what nothing blocks (verifier round 3, B-2);
+      pending the maintainer.** Item 7's step 1 released every held entry
+      and relied on step 2 to hold each again when `readOutbox` returned
+      it. A push that failed before step 2 had read every released entry
+      (more than one batch queued ahead of it) left those entries unheld,
+      so the next pull's shadowing kept them, item 8's failure again. Now
+      step 1 judges each held entry where it lies (`readHeld`, the local
+      row, the refused set as it is) and releases, in one call, only the
+      entries nothing blocks, and those whose row is gone or deleted; a
+      still-blocked entry is never released. A failure at any point leaves
+      every still-blocked entry held, and repeating the step is harmless.
+      `LocalStore.releaseHeld` takes the entries to release, by row, so an
+      edit since the read does not keep a free entry held. The cycle's
+      `held` count still counts every entry held at the end of judging. In
+      its own commit, so it can be reverted.
+
+      ```gherkin
+      Scenario: H17 a held edit stays held through failed pushes
+        Given T2 of s1 is refused on A, then A writes tag G0 and renames s1
+              to "A-name"
+        When a cycle with a batch of 2 holds s1 and G0's push fails
+        And a cycle with a batch of 1 sends G0 first and its push fails
+        Then s1 is still held
+        And when B renames s1 to "B-name" and A syncs, A shows "B-name",
+            and once T2 is fixed both devices show "B-name"
+      ```

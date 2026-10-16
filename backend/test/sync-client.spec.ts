@@ -166,8 +166,8 @@ class Device {
         this.held.add(key);
         if (resetClientChangeId) current.clientChangeId = null;
       },
-      releaseHeld: async () => {
-        this.held.clear();
+      releaseHeld: async (refs) => {
+        for (const ref of refs) this.held.delete(this.key(ref.tableName, ref.rowId));
       },
       heldCount: async () => [...this.outbox.keys()].filter((key) => this.held.has(key)).length,
       readHeld: async () =>
@@ -988,6 +988,52 @@ describe('the phone holds a refused row’s family across pushes', () => {
       await deviceB.sync();
       expect(deviceA.get('sessions', 's1')).toMatchObject({ name: 'A2' });
       expect(deviceB.get('sessions', 's1')).toMatchObject({ name: 'A2' });
+    });
+
+    // Revision 2 item 10 (verifier round 3, B-2): a push that fails before
+    // a held entry is read again must leave it held, or it shadows the next
+    // pull. A batch of 1 or 2 stands in for more than 500 queued entries.
+    it('H17 a held edit stays held through failed pushes, so a later edit elsewhere still wins', async () => {
+      deviceA.write('sessions', sessionRow('s1', 'Before', T0));
+      deviceA.write('series', seriesRow('r1', 's1', 1, T0));
+      deviceA.write('shots', shotRow('t1', 'r1'));
+      await deviceA.sync();
+      await deviceB.sync();
+      await deviceA.sync();
+      deviceA.write('shots', shotRow('t2', 'r1', null, T1));
+      await expect(deviceA.sync()).resolves.toMatchObject({ invalid: 1 });
+      deviceA.write('tags', row('tags', 'g0', T1, { name: 'G' }));
+      deviceA.write('sessions', sessionRow('s1', 'A-name', T1));
+
+      const failing = (batch: number) => {
+        const inner = deviceA.transport();
+        return runSyncCycle({
+          store: deviceA.store(),
+          transport: {
+            pull: (request) => inner.pull(request),
+            push: async () => {
+              throw new Error('network');
+            },
+          },
+          newId: uuid,
+          pushBatchMax: batch,
+        });
+      };
+      await expect(failing(2)).rejects.toThrow('network');
+      expect(await heldOn(deviceA)).toBe(1);
+      await expect(failing(1)).rejects.toThrow('network');
+      expect(await heldOn(deviceA)).toBe(1);
+
+      deviceB.write('sessions', sessionRow('s1', 'B-name', T2));
+      await deviceB.sync();
+      await expect(deviceA.sync()).resolves.toMatchObject({ shadowed: 0, held: 0 });
+      expect(deviceA.get('sessions', 's1')).toMatchObject({ name: 'B-name' });
+
+      deviceA.write('shots', shotRow('t2', 'r1', 70, T3));
+      await deviceA.sync();
+      await deviceB.sync();
+      expect(deviceA.get('sessions', 's1')).toMatchObject({ name: 'B-name' });
+      expect(deviceB.get('sessions', 's1')).toMatchObject({ name: 'B-name' });
     });
   });
 });

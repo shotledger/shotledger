@@ -43,7 +43,7 @@ export interface LocalStore {
   applyChanges(changes: ChangeRow[]): Promise<void>;
   /**
    * Queued entries in `rev` order, up to `limit`. A **held** entry is
-   * skipped: it stays queued, unsent, until `releaseHeld`
+   * skipped: it stays queued, unsent, until `releaseHeld` names it
    * (docs/specs/sync-family-refusal-spec.md §2.3).
    */
   readOutbox(limit: number): Promise<OutboxEntry[]>;
@@ -71,8 +71,11 @@ export interface LocalStore {
    * id, so it is sent as a new change once released.
    */
   holdOutboxEntry(entry: OutboxEntry, resetClientChangeId: boolean): Promise<void>;
-  /** Un-holds every held entry, to be judged again on the next read. */
-  releaseHeld(): Promise<void>;
+  /**
+   * Un-holds the named entries, whatever their `rev`, in one step, to be
+   * judged again on the next read; every other held entry stays held.
+   */
+  releaseHeld(refs: readonly RowRef[]): Promise<void>;
   /** Held entries; what Account & Sync shows as waiting on a refused change. */
   heldCount(): Promise<number>;
   /**

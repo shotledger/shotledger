@@ -83,9 +83,9 @@ function createFakeStore(options: FakeStoreOptions = {}) {
       held.add(keyOf(found));
       if (resetClientChangeId) found.clientChangeId = null;
     },
-    releaseHeld: async () => {
+    releaseHeld: async (refs) => {
       releases += 1;
-      held.clear();
+      for (const ref of refs) held.delete(keyOf(ref));
     },
     heldCount: async () => outbox.filter((e) => held.has(keyOf(e))).length,
     readHeld: async () => outbox.filter((e) => held.has(keyOf(e))),
@@ -1354,6 +1354,68 @@ describe('runSyncCycle — family refusal', () => {
     const { transport, sent } = recordingTransport(() => undefined);
     await runSyncCycle({ store: fake.store, transport, newId: ids() });
     expect(sent()).toEqual(['series:r1']);
+  });
+
+  it('a push that fails before a held entry is read leaves it held (Revision 2 item 10)', async () => {
+    const fake = createFakeStore({
+      outbox: [entry('tags', 'tag1', 1), entry('sessions', 's1', 2), entry('series', 'r2', 3)],
+      rows: localRows(),
+      held: ['sessions:s1', 'series:r2'],
+      refused: [ref('shots', 't1')],
+    });
+    const transport = createTransport({
+      push: async () => {
+        throw new Error('network');
+      },
+    });
+
+    await expect(
+      runSyncCycle({ store: fake.store, transport, newId: ids(), pushBatchMax: 1 }),
+    ).rejects.toThrow('network');
+
+    // s1 is still blocked by t1, so it stays held; r2 (another session) was
+    // released at step 1, unsent.
+    expect([...fake.held]).toEqual(['sessions:s1']);
+  });
+
+  it('a failure while judging the held entries releases none of them', async () => {
+    const fake = createFakeStore({
+      outbox: [entry('series', 'r2', 1), entry('sessions', 's1', 2)],
+      rows: localRows(),
+      held: ['series:r2', 'sessions:s1'],
+      refused: [ref('shots', 't1')],
+    });
+    const { store } = fake;
+    const inner = { ...store };
+    // The refused set's walk reads s1 twice (its root, then whether it is
+    // deleted); the third read is step 1 judging s1, after r2 was judged free.
+    const reads: string[] = [];
+    store.readRow = async (tableName, rowId) => {
+      reads.push(`${tableName}:${rowId}`);
+      if (reads.filter((r) => r === 'sessions:s1').length === 3) throw new Error('disk');
+      return inner.readRow(tableName, rowId);
+    };
+
+    await expect(
+      runSyncCycle({ store, transport: createTransport(), newId: ids() }),
+    ).rejects.toThrow('disk');
+
+    expect(reads.slice(-3)).toEqual(['series:r2', 'sessions:s2', 'sessions:s1']);
+    expect([...fake.held].sort()).toEqual(['series:r2', 'sessions:s1']);
+    expect(fake.releases()).toBe(0);
+  });
+
+  it('counts the entries still held after step 1 as held this cycle', async () => {
+    const fake = createFakeStore({
+      outbox: [entry('series', 'r1', 1), entry('series', 'r2', 2)],
+      rows: localRows(),
+      held: ['series:r1', 'series:r2'],
+      refused: [ref('shots', 't1')],
+    });
+    const { transport, sent } = recordingTransport(() => undefined);
+    const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+    expect(sent()).toEqual(['series:r2']);
+    expect(result).toMatchObject({ held: 1, pushed: 1 });
   });
 
   it('with nothing refused, reads no extra rows and releases nothing (N4)', async () => {
