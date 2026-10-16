@@ -13,6 +13,7 @@ import {
   stageSubtotals,
   seriesAverageTenths,
   seriesInnerTenAverage,
+  sessionInnerTenCount,
   sessionResults,
   tenthsToScore,
   totalOnlyShotCount,
@@ -31,7 +32,6 @@ import { getFirearm } from '@/db/queries/firearms';
 import { getSession } from '@/db/queries/sessions';
 import { listTagsForSession } from '@/db/queries/tags';
 import { resolveSeriesLength } from './series-length';
-import { sessionInnerTens } from './session-inner-tens';
 import { stageStats, type StageStats } from './stage-stats';
 
 export interface SeriesRow {
@@ -39,8 +39,6 @@ export interface SeriesRow {
   position: number;
   isSighter: boolean;
   isFinal: boolean;
-  /** A särskjutning series (#727); shown, scored like any other. */
-  isShootOff: boolean;
   photoUri: string | null;
   shots: EntryShot[];
   totalTenths: number;
@@ -158,7 +156,6 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
       position: row.position,
       isSighter,
       isFinal: row.isFinal === 1,
-      isShootOff: row.isShootOff === 1,
       photoUri: row.photoUri,
       shots,
       totalTenths,
@@ -208,7 +205,7 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
       })),
     ),
     seriesAverageTenths: seriesAverageTenths(forResults),
-    innerTenCount: sessionInnerTens(session.innerTenCount, forResults),
+    innerTenCount: sessionInnerTenCount(forResults),
     innerTenAverage: seriesInnerTenAverage(forResults),
     seriesLength,
     guldThreshold,

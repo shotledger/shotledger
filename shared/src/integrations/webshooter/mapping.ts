@@ -89,7 +89,6 @@ export function mapResultsType(resultsType: WebshooterResultsType): DisciplinePr
 export interface MappedSeriesOverride {
   position: number;
   isFinal: boolean;
-  isShootOff: boolean;
   isTotalOverride: true;
   totalOverrideTenths: number;
   totalOverrideShotCount: number;
@@ -98,7 +97,6 @@ export interface MappedSeriesOverride {
 function mapSection(
   rows: readonly StationResult[],
   isFinal: boolean,
-  isShootOff: boolean,
   shotsPerSeries: number,
 ): Omit<MappedSeriesOverride, 'position'>[] {
   return (
@@ -109,7 +107,6 @@ function mapSection(
       .filter((row) => row.points !== null)
       .map((row) => ({
         isFinal,
-        isShootOff,
         isTotalOverride: true as const,
         totalOverrideTenths: row.points! * 10,
         totalOverrideShotCount: shotsPerSeries,
@@ -118,19 +115,19 @@ function mapSection(
 }
 
 /**
- * Flattens `results` (main round), `results_finals` (§A.6: same section
- * semantics as a locally-entered final), and `results_distinguish` (§A.6:
- * ordinary extra scored series flagged `isShootOff`, #727) into one position-ordered array of series-total-without-shots
- * structures (§A.4).
+ * Flattens `results` (main round) and `results_finals` (§A.6: same section
+ * semantics as a locally-entered final) into one position-ordered array of
+ * series-total-without-shots structures (§A.4). `results_distinguish`, a
+ * särskjutning, is not imported: the app models särskjutning in fält only
+ * (maintainer, 2026-10-14; #727), and it never enters the score.
  */
 export function mapStationResultsToSeries(
   row: ResultRow,
   shotsPerSeries: number,
 ): MappedSeriesOverride[] {
   const sections = [
-    ...mapSection(row.results, false, false, shotsPerSeries),
-    ...mapSection(row.results_finals, true, false, shotsPerSeries),
-    ...mapSection(row.results_distinguish, false, true, shotsPerSeries),
+    ...mapSection(row.results, false, shotsPerSeries),
+    ...mapSection(row.results_finals, true, shotsPerSeries),
   ];
   return sections.map((section, index) => ({ ...section, position: index + 1 }));
 }

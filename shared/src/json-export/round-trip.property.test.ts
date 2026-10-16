@@ -37,7 +37,6 @@ const shotSeriesArb = fc.record({
   position: fc.integer({ min: 1, max: 10 }),
   isSighter: fc.boolean(),
   isFinal: fc.boolean(),
-  isShootOff: fc.boolean(),
   // maxLength 0 is reachable: a series with no shots must survive (C3).
   shots: fc.array(shotArb, { maxLength: 6 }),
   totalOverride: fc.constant(null),
@@ -47,7 +46,6 @@ const totalOnlySeriesArb = fc.record({
   position: fc.integer({ min: 1, max: 10 }),
   isSighter: fc.constant(false),
   isFinal: fc.boolean(),
-  isShootOff: fc.boolean(),
   shots: fc.constant<ShotExport[]>([]),
   totalOverride: fc.record({
     tenths: fc.integer({ min: 0, max: 1090 }),
@@ -121,8 +119,6 @@ const sessionArb: fc.Arbitrary<SessionExport> = fc.record({
     .map((d) => d.toISOString()),
   location: nullableText,
   notes: nullableText,
-  tenCount: fc.option(fc.nat({ max: 60 }), { nil: null }),
-  innerTenCount: fc.option(fc.nat({ max: 60 }), { nil: null }),
   decimalScoring: fc.boolean(),
   seriesLength: fc.option(fc.integer({ min: 1, max: 10 }), { nil: null }),
   extraRounds: fc.option(fc.integer({ min: 0, max: 10_000 }), { nil: null }),

@@ -44,7 +44,6 @@ function seriesRow(overrides: Partial<ExportSeriesRow> = {}): ExportSeriesRow {
     position: 1,
     isSighter: 0,
     isFinal: 0,
-    isShootOff: 0,
     isTotalOverride: 0,
     totalOverrideTenths: null,
     totalOverrideShotCount: null,
@@ -97,8 +96,6 @@ describe('sessionExportsFromRows', () => {
       faltResultMode: 'poangfalt',
       type: 'competition',
       kind: 'rounds',
-      tenCount: 9,
-      innerTenCount: 3,
       externalSource: 'webshooter',
       externalRef: 'webshooter:1:2',
       officialPlacement: 4,
@@ -131,8 +128,6 @@ describe('sessionExportsFromRows', () => {
         faltResultMode: 'poangfalt',
         stations: [],
         kind: 'rounds',
-        tenCount: 9,
-        innerTenCount: 3,
         externalSource: 'webshooter',
         externalRef: 'webshooter:1:2',
         officialPlacement: 4,
@@ -145,8 +140,6 @@ describe('sessionExportsFromRows', () => {
     const [exported] = sessionExportsFromRows({ ...empty, sessions: [session()] });
     expect(exported).toMatchObject({
       kind: 'series',
-      tenCount: null,
-      innerTenCount: null,
       externalSource: null,
       externalRef: null,
       officialPlacement: null,
@@ -206,18 +199,6 @@ describe('sessionExportsFromRows', () => {
     expect(exported.map((s) => s.tags)).toEqual([['dry', 'match'], []]);
   });
 
-  it('S5 carries a shoot-off series as isShootOff', () => {
-    const [exported] = sessionExportsFromRows({
-      ...empty,
-      sessions: [session()],
-      series: [
-        seriesRow({ id: 'R1', position: 1 }),
-        seriesRow({ id: 'R2', position: 2, isShootOff: 1 }),
-      ],
-    });
-    expect(exported!.series.map((s) => s.isShootOff)).toEqual([false, true]);
-  });
-
   it('nests series and shots under their parents, in position order', () => {
     const [exported] = sessionExportsFromRows({
       ...empty,
@@ -238,7 +219,6 @@ describe('sessionExportsFromRows', () => {
         position: 1,
         isSighter: true,
         isFinal: false,
-        isShootOff: false,
         shots: [],
         totalOverride: null,
       },
@@ -246,7 +226,6 @@ describe('sessionExportsFromRows', () => {
         position: 2,
         isSighter: false,
         isFinal: true,
-        isShootOff: false,
         shots: [
           { position: 1, valueTenths: 100, isInnerTen: true },
           { position: 2, valueTenths: 90, isInnerTen: false },

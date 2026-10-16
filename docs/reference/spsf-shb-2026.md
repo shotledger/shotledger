@@ -50,6 +50,9 @@ genuinely does not say. Keep the PDF outside the working tree.
   **no provskott**. Tie-break order before särskjutning: X count, then
   last series score backwards, then value counts in the last series
   (F.6.11.2.1 p. 180).
+  **The app does not model a precision särskjutning** (maintainer,
+  2026-10-14): a Webshooter `results_distinguish` is not imported. In the app,
+  särskjutning exists in fält only.
 - Scoring rule (F.6.10.1 p. 176): "Kulhål räknas till det högre värdet
   så snart ringens ytterkant är tangerad."
 

@@ -3,13 +3,13 @@
 // in the native expo-sqlite client (see use-home-data.test.ts).
 import {
   seriesAverageTenths,
+  sessionInnerTenCount,
   sessionResults,
   tenthsToScore,
   type StatsSeries,
 } from '@shotledger/shared';
 
 import type { FaltResultSummary } from '../session/format-falt-result';
-import { sessionInnerTens } from '../session/session-inner-tens';
 
 /** Conventional "average" glyph (U+2300 DIAMETER SIGN) for the row subtitle. */
 export const AVERAGE_SYMBOL = '⌀';
@@ -79,7 +79,6 @@ export function buildHomeSessionRow(
     type: 'training' | 'competition';
     startedAt: string;
     extraRounds?: number | null;
-    innerTenCount?: number | null;
   },
   sessionSeries: readonly StatsSeries[],
   tags: readonly string[] = [],
@@ -94,7 +93,7 @@ export function buildHomeSessionRow(
     total: tenthsToScore(sessionResults(sessionSeries).totalTenths),
     falt,
     seriesAverage: average === null ? null : tenthsToScore(average),
-    innerTenCount: sessionInnerTens(session.innerTenCount, sessionSeries),
+    innerTenCount: sessionInnerTenCount(sessionSeries),
     tags,
     shape: deriveSessionShapeFromContent(sessionSeries, session.extraRounds ?? null),
     extraRounds: session.extraRounds ?? null,

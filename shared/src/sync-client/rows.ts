@@ -58,8 +58,6 @@ export function newSessionRow(id: string, now: string, fields: SessionFields): P
     started_at: fields.startedAt,
     location: fields.location,
     notes: null,
-    ten_count: null,
-    inner_ten_count: null,
     decimal_scoring: fields.decimalScoring ? 1 : 0,
     series_length: fields.seriesLength,
     falt_result_mode: null,
@@ -92,7 +90,6 @@ export function newSeriesRow(id: string, now: string, fields: SeriesFields): Pay
     is_total_override: 0,
     total_override_tenths: null,
     total_override_shot_count: null,
-    is_shoot_off: 0,
   };
 }
 

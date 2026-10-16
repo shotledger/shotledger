@@ -971,8 +971,14 @@ Competition Name field. Superseded the `<level> <program> <weapon_group>`
 competition form on 2026-09-09 at the maintainer's request.
 
 **Särskjutning** (tie-break; F.6.11.3 p. 181: extra series until medals
-decided, **no provskott**) is out of v1 scope — log such series as
-ordinary extra scored series, flagged `is_shoot_off` (#727; was a note).
+decided, **no provskott**) is not supported for precision (maintainer,
+2026-10-14): a Webshooter `results_distinguish` is not imported, and
+`series.is_shoot_off` is gone. Särskjutning exists in fält only, as
+särskjutning stations (`docs/specs/shoot-off-and-ten-counts-727-spec.md`).
+
+- [x] #727 PR C: no precision särskjutning (`series.is_shoot_off` dropped);
+      session `ten_count` / `inner_ten_count` dropped, tens and inner tens
+      counted from the shots.
 
 **Decimal scoring — who actually uses it:** per ISSF rules, 10m air
 rifle scores decimal in qualification _and_ finals; 10m air pistol and

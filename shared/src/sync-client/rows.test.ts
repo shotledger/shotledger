@@ -46,8 +46,6 @@ describe('new rows', () => {
       started_at: '2026-10-06T08:30:00.000Z',
       location: 'Range',
       notes: null,
-      ten_count: null,
-      inner_ten_count: null,
       decimal_scoring: 1,
       series_length: 6,
       falt_result_mode: null,
@@ -93,7 +91,6 @@ describe('new rows', () => {
       is_total_override: 0,
       total_override_tenths: null,
       total_override_shot_count: null,
-      is_shoot_off: 0,
     });
     expect(
       newSeriesRow('r2', NOW, { sessionId: 's1', position: 1, isSighter: false }),

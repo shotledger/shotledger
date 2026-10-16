@@ -36,7 +36,6 @@ const session: SessionExport = {
       position: 1,
       isSighter: false,
       isFinal: false,
-      isShootOff: false,
       totalOverride: null,
       shots: [
         { position: 1, valueTenths: 100, isInnerTen: true },
@@ -47,8 +46,6 @@ const session: SessionExport = {
   faltResultMode: null,
   stations: [],
   kind: 'series',
-  tenCount: null,
-  innerTenCount: null,
   externalSource: null,
   externalRef: null,
   officialPlacement: null,

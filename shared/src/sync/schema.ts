@@ -171,18 +171,6 @@ export const sessions = sqliteTable('sessions', {
   startedAt: text('started_at').notNull(),
   location: text('location'),
   notes: text('notes'),
-  /**
-   * Ten and inner-ten counts recorded for the SESSION rather than derived
-   * from shot flags.
-   *
-   * Null wherever real `shots` rows exist — those are counted from the flags,
-   * and a stored copy would be a second truth that drifts. Set only where
-   * there is nothing to count: a ShotLog import writes a total-override
-   * series with no shots, so its "Number of X"/"(X)" values had nowhere to
-   * live and were parked in the note as prose (#138).
-   */
-  tenCount: integer('ten_count'),
-  innerTenCount: integer('inner_ten_count'),
   decimalScoring: integer('decimal_scoring').notNull().default(0),
   // Shots per series chosen at creation (#348); NULL falls back to the
   // program's, then the discipline's. Never set on a fixed-format session.
@@ -245,9 +233,8 @@ export const series = sqliteTable('series', {
   // shot count backing the override total; required so round counters and
   // per-series averages stay correct without shot rows
   totalOverrideShotCount: integer('total_override_shot_count'),
-  // A särskjutning series (§A.6; tie-break for placement), as on falt_stations.
-  // Scored like any other series for now (#727 spec §3.3 S3).
-  isShootOff: integer('is_shoot_off').notNull().default(0),
+  // No shoot-off flag: the app models särskjutning in fält only, on
+  // falt_stations (maintainer, 2026-10-14; #727).
 });
 
 export const shots = sqliteTable('shots', {

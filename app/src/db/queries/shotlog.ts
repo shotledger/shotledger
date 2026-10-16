@@ -63,8 +63,8 @@ function resolveFirearmId(db: Database, suggestion: ShotlogPlanRow['suggestion']
 
 /**
  * Writes one plan row: a session with its series and shots, in one
- * transaction so a failure never leaves half a session (spec §7). No
- * `tenCount`/`innerTenCount`: the shots carry both.
+ * transaction so a failure never leaves half a session (spec §7). The
+ * shots carry the tens and inner tens.
  */
 export function importShotlogRow(db: Database, row: ShotlogPlanRow): string {
   const { suggestion } = row;

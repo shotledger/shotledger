@@ -143,11 +143,7 @@ function SeriesEntryScreen({ position }: { position: number }) {
 
   const shots = enteredShots(state);
   const current = { rowId: row?.id ?? null, position, isFinal, isSighter, shots };
-  const sessionTotals = liveSessionTotals(
-    detail.seriesRows,
-    current,
-    detail.session?.innerTenCount ?? null,
-  );
+  const sessionTotals = liveSessionTotals(detail.seriesRows, current);
   // Read once, as if this series were scored; a sighter compares with nothing.
   const [lastTimeScored] = useState(() =>
     detail.session
