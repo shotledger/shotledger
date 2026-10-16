@@ -9,7 +9,7 @@ import { familyKind, familyRoot, ownerOf, type RowRef } from '../sync/family';
 import { REJECTED_FAMILY, REJECTED_INVALID_PAYLOAD, REJECTED_TOMBSTONED } from '../sync/merge';
 import { APPLY_ORDER, sortChangesForApply } from './order';
 import { buildClientChange } from './outbox';
-import { filterShadowedChanges, rowKey, tombstoneFromRejection } from './shadow';
+import { filterShadowedChanges, replacesHeldEdit, rowKey, tombstoneFromRejection } from './shadow';
 import type { LocalStore, OutboxEntry, SyncTransport } from './ports';
 
 /**
@@ -139,15 +139,18 @@ async function runPull(
     const response = await deps.transport.pull(request);
 
     // A held edit is not sent this cycle, so it cannot win by arriving
-    // later: a pulled change for its row replaces it, and the entry is
-    // dropped, as if it had been sent on time and lost to the later write
-    // (Revision 2 item 8). Dropped before the apply: a crash between the
-    // two leaves the cursor where it was, and the page is pulled again.
-    const pulledKeys = new Set(response.changes.map((c) => rowKey(c.tableName, c.rowId)));
+    // later: a pulled change that replaces it (shadow.ts, replacesHeldEdit)
+    // is applied and the entry dropped, as if the edit had been sent on time
+    // and lost to the later write (Revision 2 items 8 and 9). Any other
+    // pulled change for a held row, this device's own older push among
+    // them, is shadowed. Dropped before the apply: a crash between the two
+    // leaves the cursor where it was, and the page is pulled again.
+    const pulledByKey = new Map(response.changes.map((c) => [rowKey(c.tableName, c.rowId), c]));
     for (const entry of await deps.store.readHeld()) {
-      if (pulledKeys.has(rowKey(entry.tableName, entry.rowId))) {
-        await deps.store.clearOutboxEntry(entry);
-      }
+      const pulled = pulledByKey.get(rowKey(entry.tableName, entry.rowId));
+      if (pulled === undefined) continue;
+      const local = await deps.store.readRow(entry.tableName, entry.rowId);
+      if (replacesHeldEdit(pulled, local)) await deps.store.clearOutboxEntry(entry);
     }
 
     // A row with an unsent local edit keeps that edit; the push later in

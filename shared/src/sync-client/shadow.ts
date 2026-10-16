@@ -1,5 +1,5 @@
 import type { ChangeRow, SyncTableName } from '../sync/protocol';
-import type { OutboxEntry } from './ports';
+import type { LocalRowSnapshot, OutboxEntry } from './ports';
 
 /**
  * Local-edit shadowing (docs/specs/sync-app-spec.md §5a).
@@ -13,8 +13,9 @@ import type { OutboxEntry } from './ports';
  * the server's own last-write-wins makes it the winner for everyone.
  *
  * A **held** entry (docs/specs/sync-family-refusal-spec.md §2.3) is not
- * pushed in the same cycle, so it does not shadow: the engine drops it before
- * this filter runs, and the pulled change is applied (Revision 2 item 8).
+ * pushed in the same cycle, so it shadows only a pulled change it beats
+ * (`replacesHeldEdit`); the engine drops it before this filter runs when it
+ * does not (Revision 2 items 8 and 9).
  */
 
 export function rowKey(tableName: SyncTableName, rowId: string): string {
@@ -26,6 +27,24 @@ export function filterShadowedChanges(
   pendingKeys: ReadonlySet<string>,
 ): ChangeRow[] {
   return changes.filter((change) => !pendingKeys.has(rowKey(change.tableName, change.rowId)));
+}
+
+/**
+ * Whether a pulled change replaces the held edit of its row, which is the
+ * local row's current version (Revision 2 item 9). The server orders writes
+ * by arrival, and a held edit has not arrived, so the phone decides:
+ *
+ * - a tombstone always replaces it, as the server's R2 (tombstone-wins)
+ *   would reject the edit once sent;
+ * - a live change replaces it only when its `updatedAt` is strictly later
+ *   than the local row's. This device's own earlier push, pulled back as an
+ *   echo, is older than the edit held after it, so it does not drop it.
+ *   An equal or older change, or a time either side cannot read, does not.
+ * - With no local row left, nothing is held to keep.
+ */
+export function replacesHeldEdit(pulled: ChangeRow, local: LocalRowSnapshot | undefined): boolean {
+  if (local === undefined || pulled.deletedAt !== null) return true;
+  return Date.parse(pulled.updatedAt) > Date.parse(local.updatedAt);
 }
 
 /**

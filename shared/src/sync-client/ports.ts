@@ -76,8 +76,8 @@ export interface LocalStore {
   /** Held entries; what Account & Sync shows as waiting on a refused change. */
   heldCount(): Promise<number>;
   /**
-   * The held entries themselves. A pulled change for a held row replaces it
-   * and drops its entry, instead of being shadowed (Revision 2 item 8).
+   * The held entries themselves. A pulled change that replaces a held edit
+   * drops its entry instead of being shadowed (Revision 2 items 8 and 9).
    */
   readHeld(): Promise<OutboxEntry[]>;
 }

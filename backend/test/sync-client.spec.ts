@@ -932,5 +932,62 @@ describe('the phone holds a refused row’s family across pushes', () => {
       expect(await heldOn(deviceA)).toBe(0);
       expect(deviceA.outbox.size).toBe(0);
     });
+
+    // Revision 2 item 9 (verifier round 3, B-1): the pull returns this
+    // device's own pushes too, so the echo of an older push must not drop
+    // the edit held after it.
+    async function heldEditAfterOwnPush(validT2: boolean) {
+      deviceA.write('sessions', sessionRow('s1', 'Before', T0));
+      deviceA.write('series', seriesRow('r1', 's1', 1, T0));
+      deviceA.write('shots', shotRow('t1', 'r1'));
+      await deviceA.sync();
+      await deviceB.sync();
+      await deviceA.sync();
+      // One push: A1, and a shot T2 of r1 (r1 not in the push, so s1 lands).
+      deviceA.write('sessions', sessionRow('s1', 'A1', T1));
+      deviceA.write('shots', shotRow('t2', 'r1', validT2 ? 80 : null, T1));
+      // The user renames s1 again while that push is in flight.
+      const inner = deviceA.transport();
+      let calls = 0;
+      const first = await runSyncCycle({
+        store: deviceA.store(),
+        transport: {
+          pull: (request) => inner.pull(request),
+          push: (request) => {
+            calls += 1;
+            if (calls === 1) deviceA.write('sessions', sessionRow('s1', 'A2', T2));
+            return inner.push(request);
+          },
+        },
+        newId: uuid,
+      });
+      // The rerun the controller schedules for the mid-push write.
+      const rerun = await deviceA.sync();
+      await deviceB.sync();
+      return { first, rerun };
+    }
+
+    it('H16 this device’s own older push, pulled back, does not drop its held edit', async () => {
+      const { first, rerun } = await heldEditAfterOwnPush(false);
+      expect(first).toMatchObject({ pushed: 1, invalid: 1, held: 1 });
+      expect(rerun).toMatchObject({ pulled: 0, shadowed: 1, held: 1 });
+      expect(deviceA.get('sessions', 's1')).toMatchObject({ name: 'A2' });
+      expect(await heldOn(deviceA)).toBe(1);
+
+      deviceA.write('shots', shotRow('t2', 'r1', 70, T3));
+      const { pushes } = await syncRecording(deviceA);
+      expect(pushes).toEqual([['sessions:s1', 'shots:t2']]);
+      await deviceB.sync();
+      expect(deviceA.get('sessions', 's1')).toMatchObject({ name: 'A2' });
+      expect(deviceB.get('sessions', 's1')).toMatchObject({ name: 'A2' });
+    });
+
+    it('H16 control: without the refusal the later rename wins as well', async () => {
+      await heldEditAfterOwnPush(true);
+      await deviceA.sync();
+      await deviceB.sync();
+      expect(deviceA.get('sessions', 's1')).toMatchObject({ name: 'A2' });
+      expect(deviceB.get('sessions', 's1')).toMatchObject({ name: 'A2' });
+    });
   });
 });

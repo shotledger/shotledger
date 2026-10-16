@@ -1146,6 +1146,35 @@ describe('runSyncCycle — family refusal', () => {
     expect(result).toMatchObject({ pulled: 1, shadowed: 0 });
   });
 
+  it('this device’s own older push, pulled back, does not drop the held edit after it (Revision 2 item 9)', async () => {
+    const rows = localRows();
+    rows.set('sessions:s1', {
+      payload: { id: 's1', name: 'A2' },
+      updatedAt: '2026-10-14T12:00:00.000Z',
+      deletedAt: null,
+    });
+    const fake = createFakeStore({
+      outbox: [entry('sessions', 's1', 1)],
+      rows,
+      held: ['sessions:s1'],
+      refused: [ref('shots', 't1')],
+    });
+    const echo: ChangeRow = {
+      ...pulledSession(),
+      payload: { id: 's1', name: 'A1' },
+      updatedAt: '2026-10-14T11:00:00.000Z',
+    };
+    const transport = createTransport({ pull: pullingOnce([echo]) });
+
+    const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+    expect(fake.applied.flat()).toEqual([]);
+    expect(fake.cleared).toEqual([]);
+    expect(fake.outbox).toEqual([entry('sessions', 's1', 1)]);
+    expect([...fake.held]).toEqual(['sessions:s1']);
+    expect(result).toMatchObject({ pulled: 0, shadowed: 1 });
+  });
+
   it('a pulled tombstone of a held row is applied and drops its entry', async () => {
     const fake = createFakeStore({
       outbox: [entry('sessions', 's1', 1)],

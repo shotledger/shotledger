@@ -402,7 +402,8 @@ Feature: the phone holds a refused row's family across pushes
 | A held row is never released                          | H2, H3, H7, H8; H13 (Revision 2 item 7)                            |
 | A held entry spins the push loop                      | H9                                                                 |
 | A held edit overwrites another device's later change  | H14, H15 (Revision 2 item 8)                                       |
-| A held row is lost (cleared without being sent)       | H3; engine tests on rev-matched hold                               |
+| A held edit is dropped for an older pulled change     | H16, its control (Revision 2 item 9)                               |
+| A held row is lost (cleared without being sent)       | H3; engine tests on rev-matched hold; H16 (Revision 2 item 9)      |
 | A new foreign key ships unclassified                  | F11                                                                |
 | Seq consumed or half-write on a family refusal        | F1 `last_seq`; atomicity suite unchanged                           |
 | Old reasons change meaning                            | N3; F10                                                            |
@@ -582,4 +583,40 @@ Feature: the phone holds a refused row's family across pushes
        And B deletes s1 and R1 and syncs
        When A syncs
        Then s1 and R1 are deleted on A, and nothing is held or queued
+     ```
+
+  9. **A held edit is not dropped for an older pulled change (verifier
+     round 3, B-1); pending the maintainer.** A pull returns this device's
+     own pushes too. When A1 of s1 lands in a push and the user's next edit
+     A2 is held in the same cycle, the next pull carries A1 back, and item 8
+     dropped A2 for it: A2 was lost on every device, and the held line went
+     to 0. Item 8 does not tell an older version from a newer one. The
+     server cannot help: it orders writes by arrival (`merge.ts`, R3) and
+     compares no timestamps, and a held edit has not arrived. So the phone
+     decides, with the clock the rows carry (`replacesHeldEdit` in
+     `shadow.ts`): a pulled tombstone always replaces the held edit, as R2
+     (tombstone wins) would reject it once sent; a pulled live change
+     replaces it only when its `updatedAt` is strictly later than the local
+     row's, the held edit's own. An equal or older change, or a time that
+     does not parse, is shadowed as an unheld edit's would be: it is not
+     applied, and the cursor moves past it, as for any shadowed change; the
+     held edit is sent once released and wins by arriving last. With no
+     local row, the held entry is dropped. This differs from the server's
+     rule where two devices' clocks disagree: a later write from a device
+     whose clock is behind loses to the held edit. In its own commit, so it
+     can be reverted.
+
+     ```gherkin
+     Scenario: H16 this device's own older push does not drop its held edit
+       Given s1, R1 and T1 are on A and B
+       And A writes s1 "A1" and a shot T2 of R1 that is invalid
+       When A pushes [s1, T2], and the user renames s1 to "A2" during it
+       Then s1 "A1" is applied, T2 is refused, and "A2" is held
+       And the next cycle pulls A's own "A1", shadows it, and keeps "A2" held
+       And when A fixes T2, s1 "A2" and T2 are pushed, and both devices
+           show "A2"
+
+     Scenario: H16 control
+       Given the same steps with a valid T2
+       Then both devices show "A2"
      ```

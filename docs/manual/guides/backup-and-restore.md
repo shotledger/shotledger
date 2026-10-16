@@ -79,9 +79,10 @@ licenses, groups, calibers, maintenance and sight settings, but not the
 sessions shot with it. Deletions are never held. The held changes stay on this
 phone and are not lost: editing or deleting the refused entry on this phone, or
 changing it on another device, sends them with it at the next sync. One
-exception: if another device changes the same entry while its change here is
-held, that device's version wins and the held change is dropped, as it would
-have been had it synced in time. Other
+exception: if another device changes the same entry later than the held change
+here, that device's version wins and the held change is dropped. Which change
+is later is decided by the two devices' clocks. A deletion on another device
+always wins. Other
 devices show the session as it was before the refused change. If the session
 is deleted on another device, nothing is held back any more: the held changes
 are sent as they are.
