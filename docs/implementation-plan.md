@@ -67,21 +67,21 @@ check` (typecheck + lint + unit tests) green, the relevant checkbox in
 
 ## 2. Key library decisions (fixed — do not substitute)
 
-| Purpose       | Library                                               | Note                                                                                               |
-| ------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Navigation    | expo-router                                           | file-based; predictable for agents                                                                 |
-| Local DB      | **expo-sqlite** + Drizzle ORM                         | expo-sqlite has web/WASM support — required by the agentic web loop. (op-sqlite rejected: no web.) |
-| Migrations    | drizzle-kit                                           | SQL files in `app/src/db/migrations/`, bundled, run at app start via Drizzle's migrator            |
-| IDs           | UUIDv7 (`uuidv7` pkg)                                 | sortable, sync-friendly                                                                            |
-| State         | zustand (UI state only) + Drizzle live queries (data) | no Redux                                                                                           |
-| Charts        | **react-native-svg** (hand-drawn)                     | victory-native/Skia was planned but never adopted — see plan.md 2026-09-03; do not add one         |
-| Dates         | date-fns + date-fns-tz                                | store UTC ISO-8601 in DB; display local                                                            |
-| Forms         | react-hook-form + zod                                 | zod schemas live next to features                                                                  |
-| i18n          | i18next + react-i18next + expo-localization           |                                                                                                    |
-| Notifications | expo-notifications (local only in v1)                 | license/maintenance reminders                                                                      |
-| PDF           | expo-print (HTML → PDF)                               | Session Report                                                                                     |
-| E2E           | Maestro                                               | flows in `app/e2e/`                                                                                |
-| OTA updates   | expo-updates (EAS Update)                             | JS-only updates per release; ADR 0020                                                              |
+| Purpose       | Library                                               | Note                                                                                                       |
+| ------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Navigation    | expo-router                                           | file-based; predictable for agents                                                                         |
+| Local DB      | **expo-sqlite** + Drizzle ORM                         | expo-sqlite has web/WASM support — required by the agentic web loop. (op-sqlite rejected: no web.)         |
+| Migrations    | drizzle-kit                                           | SQL files in `app/src/db/migrations/`, bundled, run at app start via Drizzle's migrator                    |
+| IDs           | UUIDv7 (`uuidv7` pkg)                                 | sortable, sync-friendly                                                                                    |
+| State         | zustand (UI state only) + Drizzle live queries (data) | no Redux                                                                                                   |
+| Charts        | **react-native-svg** (hand-drawn)                     | victory-native/Skia was planned but never adopted — see plan.md 2026-09-03; do not add one                 |
+| Dates         | date-fns + date-fns-tz                                | store UTC ISO-8601 in DB; display local                                                                    |
+| Forms         | react-hook-form + zod                                 | zod schemas live next to features                                                                          |
+| i18n          | i18next + react-i18next + expo-localization           |                                                                                                            |
+| Notifications | expo-notifications (local only in v1)                 | license/maintenance reminders                                                                              |
+| PDF           | expo-print (HTML → PDF)                               | Session Report                                                                                             |
+| E2E           | Maestro                                               | flows in `app/e2e/`, named by user journey (#864); the milestone reports below cite their old `mN-*` names |
+| OTA updates   | expo-updates (EAS Update)                             | JS-only updates per release; ADR 0020                                                                      |
 
 ## 3. Database schema (v1 — write exactly this, as Drizzle tables)
 

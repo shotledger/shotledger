@@ -64,7 +64,7 @@ appId: app.shotledger
       id: 'compliance-source'
     direction: DOWN
     timeout: 15000
-- takeScreenshot: m6-01-settings-compliance
+- takeScreenshot: license-activity-01-settings-compliance
 # Back out of the drill-down before the tab bar is used again.
 - pressKey: Back
 - extendedWaitUntil:
@@ -79,7 +79,7 @@ appId: app.shotledger
     visible:
       id: 'home-license-check'
     timeout: 15000
-- takeScreenshot: m6-02-home-license-activity
+- takeScreenshot: license-activity-02-home-license-activity
 
 # --- Firearms tab / firearm detail: per-firearm License Activity --------
 - tapOn: 'Firearms'
@@ -90,7 +90,7 @@ appId: app.shotledger
 - extendedWaitUntil:
     visible: 'License Activity'
     timeout: 15000
-- takeScreenshot: m6-03-firearm-detail-license-activity
+- takeScreenshot: license-activity-03-firearm-detail-license-activity
 - pressKey: Back
 - extendedWaitUntil:
     visible: 'Firearms'
@@ -109,7 +109,7 @@ appId: app.shotledger
     visible:
       id: 'stats-custom-from'
     timeout: 15000
-- takeScreenshot: m6-04-stats-custom-empty
+- takeScreenshot: license-activity-04-stats-custom-empty
 - tapOn:
     id: 'stats-custom-from'
 - extendedWaitUntil:
@@ -131,4 +131,4 @@ appId: app.shotledger
 - extendedWaitUntil:
     visible: '.+ – .+ · .*'
     timeout: 15000
-- takeScreenshot: m6-05-stats-custom-applied
+- takeScreenshot: license-activity-05-stats-custom-applied

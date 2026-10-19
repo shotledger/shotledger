@@ -16,16 +16,16 @@ appId: app.shotledger
     id: 'load-demo-data'
 - openLink: 'shotledger://'
 - assertVisible: 'Home'
-- takeScreenshot: m2-smoke-home
+- takeScreenshot: tabs-smoke-home
 - tapOn: 'Statistics'
 - assertVisible: 'Statistics'
-- takeScreenshot: m2-smoke-stats
+- takeScreenshot: tabs-smoke-stats
 - tapOn: 'Firearms'
 - assertVisible: 'Firearms'
-- takeScreenshot: m2-smoke-firearms
+- takeScreenshot: tabs-smoke-firearms
 - tapOn: 'Tools'
 - assertVisible: 'Tools'
-- takeScreenshot: m2-smoke-tools
+- takeScreenshot: tabs-smoke-tools
 - tapOn: 'Settings'
 - assertVisible: 'Settings'
-- takeScreenshot: m2-smoke-settings
+- takeScreenshot: tabs-smoke-settings
