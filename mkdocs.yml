@@ -134,6 +134,8 @@ plugins:
             Weapon group and class: Vapengrupp och klass
             Glossary: Ordlista
             Your data and privacy: Dina data och integritet
+            Privacy policy: Integritetspolicy
+            Terms of service: Användarvillkor
   - search:
       lang:
         - en
@@ -172,3 +174,5 @@ nav:
       - Weapon group and class: reference/weapon-group-and-class.md
       - Glossary: reference/glossary.md
       - Your data and privacy: reference/privacy.md
+      - Privacy policy: reference/privacy-policy.md
+      - Terms of service: reference/terms.md
