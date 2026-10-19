@@ -85,6 +85,18 @@ What the deployed config already does:
 
 - [ ] **Decide the hostname(s).** That decision is the maintainer's and is
       not recorded anywhere yet; nothing in the repo assumes one.
+- [ ] **Decide whether the data stays in the EU.** D1 and R2 take a
+      jurisdiction only when they are created; it cannot be added later.
+- [ ] Run `pnpm cloudflare:setup staging <hostname>` from the repo root
+      (add `--eu` for EU jurisdiction, `--dry-run` to see the changes
+      first; needs `npx wrangler login`). `scripts/cloudflare-setup.mjs`
+      does the next two steps: it creates the D1 database and R2 bucket,
+      fills in the env's block of `backend/wrangler.jsonc` (and, for
+      `production`, `apiBaseUrl` in `app/app.json`), generates
+      `BETTER_AUTH_SECRET` into `~/cloud/agents/secrets/shotledger/` and
+      uploads it. Running it again reuses what exists. Commit the config
+      change on a branch; the ids are not secrets. To do it by hand
+      instead:
 - [ ] Create the env's D1 database and R2 bucket, then in its
       `env.<name>` block of `backend/wrangler.jsonc` replace the
       `REPLACE_ME` `database_id`, check the `bucket_name`, set
