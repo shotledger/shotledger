@@ -65,6 +65,10 @@ The app is free software under the AGPL-3.0-or-later with additional
 permissions; the sync server is under the Elastic License 2.0. See
 [`LICENSE`](LICENSE).
 
+The copyright holder also offers ShotLedger under separate commercial
+licenses, for use without the AGPL's obligations. To ask about one, open an
+issue or contact the maintainer.
+
 ## Contributing
 
 Building, testing and the repository's rules are in

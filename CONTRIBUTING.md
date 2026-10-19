@@ -219,7 +219,9 @@ with outbound Option Five, which means:
   assignment.
 - **The maintainer may license your contribution under other terms as well**
   — for example under a future version of the additional permissions for a
-  new store — and must always also offer it under the license the project
+  new store, or under a commercial license (ShotLedger is dual-licensed: the
+  public licenses above, plus commercial licenses from the copyright holder;
+  ADR 0023) — and must always also offer it under the license the project
   used the day you submitted it.
 - **Governing law is Sweden.**
 
