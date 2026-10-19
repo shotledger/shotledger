@@ -66,7 +66,7 @@ permissions; the sync server is under the Elastic License 2.0. See
 [`LICENSE`](LICENSE).
 
 The copyright holder also offers ShotLedger under separate commercial
-licenses, for use without the AGPL's obligations. To ask about one, open an
+licenses, for use without the public licenses' obligations. To ask about one, open an
 issue or contact the maintainer.
 
 ## Contributing

@@ -9,8 +9,12 @@ summary:
 - backend/ — Elastic License 2.0. Text: LICENSES/Elastic-2.0.txt.
   Licensor notice: backend/LICENSE.
 
-- Everything else, including app/ and shared/ — GNU Affero General Public
-  License, version 3 or (at your option) any later version. Text:
+- shared/src/sync/ — Apache License 2.0: the sync protocol and the Drizzle
+  tables the backend compiles in. Text: LICENSES/Apache-2.0.txt.
+
+- Everything else, including app/ and the rest of shared/ — GNU Affero
+  General Public License, version 3 or (at your option) any later version.
+  Text:
   LICENSES/AGPL-3.0-or-later.txt. It comes with the additional permissions
   under its section 7 in LICENSES/LicenseRef-ShotLedger-AGPL-Permissions.txt
   (conveying through app stores; combining with proprietary platform
@@ -21,8 +25,8 @@ summary:
   the app are listed in app/src/constants/licenses.json and
   app/src/constants/native-licenses.ts.
 
-In SPDX terms: backend/ is "Elastic-2.0"; the rest is
-"AGPL-3.0-or-later WITH LicenseRef-ShotLedger-AGPL-Permissions".
+In SPDX terms: backend/ is "Elastic-2.0"; shared/src/sync/ is "Apache-2.0";
+the rest is "AGPL-3.0-or-later WITH LicenseRef-ShotLedger-AGPL-Permissions".
 
 Commercial licenses: as the copyright holder, Jimisola Laursen also
 licenses ShotLedger under separate commercial terms, for anyone who wants to
