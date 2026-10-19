@@ -14,11 +14,11 @@ summary:
 
 - Everything else, including app/ and the rest of shared/ — GNU Affero
   General Public License, version 3 or (at your option) any later version.
-  Text:
-  LICENSES/AGPL-3.0-or-later.txt. It comes with the additional permissions
-  under its section 7 in LICENSES/LicenseRef-ShotLedger-AGPL-Permissions.txt
-  (conveying through app stores; combining with proprietary platform
-  libraries such as Google ML Kit).
+  Text: LICENSES/AGPL-3.0-or-later.txt. It comes with the additional
+  permissions under its section 7 in
+  LICENSES/LicenseRef-ShotLedger-AGPL-Permissions.txt (conveying through
+  app stores; combining with proprietary platform libraries such as Google
+  ML Kit).
 
 - Third-party components keep their own licenses. .claude/skills/old-coder/
   is vendored under MIT (its own LICENSE file). The dependencies bundled into
