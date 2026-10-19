@@ -11,18 +11,13 @@ import { ListRow } from '@/components/list-row';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import licenses from '@/constants/licenses.json';
-import { EVAL_EXPIRES_AT } from '@/constants/flags';
 import { REPO_URL } from '@/constants/links';
 import { NATIVE_LICENSES } from '@/constants/native-licenses';
-import { useDateFormat } from '@/features/dates/use-date-format';
-import { parseExpiresAt } from '@/features/evaluation/expiry';
 
 export default function AboutScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const version = Constants.expoConfig?.version ?? '—';
-  const formatDate = useDateFormat().date;
-  const evalExpiresAt = parseExpiresAt(EVAL_EXPIRES_AT);
 
   return (
     <Screen>
@@ -31,11 +26,6 @@ export default function AboutScreen() {
       <Card>
         <ThemedText type="smallBold">{t('about.appName')}</ThemedText>
         <ThemedText type="default">{t('about.version', { version })}</ThemedText>
-        {evalExpiresAt !== null && (
-          <ThemedText type="default" themeColor="textSecondary" testID="about-evaluation-expiry">
-            {t('about.evaluationExpires', { date: formatDate(evalExpiresAt) })}
-          </ThemedText>
-        )}
       </Card>
 
       <Card>

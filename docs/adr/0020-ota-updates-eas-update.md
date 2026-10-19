@@ -47,10 +47,8 @@ JS-only changes.
 - A JS update must be published from the release's tag or `hotfix/*` branch
   with the same version stamped. Publishing from `main` with the `0.0.0`
   placeholder targets runtime `0.0.0`, which no build has.
-- Locally built APKs (evaluation builds, `run-app`'s standalone APK) are not
-  EAS builds and carry no channel, so they receive no updates. That is
-  intended: an evaluation build's expiry date is baked into its bundle and
-  must not be replaced.
+- Locally built APKs (`run-app`'s standalone APK) are not EAS builds and
+  carry no channel, so they receive no updates.
 - `expo-updates` adds native code: OkHttp (already in React Native),
   Bouncy Castle, Brotli and zstd on Android, and ReachabilitySwift and a
   vendored bspatch on iOS. The Android entries are in
