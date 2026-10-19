@@ -209,6 +209,12 @@ wrote the change or have the right to submit it under the license of the files
 you touched. Use your real name and a working email address. Commits without
 a sign-off are not merged.
 
+**AI-assisted commits** are authored and signed off by you, the human
+contributor, under your own name and GitHub-linked email; credit the tool with
+a `Co-Authored-By:` trailer if you like. The DCO and the CLA bind people, not
+tools, so a commit authored by a tool's identity is not merged; the
+project's own dependency bot (Renovate) is the one exception.
+
 #### 2. Sign the CLA once
 
 Before your first pull request is merged you will be asked to agree to
