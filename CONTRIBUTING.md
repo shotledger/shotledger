@@ -229,11 +229,12 @@ What the CLA cannot do: withdraw a version already released. Every release
 under the AGPL stays under the AGPL (section 2 of that license), and anyone
 may keep using and forking it.
 
-**Signing the CLA.** The signing mechanism (a CLA-assistant check on the pull
-request, or a signatures file in the repository) is set up as part of the
-go-public checklist, issue #100. Until it is live, agreeing in a pull-request
-comment — "I have read CLA.md and agree to it" — under the name and email of
-your sign-offs is what the maintainer will ask for.
+**Signing the CLA.** When you open your first pull request, the CLA Assistant
+bot comments on it with a link. Follow the link, sign in with GitHub and
+agree to the CLA; that covers every later pull request too. The
+"license/cla" check on the pull request turns green once every commit author
+has signed. Each commit must be authored with an email address linked to a
+GitHub account, so the bot can tell who wrote it.
 
 ### Code you did not write
 
