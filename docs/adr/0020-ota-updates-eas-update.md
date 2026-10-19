@@ -33,10 +33,16 @@ JS-only changes.
    `appVersion` and is harder to reason about.
 3. **One channel per build profile** in `app/eas.json`: `preview` and
    `production`. `simulator` gets none, since it is for iOS compile checks.
-4. **No `updates.url` yet.** The URL carries the EAS project id, which only
-   exists after the maintainer runs `eas init`. Until then prebuild writes
-   `expo.modules.updates.ENABLED=false`, and the app behaves as before.
-   `docs/release.md` has the one-time steps.
+4. **`updates.url`** is `https://u.expo.dev/<projectId>`, the value
+   `eas update:configure` writes, with the project id already in
+   `extra.eas.projectId`. (Amended 2026-10-19, #780: first left out until
+   `eas init`; the id was already committed, so the URL followed.) Builds
+   made before it run with `expo.modules.updates.ENABLED=false`.
+5. **Publishing** goes through the EAS Update workflow
+   (`.github/workflows/eas-update.yml`): dispatched on a release tag or a
+   `hotfix/*`/`release/*` branch, it stamps that release's version, runs
+   the CI checks and publishes behind the `release` environment.
+   `docs/release.md` has the steps.
 
 ## Consequences
 
