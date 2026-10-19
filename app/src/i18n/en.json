@@ -1547,6 +1547,7 @@
       "saved": "Saved.",
       "savedReload": "Saved. Reload the page to see it in Statistics.",
       "savedFirearmRejected": "Saved, but the firearm was deleted on another device, so its round count did not change.",
+      "refused": "{{count}} change(s) refused by the server and not saved. Your series are still here.",
       "failedNetwork": "Could not reach the server. Your series are still here; Retry sends the same session again.",
       "failedSignedOut": "You have been signed out. Sign in again, then save again.",
       "failedOutdated": "This page is out of date. Copy your series, then reload the page.",
