@@ -389,12 +389,37 @@ config (`renovate.json5`) extends the shared
 `renovate-version-*`, `security`, `dependencies`) are already created.
 The Renovate GitHub App is installed.
 
+The repo moved from `jimisola/shotledger` to the `shotledger` organization
+on 2026-10-14 (Free plan). Organization settings are declared in the
+private `shotledger/.github` repository and applied by the
+`shotledger-safe-settings` app.
+
 **Blocked until the repo is public or on a paid plan:** branch
-protection, rulesets and auto-merge are all unavailable on a free-plan
-private repo (confirmed 2026-09-10: the rulesets API answers 403
-"Upgrade to GitHub Pro or make this repository public") — merge
-discipline stays workflow-based until then. Once the repo goes public,
-add a `protect-main` ruleset with required checks, enable auto-merge,
-revisit safe-settings, and **audit the full history before flipping
-visibility** — the secrets rule in `~/.claude/CLAUDE.md` applies to
-anything that was ever pushed, not just what is on `main` today.
+protection, rulesets, auto-merge and required reviewers on an environment
+are all unavailable on a free-plan private repo (confirmed 2026-09-10:
+the rulesets API answers 403 "Upgrade to GitHub Pro or make this
+repository public"). Merge discipline stays workflow-based until then.
+
+**Going public** is issue #100, in this order:
+
+1. **History audit.** Making the repo public publishes every commit
+   reachable from a branch, a tag or a pull request (`refs/pull/*/head`),
+   not only `main`. Done 2026-10-19 over all 2,217 such commits: no
+   tokens, keys or private-key blocks; the only secret-like values are
+   test fixtures; commit authors are the maintainer, Claude
+   (`noreply@anthropic.com`) and Renovate; the only image outside
+   `app/assets/` and `branding/` is the synthetic license card fixture;
+   license numbers are synthetic (`A000.000/…`, `A123.456/…`). Re-run it
+   right before the switch, for anything pushed since:
+   `node scripts/history-audit.mjs` (fails on a finding; never prints a
+   matched value).
+2. **Licensing checks.** `reuse lint` runs in CI (`REUSE.toml`).
+3. **CLA mechanism** live before the first outside pull request
+   (`CONTRIBUTING.md`, "Signing the CLA").
+4. **Make the repo public** (maintainer only).
+5. **Then, in safe-settings:** a `protect-main` ruleset requiring every
+   check that runs on every PR (today `check`; set "require branch up to
+   date" off; never require `renovate/stability-days`), one approval
+   satisfied by `renovate-approve` for bot PRs with no bypass for
+   Renovate, `allow_auto_merge: true`, and a required reviewer on the
+   `release` environment.
