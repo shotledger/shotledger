@@ -51,7 +51,8 @@
       // Only the custom domain serves it: no *.workers.dev or preview URLs.
       "workers_dev": false,
       "preview_urls": false,
-      // Purges stale better-auth rate-limit rows (scheduled() in src/index.ts).
+      // Purges stale better-auth rate-limit and expired verification rows
+      // (scheduled() in src/index.ts).
       "triggers": { "crons": ["*/15 * * * *"] },
       "d1_databases": [
         {
@@ -71,6 +72,10 @@
         "ENVIRONMENT": "staging",
         "BETTER_AUTH_URL": "https://REPLACE_ME.invalid",
         "BETTER_AUTH_TRUSTED_ORIGINS": "shotledger://",
+        // Passkeys bind to BETTER_AUTH_URL's host. Set this only to bind them
+        // to a parent domain instead; that domain must then serve the app's
+        // .well-known files. Decide before the first deploy (#681).
+        // "PASSKEY_RP_ID": "REPLACE_ME",
       },
       "secrets": {
         "required": ["BETTER_AUTH_SECRET"],
@@ -81,7 +86,8 @@
       // Only the custom domain serves it: no *.workers.dev or preview URLs.
       "workers_dev": false,
       "preview_urls": false,
-      // Purges stale better-auth rate-limit rows (scheduled() in src/index.ts).
+      // Purges stale better-auth rate-limit and expired verification rows
+      // (scheduled() in src/index.ts).
       "triggers": { "crons": ["*/15 * * * *"] },
       "d1_databases": [
         {
@@ -101,6 +107,10 @@
         "ENVIRONMENT": "production",
         "BETTER_AUTH_URL": "https://REPLACE_ME.invalid",
         "BETTER_AUTH_TRUSTED_ORIGINS": "shotledger://",
+        // Passkeys bind to BETTER_AUTH_URL's host. Set this only to bind them
+        // to a parent domain instead; that domain must then serve the app's
+        // .well-known files. Decide before the first deploy (#681).
+        // "PASSKEY_RP_ID": "REPLACE_ME",
       },
       "secrets": {
         "required": ["BETTER_AUTH_SECRET"],

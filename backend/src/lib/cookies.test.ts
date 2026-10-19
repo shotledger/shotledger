@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { requestWithoutCookies, responseWithoutCookies, withoutCookies } from './cookies';
+import {
+  PASSKEY_CHALLENGE_HEADER,
+  requestWithoutCookies,
+  responseWithoutCookies,
+  withoutCookies,
+} from './cookies';
 
 describe('cookie stripping', () => {
   it('drops the Cookie header and keeps the rest', () => {
@@ -37,5 +42,55 @@ describe('cookie stripping', () => {
   it('passes a response with no cookie through untouched', () => {
     const original = new Response('x');
     expect(responseWithoutCookies(original)).toBe(original);
+  });
+});
+
+describe('the passkey challenge header', () => {
+  const pair = '__Secure-better-auth.better-auth-passkey=abc.sig%3D';
+
+  it('hands the challenge cookie out as a header, and no cookie', () => {
+    const headers = new Headers();
+    headers.append('set-cookie', `${pair}; Max-Age=300; Path=/; HttpOnly; Secure; SameSite=Lax`);
+    headers.append('set-cookie', '__Secure-better-auth.session_token=s; Max-Age=604800');
+    const response = responseWithoutCookies(new Response('{}', { headers }));
+    expect(response.headers.has('set-cookie')).toBe(false);
+    expect(response.headers.get(PASSKEY_CHALLENGE_HEADER)).toBe(pair);
+  });
+
+  it('adds no header when no challenge cookie was set', () => {
+    const headers = new Headers({ 'set-cookie': 'better-auth.session_token=s' });
+    const response = responseWithoutCookies(new Response('{}', { headers }));
+    expect(response.headers.has(PASSKEY_CHALLENGE_HEADER)).toBe(false);
+  });
+
+  it('turns the header back into the only cookie', () => {
+    const request = requestWithoutCookies(
+      new Request('https://x/api/auth/passkey/verify-authentication', {
+        method: 'POST',
+        headers: { cookie: 'a=1', [PASSKEY_CHALLENGE_HEADER]: pair },
+      }),
+    );
+    expect(request.headers.get('cookie')).toBe(pair);
+    expect(request.headers.has(PASSKEY_CHALLENGE_HEADER)).toBe(false);
+  });
+
+  it.each([
+    'better-auth.session_token=s',
+    `${pair}; better-auth.session_token=s`,
+    `${pair}, better-auth.session_token=s`,
+    'better-auth.better-auth-passkey=',
+  ])('carries no cookie for the malformed header %s', (value) => {
+    const request = requestWithoutCookies(
+      new Request('https://x/', { headers: { [PASSKEY_CHALLENGE_HEADER]: value } }),
+    );
+    expect(request.headers.has('cookie')).toBe(false);
+  });
+
+  it('accepts the unprefixed name a local http config uses', () => {
+    const local = 'better-auth.better-auth-passkey=abc.sig';
+    const request = requestWithoutCookies(
+      new Request('http://localhost/', { headers: { [PASSKEY_CHALLENGE_HEADER]: local } }),
+    );
+    expect(request.headers.get('cookie')).toBe(local);
   });
 });

@@ -1,4 +1,5 @@
 import { drizzleAdapter } from '@better-auth/drizzle-adapter';
+import { passkey } from '@better-auth/passkey';
 import { betterAuth } from 'better-auth';
 import { bearer } from 'better-auth/plugins';
 import { drizzle } from 'drizzle-orm/d1';
@@ -21,7 +22,7 @@ export class AuthConfigError extends Error {
  * better-auth falls back to its public default and, with no `NODE_ENV` on
  * Workers, only warns.
  */
-function deployedConfig(env: Env): { secret: string; baseURL: string } {
+function deployedConfig(env: Env): { secret: string; baseURL: string; rpID: string } {
   const secret = env.BETTER_AUTH_SECRET ?? '';
   if (secret === DEV_SECRET) throw new AuthConfigError('BETTER_AUTH_SECRET is the dev placeholder');
   if (secret.length < 32) {
@@ -37,7 +38,25 @@ function deployedConfig(env: Env): { secret: string; baseURL: string } {
   if (!url || url.protocol !== 'https:' || url.hostname.endsWith('.invalid')) {
     throw new AuthConfigError('BETTER_AUTH_URL is not set to an https origin');
   }
-  return { secret, baseURL: url.origin };
+  return { secret, baseURL: url.origin, rpID: passkeyRpId(env.PASSKEY_RP_ID, url.hostname) };
+}
+
+/**
+ * The passkey relying-party id: the host passkeys are bound to. It defaults
+ * to `BETTER_AUTH_URL`'s host; `PASSKEY_RP_ID` may widen it to a parent
+ * domain (the apex), which then has to serve the app's `.well-known` files
+ * too. Changing it later orphans every passkey already registered, so it is
+ * chosen once, before the first deploy (#681).
+ */
+export function passkeyRpId(configured: string | undefined, host: string): string {
+  const rpID = (configured ?? '').trim().toLowerCase() || host;
+  if (rpID.endsWith('.invalid')) throw new AuthConfigError('PASSKEY_RP_ID is a placeholder');
+  // WebAuthn §5.1.2: the origin's host or a parent domain of it (browsers
+  // also refuse a public suffix such as `co.uk`).
+  if (rpID !== host && !(host.endsWith(`.${rpID}`) && rpID.includes('.'))) {
+    throw new AuthConfigError(`PASSKEY_RP_ID ${rpID} is not ${host} or a parent domain of it`);
+  }
+  return rpID;
 }
 
 const AUTH_BASE_PATH = '/api/auth';
@@ -46,6 +65,11 @@ const AUTH_BASE_PATH = '/api/auth';
 const SIGN_IN_UP_RULE = { window: 60, max: 5 };
 /** Listing and revoking sessions: a stolen token should not sweep them unthrottled. */
 const SESSION_ADMIN_RULE = { window: 60, max: 10 };
+/**
+ * Each call stores a challenge row. A browser asks again after every
+ * cancelled or failed passkey prompt, so this is looser than sign-in.
+ */
+const PASSKEY_OPTIONS_RULE = { window: 60, max: 10 };
 export const RATE_LIMIT_LONGEST_WINDOW_MS = 60_000;
 
 /**
@@ -63,13 +87,23 @@ export function isWebSession(session: { createdAt: Date; expiresAt: Date }): boo
   return session.expiresAt.getTime() - session.createdAt.getTime() <= NOT_REMEMBERED_MAX_SPAN_MS;
 }
 
-type HookContext = { body?: unknown; context?: unknown } | null;
+type HookContext = { body?: unknown; query?: unknown; context?: unknown } | null;
+
+/**
+ * Email sign-in says so in its body. The passkey endpoint's body schema
+ * drops unknown fields, so a passkey sign-in says so in the query instead
+ * (`?rememberMe=false`).
+ */
+export function asksNotToBeRemembered(ctx: HookContext): boolean {
+  if ((ctx?.body as { rememberMe?: unknown } | undefined)?.rememberMe === false) return true;
+  return (ctx?.query as { rememberMe?: unknown } | undefined)?.rememberMe === 'false';
+}
 
 function webSessionExpiry(
   session: { createdAt: Date },
   ctx: HookContext,
 ): { data: { expiresAt: Date } } | undefined {
-  if ((ctx?.body as { rememberMe?: unknown } | undefined)?.rememberMe !== false) return undefined;
+  if (!asksNotToBeRemembered(ctx)) return undefined;
   return { data: { expiresAt: new Date(session.createdAt.getTime() + WEB_SESSION_TTL_MS) } };
 }
 
@@ -121,15 +155,25 @@ function list(value: string | undefined): string[] {
  * rate limiter. Locally the base URL is taken from the request and the
  * secret defaults to `DEV_SECRET`.
  *
+ * Passkeys (#681): the rp id is `passkeyRpId`'s, and a deployed env accepts
+ * a ceremony only from its own web origin. Locally the rp id is `localhost`
+ * (open the web app at http://localhost:8787, not 127.0.0.1) and the
+ * request's Origin is used, which better-auth has already checked against
+ * the trusted origins.
+ *
  * TODO(social-sign-in): needs real OAuth app registrations (Google/Apple
  * client id + secret) only the maintainer can create — `socialProviders`
  * would go here once those exist.
  */
 export function createAuth(env: Env) {
   const deployed = env.ENVIRONMENT !== 'development';
-  const { secret, baseURL } = deployed
+  const { secret, baseURL, rpID } = deployed
     ? deployedConfig(env)
-    : { secret: env.BETTER_AUTH_SECRET || DEV_SECRET, baseURL: env.BETTER_AUTH_URL || undefined };
+    : {
+        secret: env.BETTER_AUTH_SECRET || DEV_SECRET,
+        baseURL: env.BETTER_AUTH_URL || undefined,
+        rpID: undefined,
+      };
   // Filled in once the instance exists; the rate limiter reads it per request.
   let endpointPaths: string[] = [];
   const auth = betterAuth({
@@ -156,6 +200,12 @@ export function createAuth(env: Env) {
         '/revoke-sessions': SESSION_ADMIN_RULE,
         '/revoke-other-sessions': SESSION_ADMIN_RULE,
         '/delete-user': SIGN_IN_UP_RULE,
+        '/passkey/generate-authenticate-options': PASSKEY_OPTIONS_RULE,
+        '/passkey/verify-authentication': SIGN_IN_UP_RULE,
+        '/passkey/generate-register-options': SESSION_ADMIN_RULE,
+        '/passkey/verify-registration': SESSION_ADMIN_RULE,
+        '/passkey/delete-passkey': SESSION_ADMIN_RULE,
+        '/passkey/update-passkey': SESSION_ADMIN_RULE,
         '/**': (request, current) => isAuthEndpoint(authPathOf(request), endpointPaths) && current,
       },
     },
@@ -164,7 +214,7 @@ export function createAuth(env: Env) {
     // Otherwise its router console.errors an unexpected error whole, query
     // parameters included; thrown, it reaches `logSafeErrors` instead.
     onAPIError: { throw: true },
-    plugins: [bearer()],
+    plugins: [bearer(), passkey({ rpName: 'ShotLedger', rpID, origin: deployed ? baseURL : null })],
     databaseHooks: {
       session: {
         create: { before: (session, ctx) => Promise.resolve(webSessionExpiry(session, ctx)) },

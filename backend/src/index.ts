@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 
 import { betterAuthAuthenticator } from './auth';
 import { createAuth, DEV_SECRET } from './auth/better-auth';
-import { purgeStaleAuthRateLimits } from './db/auth-rate-limit-purge';
+import { purgeExpiredVerifications, purgeStaleAuthRateLimits } from './db/auth-rate-limit-purge';
 import { apiResponseHeaders, WORKER_PATHS } from './lib/api-headers';
 import { requestWithoutCookies, responseWithoutCookies } from './lib/cookies';
 import { logSafeErrors } from './lib/errors';
@@ -34,7 +34,8 @@ app.get('/', (c) => c.text('ShotLedger backend — hello world'));
 
 // better-auth's own handler serves sign-up/sign-in/sign-out/session
 // endpoints (docs/specs/backend-auth-photos-spec.md §2).
-// Bearer only: no cookie goes in or comes out (lib/cookies.ts).
+// Bearer only: no cookie goes in or comes out, bar the passkey challenge,
+// which travels as a header (lib/cookies.ts).
 app.on(['POST', 'GET'], '/api/auth/*', async (c) =>
   responseWithoutCookies(await createAuth(c.env).handler(requestWithoutCookies(c.req.raw))),
 );
@@ -54,6 +55,8 @@ app.onError(logSafeErrors);
 export default {
   fetch: app.fetch,
   async scheduled(_controller, env) {
-    await purgeStaleAuthRateLimits(env.DB, Date.now());
+    const now = Date.now();
+    await purgeStaleAuthRateLimits(env.DB, now);
+    await purgeExpiredVerifications(env.DB, now);
   },
 } satisfies ExportedHandler<Env>;
