@@ -56,7 +56,7 @@ function derSignature(raw: Uint8Array): Uint8Array {
   const integer = (bytes: Uint8Array) => {
     let start = 0;
     while (start < bytes.length - 1 && bytes[start] === 0) start++;
-    let body = bytes.slice(start);
+    let body: Uint8Array = bytes.slice(start);
     if (body[0]! & 0x80) body = concat(new Uint8Array([0]), body);
     return concat(new Uint8Array([0x02, body.length]), body);
   };

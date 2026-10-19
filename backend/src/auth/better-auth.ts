@@ -165,7 +165,19 @@ function list(value: string | undefined): string[] {
  * client id + secret) only the maintainer can create — `socialProviders`
  * would go here once those exist.
  */
-export function createAuth(env: Env) {
+/**
+ * What the Worker uses of a better-auth instance. Named rather than inferred:
+ * the inferred type reaches into `@simplewebauthn/server`'s types, which a
+ * declaration file cannot name.
+ */
+export interface Auth {
+  handler(request: Request): Promise<Response>;
+  api: {
+    getSession(args: { headers: Headers }): Promise<{ user: { id: string } } | null>;
+  };
+}
+
+export function createAuth(env: Env): Auth {
   const deployed = env.ENVIRONMENT !== 'development';
   const { secret, baseURL, rpID } = deployed
     ? deployedConfig(env)
@@ -228,5 +240,3 @@ export function createAuth(env: Env) {
     .filter((path): path is string => typeof path === 'string');
   return auth;
 }
-
-export type Auth = ReturnType<typeof createAuth>;

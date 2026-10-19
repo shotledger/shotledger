@@ -19,6 +19,7 @@ import {
 import { ALL_MIGRATIONS } from '../src/db/migrations';
 import { PASSKEY_CHALLENGE_HEADER } from '../src/lib/cookies';
 import worker from '../src/index';
+import { createAccountApi } from '@shotledger/shared';
 import { softAuthenticator, type SoftAuthenticator } from './soft-authenticator';
 
 const ORIGIN = 'https://localhost';
@@ -384,6 +385,39 @@ describe('managing passkeys', () => {
 
     expect(response.status).toBe(200);
     expect(await passkeyRows(userId)).toEqual([]);
+  });
+});
+
+describe("the shared client's passkey calls", () => {
+  it('add, list, sign in and remove, as the web app makes them', async () => {
+    let token: string | null = await signUp('client@example.com');
+    const ip = freshIp();
+    const client = createAccountApi({
+      baseUrl: ORIGIN,
+      getToken: () => token,
+      fetchImpl: (input, init) => fetchApp(input.slice(ORIGIN.length), { ...init, ip }),
+    });
+    const authenticator = await softAuthenticator(RP_ID, ORIGIN);
+
+    const adding = await client.passkeyRegistrationOptions();
+    await client.addPasskey(adding, await authenticator.register(adding.options as never), 'Mine');
+    const [listed] = await client.listPasskeys();
+    expect(listed).toMatchObject({ name: 'Mine', aaguid: '00000000-0000-0000-0000-000000000000' });
+
+    const userId = await userIdOf(token);
+    token = null;
+    const signingIn = await client.passkeySignInOptions();
+    const session = await client.signInWithPasskey(
+      signingIn,
+      await authenticator.authenticate(signingIn.options as never),
+      { remember: false },
+    );
+    expect(session.userId).toBe(userId);
+    expect(session.email).toBe('client@example.com');
+
+    token = session.token;
+    await client.removePasskey(listed!.id);
+    expect(await client.listPasskeys()).toEqual([]);
   });
 });
 
