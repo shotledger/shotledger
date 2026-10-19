@@ -138,6 +138,9 @@ this gap is only within the push that first carries the bad row.
 
 ### 2.3 Phone: hold a refused row's family across pushes
 
+> **Superseded by Revision 3 (§11, not approved).** Kept as the approved
+> text until the maintainer approves §11.
+
 New local state (a Drizzle migration on the phone, `app/src/db/migrations/`;
 local tables, not synced):
 
@@ -181,6 +184,9 @@ family then pushes on the next cycle, with the fixed row.
 
 ### 2.4 What the user sees
 
+> **Superseded by Revision 3 (§11, not approved).** Kept as the approved
+> text until the maintainer approves §11.
+
 - Account & Sync keeps "n change(s) refused by the server and not synced"
   (app-session count, unchanged).
 - New line while any entry is held: "n change(s) waiting on a refused change"
@@ -222,6 +228,8 @@ family then pushes on the next cycle, with the fixed row.
 - **C3 Tombstones are never held.** A deletion that waits behind a refusal
   would leave other devices showing data the user deleted.
 - **C4 The server decides within one push; the phone holds across pushes.**
+  _Superseded by Revision 3 (§11, not approved), which takes the
+  alternative below._
   Alternative: the server keeps refused families (a `sync_blocked` /
   `sync_held` pair of tables, released when the blocker arrives valid,
   with every later push checked against them through `json_extract`
@@ -464,10 +472,632 @@ Feature: the phone holds a refused row's family across pushes
 - **Q4** Show the held count on Account & Sync as a second line (§2.4)?
   Recommended.
 
+## 11. Revision 3: the server remembers refused families (NOT approved)
+
+**Status: not approved.** Written 2026-10-19 after verifier round 4 failed at
+`12a2cc6`, on the maintainer's decision "Server remembers: the server keeps a
+list of refused families. It refuses later rows of a family until the bad
+row arrives fixed, so a lost response or a re-edit can't split it. The
+phone-side hold is mostly removed." No code follows it until it is approved.
+
+### 11.1 Why
+
+All four verifier rounds failed in the same place: the phone kept hold state
+the server could not see, so every gap between the two split a family or
+lost an edit.
+
+- **Round 1 (B1):** a held deletion stayed held.
+- **Round 2:**
+  - B-1: a hold with nothing left to release it.
+  - B-2: a held edit overwrote another device's later one.
+- **Round 3:**
+  - B-1: this device's own pull echo dropped its held edit.
+  - B-2: a failed push left still-blocked entries unheld.
+- **Round 4:**
+  - B-1: re-queuing a still-invalid row released its family (X9, X10).
+  - B-2: a lost response or a crash in the ack loop split a family (X1,
+    X1b, X8).
+  - D-1: the clock rule was false in the first cycle of a hold (X7).
+
+Two facts decide the design:
+
+- **Only the server sees every push of every device.** So only the server
+  can tell whether the bad row has arrived fixed.
+- **The server orders writes by arrival** (`merge.ts`, R3: the push that
+  reached the server last wins; no timestamp is compared). A change the
+  server refused, and the phone sends again later, arrives late. Only the
+  server can remember when it _first_ arrived and order it by that. Items 8
+  and 9 tried to do this on the phone, with the pull and with clocks, and
+  rounds 3 and 4 broke both.
+
+### 11.2 What Revision 3 supersedes, and what stands
+
+**Superseded:**
+
+- **§2.3 (the phone holds a refused row's family across pushes), all of it.**
+  That means `sync_refused`, `sync_outbox.held`, steps 1–5, the pull
+  release, and "the refused row is fixed by".
+- **§2.4 in part.** The held line stays, but it now counts what the server
+  refused (§11.6).
+- **C4** (the server decides within one push only).
+- **C5** (a held entry stays in the outbox, flagged). The flag now caches a
+  server verdict; it decides nothing.
+- **N1 and N2 in part.** The protocol gains two fields and one reason, at
+  `PROTOCOL_VERSION` 1 (§11.7).
+- **Revision 2 items 7, 8, 9 and 10, entirely.** There is no phone-side
+  hold left to release (7, 10), and no phone-side ordering rule (8, 9).
+  Their code goes:
+  - `releaseUnblocked`;
+  - `readBlocked` / `isBlocked`;
+  - `readHeld`;
+  - `replacesHeldEdit`;
+  - the held-drop in `runPull`.
+- **Revision 2 item 6, entirely.** With no `held` flag, the triggers have
+  nothing to clear on a soft delete. A tombstone is never refused, by the
+  server (C3, §11.5), so a deletion always goes out.
+- **The manual's held-change paragraph.** Its clock sentence goes, which
+  fixes round 4's D-1.
+
+**Stands as approved:**
+
+- **§2.1:** families, the ownership and reference edges, C1, C2.
+- **C3:** tombstones are never refused.
+- **C6:** no rollback of rows already stored.
+- **C7:** `family_refused` is its own reason.
+- **§2.2:** the within-push family walk, extended in §11.4.
+- **§2.5:** out of scope.
+- **F1–F8, F10 and F11**, with F4 narrowed in §11.10.
+- **H12** (the web): its page half is #863.
+- **N3–N8.**
+- **Revision 2 items 1–5.**
+
+### 11.3 The server's tables (D1, `backend/`, ELv2)
+
+These are the server's own tables. They are created by `SYNC_MIGRATIONS`
+and its `backend/migrations/0000_sync_init.sql` mirror, edited in place (rule
+8: the backend has never been deployed; `test/migrations-drift.spec.ts`
+keeps the two copies equal). The Drizzle mirror is in
+`backend/src/db/schema.ts`.
+
+- **`sync_refusals`**, one row per refused row:
+  - primary key `(user_id, table_name, row_id)`;
+  - `reason` (`invalid_payload` | `family_refused`);
+  - `parent_table`, `parent_row_id`, nullable: the ownership parent named
+    by the refused change's payload, or null when it names none or cannot
+    be read;
+  - `refused_at`, the server's clock, for diagnostics only.
+
+  An `invalid_payload` row is a **bad row**: it blocks its family. A
+  `family_refused` row blocks nothing. It is remembered only for its
+  parent link, so the family stays connected while the row itself is not
+  stored. That is round 4's X8 shape: a new series and its shot, neither
+  stored.
+
+  The family root is computed when a push is judged, not stored, because a
+  link can arrive after the refusal. For example, T1 refused before the
+  server knew that its series R1 belongs to S1.
+
+- **`sync_sequence.state_rev`**, a new column: `INTEGER NOT NULL DEFAULT
+0`, bumped by every push batch that commits. It is two things:
+  - the user's **arrival clock**: every change in one push arrives at that
+    push's `state_rev`;
+  - the **snapshot version** for §11.8.
+- **`sync_rows.arrival_rev`**, a new column, `INTEGER NOT NULL`: when the
+  stored version first arrived (§11.5). It equals the push's `state_rev`
+  for a change applied on arrival, and the change's first arrival for a
+  change that was refused first.
+- **`sync_idempotency.arrival_rev`**, a new column, nullable: set on a
+  `family_refused` record, to the push's `state_rev` the first time that
+  `client_change_id` was refused.
+
+### 11.4 When a family is blocked
+
+A push is judged as a whole, from one snapshot (§11.8). The snapshot
+includes:
+
+- the user's `sync_refusals`;
+- the stored rows that the walk below needs;
+- `state_rev`.
+
+**Parent links.** A live change's parent is found in this order:
+
+1. its own payload's ownership column, when the change is in this push;
+2. else its `sync_refusals` row's parent link;
+3. else its stored row's payload in `sync_rows`.
+
+The **root** is the topmost row the walk reaches. That can be a bare id
+the server has never seen (§9's orphan rule). The walk is at most two steps
+(shot, series, session).
+
+**Bad rows.** The bad set is:
+
+- the bad rows in `sync_refusals`, minus any of them this push carries as a
+  valid live change or as a tombstone;
+- plus the changes this push refuses as `invalid_payload`;
+- minus the **inert** ones (below).
+
+**Blocked.** A live change is refused `family_refused` when either:
+
+- **session family:** a bad row of a session-family table has the same root;
+- **firearm family:** its own firearm, or itself if it is a firearm row, is
+  a bad `firearms` row.
+
+So a bad license still blocks only itself, as C2 says. This covers every
+later push and every device of the user (§11.9). It also covers rows whose
+parents are absent from the push: the root comes from the stored rows and
+the refusal links.
+
+**Inert bad rows.** A bad row is inert when:
+
+- it is tombstoned on the server; or
+- its root is tombstoned on the server; or
+- this push tombstones it or its root.
+
+An inert bad row blocks nothing, and the batch deletes its `sync_refusals`
+row. The user deleted what the refusal was about, so its family goes out
+as it did before #856: under a deleted session, the server stores the rows
+without a foreign-key check (N5). Round 2's H13 and round 3's V-D come out
+the same way.
+
+**In this push.** §2.2's walk stays. `familyRefusals` gains the stored and
+remembered links, and the remembered bad rows as extra roots. So F1–F3 and
+F6 hold within a push, and C4's within-push gap closes wherever the server
+knows the link.
+
+### 11.5 When a family is released, and how a late change is ordered
+
+**Release.** The family is released when no bad row of its root is left.
+A bad row's `sync_refusals` row is deleted, in the batch that does it,
+when:
+
+- it arrives as a **valid live change** and is applied, from any device or
+  the web; or
+- it arrives as a **tombstone** (C3: never refused); or
+- it becomes **inert** (§11.4).
+
+A **re-sent, still-invalid** bad row is refused `invalid_payload` again and
+stays bad. A re-queue alone releases nothing, which fixes round 4's B-1
+(X9, X10).
+
+A **pull** releases nothing on the server; the server is the only judge.
+On the phone, a pull is one of the retry signals (§11.6).
+
+**A `family_refused` change is not final.** Today its idempotency record
+makes a replay ack `duplicate` with the old verdict. Under Revision 3, a
+replay of a `family_refused` `client_change_id` is judged again:
+
+- still blocked: `family_refused` again, with the same `arrival_rev`;
+- released: decided as below.
+
+Only `applied`, `invalid_payload`, `tombstoned` and `superseded` are final.
+This supersedes F9 (§11.10). It is what makes a lost response harmless
+(X8): the second push decides afresh.
+
+**Ordering a late change.** A change refused `family_refused` and applied
+later carries its **first arrival**: the `arrival_rev` of its idempotency
+record. Every other change arrives at its push's `state_rev`. A live change
+whose row is stored:
+
+- is applied when the stored `arrival_rev` is at most the change's
+  arrival, and stores that arrival;
+- is otherwise refused **`superseded`** (a new reason, final): a write that
+  reached the server later already won.
+
+This is R3, last arrival wins, with a refused change counted from when it
+first arrived. It is the ordering items 8 and 9 tried to reach on the
+phone.
+
+- A normal change arrives after everything stored, so R3 is unchanged for
+  normal traffic.
+- R2 is unchanged: a live edit over a tombstone is `tombstoned`, whatever
+  its arrival.
+- The applied change still takes a new `seq`, so every device's pull
+  cursor sees it.
+
+**Precedence.** A live change is judged in this order:
+
+1. `tombstoned` (R2, C11, F10);
+2. `invalid_payload` (#697's validator, unchanged);
+3. `family_refused`;
+4. `superseded`;
+5. `applied`.
+
+An invalid change over a tombstoned row is reported `tombstoned`, as now,
+and is **not** a bad row. Its row is deleted, so it blocks nothing.
+
+### 11.6 The phone
+
+**Kept:**
+
+- **`sync_outbox.refused_arrival INTEGER`**, null when not refused. It
+  replaces `held`. A `family_refused` ack sets it to the ack's `arrival`;
+  the write is rev-matched, as clearing is.
+- **The outbox trigger** sets it back to null with `client_change_id` on
+  every write of the row. A new local version is a new change, with a new
+  arrival.
+- **The entry is never cleared on `family_refused`.** It stays queued with
+  its `client_change_id`, which is no longer reset, so a replay finds its
+  first arrival (§11.5).
+
+**Removed:**
+
+- `sync_refused`;
+- `held`;
+- every family walk on the phone;
+- item 6's trigger clause;
+- items 7–10's engine code.
+
+`shared/src/sync/family.ts` stays; the server uses it.
+
+**Retry.** A refused entry (`refused_arrival` set) is skipped by
+`readOutbox` except in a retry pass. Each entry is sent at most once per
+pass; within a cycle the read walks forward by `rev`, so a refused entry
+cannot spin the iteration cap (H9). A cycle makes one retry pass when any
+of these holds:
+
+- its pull returned at least one change;
+- its push had an `applied` ack;
+- it is the first cycle since the app started.
+
+A family is released only by a write the server applies: the fix, a
+deletion, or a deletion of the root. Each of those reaches this phone either
+as an `applied` ack (its own write) or as a pulled change (another device's
+write or the web's). So the retry signal cannot miss a release, and it
+needs no timer or clock (the `shared/` rule).
+
+The cost is one resend of the refused entries per signal. While the user
+scores a blocked session, only the new entries go out: the server refuses
+them, nothing is applied, so nothing signals.
+
+**Shadowing.** A pulled change for a row with a queued entry:
+
+| The queued entry is… | The pulled change is…                                          | Result                                                                                               |
+| -------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| not refused          | anything                                                       | shadowed, as today. The entry goes out this cycle, arrives last, and wins                            |
+| refused              | a tombstone                                                    | applied, and the entry dropped (rev-matched, before the apply). R2 would reject the edit             |
+| refused              | live, its `arrival` greater than the entry's `refused_arrival` | applied, and the entry dropped. It reached the server after the refused change first did, so it wins |
+| refused              | live, its `arrival` not greater                                | shadowed. The refused change first arrived later and will win when released                          |
+
+The pull carries each row's `arrival_rev` as `arrival` (§11.7). So the phone
+applies the server's own order and no clock: there is no `updatedAt`
+comparison.
+
+- **This device's own echo** (ECHO, H16) is older than its own refused edit,
+  so it is shadowed.
+- **Another device's later edit** (round 2's A-name/B-name, X7) has a
+  greater arrival. It wins.
+
+A `superseded` ack clears the entry. The winning version reaches the phone
+by pull: it was never shadowed by this entry, because the table above
+shadows only what the entry beats.
+
+**What the user sees (§2.4, revised):**
+
+- "n change(s) waiting on a refused change" counts outbox entries with
+  `refused_arrival` set. The server's acks set it, and it survives a restart
+  (C5's reason).
+- "n change(s) waiting to upload" counts only the entries not refused, so a
+  waiting change is no longer counted on both lines (round 4's N-2).
+- The refused line, the app-session `invalid_payload` count, is unchanged.
+
+The manual's held paragraph says:
+
+- the server holds the family back until the refused change arrives fixed,
+  or until it or its session is deleted, from any device;
+- changes to that session from other devices wait too;
+- when two devices change the same entry, the change that reached the
+  server last wins, and a waiting change counts from when it first reached
+  the server.
+
+### 11.7 Protocol
+
+Changed in place, at `PROTOCOL_VERSION` 1 (rule 8):
+
+- `ChangeRow.arrival`: the row's `arrival_rev`.
+- `PushAck.arrival`: on a `family_refused` ack.
+- `superseded`: a new rejection reason.
+
+This supersedes N1's "only a new `reason` value appears", and N2's
+"the pull path is unchanged on the server". N6 stands: `arrival` is a
+counter, not an id or a value.
+
+The web's `direct-push.ts` reports `superseded` and `family_refused` as
+`partlyRejected`. The page's message is #863.
+
+### 11.8 Idempotency and atomicity
+
+- **One batch.** Recording and deleting `sync_refusals` rows, the
+  idempotency records (with `arrival_rev`), the applies with their `seq` and
+  `arrival_rev`, and the `state_rev` bump all go into the push's one D1
+  batch, one transaction. A refusal is never recorded without the push's
+  other outcomes, or the reverse.
+- **Snapshot check (optimistic).** The route judges the push from a
+  snapshot, so another device's push can commit between the read and the
+  batch. Every statement in the batch therefore carries the guard
+  "`state_rev` still equals the snapshot's", and the batch's last statement
+  bumps `state_rev` under the same guard. A batch whose guard fails writes
+  nothing.
+  - The route sees that the bump did not happen, then reads and judges
+    again, at most 3 times.
+  - After that it answers 503, and the phone backs off as for any failed
+    push.
+  - Two devices pushing into one family at once are therefore judged one
+    after the other, each against the other's committed state (CONC).
+- **Lost response** (X8): the batch committed and the phone got nothing.
+  The phone sends the same ids again. Results that are final replay as
+  `duplicate` with their reason. `family_refused` is judged again
+  (§11.5). The family therefore lands whole, or stays refused whole.
+- **A crash in the phone's ack loop** (X1, X1b): the phone's only state is
+  the `refused_arrival` cache and the outbox entry. A crash leaves an entry
+  queued, refused or not, and it is sent again; the server decides again.
+  Nothing on the phone can release or split a family.
+
+### 11.9 Roots across devices
+
+Families are per user. Another device's rows in a blocked family are refused
+`family_refused` too, and wait on that device, counted on its held line,
+until the bad row arrives fixed or the family is deleted.
+
+The bad row may exist only on the device that wrote it, and that device may
+be gone. The other device can still release the family in one of two ways:
+
+- **delete the session.** A tombstone of the root makes the bad row inert;
+- **edit the bad row,** if the server stores an older version of it, which
+  syncs a valid version.
+
+Q2 asks whether a block should also lift by itself.
+
+### 11.10 Scenarios
+
+**Stand as written in §4:** F1, F2, F3, F5, F6, F7, F8, F10, F11, H4, H5,
+H6, H12.
+
+**Revised:**
+
+- **F4.** A row whose parent is in neither the push, `sync_rows` nor
+  `sync_refusals` is not linked. It is its own family, by the §9 rule.
+- **F9.** A replayed `family_refused` change is judged again (below).
+- **H1–H3, H7–H11 and H13–H17** are restated below, with the server as the
+  judge.
+
+```gherkin
+Feature: The server remembers refused families (Revision 3)
+
+  # Every cycle: pull, then push. "A" and "B" are two devices of one user.
+  # S1 owns series R1 and R2; R1 owns shots T1, T2; R2 owns T3.
+
+  Scenario: F9' a replayed family_refused change is judged again
+    Given R1 was refused family_refused with T2 invalid
+    And T2 has since arrived valid
+    When R1's client_change_id is pushed again
+    Then R1 is applied, not acked duplicate
+
+  Scenario: H1' rows after a refused session are refused by the server
+    Given S1 was refused invalid_payload
+    When A pushes R1, T1 and T2 in a later push
+    Then all three are acked family_refused with one arrival
+    And A shows "3 change(s) waiting on a refused change"
+    And B pulls nothing of S1's family
+
+  Scenario: H2' fixing the refused row sends the family in the same cycle
+    Given H1'
+    When A edits S1 to a valid name
+    Then S1 is applied, the applied ack starts a retry pass,
+         R1, T1 and T2 are applied in the same cycle,
+         and B receives all four
+
+  Scenario: H3' family_refused entries are never lost
+    Given R1 is refused family_refused
+    Then its outbox entry stays queued with its client_change_id
+    And it is sent again in the next retry pass
+
+  Scenario: H7' deleting the refused row releases the family
+    Given H1'
+    When A deletes S1
+    Then the tombstone of S1 is applied (C3)
+    And S1's refusal is deleted
+    And the retry pass applies R1, T1 and T2 under the deleted session (N5)
+
+  Scenario: H8' another device's valid version of the refused row releases it
+    Given T2 is refused, and B holds an older stored T2
+    When B edits T2 validly and syncs
+    Then T2's refusal is deleted
+    And A's next pull returns B's T2, which starts A's retry pass
+    And A's waiting rows of S1 are applied
+
+  Scenario: H9' refused entries never stall the outbox
+    Given 600 entries with refused_arrival set and 10 tags queued
+    When a cycle runs with no retry signal
+    Then the 10 tags are pushed in one push and the cycle drains
+
+  Scenario: H10' tombstones are never refused
+    Given S1 is a bad row
+    When A deletes T1
+    Then the tombstone is applied
+
+  Scenario: H11' the waiting count survives a restart
+    Given H1', and the app restarts
+    Then Account & Sync shows "3 change(s) waiting on a refused change"
+    And the first cycle makes a retry pass
+
+  Scenario: H13' a bad row acked tombstoned blocks nothing (round 2, V-D)
+    Given B deleted S1 and synced
+    When A, not yet synced, pushes S1 with name null, plus R1 and T1
+    Then S1 is acked tombstoned and is not recorded as a bad row
+    And R1 and T1 are applied in that push
+
+  Scenario: V1 deleting a waiting row sends the deletion (round 1)
+    Given S1 is a bad row and T1's edit is waiting family_refused
+    When A soft-deletes T1
+    Then the trigger clears refused_arrival
+    And the tombstone is pushed and applied, and B deletes T1
+
+  Scenario: ECHO this device's own older push does not replace its waiting edit (round 3, H16)
+    Given S1, R1 and T1 are on A and B
+    And A pushes S1 "A1" and an invalid T2 of R1
+    And during that push the user renames S1 to "A2"
+    Then "A1" is applied and T2 is a bad row
+    And A's next push sends "A2", which is refused family_refused with arrival F
+    When A pulls its own "A1", whose arrival is less than F
+    Then the pull is shadowed and A keeps "A2"
+    And when T2 is fixed, "A2" is applied and both devices show "A2"
+
+  Scenario: RELEASEFAIL a failed push changes nothing (round 3, H17)
+    Given T2 is a bad row and A's rename of S1 is waiting family_refused
+    When pushes fail with batches of 2 and of 1
+    Then the server's refusals are unchanged
+    And A's entry is still queued, with or without refused_arrival
+    When B renames S1 and syncs
+    Then B's rename is refused family_refused too (§11.9)
+    And once T2 is fixed, both renames are applied in first-arrival order,
+        and both devices show B's
+
+  Scenario: AB another device's later edit of a waiting row wins (round 2, H14)
+    Given T2 of S1 is a bad row from A
+    And A's rename of S1 to "A-name" is waiting with arrival F1
+    And B renames S1 to "B-name", which is refused with arrival F2 > F1
+    When A fixes T2
+    Then "A-name" is applied with arrival F1 in A's cycle
+    And B's retry pass applies "B-name" with arrival F2
+    And both devices show "B-name"
+
+  Scenario: VC another device's deletion of a waiting row arrives at once (round 2, H15)
+    Given T2 of S1 is a bad row and A's rename of S1 is waiting
+    When B deletes S1 and R1 and syncs
+    Then A's pull applies both tombstones and drops A's waiting entry
+    And S1's bad row is inert and its refusal is deleted
+
+  Scenario: X1 a crash after the invalid ack leaves nothing half-done (round 4)
+    Given A pushes S1 with name null, and the server records it as a bad row
+    When the phone throws while handling the ack
+    Then the next cycle sends S1 again
+    And it replays duplicate invalid_payload
+    And A's later R1 and T1 are refused family_refused by the server
+
+  Scenario: X1b a crash before the family_refused ack is handled (round 4)
+    Given the server refused R1 family_refused
+    And the phone threw before recording refused_arrival
+    When T2 is fixed
+    Then R1's replay is judged again and applied with T2 in the same push or retry pass
+    And B never has T2 without R1
+
+  Scenario: X5 a waiting row deleted locally keeps its deletion (round 4)
+    Given R1 waits family_refused and A deletes R1 at 10:00
+    And B edits R1 at 11:00
+    Then A's tombstone of R1 is applied (C3)
+    And B's later live edit is acked tombstoned (R2)
+    And the deletion stands on both devices
+
+  Scenario: X7 offline edit, then another device's later edit (round 4)
+    Given T2 is a bad row
+    And A, offline, renames S1 to "A-name"
+    And B renames S1 to "B-name", which is refused with arrival F2
+    When A comes online
+    Then A's pull has nothing of S1 to shadow
+    And A's rename is refused with arrival F3 > F2
+    And once T2 is fixed, "A-name" wins on both devices
+    # The change that first reached the server last wins.
+    # No clock is involved, so the manual's wording holds in every cycle.
+
+  Scenario: X8 a lost push response cannot split a family (round 4)
+    Given A pushes R1 (new) and T1 (invalid)
+    And the server records T1 as bad and refuses R1 family_refused
+    And the response is lost
+    When the user fixes T1 and A pushes R1 (same id) and T1 (new id)
+    Then T1 is applied, and R1's replay is judged again and applied
+    And B pulls R1 and T1 together
+
+  Scenario: X9 a still-invalid re-queue keeps the family blocked (round 4)
+    Given T2 of R1 is a bad row
+    And A adds T3 of R2
+    When the user edits T2 again and it stays invalid
+    Then T2 is refused invalid_payload and stays bad
+    And T3 is refused family_refused: its root S1 comes from the stored R2
+    And B has neither
+
+  Scenario: X10 a batch boundary cannot split a family (round 4)
+    Given S1 is a bad row, and R1 and T1 are waiting
+    And a write re-queues S1, still invalid
+    When pushes run with a batch of 2
+    Then R1 and T1 are refused family_refused
+    And S1 is refused invalid_payload
+    And B has none of them
+
+  Scenario: L1 a fix written mid-push goes out in the same cycle (round 1 O2, round 3 L-1)
+    Given A pushes S1 with name null and tag G1
+    And the user fixes S1 during the push
+    Then the fix is applied in the next iteration
+    And its applied ack starts a retry pass in the same cycle
+
+  Scenario: CONC two devices push into one family at once
+    Given A's push makes T2 a bad row
+    And B's push carries T3 of S1, and both are judged from the same snapshot
+    When A's batch commits first
+    Then B's batch writes nothing, because its snapshot guard fails
+    And B's push is judged again and T3 is refused family_refused
+
+  Scenario: ROOT a session deleted on another device releases its family
+    Given T2 of S1 is a bad row and T3 waits on A
+    When B deletes S1 and syncs
+    Then the bad row is inert and its refusal is deleted
+    And A's retry pass applies T3
+```
+
+### 11.11 Failure model (Revision 3)
+
+| Failure                                                         | Caught by                                                                      |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| A family member slips through within a push                     | F1–F3, F6; the property test over generated trees                              |
+| A family splits in a later push after a re-queue of the bad row | X9, X10                                                                        |
+| A lost response or a replay splits a family                     | X8, F9'                                                                        |
+| A crash on the phone splits a family                            | X1, X1b, RELEASEFAIL                                                           |
+| Two devices' concurrent pushes split a family                   | CONC                                                                           |
+| A family is never released                                      | H2', H7', H8', H13', ROOT, VC; the retry-signal completeness argument in §11.6 |
+| A waiting edit overwrites a later edit from another device      | AB, X7                                                                         |
+| This device's own echo replaces its waiting edit                | ECHO                                                                           |
+| A deletion is held back or lost                                 | H10', V1, X5, VC                                                               |
+| Refused entries spin or stall the push                          | H9'                                                                            |
+| A seq is consumed, or a half-write happens, on a refusal        | F1 `last_seq`; the atomicity suite; one batch (§11.8)                          |
+| A new foreign key ships unclassified                            | F11                                                                            |
+| Old reasons change meaning                                      | N3; F10; §11.5's precedence                                                    |
+
+### 11.12 Existing data
+
+Pre-1.0 (rule 8), with no compatibility path:
+
+- **The server's D1 tables** change in `0000_sync_init` in place. A local
+  `wrangler dev` database is recreated.
+- **The phone's baseline** changes in place:
+  - `sync_refused` goes;
+  - `held` becomes `refused_arrival`;
+  - item 6's trigger clause goes;
+  - the journal `when` is bumped.
+
+  The old install is cleared (`pm clear`), as for every baseline edit so
+  far.
+
+### 11.13 Questions for the maintainer (Revision 3)
+
+- **Q1 Approve Revision 3** as written: the server remembers, the phone
+  retries, and a late change keeps its first arrival (`superseded`)?
+  **Recommended: yes.**
+- **Q2 Should a block lift by itself after some time** (for a bad row on a
+  device that is gone)? **Recommended: no.** Deleting the session, or
+  editing a stored bad row from another device, already releases it, and an
+  automatic lift would split the family the design exists to keep whole.
+- **Q3 Drop Revision 2 item 6** (the soft-delete clause in 28 triggers),
+  which has nothing left to do? **Recommended: yes.**
+- **Q4 Change the protocol in place** at version 1 (`arrival` on pulled rows
+  and on `family_refused` acks, reason `superseded`)? **Recommended: yes**
+  (rule 8).
+
 ## Revisions
 
 - **Revision 1 (2026-10-14).** First draft, before implementation.
 - **Approved (2026-10-16).** Q1–Q4 answered as recommended.
+- **Revision 3 (2026-10-19), not approved.** The server remembers refused
+  families; see §11. It supersedes §2.3, §2.4, C4, parts of item 6 and items
+  7–10 of Revision 2 once approved.
 - **Revision 2 (2026-10-16), during implementation.** Items 1–5 approved by
   the maintainer, 2026-10-16: "Approve, file issue", answering "Approve the
   implementation corrections (Revision 2) to the #856 spec?"; item 4's web
