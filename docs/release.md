@@ -415,7 +415,15 @@ repository public"). Merge discipline stays workflow-based until then.
    matched value).
 2. **Licensing checks.** `reuse lint` runs in CI (`REUSE.toml`).
 3. **CLA mechanism** live before the first outside pull request
-   (`CONTRIBUTING.md`, "Signing the CLA").
+   (`CONTRIBUTING.md`, "Signing the CLA"): the hosted CLA Assistant
+   (<https://cla-assistant.io>), chosen 2026-10-19. Sign in there as the
+   maintainer, put the text of `CLA.md` in a GitHub Gist, and link the
+   gist to `shotledger/shotledger`. Allowlist bots (`renovate[bot]`,
+   `*[bot]`). Commits authored by the agents' identity
+   (`noreply@anthropic.com`) belong to no GitHub account, so the check
+   will flag them: open a test pull request and settle how those are
+   handled before the check becomes required. When `CLA.md` changes,
+   update the gist so contributors re-sign the new version.
 4. **Make the repo public** (maintainer only).
 5. **Then, in safe-settings:** a `protect-main` ruleset requiring every
    check that runs on every PR (today `check`; set "require branch up to
