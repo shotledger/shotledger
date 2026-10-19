@@ -24,5 +24,11 @@ summary:
 In SPDX terms: backend/ is "Elastic-2.0"; the rest is
 "AGPL-3.0-or-later WITH LicenseRef-ShotLedger-AGPL-Permissions".
 
+Commercial licenses: as the copyright holder, Jimisola Laursen also
+licenses ShotLedger under separate commercial terms, for anyone who wants to
+use it without the obligations of the licenses above. Those terms are agreed
+case by case and are not part of this repository; they never withdraw the
+public licenses above. See docs/adr/0023-dual-licensing-agpl-and-commercial.md.
+
 Contributions: see CONTRIBUTING.md and CLA.md. The reasoning behind this map
 is recorded in docs/adr/0017-license-map-and-business-model.md.

@@ -1,7 +1,9 @@
 # ADR 0017: license map and business model — AGPL app, ELv2 backend, paid services
 
 Status: accepted (2026-09-30). Supersedes ADR 0004. Amended by ADR 0021
-(accepted 2026-10-14): the Drizzle tables join `shared/src/sync/`.
+(accepted 2026-10-14): the Drizzle tables join `shared/src/sync/`. Amended by
+ADR 0023 (accepted 2026-10-19): the copyright holder also offers commercial
+licenses (dual licensing).
 
 Not legal advice. The sources at the end were read in full; a lawyer's review
 is still owed, and it and the other open actions are tracked on #100.
