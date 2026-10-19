@@ -451,6 +451,6 @@ secret`, never committed, provisioned by the maintainer.
 - **§2/§3 passkeys (#681)**: the `passkey` table joins `0001_auth_init`
   (rewritten in place, rule 8) with its credential id unique, not just
   indexed, so one credential cannot sit on two accounts. Account deletion
-  removes its rows, and the cron also purges expired `verification` rows,
-  which cancelled passkey prompts leave behind. `backend/test/passkey.spec.ts`
+  removes its rows. The challenge rows a cancelled passkey prompt leaves
+  in `verification` go with the cron's expired-records purge (#875). `backend/test/passkey.spec.ts`
   runs real ceremonies on workerd with a software authenticator.

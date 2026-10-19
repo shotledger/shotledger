@@ -85,6 +85,18 @@ What the deployed config already does:
 
 - [ ] **Decide the hostname(s).** That decision is the maintainer's and is
       not recorded anywhere yet; nothing in the repo assumes one.
+- [ ] **Decide whether the data stays in the EU.** D1 and R2 take a
+      jurisdiction only when they are created; it cannot be added later.
+- [ ] Run `pnpm cloudflare:setup staging <hostname>` from the repo root
+      (add `--eu` for EU jurisdiction, `--dry-run` to see the changes
+      first; needs `npx wrangler login`). `scripts/cloudflare-setup.mjs`
+      does the next two steps: it creates the D1 database and R2 bucket,
+      fills in the env's block of `backend/wrangler.jsonc` (and, for
+      `production`, `apiBaseUrl` in `app/app.json`), generates
+      `BETTER_AUTH_SECRET` into `~/cloud/agents/secrets/shotledger/` and
+      uploads it. Running it again reuses what exists. Commit the config
+      change on a branch; the ids are not secrets. To do it by hand
+      instead:
 - [ ] Create the env's D1 database and R2 bucket, then in its
       `env.<name>` block of `backend/wrangler.jsonc` replace the
       `REPLACE_ME` `database_id`, check the `bucket_name`, set
@@ -204,28 +216,37 @@ dependency, `app.json` plugins or permissions) still needs a release.
 
 One-time, before the first update:
 
-- [ ] `cd app && eas init`, if `app/app.json` has no
-      `extra.eas.projectId` yet (the same step as in (a)).
-- [ ] `cd app && eas update:configure`. It adds `updates.url` to
-      `app/app.json`. `runtimeVersion` and the channels in `app/eas.json`
-      are already set, so commit only the URL and project id it writes.
-- [ ] Ship one release **after** that commit. Builds made before it have
-      no update URL and never check for updates.
+- [ ] `cd app && eas project:info` prints the project id in
+      `app/app.json` (`extra.eas.projectId`). `updates.url` is
+      `https://u.expo.dev/<that id>`, already committed. If the id is not
+      your project's, run `eas init` and fix both values together.
+- [ ] `cd app && eas update:configure` should change nothing. If it
+      writes to `app/app.json` or `app/eas.json`, review and commit that.
+- [ ] Add `EXPO_TOKEN` to the `release` environment if the release
+      workflow does not already have it there.
+- [ ] Ship one release **after** `updates.url` landed. Builds made before
+      it have no update URL and never check for updates.
 
 Every update:
 
 0. An update that carries a migration of a synced table waits for the
    sync server, and a phone that has not taken the update has its changes
    to that table refused, as step 0 of a release says.
-1. Check out the release's tag (or its `hotfix/*` branch with the fix on
-   top). The runtime version is the app version, so the update has to be
-   published with that release's version.
-2. Stamp it the way the release workflow does:
-   `cd app && npm pkg set version=<release version>`. Don't commit it.
-3. `cd app && eas update --channel production --message "<what changed>"`.
-   Use `--channel preview` to try it on a preview APK first.
-4. Phones pick it up on the next launch after the download finishes, so
+1. Run the **EAS Update** workflow (`.github/workflows/eas-update.yml`,
+   Actions → EAS Update → Run workflow). Dispatch it on the release's tag,
+   or on its `hotfix/*` or `release/*` branch with the release version as
+   input. The runtime version is the app version, so the update has to
+   be built from that release with that version stamped; the workflow
+   refuses `main`, where the version is the `0.0.0` placeholder. Pick
+   `preview` first to try it on a preview APK, then run it again with
+   `production`. It runs the same checks as a release, then waits on the
+   `release` environment.
+2. Phones pick it up on the next launch after the download finishes, so
    expect it on the second launch.
+
+By hand, the same thing is: check out the tag (or hotfix branch),
+`cd app && npm pkg set version=<release version>` (don't commit it), then
+`eas update --channel <preview|production> --platform android --message "<what changed>"`.
 
 Locally built APKs (the `run-app` standalone APK) have no channel and never
 receive updates.

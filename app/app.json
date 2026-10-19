@@ -8,6 +8,9 @@
     "runtimeVersion": {
       "policy": "appVersion"
     },
+    "updates": {
+      "url": "https://u.expo.dev/40247c86-ecf3-463d-a5a4-0ec904fa6109"
+    },
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",

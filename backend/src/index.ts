@@ -2,7 +2,8 @@ import { Hono } from 'hono';
 
 import { betterAuthAuthenticator } from './auth';
 import { createAuth, DEV_SECRET } from './auth/better-auth';
-import { purgeExpiredVerifications, purgeStaleAuthRateLimits } from './db/auth-rate-limit-purge';
+import { purgeStaleAuthRateLimits } from './db/auth-rate-limit-purge';
+import { purgeExpiredRecords } from './db/expired-records-purge';
 import { apiResponseHeaders, WORKER_PATHS } from './lib/api-headers';
 import { requestWithoutCookies, responseWithoutCookies } from './lib/cookies';
 import { logSafeErrors } from './lib/errors';
@@ -57,6 +58,6 @@ export default {
   async scheduled(_controller, env) {
     const now = Date.now();
     await purgeStaleAuthRateLimits(env.DB, now);
-    await purgeExpiredVerifications(env.DB, now);
+    await purgeExpiredRecords(env.DB, now);
   },
 } satisfies ExportedHandler<Env>;

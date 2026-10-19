@@ -12,16 +12,3 @@ export async function purgeStaleAuthRateLimits(db: D1Database, nowMs: number): P
     .run();
   return result.meta.changes;
 }
-
-/**
- * Deletes expired `verification` rows. A passkey prompt that is cancelled
- * leaves its challenge row behind; better-auth removes one only when it is
- * used. Run by the same cron.
- */
-export async function purgeExpiredVerifications(db: D1Database, nowMs: number): Promise<number> {
-  const result = await db
-    .prepare('DELETE FROM verification WHERE expires_at < ?')
-    .bind(nowMs)
-    .run();
-  return result.meta.changes;
-}

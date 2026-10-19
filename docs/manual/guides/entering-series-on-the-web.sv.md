@@ -138,6 +138,12 @@ avlossade skotten; för fältskjutning med sex för varje sparad station, strukn
 stationer och särskjutning inräknade. Fotona skickas först, och passet först när alla foton har
 kommit fram; telefonen hämtar dem som vilka synkade foton som helst.
 
+Avvisar servern en del av passet säger sidan hur många ändringar som
+avvisades och inte sparades, så som telefonens kontoskärm räknar avvisade
+ändringar, och serierna finns kvar på sidan. **Pass** visar det som kom fram.
+Ett vapen som tagits bort på en annan enhet är det enda undantaget: passet
+sparas och bara det vapnets skottantal ändras inte.
+
 Går ett foto inte att skicka sparas ingenting. Går servern inte att nå, eller
 har fler än 60 foton skickats den senaste timmen, blir **Spara** till
 **Försök igen**, som bara skickar de foton som inte kommit fram och sedan

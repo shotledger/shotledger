@@ -1547,6 +1547,7 @@
       "saved": "Sparat.",
       "savedReload": "Sparat. Ladda om sidan för att se det i statistiken.",
       "savedFirearmRejected": "Sparat, men vapnet har tagits bort på en annan enhet, så dess skottantal ändrades inte.",
+      "refused": "{{count}} ändring(ar) avvisades av servern och sparades inte. Serierna finns kvar.",
       "failedNetwork": "Kunde inte nå servern. Serierna finns kvar; Försök igen skickar samma pass igen.",
       "failedSignedOut": "Du har loggats ut. Logga in igen och spara sedan på nytt.",
       "failedOutdated": "Sidan är inaktuell. Kopiera dina serier och ladda sedan om sidan.",

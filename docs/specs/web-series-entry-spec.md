@@ -232,6 +232,7 @@ An ack set that does not match the sent `clientChangeId`s one to one is
 | saved                    | Saved; the logbook refreshes from the server                                        | cleared                 |
 | saved, refresh failed    | Saved; reload to see it                                                             | cleared                 |
 | partlyRejected (firearm) | Saved, but the firearm was deleted on another device, so its counter did not move   | cleared                 |
+| partlyRejected (other)   | N change(s) refused by the server and not saved, as the phone's Account screen says | kept, nothing held      |
 | network                  | Could not reach the server: **Retry**                                               | kept, request held (C2) |
 | unauthenticated          | Signed out: sign in again here (inline form), then **Retry**                        | kept, request held      |
 | versionUnsupported       | This page is out of date. Copy your series, then reload                             | kept                    |
@@ -346,6 +347,7 @@ Feature: the page model (web/src/entry/*.test.ts, the web package's pure-module 
   Scenario: U2 a failed save keeps the draft and holds the request; Retry resends the identical request
   Scenario: U3 editing the draft after a failure drops the held request
   Scenario: U4 a save refreshes the logbook and clears the draft; a failed refresh says "reload"
+  Scenario: U4b a refused session row is not reported as saved (#863)
   Scenario: U5 the discipline options exclude hits disciplines
   Scenario: U6 Enter in the last free-format row adds a row; in a fixed-format skeleton it does not
 
@@ -567,3 +569,17 @@ Added after the maintainer graded independent verification round 2
   The accepted form is the builder's decision under the maintainer's
   instruction; the guard is unverified until verification round 3, which the
   maintainer approved beyond the cap of two.
+
+Added for #863 (2026-10-19):
+
+- **R29 (R25's choice reversed).** A `partlyRejected` push that refuses any
+  row other than the firearm's counter is no longer "Saved". The page says
+  `web.entry.refused`, "N change(s) refused by the server and not saved",
+  which is the phone's Account screen line (`account.refusedChanges`) with
+  "not saved" for "not synced": the web has no local copy to sync later. It
+  says what was refused rather than "could not save", so it stays true when
+  the rest of the session was stored (R25's concern). The draft is kept and
+  nothing is held: a resend would be refused again. The logbook still
+  refreshes, so Sessions shows what did land. #856's whole-family refusal
+  (`family_refused`) arrives as rejected acks for every row of the session,
+  so it reads as the same outcome. Scenario **U4b**.
