@@ -10,7 +10,6 @@ import { db } from '@/db/client';
 import { MigrationGate } from '@/db/migration-gate';
 import { setMaintenanceDueListener } from '@/db/queries/maintenance-due';
 import { rewriteSeriesPhotoUris } from '@/db/queries/series';
-import { EvaluationGate } from '@/features/evaluation/evaluation-gate';
 import { maintenanceShown } from '@/features/firearms/maintenance';
 import { MaintenanceReminders } from '@/features/firearms/maintenance-reminders';
 import { SyncTriggers } from '@/features/sync/sync-triggers';
@@ -210,11 +209,9 @@ function ThemedApp() {
       {/* Follows the app's theme, not the device's: light icons on a light screen were unreadable (#745). */}
       <StatusBar style={resolvedThemeName === 'dark' ? 'light' : 'dark'} />
       <AnimatedSplashOverlay />
-      <EvaluationGate>
-        <SyncTriggers />
-        <MaintenanceReminders />
-        <RootStack />
-      </EvaluationGate>
+      <SyncTriggers />
+      <MaintenanceReminders />
+      <RootStack />
     </ThemeProvider>
   );
 }

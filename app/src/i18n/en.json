@@ -547,13 +547,7 @@
     "licensesNativeTitle": "Native Components",
     "licensesNativeNote": "Compiled into the app rather than bundled as JavaScript. Not all of these are open source, and the Android platform libraries the build links against are not listed.",
     "licensesJsTitle": "JavaScript Packages",
-    "repoLink": "GitHub Repository",
-    "evaluationExpires": "Evaluation build for personal testing only; no other license is granted. Expires {{date}}."
-  },
-  "evaluation": {
-    "expiredTitle": "Evaluation Build Expired",
-    "expiredBody": "This evaluation build of ShotLedger expired on {{date}}. Ask for a new build to keep using the app.",
-    "expiredExportNote": "Your sessions are still on this phone. Export them to keep a copy."
+    "repoLink": "GitHub Repository"
   },
   "jsonExport": {
     "sectionTitle": "Sessions Export",

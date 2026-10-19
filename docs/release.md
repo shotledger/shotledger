@@ -227,8 +227,8 @@ Every update:
 4. Phones pick it up on the next launch after the download finishes, so
    expect it on the second launch.
 
-Locally built APKs (evaluation builds, the `run-app` standalone APK) have no
-channel and never receive updates.
+Locally built APKs (the `run-app` standalone APK) have no channel and never
+receive updates.
 
 ## Preview builds (internal testing, not Play Console)
 
@@ -239,59 +239,6 @@ cd app && eas build --platform android --profile preview
 Produces an installable `.apk` for ad-hoc sharing (e.g. sideloading to a
 test device) without going through Play Console at all. Useful for
 milestone demos before a store submission is warranted.
-
-## Evaluation builds (outside testers)
-
-An evaluation build is a sideloaded APK that stops working on a set date,
-**30 days after it is built** by default. From the repo root:
-
-```bash
-pnpm build:eval                # expires in 30 days
-EVAL_DAYS=14 pnpm build:eval   # another window
-```
-
-`scripts/build-eval.mjs` runs the standalone release build from the `run-app`
-skill (`.claude/skills/run-app/references/emulator.md`) with the expiry set,
-copies the APK to `shotledger-eval-expires-<date>.apk` at the repo root
-(gitignored) and prints the hand-out message. It refuses to run with
-`EXPO_PUBLIC_ENABLE_DEV_TOOLS` set.
-
-- **The date** is midnight UTC, `EVAL_DAYS` days after today's UTC date.
-  The script passes it to the app as `EXPO_PUBLIC_EVAL_EXPIRES_AT`
-  (`YYYY-MM-DD`, or a full ISO 8601 date-time with `Z` or an offset, if you
-  ever build by hand) and overrides any value already in the shell. From that instant on, launching the app, or
-  returning to it, shows a blocking "Evaluation Build Expired" screen that
-  tells the tester to ask for a new build and still offers the sessions
-  export. The tester's data stays on the phone; a new build signed with the
-  same key installs over it. Settings → About shows the expiry date while the
-  build is active.
-- **License terms:** an evaluation build is handed out under an
-  evaluation-only grant, not the AGPL, while the repository is private and
-  the maintainer is its sole copyright holder (ADR 0017). About says so;
-  repeat it in the hand-out message:
-
-  > ShotLedger evaluation build, for your personal testing only. No other
-  > license is granted; please don't pass the APK on. It stops working on
-  > <date>; ask me for a new build after that.
-
-  Once the repository is public, builds are AGPL like every other and this
-  grant no longer applies.
-
-- **A malformed value fails open:** the build runs with no expiry at all.
-  The script always writes a valid date; this matters only for a hand-set
-  value.
-- **Clock rollback:** the app keeps the latest time it has seen in
-  SecureStore (localStorage on web) and compares against that, so setting
-  the clock back neither reopens an expired build nor rewinds the window.
-  This defeats only the casual case. Clearing the app's data and setting the
-  clock back before the next launch beats it, and so does patching the
-  bundle; it is an honest-user gate, not enforcement.
-- **There is no EAS profile for it.** The date changes with every build, so
-  it does not belong in `eas.json`.
-- **Never for a Play build.** No profile in `app/eas.json` sets
-  `EXPO_PUBLIC_EVAL_EXPIRES_AT`, so the `production` build has no expiry;
-  keep it that way, and never export the variable in a shell that runs
-  `eas build`.
 
 ## CI and build budget
 

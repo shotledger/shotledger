@@ -47,10 +47,8 @@ English and Swedish throughout.
 
 ## Status
 
-Not released yet. ShotLedger is not in Google Play; testers get 30-day
-evaluation builds from the maintainer, which stop working after 30 days but
-keep your data and still let you export it. The repository is private for
-now.
+Not released yet. ShotLedger is not in Google Play. The repository is private
+for now.
 
 ## Privacy
 

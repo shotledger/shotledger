@@ -16,7 +16,6 @@
     "licenses:generate": "node scripts/generate-licenses.mjs",
     "licenses:check": "node scripts/generate-licenses.mjs --check",
     "check": "pnpm node:check && pnpm typecheck && pnpm typecheck:app && pnpm typecheck:web && pnpm schema:check && pnpm i18n:check && pnpm licenses:check && pnpm lint && pnpm format && vitest run --coverage && (cd app && pnpm exec jest --passWithNoTests --coverage)",
-    "build:eval": "node scripts/build-eval.mjs",
     "coverage": "vitest run --coverage",
     "mutation": "stryker run",
     "mutation:schema": "node scripts/mutate-schema.mjs",

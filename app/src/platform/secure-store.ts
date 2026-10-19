@@ -66,39 +66,3 @@ export async function clearSessionToken(): Promise<void> {
     // best-effort, see setSessionToken
   }
 }
-
-// The latest clock reading an evaluation build has seen (features/evaluation).
-// Not a secret, but the keychain is out of reach of an ordinary user. Web has
-// no keychain, so it uses localStorage.
-const EVAL_HIGH_WATER_MARK_KEY = 'eval_high_water_mark';
-
-type WebStorage = {
-  getItem(key: string): string | null;
-  setItem(key: string, value: string): void;
-};
-
-function webStorage(): WebStorage | undefined {
-  return (globalThis as { localStorage?: WebStorage }).localStorage;
-}
-
-export async function getEvalHighWaterMark(): Promise<number | null> {
-  try {
-    const raw =
-      Platform.OS === 'web'
-        ? (webStorage()?.getItem(EVAL_HIGH_WATER_MARK_KEY) ?? null)
-        : await SecureStore.getItemAsync(EVAL_HIGH_WATER_MARK_KEY);
-    const ms = raw === null ? Number.NaN : Number(raw);
-    return Number.isFinite(ms) ? ms : null;
-  } catch {
-    return null;
-  }
-}
-
-export async function setEvalHighWaterMark(ms: number): Promise<void> {
-  try {
-    if (Platform.OS === 'web') webStorage()?.setItem(EVAL_HIGH_WATER_MARK_KEY, String(ms));
-    else await SecureStore.setItemAsync(EVAL_HIGH_WATER_MARK_KEY, String(ms));
-  } catch {
-    // Best-effort: a failed write only means the next launch trusts its clock.
-  }
-}
