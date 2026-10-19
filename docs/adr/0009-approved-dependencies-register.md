@@ -11,6 +11,19 @@ entry is deleted with it; git keeps the history.
 
 ## Decision
 
+**`@better-auth/passkey@1.7.7`** (MIT) in `backend/` and
+**`@simplewebauthn/browser@13.3.0`** (MIT, no dependencies) in `web/` —
+**proposed 2026-10-19, awaiting the maintainer's approval** (#681). The plugin
+is better-auth's own, at the version `better-auth` is pinned to; it brings
+`@simplewebauthn/server` (MIT) and `zod`. It runs on workerd: `@simplewebauthn/server`
+uses only `globalThis.crypto`, and `backend/test/passkey.spec.ts` runs real
+ceremonies there. The browser package runs the WebAuthn ceremony and is
+called from `web/src/api.ts`. Neither reaches the app bundle. Rejected:
+better-auth's `passkeyClient`, which would add `better-auth/client`,
+`nanostores` and `@better-fetch/fetch` to a web app that talks to the Worker
+through `shared/src/sync-client/http`; and a hand-rolled WebAuthn verifier.
+The phone's native passkey module is a separate decision (#681, "App").
+
 **`reactivecircus/android-emulator-runner@v2.38.0`** (GitHub Action, Apache-2.0,
 pinned by commit SHA) and the **Maestro CLI 2.11.0** (Apache-2.0, release zip
 checked against its SHA-256) — 2026-10-14, CI only, for running the
