@@ -12,7 +12,7 @@ import { SessionEdit, type Done } from './edit/edit';
 import { Entry } from './entry/entry';
 import { Firearms } from './firearms/firearms';
 import { LicenseCheck } from './license-check';
-import { type PulledTables } from './pull';
+import { type PulledAccount } from './pull';
 import { afterReauth, type LoadedAccount, type ReauthOutcome } from './reauth';
 import { replacementHash, routeFromHash, type Route } from './shell/route';
 import { Shell } from './shell/shell';
@@ -30,7 +30,7 @@ type State =
   | { kind: 'deleted' }
   | { kind: 'loading'; rows: number }
   | { kind: 'failed' }
-  | { kind: 'ready'; tables: PulledTables };
+  | { kind: 'ready'; tables: PulledAccount };
 
 export function App() {
   const { t } = useTranslation();

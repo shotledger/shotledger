@@ -14,7 +14,7 @@ import {
 } from '@shotledger/shared/src/sync-client/http';
 
 import { createFetchPhoto } from './photo-fetch';
-import { pullAll, type PulledTables, type WebTable } from './pull';
+import { pullAll, type PulledAccount, type PulledTables, type WebTable } from './pull';
 
 const TOKEN_KEY = 'shotledger.token';
 
@@ -98,7 +98,7 @@ export async function signOut(): Promise<void> {
   writeToken(null);
 }
 
-export function loadAccount(onProgress?: (rows: number) => void): Promise<PulledTables> {
+export function loadAccount(onProgress?: (rows: number) => void): Promise<PulledAccount> {
   return pullAll(transport, PROTOCOL_VERSION, onProgress);
 }
 

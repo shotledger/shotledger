@@ -89,4 +89,48 @@ describe('pullAll', () => {
     expect([...tables.firearms.keys()]).toEqual(['f1']);
     expect(tables.sessions.size).toBe(0);
   });
+
+  it('keeps the refusals of the last response (spec §11.7), or none', async () => {
+    const entry = (rowId: string, reason: 'invalid_payload' | 'family_refused') => ({
+      tableName: 'shots' as const,
+      rowId,
+      reason,
+      arrival: 3,
+      blocker: reason === 'family_refused' ? { tableName: 'shots' as const, rowId: 't2' } : null,
+    });
+    const pages: PullResponse[] = [
+      {
+        protocolVersion: 1,
+        changes: [],
+        refusals: [entry('t2', 'invalid_payload')],
+        nextCursors: [{ tableName: 'shots', cursor: 1, hasMore: true }],
+      },
+      {
+        protocolVersion: 1,
+        changes: [],
+        refusals: [entry('t2', 'invalid_payload'), entry('t3', 'family_refused')],
+        nextCursors: [{ tableName: 'shots', cursor: 2, hasMore: false }],
+      },
+    ];
+    let page = 0;
+    const pulled = await pullAll({ pull: () => Promise.resolve(pages[page++]!) }, 1, undefined, [
+      'shots',
+    ]);
+    expect(pulled.refusals).toEqual(pages[1]!.refusals);
+
+    const none = await pullAll(
+      {
+        pull: () =>
+          Promise.resolve({
+            protocolVersion: 1,
+            changes: [],
+            nextCursors: [{ tableName: 'shots', cursor: 0, hasMore: false }],
+          }),
+      },
+      1,
+      undefined,
+      ['shots'],
+    );
+    expect(none.refusals).toEqual([]);
+  });
 });
