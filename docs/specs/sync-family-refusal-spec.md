@@ -902,9 +902,14 @@ transaction as the rev-matched clear of the entry:
 - `invalid_payload` upserts an `invalid` mark, this device's own (fix 3). The bad row is not
   sent again until the user edits it; the edit makes a new outbox entry, as
   today;
-- `applied` and `tombstoned` delete the row's mark.
+- `applied` and `tombstoned` delete the row's mark, unless the mark's
+  `arrival` is greater than the ack's (Revision 4, item 12).
 
-An upsert keeps the greater of the old and new `arrival`. A `duplicate` ack
+An upsert keeps the mark with the greater of the old and new `arrival`, and
+a delete spares a mark that arrived after the acked change. Only a later
+record of the row can have made such a mark, from a later push of this
+device or a pull's list of another device's record; the ack says nothing
+about it, and the next pull's list settles it. A `duplicate` ack
 is handled by its stored reason, the same way. Then its `current` row
 (§11.7) is applied through the rules below.
 
@@ -1627,7 +1632,7 @@ Pre-1.0 (rule 8), with no compatibility path:
   devices showing the stored session and the counts everywhere; indexed
   lookups and a 10,000-row test; the missing concurrency test, the test and
   evidence corrections, the required protocol fields, and refusing a push
-  that lands after the account is deleted. Items 9–11 match that
+  that lands after the account is deleted. Items 9–12 match that
   proposal and are approved with it; any item beyond it stays pending.
   1. **REVAL's T2 waits; it is not applied.** The scenario says "T2 is
      applied". Re-validation turns T1 into a bad row at T1's own arrival,
@@ -1716,6 +1721,15 @@ QUERY PLAN` in the evidence). The judge lists a blocker only when it
       sequence row and wrote its rows and waiting payloads after it. The
       insert's `last_seq` is now null unless `?2` is 0 or the row exists;
       the route answers that failure with 401 and no retry (GONE).
+
+  12. **An ack's delete spares a later mark (round 5, V5-8).** §11.6 said
+      `applied` and `tombstoned` delete the row's mark. The build deletes
+      it only up to the ack's arrival, and keeps a mark that arrived after
+      the acked change. The text now says what the build does. That is
+      the safer reading: deleting the later mark would let a pull overwrite
+      a version the server still holds back, until the next pull's list
+      rebuilt it, while keeping it costs at most one stale count, which
+      that same list removes.
 
 - **Revision 2 (2026-10-16), during implementation.** Items 1–5 approved by
   the maintainer, 2026-10-16: "Approve, file issue", answering "Approve the
