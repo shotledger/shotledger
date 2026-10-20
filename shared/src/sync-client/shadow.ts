@@ -53,7 +53,9 @@ export function tombstoneFromRejection(entry: OutboxEntry, deletedAt: string): C
  * anything, as above. A mark means the server holds a version of this row
  * that has not landed: a tombstone still wins (R2), and a live change wins
  * when it arrived at the server no earlier than the held version; an older
- * one, such as this device's own echo, is shadowed. Arrivals are the
+ * one, such as this device's own echo, is shadowed, but only by the device's
+ * own mark. A device that never held the held version applies the stored
+ * one, which is all it can show (round 5, V5-1 and V5-2). Arrivals are the
  * server's, never a clock.
  */
 export function shadowPull(
@@ -68,8 +70,11 @@ export function shadowPull(
     if (pendingKeys.has(key)) continue;
     const mark = byKey.get(key);
     if (mark !== undefined) {
-      if (change.deletedAt === null && change.arrival < mark.arrival) continue;
-      byKey.delete(key);
+      if (change.deletedAt === null && change.arrival < mark.arrival) {
+        if (mark.own) continue;
+      } else {
+        byKey.delete(key);
+      }
     }
     applicable.push(change);
   }
@@ -80,14 +85,28 @@ export function shadowPull(
   };
 }
 
-/** The marks a pull's `refusals` list stands for (§11.6). */
-export function marksFromRefusals(entries: readonly RefusalEntry[]): RefusalMark[] {
+/**
+ * The marks a pull's `refusals` list stands for (§11.6). A mark stays this
+ * device's own only when the device's own mark of that row is at the listed
+ * arrival, so the record still keeps back the version this device sent; any
+ * other listed record keeps back a version only another device held.
+ */
+export function marksFromRefusals(
+  entries: readonly RefusalEntry[],
+  local: readonly RefusalMark[],
+): RefusalMark[] {
+  const own = new Set(
+    local
+      .filter((mark) => mark.own)
+      .map((mark) => `${rowKey(mark.tableName, mark.rowId)}@${mark.arrival}`),
+  );
   return entries.map((entry) => ({
     tableName: entry.tableName,
     rowId: entry.rowId,
     kind: entry.reason === 'invalid_payload' ? 'invalid' : 'waiting',
     arrival: entry.arrival,
     blocker: entry.blocker,
+    own: own.has(`${rowKey(entry.tableName, entry.rowId)}@${entry.arrival}`),
   }));
 }
 

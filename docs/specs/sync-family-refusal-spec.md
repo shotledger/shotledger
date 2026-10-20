@@ -869,12 +869,13 @@ every cycle, and the old H9 stall cannot occur.
 synced), so that a pull does not overwrite a local version the server is
 holding:
 
-| Column                            | Meaning                                                 |
-| --------------------------------- | ------------------------------------------------------- |
-| `table_name`, `row_id`            | primary key                                             |
-| `kind`                            | `waiting` or `invalid`                                  |
-| `arrival`                         | the server record's `arrival`                           |
-| `blocker_table`, `blocker_row_id` | for `waiting`: the record's blocker; null for `invalid` |
+| Column                            | Meaning                                                   |
+| --------------------------------- | --------------------------------------------------------- |
+| `table_name`, `row_id`            | primary key                                               |
+| `kind`                            | `waiting` or `invalid`                                    |
+| `arrival`                         | the server record's `arrival`                             |
+| `blocker_table`, `blocker_row_id` | for `waiting`: the record's blocker; null for `invalid`   |
+| `own`                             | this device's own ack wrote the mark (Revision 4, item 9) |
 
 **The server's list is the source of the marks** (fixes 4 and 5). Every pull
 response carries `refusals`: the user's records, read before the pull's
@@ -889,12 +890,16 @@ transaction that applies the response's changes, before it applies them.
   for T2, and the mark still clears.
 - The list is the account's, so it includes rows other devices wrote. The
   counts below are the same on every device and on the web.
+- A rebuilt mark is this device's **own** only when the device's own mark
+  of that row is at the listed `arrival`: the record still keeps back the
+  version this device sent. Every other mark, on a fresh, signed-out or
+  restored device too, counts and shadows nothing (Revision 4, item 9).
 
 **Between pulls, acks keep the marks current**, written in the same
 transaction as the rev-matched clear of the entry:
 
-- `family_refused` upserts a `waiting` mark;
-- `invalid_payload` upserts an `invalid` mark (fix 3). The bad row is not
+- `family_refused` upserts a `waiting` mark, this device's own;
+- `invalid_payload` upserts an `invalid` mark, this device's own (fix 3). The bad row is not
   sent again until the user edits it; the edit makes a new outbox entry, as
   today;
 - `applied` and `tombstoned` delete the row's mark.
@@ -905,13 +910,14 @@ is handled by its stored reason, the same way. Then its `current` row
 
 **Shadowing.** A pulled change for a row:
 
-| The row has…          | The pulled change is…               | Result                                                                                             |
-| --------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------- |
-| a queued outbox entry | anything                            | shadowed, as today. The entry goes out this cycle, arrives last, and wins (or its ack fixes it)    |
-| a mark, and no entry  | a tombstone                         | applied, and the mark deleted. R2: the deletion wins                                               |
-| a mark, and no entry  | live, `arrival` at least the mark's | applied, and the mark deleted. It is the held version itself, or one that reached the server later |
-| a mark, and no entry  | live, `arrival` below the mark's    | shadowed, and the mark kept. The server holds a later version of this row                          |
-| neither               | anything                            | applied, as today                                                                                  |
+| The row has…           | The pulled change is…               | Result                                                                                                             |
+| ---------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| a queued outbox entry  | anything                            | shadowed, as today. The entry goes out this cycle, arrives last, and wins (or its ack fixes it)                    |
+| a mark, and no entry   | a tombstone                         | applied, and the mark deleted. R2: the deletion wins                                                               |
+| a mark, and no entry   | live, `arrival` at least the mark's | applied, and the mark deleted. It is the held version itself, or one that reached the server later                 |
+| its own mark, no entry | live, `arrival` below the mark's    | shadowed, and the mark kept. The server holds a later version of this row, which this device holds                 |
+| a mark not its own     | live, `arrival` below the mark's    | applied, and the mark kept. The device does not hold the later version; the stored one is all it can show (item 9) |
+| neither                | anything                            | applied, as today                                                                                                  |
 
 The phone compares the server's arrivals, never a clock.
 
@@ -925,7 +931,10 @@ The phone compares the server's arrivals, never a clock.
 **No device stays behind (fix 2).** A shadowed pull is final only when the
 shadowing thing loses to it. There are two cases:
 
-- **A mark** shadows only versions older than the one the server holds.
+- **A mark** shadows only on the device whose own ack wrote it, the one
+  device that holds the version the server keeps back, and only versions
+  older than that one. Every other device applies the stored version
+  (Revision 4, item 9).
   That held version, or a later one, arrives as a new `seq` when the family
   is released, and the table applies it. If the record goes without a
   release (it is deleted as inert), the next pull's list drops the mark. The
@@ -1448,6 +1457,7 @@ Feature: The server keeps refused families and their waiting rows (Revision 3)
     Then A's first pull carries both records in refusals
     And A shows 1 refused change and 1 waiting change
     And the web's account page shows the same two counts
+    And A shows the stored versions of S1's rows (Revision 4, item 9)
 
   Scenario: OWN an invalid ownership column keeps the row in its family (second review 6)
     Given T2 of R1 of S1 is stored
@@ -1625,6 +1635,26 @@ Pre-1.0 (rule 8), with no compatibility path:
   8. **Silent: release ties sort by code unit.** `ORDER BY arrival,
 table_name, row_id` uses SQLite's BINARY collation, so the judge
      sorts ties the same way rather than with `localeCompare`.
+  9. **Only the device that sent a held version shadows with its mark
+     (round 5, V5-1 and V5-2; a gap in the approved §11.6).** The
+     approved table shadows every live change below a mark's arrival, and
+     every device rebuilds its marks from the account's list. So a device
+     that never held the waiting version also shadowed the stored one:
+     - a fresh, reinstalled or signed-out device never applied a stored row
+       that has a record, and showed S1's shots with no session;
+     - a device that missed an applied edit kept an older version (T1 = 90
+       where the server stores 80).
+       That broke C6 ("other devices show the family as it was before the bad
+       row"), "No device stays behind", and the manual. The build now gives
+       each mark an `own` flag:
+     - an ack's mark is the device's own;
+     - a pull's list keeps a mark its own only when the device's own mark of
+       that row is at the listed arrival;
+     - sign-out, a restore and a reinstall drop every mark, so the next
+       pull rebuilds them all as not its own.
+       A mark that is not its own counts on Account & Sync and shadows
+       nothing. Scenarios V5-1 and V5-2 (backend `sync-client.spec.ts`) pin
+       it.
 - **Revision 2 (2026-10-16), during implementation.** Items 1–5 approved by
   the maintainer, 2026-10-16: "Approve, file issue", answering "Approve the
   implementation corrections (Revision 2) to the #856 spec?"; item 4's web

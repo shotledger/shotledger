@@ -257,6 +257,7 @@ CREATE TABLE `sync_refusal_marks` (
 	`arrival` integer NOT NULL,
 	`blocker_table` text,
 	`blocker_row_id` text,
+	`own` integer NOT NULL,
 	PRIMARY KEY(`table_name`, `row_id`)
 );
 --> statement-breakpoint

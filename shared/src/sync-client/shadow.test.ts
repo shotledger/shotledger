@@ -99,12 +99,19 @@ describe('tombstoneFromRejection', () => {
 
 // docs/specs/sync-family-refusal-spec.md §11.6, the shadowing table.
 describe('shadowPull', () => {
-  const mark = (rowId: string, arrival: number, kind: RefusalMark['kind'] = 'waiting') => ({
+  // This device's own marks unless said otherwise: only those shadow (V5-1).
+  const mark = (
+    rowId: string,
+    arrival: number,
+    kind: RefusalMark['kind'] = 'waiting',
+    own = true,
+  ): RefusalMark => ({
     tableName: 'sessions' as const,
     rowId,
     kind,
     arrival,
     blocker: kind === 'waiting' ? { tableName: 'shots' as const, rowId: 't2' } : null,
+    own,
   });
   const at = (rowId: string, arrival: number): ChangeRow => ({ ...change(rowId), arrival });
   const tombstone = (rowId: string, arrival: number): ChangeRow => ({
@@ -152,6 +159,24 @@ describe('shadowPull', () => {
     expect(out).toEqual({ applicable: [at('a', 1), at('b', 1)], marks: [other], shadowed: 0 });
   });
 
+  it('V5-1 a mark of another device’s version shadows nothing: an older change applies and the mark stays', () => {
+    const counted = [mark('a', 5, 'waiting', false)];
+    expect(shadowPull([at('a', 4)], new Set(), counted)).toEqual({
+      applicable: [at('a', 4)],
+      marks: counted,
+      shadowed: 0,
+    });
+  });
+
+  it('V5-1 a mark of another device’s version still goes with a change at its arrival or a tombstone', () => {
+    const counted = (rowId: string) => mark(rowId, 5, 'invalid', false);
+    const out = shadowPull([at('a', 5), tombstone('b', 1)], new Set(), [
+      counted('a'),
+      counted('b'),
+    ]);
+    expect(out).toEqual({ applicable: [at('a', 5), tombstone('b', 1)], marks: [], shadowed: 0 });
+  });
+
   it('a page with two changes of one marked row judges each against the mark it meets', () => {
     // The first applies and drops the mark, so the second applies too.
     const out = shadowPull([at('a', 6), at('a', 3)], new Set(), [mark('a', 5)]);
@@ -161,28 +186,59 @@ describe('shadowPull', () => {
 });
 
 describe('marksFromRefusals', () => {
-  it('turns a bad row into an invalid mark and a waiting row into a waiting mark', () => {
-    expect(
-      marksFromRefusals([
-        { tableName: 'shots', rowId: 't2', reason: 'invalid_payload', arrival: 3, blocker: null },
-        {
-          tableName: 'series',
-          rowId: 'r1',
-          reason: 'family_refused',
-          arrival: 4,
-          blocker: { tableName: 'shots', rowId: 't2' },
-        },
-      ]),
-    ).toEqual([
-      { tableName: 'shots', rowId: 't2', kind: 'invalid', arrival: 3, blocker: null },
+  const entries = [
+    {
+      tableName: 'shots' as const,
+      rowId: 't2',
+      reason: 'invalid_payload' as const,
+      arrival: 3,
+      blocker: null,
+    },
+    {
+      tableName: 'series' as const,
+      rowId: 'r1',
+      reason: 'family_refused' as const,
+      arrival: 4,
+      blocker: { tableName: 'shots' as const, rowId: 't2' },
+    },
+  ];
+  const local = (tableName: 'shots' | 'series', rowId: string, arrival: number, own: boolean) => ({
+    tableName,
+    rowId,
+    kind: 'waiting' as const,
+    arrival,
+    blocker: null,
+    own,
+  });
+
+  it('turns a bad row into an invalid mark and a waiting row into a waiting mark, neither its own', () => {
+    expect(marksFromRefusals(entries, [])).toEqual([
+      { tableName: 'shots', rowId: 't2', kind: 'invalid', arrival: 3, blocker: null, own: false },
       {
         tableName: 'series',
         rowId: 'r1',
         kind: 'waiting',
         arrival: 4,
         blocker: { tableName: 'shots', rowId: 't2' },
+        own: false,
       },
     ]);
+  });
+
+  it('V5-1 keeps a mark this device’s own only when its own mark of that row is at the listed arrival', () => {
+    const own = (marks: ReturnType<typeof local>[]) =>
+      marksFromRefusals(entries, marks).map((m) => `${m.rowId}:${m.own}`);
+    expect(own([local('shots', 't2', 3, true), local('series', 'r1', 4, true)])).toEqual([
+      't2:true',
+      'r1:true',
+    ]);
+    // Another version of the row is listed, or the local mark is not its own,
+    // or it is another table's row of that id.
+    expect(own([local('shots', 't2', 2, true), local('series', 'r1', 4, false)])).toEqual([
+      't2:false',
+      'r1:false',
+    ]);
+    expect(own([local('series', 't2', 3, true)])).toEqual(['t2:false', 'r1:false']);
   });
 });
 
@@ -197,6 +253,7 @@ describe('applyMarkUpdate', () => {
     kind,
     arrival,
     blocker: null,
+    own: true,
   });
   const ref = { tableName: 'series' as const, rowId: 'a' };
 
@@ -233,6 +290,7 @@ describe('countMarks', () => {
     kind,
     arrival: 1,
     blocker: null,
+    own: false,
   });
 
   it('counts the invalid and the waiting marks apart (the Account & Sync lines)', () => {

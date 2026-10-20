@@ -331,6 +331,12 @@ const MUTANTS = [
     replace: '  db.delete(syncState).run();\n',
   },
   {
+    name: 'a stored mark reads back as this device’s own',
+    file: STORE,
+    find: '      own: row.own,\n',
+    replace: '      own: true,\n',
+  },
+  {
     name: 'a restore keeps the marks',
     file: STORE,
     find: '    tx.delete(syncRefusalMarks).run();\n',

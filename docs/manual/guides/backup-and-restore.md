@@ -90,8 +90,9 @@ sessions shot with it. Deletions are never held.
   last wins. A held change counts from when it reached the server, not from
   when it is stored. A deletion always wins.
 
-Other devices show the session as it was before the refused change until the
-server stores the held changes.
+Other devices and the web app show the session as the server stores it: as it
+was before the refused change, until the server stores the held changes. So
+does this phone after you sign out, restore a backup or reinstall the app.
 
 ## How often
 

@@ -549,19 +549,21 @@ describe('session_tags and settings', () => {
 // refusals leave on this device.
 describe('refusal marks', () => {
   const blocker = { tableName: 'shots' as const, rowId: 't2' };
-  const waiting = (rowId: string, arrival: number): RefusalMark => ({
+  const waiting = (rowId: string, arrival: number, own = true): RefusalMark => ({
     tableName: 'series',
     rowId,
     kind: 'waiting',
     arrival,
     blocker,
+    own,
   });
-  const invalid = (rowId: string, arrival: number): RefusalMark => ({
+  const invalid = (rowId: string, arrival: number, own = true): RefusalMark => ({
     tableName: 'shots',
     rowId,
     kind: 'invalid',
     arrival,
     blocker: null,
+    own,
   });
   const firearmPayload = (id: string, model: string) => ({
     id,
@@ -591,6 +593,15 @@ describe('refusal marks', () => {
     // STUCK: a list without T2 drops its mark, with no change to apply.
     await store.applyChanges([], [waiting('r1', 4)]);
     expect(await store.readMarks()).toEqual([waiting('r1', 4)]);
+  });
+
+  it('V5-1 keeps whether a mark is this device’s own, across a restart', async () => {
+    await store.applyChanges([], [waiting('r1', 4, true), invalid('t2', 3, false)]);
+    const restarted = createSyncStore(db);
+    expect(sortMarks(await restarted.readMarks())).toEqual([
+      waiting('r1', 4, true),
+      invalid('t2', 3, false),
+    ]);
   });
 
   it('applyChanges with no marks leaves them as they are', async () => {
@@ -763,6 +774,8 @@ describe('refusal marks', () => {
   it('ECHO with the real engine: this device’s own older push, pulled back, keeps its waiting edit', async () => {
     const id = createFirearm(db, { make: 'Pardini', model: 'A2' }).id;
     db.delete(syncOutbox).run();
+    // A2's family_refused ack wrote this device's own mark at its arrival.
+    await store.applyChanges([], [{ ...waiting(id, 6), tableName: 'firearms' }]);
     const echo = change({
       tableName: 'firearms',
       rowId: id,

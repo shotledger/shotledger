@@ -983,6 +983,72 @@ describe('the server keeps refused families (Revision 3)', () => {
     expect(nameOn(deviceB)).toBe('B-name');
   });
 
+  // Round 5 (V5-1, V5-2): only the device whose own ack made a mark holds
+  // the version it stands for. Marks rebuilt from the account's list on any
+  // other device, a fresh one included, are counts only and shadow nothing.
+  it('V5-1 a fresh device shows the stored rows of a family with a waiting row', async () => {
+    deviceA.write('sessions', S1('S'));
+    deviceA.write('series', R('r1'));
+    deviceA.write('shots', T('t1', 'r1'));
+    deviceA.write('shots', T('t2', 'r1'));
+    await deviceA.sync();
+    await deviceB.sync();
+    deviceA.write('shots', T('t2', 'r1', null, TL));
+    await deviceA.sync();
+    deviceA.write('sessions', S1('renamed', TL));
+    await deviceA.sync();
+    expect(marksOf(deviceA)).toEqual(['sessions:s1:waiting', 'shots:t2:invalid']);
+
+    const fresh = new Device();
+    fresh.setToken(tokenOf(deviceA));
+    await fresh.sync();
+
+    expect(nameOn(fresh)).toBe('S');
+    expect(fresh.get('series', 'r1')).toBeDefined();
+    expect(fresh.get('shots', 't1')).toBeDefined();
+    expect(fresh.get('shots', 't2')).toMatchObject({ value_tenths: 90 });
+    expect(await fresh.store().markCounts()).toEqual({ invalid: 1, waiting: 1 });
+    // A, whose own pushes made the marks, keeps its own versions.
+    await deviceA.sync();
+    expect(nameOn(deviceA)).toBe('renamed');
+    expect(deviceA.get('shots', 't2')).toMatchObject({ value_tenths: null });
+  });
+
+  it('V5-2 a device that missed an applied edit gets it, though a later version is refused', async () => {
+    deviceA.write('sessions', S1('S'));
+    deviceA.write('series', R('r1'));
+    deviceA.write('shots', T('t1', 'r1'));
+    await deviceA.sync();
+    await deviceB.sync();
+    deviceA.write('shots', T('t1', 'r1', 80, TL));
+    await deviceA.sync();
+    deviceA.write('shots', T('t1', 'r1', null, '2026-10-20T12:00:00.000Z'));
+    await deviceA.sync();
+
+    await deviceB.sync();
+
+    expect(deviceB.get('shots', 't1')).toMatchObject({ value_tenths: 80 });
+    expect(await deviceB.store().markCounts()).toEqual({ invalid: 1, waiting: 0 });
+  });
+
+  it('V5-1 a device signed out and in again holds no version of its own: it shows the stored rows', async () => {
+    deviceA.write('sessions', S1('S'));
+    deviceA.write('series', R('r1'));
+    deviceA.write('shots', T('t2', 'r1'));
+    await deviceA.sync();
+    deviceA.write('shots', T('t2', 'r1', null, TL));
+    await deviceA.sync();
+    deviceA.write('sessions', S1('renamed', TL));
+    await deviceA.sync();
+
+    deviceA.reset();
+    await deviceA.sync();
+
+    expect(nameOn(deviceA)).toBe('S');
+    expect(deviceA.get('shots', 't2')).toMatchObject({ value_tenths: 90 });
+    expect(await deviceA.store().markCounts()).toEqual({ invalid: 1, waiting: 1 });
+  });
+
   it('I3 two devices that cycle until both outboxes are empty show the server’s rows', async () => {
     // A fixed interleaving of the cast's writes, invalid ones included.
     const plan: [Device, () => void][] = [

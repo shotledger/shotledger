@@ -92,8 +92,10 @@ inte de pass som skjutits med det. Raderingar hålls aldrig tillbaka.
   servern sist. En tillbakahållen ändring räknas från när den kom fram till
   servern, inte från när den lagras. En radering vinner alltid.
 
-Andra enheter visar passet som det var före den nekade ändringen tills servern
-lagrar de tillbakahållna ändringarna.
+Andra enheter och webbappen visar passet som servern har lagrat det: som det
+var före den nekade ändringen, tills servern lagrar de tillbakahållna
+ändringarna. Det gör även den här telefonen efter att du loggat ut, återställt
+en säkerhetskopia eller installerat om appen.
 
 ## Hur ofta
 

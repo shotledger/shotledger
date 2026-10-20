@@ -35,8 +35,10 @@ export interface LocalRowSnapshot {
 /**
  * What the server holds back for one row (docs/specs/sync-family-refusal-spec.md
  * §11.6): an `invalid` row it refused, or a `waiting` row it keeps until its
- * family is released. A mark stops a pull from overwriting the local version
- * with an older one; it decides nothing else.
+ * family is released. Every mark is counted on Account & Sync. Only a mark
+ * this device's own ack wrote (`own`) stops a pull from overwriting the
+ * local version with an older one: only that device holds the version the
+ * server keeps back (round 5, V5-1). A mark decides nothing else.
  */
 export interface RefusalMark {
   tableName: SyncTableName;
@@ -46,6 +48,13 @@ export interface RefusalMark {
   arrival: number;
   /** For `waiting`: the bad row that blocks it. */
   blocker: RowRef | null;
+  /**
+   * This device's own ack wrote the mark, so the device holds the version
+   * the record keeps back. A mark rebuilt from a pull's `refusals` alone, as
+   * on a fresh or signed-out device, is not its own: it counts, and shadows
+   * nothing.
+   */
+  own: boolean;
 }
 
 /**

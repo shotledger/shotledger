@@ -233,6 +233,7 @@ function readMarksSync(db: Database): RefusalMark[] {
         row.blockerTable === null || row.blockerRowId === null
           ? null
           : { tableName: row.blockerTable as SyncTableName, rowId: row.blockerRowId },
+      own: row.own,
     }));
 }
 
@@ -247,6 +248,7 @@ function replaceMarks(db: Database, marks: readonly RefusalMark[]): void {
         arrival: mark.arrival,
         blockerTable: mark.blocker?.tableName ?? null,
         blockerRowId: mark.blocker?.rowId ?? null,
+        own: mark.own,
       })
       .run();
   }

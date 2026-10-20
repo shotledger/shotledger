@@ -253,7 +253,7 @@ function Delete({ onDeleted }: { onDeleted: () => void }) {
  */
 function Refusals({ refusals }: { refusals: readonly RefusalEntry[] }) {
   const { t } = useTranslation();
-  const { invalid, waiting } = countMarks(marksFromRefusals(refusals));
+  const { invalid, waiting } = countMarks(marksFromRefusals(refusals, []));
   if (invalid === 0 && waiting === 0) return null;
   return (
     <section className="card">

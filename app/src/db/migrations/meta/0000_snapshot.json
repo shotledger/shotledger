@@ -1682,6 +1682,13 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "own": {
+          "name": "own",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         }
       },
       "indexes": {},

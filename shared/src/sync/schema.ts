@@ -463,6 +463,8 @@ export const syncRefusalMarks = sqliteTable(
     arrival: integer('arrival').notNull(),
     blockerTable: text('blocker_table'),
     blockerRowId: text('blocker_row_id'),
+    /** This device's own ack wrote the mark (RefusalMark.own). */
+    own: integer('own', { mode: 'boolean' }).notNull(),
   },
   (t) => [primaryKey({ columns: [t.tableName, t.rowId] })],
 );

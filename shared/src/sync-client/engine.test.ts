@@ -544,7 +544,7 @@ describe('runSyncCycle — push', () => {
 
     // Recorded once, with its entry's clear; b is still queued.
     expect([...fake.marks.values()]).toEqual([
-      { tableName: 'series', rowId: 'a', kind: 'invalid', arrival: 4, blocker: null },
+      { tableName: 'series', rowId: 'a', kind: 'invalid', arrival: 4, blocker: null, own: true },
     ]);
     expect(fake.outbox.map((e) => e.rowId)).toEqual(['b']);
   });
@@ -758,12 +758,20 @@ describe('runSyncCycle — push', () => {
 // server is holding, and every ack clears its entry.
 describe('runSyncCycle — refusal marks (Revision 3)', () => {
   const blocker = { tableName: 'shots' as const, rowId: 't2' };
-  const waiting = (rowId: string, arrival: number, tableName: SyncTableName = 'sessions') => ({
+  // A mark an ack of this device wrote is its own (V5-1); one rebuilt from
+  // the pull's list alone is not.
+  const waiting = (
+    rowId: string,
+    arrival: number,
+    tableName: SyncTableName = 'sessions',
+    own = true,
+  ) => ({
     tableName,
     rowId,
     kind: 'waiting' as const,
     arrival,
     blocker,
+    own,
   });
   const invalid = (rowId: string, arrival: number, tableName: SyncTableName = 'shots') => ({
     tableName,
@@ -771,6 +779,7 @@ describe('runSyncCycle — refusal marks (Revision 3)', () => {
     kind: 'invalid' as const,
     arrival,
     blocker: null,
+    own: true,
   });
   const pulled = (rowId: string, arrival: number, name = 'server'): ChangeRow => ({
     tableName: 'sessions',
@@ -835,7 +844,7 @@ describe('runSyncCycle — refusal marks (Revision 3)', () => {
       await runSyncCycle({ store: fake.store, transport, newId: ids() });
 
       expect(await fake.store.markCounts()).toEqual({ invalid: 1, waiting: 1 });
-      expect(fake.marks.get('series:r1')).toEqual(waiting('r1', 4, 'series'));
+      expect(fake.marks.get('series:r1')).toEqual(waiting('r1', 4, 'series', false));
     });
 
     it('STUCK a mark whose record is gone is dropped by the next pull, with nothing pulled for its row', async () => {
@@ -896,21 +905,28 @@ describe('runSyncCycle — refusal marks (Revision 3)', () => {
       expect(fake.marks.size).toBe(0);
     });
 
-    it('the shadowing rules run against the page’s refusals, not the marks they replace', async () => {
-      // An older mark would let the echo through; the list says the server
-      // now holds arrival 9.
+    it('V5-1 a listed version other than the one of the device’s own mark is counted, not shadowed', async () => {
+      // This device's own version arrived at 2; the server now holds another
+      // device's version at 9, which this device does not hold. The stored
+      // version at 5 is newer than the device's own, so it applies.
       const fake = createFakeStore({ marks: [waiting('s1', 2)] });
-      const transport = createTransport({
-        pull: pullOf(
-          [pulled('s1', 5)],
-          [{ tableName: 'sessions', rowId: 's1', reason: 'family_refused', arrival: 9, blocker }],
-        ),
-      });
+      const transport = createTransport({ pull: pullOf([pulled('s1', 5)], [listed('s1', 9)]) });
 
       const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
 
-      expect(result.shadowed).toBe(1);
-      expect([...fake.marks.values()]).toEqual([waiting('s1', 9)]);
+      expect(result.shadowed).toBe(0);
+      expect(fake.applied[0]).toEqual([pulled('s1', 5)]);
+      expect([...fake.marks.values()]).toEqual([waiting('s1', 9, 'sessions', false)]);
+    });
+
+    it('V5-1 a device with no mark of its own applies an older stored version and keeps the count', async () => {
+      const fake = createFakeStore();
+      const transport = createTransport({ pull: pullOf([pulled('s1', 5)], [listed('s1', 9)]) });
+
+      const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(result).toMatchObject({ pulled: 1, shadowed: 0 });
+      expect(await fake.store.markCounts()).toEqual({ invalid: 0, waiting: 1 });
     });
 
     it('a queued entry still shadows a pulled change at any arrival', async () => {
