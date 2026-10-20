@@ -386,8 +386,22 @@ describe('judgePush: release (§11.5)', () => {
       waiting('shots', 'a', 5, ref('series', 'r1')),
       waiting('shots', 'B', 5, ref('series', 'r1')),
     ];
-    const plan = judgePush([T('t2', 'r1')], new Set(), snapshot({ records: tie, stored: FAMILY }));
-    expect(plan.release).toEqual([ref('shots', 'B'), ref('shots', 'a')]);
+    for (const records of [tie, [tie[0]!, tie[2]!, tie[1]!]]) {
+      const plan = judgePush([T('t2', 'r1')], new Set(), snapshot({ records, stored: FAMILY }));
+      expect(plan.release).toEqual([ref('shots', 'B'), ref('shots', 'a')]);
+    }
+  });
+
+  it('orders a tie by table before id', () => {
+    const tie = [
+      bad('shots', 't2', 3, ref('series', 'r1')),
+      waiting('shots', 'a', 5, ref('series', 'r1')),
+      waiting('series', 'z', 5, ref('sessions', 's1')),
+    ];
+    for (const records of [tie, [tie[0]!, tie[2]!, tie[1]!]]) {
+      const plan = judgePush([T('t2', 'r1')], new Set(), snapshot({ records, stored: FAMILY }));
+      expect(plan.release).toEqual([ref('series', 'z'), ref('shots', 'a')]);
+    }
   });
 
   it('a still-blocked waiting row gets its current blocker, and nothing is released', () => {
@@ -459,7 +473,10 @@ describe('judgePush: release (§11.5)', () => {
       records: [waiting('series', 'r1', 2, ref('sessions', 's1'))],
       stored: [stored('series', 'r1', null, true)],
     });
-    expect(judgePush([live('tags', 'g1')], new Set(), snap).release).toEqual([ref('series', 'r1')]);
+    const plan = judgePush([live('tags', 'g1')], new Set(), snap);
+    expect(plan.release).toEqual([ref('series', 'r1')]);
+    // Released, not made inert: only a bad record is inert.
+    expect(plan.inert).toEqual([]);
   });
 
   it('a live change of a waiting row acked tombstoned leaves its record to the release', () => {
