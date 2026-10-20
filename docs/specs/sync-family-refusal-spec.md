@@ -138,8 +138,7 @@ this gap is only within the push that first carries the bad row.
 
 ### 2.3 Phone: hold a refused row's family across pushes
 
-> **Superseded by Revision 3 (§11, not approved).** Kept as the approved
-> text until the maintainer approves §11.
+> **Superseded by Revision 3 (§11, approved 2026-10-20).** Kept as history.
 
 New local state (a Drizzle migration on the phone, `app/src/db/migrations/`;
 local tables, not synced):
@@ -184,8 +183,7 @@ family then pushes on the next cycle, with the fixed row.
 
 ### 2.4 What the user sees
 
-> **Superseded by Revision 3 (§11, not approved).** Kept as the approved
-> text until the maintainer approves §11.
+> **Superseded by Revision 3 (§11, approved 2026-10-20).** Kept as history.
 
 - Account & Sync keeps "n change(s) refused by the server and not synced"
   (app-session count, unchanged).
@@ -228,7 +226,7 @@ family then pushes on the next cycle, with the fixed row.
 - **C3 Tombstones are never held.** A deletion that waits behind a refusal
   would leave other devices showing data the user deleted.
 - **C4 The server decides within one push; the phone holds across pushes.**
-  _Superseded by Revision 3 (§11, not approved), which takes the
+  _Superseded by Revision 3 (§11, approved 2026-10-20), which takes the
   alternative below._
   Alternative: the server keeps refused families (a `sync_blocked` /
   `sync_held` pair of tables, released when the blocker arrives valid,
@@ -472,9 +470,19 @@ Feature: the phone holds a refused row's family across pushes
 - **Q4** Show the held count on Account & Sync as a second line (§2.4)?
   Recommended.
 
-## 11. Revision 3: the server remembers refused families (NOT approved)
+## 11. Revision 3: the server remembers refused families (approved)
 
-**Status: not approved.** Written 2026-10-19 after verifier round 4 failed at
+**Status: approved by the maintainer, 2026-10-20**: "Approve all",
+answering "Approve the revised #856 design (Revision 3) with the
+recommended answers to Q1–Q4?". So:
+
+- Q1: yes;
+- Q2: the Discard action is a follow-up issue; the `refusals` list, the
+  `blocker` and the counts ship now;
+- Q3: item 6 is dropped;
+- Q4: the protocol changes in place at version 1.
+
+Written 2026-10-19 after verifier round 4 failed at
 `12a2cc6`, on the maintainer's decision "Server remembers: the server keeps a
 list of refused families. It refuses later rows of a family until the bad
 row arrives fixed, so a lost response or a re-edit can't split it. The
@@ -482,8 +490,8 @@ phone-side hold is mostly removed." The same day, a fresh reviewer judged the
 first draft (`228185e`) "sound with fixes". The revision (`91d9c4d`) adopted
 the reviewer's simplification: **the server keeps the waiting rows' payloads
 and applies them itself.** A second fresh review of that revision also came
-back "sound with fixes", and this text applies its findings. No code follows
-it until it is approved.
+back "sound with fixes", and this text applies its findings. No code
+followed it until it was approved.
 
 ### 11.1 Why
 
@@ -1558,12 +1566,16 @@ Pre-1.0 (rule 8), with no compatibility path:
 
 - **Revision 1 (2026-10-14).** First draft, before implementation.
 - **Approved (2026-10-16).** Q1–Q4 answered as recommended.
-- **Revision 3 (2026-10-19), not approved.** The server remembers refused
-  families and keeps the waiting rows; see §11. The first draft (`228185e`)
-  was revised (`91d9c4d`) after a review judged it "sound with fixes". A
-  second review judged the revision "sound with fixes" too, and its findings
-  are applied. Once approved, it supersedes §2.3, §2.4, C4, C5, Revision 2
-  items 6–10, and parts of N1, N2, N4 and N6.
+- **Revision 3 (2026-10-19).** The server remembers refused families and
+  keeps the waiting rows; see §11. The first draft (`228185e`) was revised
+  (`91d9c4d`) after a review judged it "sound with fixes". A second review
+  judged the revision "sound with fixes" too, and its findings are applied
+  (`f461e61`). It supersedes §2.3, §2.4, C4, C5, Revision 2 items 6–10, and
+  parts of N1, N2, N4 and N6.
+- **Revision 3 approved (2026-10-20).** By the maintainer: "Approve all",
+  answering "Approve the revised #856 design (Revision 3) with the
+  recommended answers to Q1–Q4?". Q1 yes; Q2 Discard is a follow-up issue;
+  Q3 drop item 6; Q4 protocol in place at version 1.
 - **Revision 2 (2026-10-16), during implementation.** Items 1–5 approved by
   the maintainer, 2026-10-16: "Approve, file issue", answering "Approve the
   implementation corrections (Revision 2) to the #856 spec?"; item 4's web
