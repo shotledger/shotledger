@@ -129,7 +129,7 @@ scores against official results.
 - A CV spike report with measured detection numbers:
   `docs/specs/cv-spike-report.md`.
 - **No customers, testimonials, benchmarks, pricing, or press exist.** The app
-  is unreleased and the repository is private. Future work must not fabricate
+  is unreleased. Future work must not fabricate
   any of these.
 
 ## Product Principles

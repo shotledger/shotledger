@@ -152,14 +152,9 @@ checksum-verified), `.github/actions/check-version`, and `.github/cliff.toml`.
 
 One-time, before the first release:
 
-- [ ] The approval gate is **advisory for now**. The `release` environment
-      exists, but a private repo on GitHub Free cannot give it a required
-      reviewer (the API answers 422, "ensure the billing plan supports the
-      required reviewers protection rule"). Until the repo is public or on
-      Pro ([#100](https://github.com/shotledger/shotledger/issues/100)), what
-      stands between a dispatch and a release is the `dry-run` default and
-      that only the maintainer can run the workflow. Then add the maintainer
-      as required reviewer under Settings → Environments → `release`.
+- [x] The approval gate: the `release` environment requires the maintainer
+      as reviewer, declared in shotledger/.github
+      (`safe-settings/suborgs/product.yml`), not set by hand.
 - [ ] The `EXPO_TOKEN` repository secret (see the iOS section).
 - [ ] Run one production build interactively,
       `cd app && eas build --platform android --profile production`, so EAS
@@ -263,10 +258,9 @@ milestone demos before a store submission is warranted.
 
 ## CI and build budget
 
-**GitHub Actions**, private repo: macOS minutes are limited (2,000 min/mo
-at a 10× multiplier ≈ 200 real minutes on the free plan) — the
-unlimited-free-macOS perk only applies once the repo is public. EAS's
-free tier (30 builds/mo, 15 iOS) covers app builds in the meantime.
+**GitHub Actions** standard runners, macOS included, are free for a public
+repo. App builds run on EAS, whose free tier allows 30 builds a month, 15
+of them iOS.
 
 **iOS without a Mac.** EAS Build + EAS Submit run from Linux; TestFlight
 handles beta distribution (builds expire after 90 days). A real iPhone is

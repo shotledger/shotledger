@@ -107,8 +107,8 @@ jobs:
     permissions:
       contents: read
 
-  # Same gate as the release build: the `release` environment holds EXPO_TOKEN
-  # and, once configured, the maintainer as required reviewer.
+  # Same gate as the release build: the `release` environment requires the
+  # maintainer's approval.
   publish:
     name: publish on EAS
     needs: [prepare, checks]
