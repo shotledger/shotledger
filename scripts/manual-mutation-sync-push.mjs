@@ -349,12 +349,15 @@ const APP_TESTS = [
   'src/features/sync/',
 ];
 
-/** Runs one suite; returns 'pass', 'fail' (a test failed) or 'error'. */
+/**
+ * Runs one suite, stopping at the first failing test, since one is a kill;
+ * returns 'pass', 'fail' (a test failed) or 'error'.
+ */
 function runSuite(suite) {
   const [cwd, command, args, failed] =
     suite === 'app'
-      ? ['app', 'npx', ['jest', ...APP_TESTS], /Tests:\s+\d+ failed/]
-      : ['backend', 'npx', ['vitest', 'run', ...BACKEND_TESTS], /Tests\s+\d+ failed/];
+      ? ['app', 'npx', ['jest', '--bail', ...APP_TESTS], /Tests:\s+\d+ failed/]
+      : ['backend', 'npx', ['vitest', 'run', '--bail=1', ...BACKEND_TESTS], /Tests\s+\d+ failed/];
   try {
     execFileSync(command, args, { cwd, encoding: 'utf8', stdio: 'pipe' });
     return 'pass';
