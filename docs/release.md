@@ -295,6 +295,12 @@ The same statement, in user words, is in `docs/store-listing.md`.
   Releases. Google's developer verification requirement (enforcing
   2026-09-30 in BR/ID/SG/TH, global 2027) is satisfied by having a Play
   account — register the package name and signing key once.
+- **F-Droid:** not for now (maintainer, 2026-10-20; #876). F-Droid refuses
+  bundled proprietary libraries, and the build has three: ML Kit (licence-card
+  OCR), Firebase Messaging (pulled in by `expo-notifications`) and Play
+  Services Location (`expo-location`); EAS Update's OTA download breaks its
+  policy too. Listing would need a free-only build flavour; #876 has the
+  analysis. The GitHub Releases APK serves users without Play meanwhile.
 - **Donations:** a "Support development" row in Settings opens the
   configured funding link in the external browser; unlocks nothing, no
   purchase language. Also linked from the store listing and README. The
