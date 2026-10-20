@@ -348,6 +348,9 @@ const STORE_TESTS = [
   'app/src/db/backup/sync-bookkeeping.test.ts',
 ];
 
+/** The end of the last run that failed without a failing test, to show. */
+let lastError = '';
+
 /**
  * Runs one suite, stopping at the first failing test, since one is a kill;
  * returns 'pass', 'fail' (a test failed) or 'error'.
@@ -362,7 +365,9 @@ function runSuite(suite) {
     return 'pass';
   } catch (error) {
     const output = `${error.stdout ?? ''}${error.stderr ?? ''}`;
-    return /Tests\s+\d+ failed/.test(output) ? 'fail' : 'error';
+    if (/Tests\s+\d+ failed/.test(output)) return 'fail';
+    lastError = output.split('\n').slice(-40).join('\n');
+    return 'error';
   }
 }
 
@@ -422,6 +427,7 @@ for (const mutant of MUTANTS) {
 
   if (result === 'error') {
     console.error(`FAIL: mutant "${mutant.name}" broke the run without failing a test.`);
+    console.error(lastError);
     process.exit(1);
   }
   if (result === 'fail') {
