@@ -47,8 +47,7 @@ English and Swedish throughout.
 
 ## Status
 
-Not released yet. ShotLedger is not in Google Play. The repository is private
-for now.
+Not released yet. ShotLedger is not in Google Play.
 
 ## Privacy
 
