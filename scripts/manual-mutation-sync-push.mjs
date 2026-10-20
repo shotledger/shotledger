@@ -3,7 +3,7 @@
 // sync-payload-validation-spec.md §7, sync-family-refusal-spec.md §11) and
 // the phone's refusal marks (app/src/db/queries/sync-store.ts, §11.6).
 // Stryker runs in the root Node vitest pool and cannot reach code that only
-// runs in workerd, nor the app's jest suite.
+// runs in workerd; the store's mutants run its own suite on the root vitest.
 //
 // FAILS CLOSED. The unmutated suites must pass first; a mutant whose pattern
 // does not match exactly once, a file that does not restore, or a run that
@@ -18,7 +18,16 @@ const FILE = 'backend/src/db/queries.ts';
 const ROUTE = 'backend/src/routes/sync.ts';
 const STORE = 'app/src/db/queries/sync-store.ts';
 
-/** Each mutant is a plausible bug, not a syntactic tweak. */
+/**
+ * Each mutant is a plausible bug, not a syntactic tweak. Two earlier mutants
+ * are retired as equivalent under Revision 3, where the judge decides before
+ * the batch from a snapshot the guard keeps current:
+ * - "an invalid payload outranks a tombstone": the judge acks a live change
+ *   over a tombstone `tombstoned` (precedence 2), so its `reason` is null and
+ *   the SQL CASE never sees an invalid change over a tombstone;
+ * - "a duplicate rewrites the record": a replay is judged `duplicate`, which
+ *   takes the record's delete branch, never the upsert's.
+ */
 const MUTANTS = [
   {
     name: 'a duplicate bumps the seq counter',
@@ -100,12 +109,6 @@ const MUTANTS = [
     replace: 'WHEN ${notTombstoned} THEN ${REJECTED_TOMBSTONED}',
   },
   {
-    name: 'an invalid payload outranks a tombstone',
-    find: 'WHEN ${notTombstoned} THEN ${reason}\n            ELSE ${REJECTED_TOMBSTONED} END',
-    replace:
-      'WHEN ${reason} IS NOT NULL THEN ${reason}\n            ELSE ${REJECTED_TOMBSTONED} END',
-  },
-  {
     name: 'the batch records every refusal as invalid_payload',
     find: 'WHEN ${notTombstoned} THEN ${reason}',
     replace: 'WHEN ${notTombstoned} THEN ${REJECTED_INVALID_PAYLOAD}',
@@ -159,11 +162,6 @@ const MUTANTS = [
     name: 'an applied change leaves its record',
     find: '.where(sql`${thisRow} AND ${notDuplicate} AND ${ok}`)',
     replace: '.where(sql`false`)',
-  },
-  {
-    name: 'a duplicate rewrites the record',
-    find: 'WHERE ${notDuplicate} AND ${notTombstoned}`,',
-    replace: 'WHERE ${notTombstoned}`,',
   },
   {
     name: 'a waiting record keeps no payload',
@@ -332,7 +330,7 @@ const MUTANTS = [
 const SUITES = {
   [FILE]: 'backend',
   [ROUTE]: 'backend',
-  [STORE]: 'app',
+  [STORE]: 'store',
 };
 
 const BACKEND_TESTS = [
@@ -343,10 +341,11 @@ const BACKEND_TESTS = [
   'test/sync-payload-validation.spec.ts',
   'test/sync-family-refusal.spec.ts',
 ];
-const APP_TESTS = [
-  'src/db/queries/sync-store.test.ts',
-  'src/db/backup/sync-bookkeeping.test.ts',
-  'src/features/sync/',
+// The phone's SQLite store runs on the root vitest, not the app's jest
+// (app/jest.config.js ignores src/db/).
+const STORE_TESTS = [
+  'app/src/db/queries/sync-store.test.ts',
+  'app/src/db/backup/sync-bookkeeping.test.ts',
 ];
 
 /**
@@ -354,16 +353,16 @@ const APP_TESTS = [
  * returns 'pass', 'fail' (a test failed) or 'error'.
  */
 function runSuite(suite) {
-  const [cwd, command, args, failed] =
-    suite === 'app'
-      ? ['app', 'npx', ['jest', '--bail', ...APP_TESTS], /Tests:\s+\d+ failed/]
-      : ['backend', 'npx', ['vitest', 'run', '--bail=1', ...BACKEND_TESTS], /Tests\s+\d+ failed/];
+  const [cwd, args] =
+    suite === 'store'
+      ? ['.', ['vitest', 'run', '--bail=1', ...STORE_TESTS]]
+      : ['backend', ['vitest', 'run', '--bail=1', ...BACKEND_TESTS]];
   try {
-    execFileSync(command, args, { cwd, encoding: 'utf8', stdio: 'pipe' });
+    execFileSync('npx', args, { cwd, encoding: 'utf8', stdio: 'pipe' });
     return 'pass';
   } catch (error) {
     const output = `${error.stdout ?? ''}${error.stderr ?? ''}`;
-    return failed.test(output) ? 'fail' : 'error';
+    return /Tests\s+\d+ failed/.test(output) ? 'fail' : 'error';
   }
 }
 
