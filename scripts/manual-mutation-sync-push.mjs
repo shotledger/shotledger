@@ -214,6 +214,13 @@ const MUTANTS = [
     find: 'WHERE w.depth < 2 AND',
     replace: 'WHERE w.depth < 1 AND',
   },
+  // §11.8: the snapshot is read after state_rev, so the guard covers every read.
+  {
+    name: 'the snapshot reads state_rev last',
+    find: '  const stateRev = await readStateRev(db, userId);\n  const recorded = await readRecorded(db, userId, changes);\n  const records = await readRecords(db, userId);\n  const stored = await readWalk(db, userId, changes, records);\n',
+    replace:
+      '  const recorded = await readRecorded(db, userId, changes);\n  const records = await readRecords(db, userId);\n  const stored = await readWalk(db, userId, changes, records);\n  const stateRev = await readStateRev(db, userId);\n',
+  },
   // §11.5: re-validation before release.
   {
     name: 'a waiting row is released without re-validation',

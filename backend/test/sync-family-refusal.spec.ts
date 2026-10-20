@@ -1104,6 +1104,63 @@ describe('CONC two devices push into one family at once', () => {
   });
 });
 
+/**
+ * Commits `other` once, just before the push's first read of `state_rev`
+ * executes. With `state_rev` read first, as §11.8 requires, every read of the
+ * snapshot sees `other`; read later, the earlier reads miss it and the guard
+ * still passes.
+ */
+function commitBeforeStateRevRead(real: D1Database, other: ClientChange[]): D1Database {
+  let done = false;
+  const wrap = (statement: D1PreparedStatement): D1PreparedStatement =>
+    new Proxy(statement, {
+      get(target, prop) {
+        if (prop === 'bind') return (...values: unknown[]) => wrap(target.bind(...values));
+        const value = Reflect.get(target, prop) as unknown;
+        if (typeof value !== 'function') return value;
+        if (prop === 'all' || prop === 'raw' || prop === 'first' || prop === 'run') {
+          return async (...args: unknown[]) => {
+            if (!done) {
+              done = true;
+              await pushThrough(real, other);
+            }
+            return (value as (...a: unknown[]) => unknown).apply(target, args);
+          };
+        }
+        return (value as () => unknown).bind(target);
+      },
+    });
+  return new Proxy(real, {
+    get(target, prop) {
+      if (prop === 'prepare') {
+        return (query: string) => {
+          const statement = target.prepare(query);
+          return /select "state_rev" from "sync_sequence"/.test(query) ? wrap(statement) : statement;
+        };
+      }
+      const value = Reflect.get(target, prop) as unknown;
+      return typeof value === 'function' ? (value as () => unknown).bind(target) : value;
+    },
+  });
+}
+
+describe('SNAP the snapshot reads state_rev before anything else', () => {
+  it('a push committed just before the state_rev read is seen by every later read: T4 waits', async () => {
+    await push([S(), R('r1'), T('t1', 'r1'), R('r2'), T('t3', 'r2')]);
+    const racing = commitBeforeStateRevRead(env.DB, [T('t2', 'r1', true)]);
+
+    const response = await pushThrough(racing, [T('t4', 'r2')]);
+
+    expect(response.status).toBe(200);
+    expect(response.acks[0]).toMatchObject({
+      status: 'rejected',
+      reason: 'family_refused',
+      blocker: ref('shots', 't2'),
+    });
+    expect(await storedRow('shots', 't4')).toBeNull();
+  });
+});
+
 describe('DISCARD a tombstone of the blocker releases the family', () => {
   it('B tombstones T2, which only A ever held; S1’s waiting rows are applied', async () => {
     await push([S(), R('r1')]);
