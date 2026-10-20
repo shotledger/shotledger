@@ -78,9 +78,10 @@ backend/migrations/0002_photos_init.sql  photos/quota/rate-limit tables DDL
   what `backend/test/sync.spec.ts` mounts for its bare-token fixtures —
   nothing reachable from the deployed Worker trusts a bearer string as a
   user id.
-- **`settings` and `session_tags`** are excluded from the syncable table
-  set — they don't carry the `id`/`updated_at`/`deleted_at` convention the
-  rest of the schema does. Flagged as `VERIFY` in spec §1.
+- **`settings` and `session_tags`** sync too, though they were first left
+  out for lacking the `id`/`updated_at`/`deleted_at` convention.
+  `SYNC_TABLE_NAMES` and `SYNCED_SETTING_KEYS` in `shared/src/sync/protocol.ts`
+  are the list; only the settings keys named there leave the device.
 - **Auth: better-auth on Workers + D1** via `@better-auth/drizzle-adapter`,
   email+password only. The `bearer()` plugin lets a mobile client send
   `Authorization: Bearer <sessionToken>` (from the `set-auth-token`

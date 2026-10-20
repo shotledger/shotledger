@@ -1,7 +1,7 @@
 import type { MiddlewareHandler } from 'hono';
 
 /** The paths the Worker answers itself (`assets.run_worker_first` in wrangler.jsonc). */
-export const WORKER_PATHS = ['/api/*', '/sync/*', '/photos/*', '/account/*'];
+export const WORKER_PATHS = ['/api/*', '/sync/*', '/photos/*', '/account/*', '/.well-known/*'];
 
 /**
  * web/public/_headers covers only static assets. Every Worker response is

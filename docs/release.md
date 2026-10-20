@@ -136,7 +136,13 @@ What the deployed config already does:
       collected — one foreground fix, taken only on that tap, sent to
       `overpass-api.de` to look up nearby ranges and then discarded; no
       background access, nothing stored, and only the range name the user
-      picks is saved.
+      picks is saved. **ML Kit** (licence-card OCR) counts as an SDK that
+      collects data: the image and text stay on the phone, but Google's ML
+      Kit terms say it sends Google metrics on the API's performance and use,
+      and make the app responsible for disclosing that. Answer the form from
+      Google's ML Kit data-disclosure guidance for the version shipped, and
+      keep it consistent with the privacy policy
+      (`docs/manual/reference/privacy-policy.md`).
 
 ## (b) Repeatable steps, every release
 

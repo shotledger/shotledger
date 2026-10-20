@@ -5,6 +5,7 @@ import { bearer } from 'better-auth/plugins';
 import { drizzle } from 'drizzle-orm/d1';
 
 import * as authSchema from '../db/auth-schema';
+import { androidOrigin, signingFingerprints } from '../lib/app-association';
 import { redactingAuthLogger } from '../lib/errors';
 
 /** `expo.scheme` in app/app.json. */
@@ -156,7 +157,8 @@ function list(value: string | undefined): string[] {
  * secret defaults to `DEV_SECRET`.
  *
  * Passkeys (#681): the rp id is `passkeyRpId`'s, and a deployed env accepts
- * a ceremony only from its own web origin. Locally the rp id is `localhost`
+ * a ceremony only from its own web origin and from the Android app signed
+ * with a key in `ANDROID_SIGNING_CERT_SHA256`. Locally the rp id is `localhost`
  * (open the web app at http://localhost:8787, not 127.0.0.1) and the
  * request's Origin is used, which better-auth has already checked against
  * the trusted origins.
@@ -186,6 +188,11 @@ export function createAuth(env: Env): Auth {
         baseURL: env.BETTER_AUTH_URL || undefined,
         rpID: undefined,
       };
+  // The web origin, and the Android app signed with each listed key (#681).
+  const passkeyOrigins =
+    deployed && baseURL
+      ? [baseURL, ...signingFingerprints(env.ANDROID_SIGNING_CERT_SHA256).map(androidOrigin)]
+      : null;
   // Filled in once the instance exists; the rate limiter reads it per request.
   let endpointPaths: string[] = [];
   const auth = betterAuth({
@@ -226,7 +233,7 @@ export function createAuth(env: Env): Auth {
     // Otherwise its router console.errors an unexpected error whole, query
     // parameters included; thrown, it reaches `logSafeErrors` instead.
     onAPIError: { throw: true },
-    plugins: [bearer(), passkey({ rpName: 'ShotLedger', rpID, origin: deployed ? baseURL : null })],
+    plugins: [bearer(), passkey({ rpName: 'ShotLedger', rpID, origin: passkeyOrigins })],
     databaseHooks: {
       session: {
         create: { before: (session, ctx) => Promise.resolve(webSessionExpiry(session, ctx)) },

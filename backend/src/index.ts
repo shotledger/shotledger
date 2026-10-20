@@ -10,6 +10,7 @@ import { logSafeErrors } from './lib/errors';
 import { createAccountRoutes } from './routes/account';
 import { createPhotoRoutes } from './routes/photos';
 import { createSyncRoutes } from './routes/sync';
+import { createWellKnownRoutes } from './routes/well-known';
 
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
@@ -50,6 +51,7 @@ app.route(
 
 app.route('/photos', createPhotoRoutes());
 app.route('/account', createAccountRoutes());
+app.route('/.well-known', createWellKnownRoutes());
 
 app.onError(logSafeErrors);
 

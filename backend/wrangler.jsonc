@@ -19,7 +19,7 @@
   "assets": {
     "directory": "../web/dist",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*", "/sync/*", "/photos/*", "/account/*"],
+    "run_worker_first": ["/api/*", "/sync/*", "/photos/*", "/account/*", "/.well-known/*"],
   },
   // Local/test-only — never deployed (no real database_id).
   // See docs/specs/sync-protocol-spec.md §5.
@@ -72,6 +72,17 @@
         "ENVIRONMENT": "staging",
         "BETTER_AUTH_URL": "https://web-staging.shotledger.app",
         "BETTER_AUTH_TRUSTED_ORIGINS": "shotledger://",
+        // Passkeys bind to BETTER_AUTH_URL's host, by decision (#887): leave
+        // this unset. It would bind them to a parent domain instead, which
+        // must then serve the app's .well-known files.
+        // "PASSKEY_RP_ID": "<parent domain>",
+        // Passkeys in the phone app (#681): the SHA-256 fingerprints of the
+        // certificates that sign it (Play Console > App integrity > App
+        // signing key, plus any key that signs test builds), comma-separated,
+        // and the Apple Developer Team ID. Unset, /.well-known answers 404
+        // for that platform and the app cannot use passkeys there.
+        // "ANDROID_SIGNING_CERT_SHA256": "<AA:BB:…>,<CC:DD:…>",
+        // "APPLE_TEAM_ID": "<10-character Team ID>",
       },
       "secrets": {
         "required": ["BETTER_AUTH_SECRET"],
@@ -103,6 +114,17 @@
         "ENVIRONMENT": "production",
         "BETTER_AUTH_URL": "https://web.shotledger.app",
         "BETTER_AUTH_TRUSTED_ORIGINS": "shotledger://",
+        // Passkeys bind to BETTER_AUTH_URL's host, by decision (#887): leave
+        // this unset. It would bind them to a parent domain instead, which
+        // must then serve the app's .well-known files.
+        // "PASSKEY_RP_ID": "<parent domain>",
+        // Passkeys in the phone app (#681): the SHA-256 fingerprints of the
+        // certificates that sign it (Play Console > App integrity > App
+        // signing key, plus any key that signs test builds), comma-separated,
+        // and the Apple Developer Team ID. Unset, /.well-known answers 404
+        // for that platform and the app cannot use passkeys there.
+        // "ANDROID_SIGNING_CERT_SHA256": "<AA:BB:…>,<CC:DD:…>",
+        // "APPLE_TEAM_ID": "<10-character Team ID>",
       },
       "secrets": {
         "required": ["BETTER_AUTH_SECRET"],

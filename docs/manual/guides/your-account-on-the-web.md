@@ -119,7 +119,16 @@ Where the browser supports it, your passkey is also offered when you click
 the email field.
 
 Passkeys work only on the real ShotLedger web address, over a secure
-connection. The phone app does not use them yet.
+connection.
+
+The phone app uses the same passkeys. On the phone, open **Settings** >
+**Account & Sync**. Signed out, **Sign In with a Passkey** under the password
+field signs you in. Signed in, the **Passkeys** card lists your passkeys with
+**Remove**, and **Add Passkey** saves one in your phone's password manager
+under the name "ShotLedger app on Android" or "ShotLedger app on iOS". If the
+phone says to sign out and in again, it is because a passkey can only be added
+within a day of signing in. A phone without a screen lock, or without Google
+Play services on Android, cannot use passkeys, and the card says so.
 
 ## Photo storage
 
