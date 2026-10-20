@@ -83,14 +83,14 @@ export function SignIn({ onSignedIn }: { onSignedIn: () => void }) {
           <p className="danger">{t(`account.error.${error.error}`)}</p>
         )}
         {error?.kind === 'passkey' && (
-          <p className="danger">{t(`web.passkey.error.${error.error}`)}</p>
+          <p className="danger">{t(`account.passkey.error.${error.error}`)}</p>
         )}
         <button type="submit" disabled={busy}>
           {t('account.signIn')}
         </button>
         {passkeys && (
           <button type="button" className="secondary" disabled={busy} onClick={onPasskey}>
-            {t('web.passkey.signIn')}
+            {t('account.passkey.signIn')}
           </button>
         )}
       </form>

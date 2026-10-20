@@ -22,7 +22,13 @@ called from `web/src/api.ts`. Neither reaches the app bundle. Rejected:
 better-auth's `passkeyClient`, which would add `better-auth/client`,
 `nanostores` and `@better-fetch/fetch` to a web app that talks to the Worker
 through `shared/src/sync-client/http`; and a hand-rolled WebAuthn verifier.
-The phone's native passkey module is a separate decision (#681, "App").
+**`react-native-passkey@3.6.2`** (MIT) in `app/` — 2026-10-20, the phone's
+side of the same feature (#681, "App"). It hands the Worker's WebAuthn JSON to
+Android's Credential Manager (`androidx.credentials` 1.6.0, Apache-2.0, with
+`kotlinx-coroutines` 1.10.2) and iOS's AuthenticationServices, and returns the
+JSON `@simplewebauthn/browser` would. Behind `app/src/platform/passkey.ts`; the
+web preview gets `passkey.web.ts`, which reports no support. Rejected: a
+hand-written Expo module for the same two calls.
 
 **`reactivecircus/android-emulator-runner@v2.38.0`** (GitHub Action, Apache-2.0,
 pinned by commit SHA) and the **Maestro CLI 2.11.0** (Apache-2.0, release zip

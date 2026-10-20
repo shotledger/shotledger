@@ -168,19 +168,19 @@ function Passkeys() {
 
   return (
     <section className="card">
-      <h2>{t('web.passkey.title')}</h2>
-      <p className="muted">{t('web.passkey.body')}</p>
+      <h2>{t('account.passkey.title')}</h2>
+      <p className="muted">{t('account.passkey.body')}</p>
       {passkeys.kind === 'loading' && <p className="muted">{t('web.account.loading')}</p>}
-      {passkeys.kind === 'failed' && <p className="danger">{t('web.passkey.listFailed')}</p>}
+      {passkeys.kind === 'failed' && <p className="danger">{t('account.passkey.listFailed')}</p>}
       {passkeys.kind === 'ready' && passkeys.value.length > 0 && (
         <ul className="devices">
           {passkeys.value.map((passkey: AccountPasskey) => (
             <li key={passkey.id}>
               <div>
-                <strong>{passkey.name ?? t('web.passkey.unnamed')}</strong>
+                <strong>{passkey.name ?? t('account.passkey.unnamed')}</strong>
                 {passkey.createdAt && (
                   <div className="muted">
-                    {t('web.passkey.added', { date: date(passkey.createdAt) })}
+                    {t('account.passkey.added', { date: date(passkey.createdAt) })}
                   </div>
                 )}
               </div>
@@ -189,7 +189,7 @@ function Passkeys() {
                 disabled={busy !== null}
                 onClick={() => remove(passkey.id)}
               >
-                {t('web.passkey.remove')}
+                {t('account.passkey.remove')}
               </button>
             </li>
           ))}
@@ -197,15 +197,19 @@ function Passkeys() {
       )}
       {error !== null && (
         <p className="danger">
-          {t(error === 'removeFailed' ? 'web.passkey.removeFailed' : `web.passkey.error.${error}`)}
+          {t(
+            error === 'removeFailed'
+              ? 'account.passkey.removeFailed'
+              : `account.passkey.error.${error}`,
+          )}
         </p>
       )}
       {supported ? (
         <button onClick={add} disabled={busy !== null}>
-          {t('web.passkey.add')}
+          {t('account.passkey.add')}
         </button>
       ) : (
-        <p className="muted">{t('web.passkey.unsupported')}</p>
+        <p className="muted">{t('account.passkey.unsupported')}</p>
       )}
     </section>
   );

@@ -121,7 +121,17 @@ inloggningssidan. Där webbläsaren stöder det erbjuds nyckeln också när du
 klickar i e-postfältet.
 
 Nycklar fungerar bara på ShotLedgers riktiga webbadress, över en säker
-anslutning. Telefonappen använder dem inte ännu.
+anslutning.
+
+Telefonappen använder samma nycklar. Öppna **Inställningar** > **Konto och
+synk** i telefonen. Utloggad loggar **Logga in med nyckel** under
+lösenordsfältet in dig. Inloggad listar kortet **Nycklar** dina nycklar med
+**Ta bort**, och **Lägg till nyckel** sparar en i telefonens
+lösenordshanterare med namnet "ShotLedger-appen på Android" eller
+"ShotLedger-appen på iOS". Om telefonen ber dig logga ut och in igen beror
+det på att en nyckel bara kan läggas till inom ett dygn efter inloggningen.
+En telefon utan skärmlås, eller utan Google Play-tjänster på Android, kan
+inte använda nycklar, och kortet säger det.
 
 ## Fotolagring
 
