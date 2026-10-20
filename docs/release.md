@@ -152,14 +152,9 @@ checksum-verified), `.github/actions/check-version`, and `.github/cliff.toml`.
 
 One-time, before the first release:
 
-- [ ] The approval gate is **advisory for now**. The `release` environment
-      exists, but a private repo on GitHub Free cannot give it a required
-      reviewer (the API answers 422, "ensure the billing plan supports the
-      required reviewers protection rule"). Until the repo is public or on
-      Pro ([#100](https://github.com/shotledger/shotledger/issues/100)), what
-      stands between a dispatch and a release is the `dry-run` default and
-      that only the maintainer can run the workflow. Then add the maintainer
-      as required reviewer under Settings → Environments → `release`.
+- [x] The approval gate: the `release` environment requires the
+      maintainer's approval (self-review allowed), declared in
+      `shotledger/.github` (shotledger/.github#2, 2026-10-20).
 - [ ] The `EXPO_TOKEN` repository secret (see the iOS section).
 - [ ] Run one production build interactively,
       `cd app && eas build --platform android --profile production`, so EAS
