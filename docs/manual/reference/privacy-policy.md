@@ -20,7 +20,7 @@ feature-by-feature overview is in [Your data and privacy](privacy.md).
 The controller for the personal data the sync service stores is Jimisola
 Laursen, Sweden, who develops and runs ShotLedger.
 
-Contact: VERIFY (contact email for privacy requests).
+Contact: [privacy@shotledger.app](mailto:privacy@shotledger.app)
 
 ## What stays on your phone
 

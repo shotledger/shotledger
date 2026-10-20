@@ -74,4 +74,4 @@ taken to the Swedish National Board for Consumer Disputes
 
 ## Contact
 
-VERIFY (contact email).
+[privacy@shotledger.app](mailto:privacy@shotledger.app)

@@ -75,4 +75,4 @@ Allmänna reklamationsnämnden ([ARN](https://www.arn.se)).
 
 ## Kontakt
 
-VERIFY (e-postadress).
+[privacy@shotledger.app](mailto:privacy@shotledger.app)

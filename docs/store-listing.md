@@ -121,5 +121,6 @@ eller 32-bitars (armeabi-v7a) ARM-enhet.
   <https://shotledger.github.io/shotledger/reference/privacy-policy/>
   (source `docs/manual/reference/privacy-policy.md`; Swedish under `/sv/`).
   Terms of service for the sync service: `reference/terms/` beside it.
-  VERIFY: the contact email and the effective date in both pages before
-  entering the URL in Play Console.
+  Contact: privacy@shotledger.app (also the Play Console developer contact).
+  VERIFY: the effective date in both pages before entering the URL in Play
+  Console.

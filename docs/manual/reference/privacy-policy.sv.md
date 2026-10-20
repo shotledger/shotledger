@@ -21,7 +21,7 @@ funktion för funktion, finns i [Dina data och integritet](privacy.md).
 Personuppgiftsansvarig för de uppgifter synktjänsten lagrar är Jimisola
 Laursen, Sverige, som utvecklar och driver ShotLedger.
 
-Kontakt: VERIFY (e-postadress för integritetsfrågor).
+Kontakt: [privacy@shotledger.app](mailto:privacy@shotledger.app)
 
 ## Vad som stannar i telefonen
 
