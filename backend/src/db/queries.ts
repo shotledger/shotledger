@@ -322,11 +322,22 @@ async function planPush(
 
 // --- The batch (§11.5, §11.8).
 
-/** The one statement that writes `state_rev`: the arrival bump and the snapshot guard. */
+/**
+ * The one statement that writes `state_rev`: the arrival bump and the
+ * snapshot guard. A push judged with a sequence row that is gone by the
+ * batch, as when the account is deleted in between, must not create one:
+ * its `last_seq` is null then, and the insert fails (round 5, V5-6). Only a
+ * push judged from no row (`stateRev` 0) creates it.
+ */
 function guardStatement(db: Db, userId: string, stateRev: number) {
   return db
     .insert(syncSequence)
-    .values({ userId, lastSeq: 0, stateRev: 1 })
+    .values({
+      userId,
+      lastSeq: sql`CASE WHEN ${stateRev} = 0
+        OR EXISTS (SELECT 1 FROM sync_sequence WHERE user_id = ${userId}) THEN 0 END`,
+      stateRev: 1,
+    })
     .onConflictDoUpdate({
       target: syncSequence.userId,
       set: {
@@ -339,10 +350,29 @@ function guardStatement(db: Db, userId: string, stateRev: number) {
 const GUARD_FAILED = 'NOT NULL constraint failed: sync_sequence.state_rev';
 
 function isGuardFailure(error: unknown): boolean {
+  return hasMessage(error, GUARD_FAILED);
+}
+
+/** SQLite's message when the guard expected a sequence row that is gone. */
+const ACCOUNT_GONE = 'NOT NULL constraint failed: sync_sequence.last_seq';
+
+function hasMessage(error: unknown, message: string): boolean {
   for (let e: unknown = error; e instanceof Error; e = e.cause) {
-    if (e.message.includes(GUARD_FAILED)) return true;
+    if (e.message.includes(message)) return true;
   }
   return false;
+}
+
+/**
+ * The user's sequence row went between the snapshot and the batch: the
+ * account was deleted. Nothing is written, and the push is not tried again,
+ * since a fresh read would find no row and recreate the user (V5-6).
+ */
+export class PushAccountGoneError extends Error {
+  constructor() {
+    super('applyPush: the account was deleted during the push');
+    this.name = 'PushAccountGoneError';
+  }
 }
 
 /** The snapshot guard failed on every attempt: the route answers 503 (§11.7). */
@@ -689,6 +719,7 @@ export async function applyPush(
     try {
       return await attemptPush(db, userId, changes, options);
     } catch (error) {
+      if (hasMessage(error, ACCOUNT_GONE)) throw new PushAccountGoneError();
       if (!isGuardFailure(error)) throw error;
     }
   }

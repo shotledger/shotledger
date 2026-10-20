@@ -1054,7 +1054,9 @@ The batch's **first statement** is the guard, and it also bumps
 `state_rev`:
 
 ```sql
-INSERT INTO sync_sequence (user_id, last_seq, state_rev) VALUES (?1, 0, 1)
+INSERT INTO sync_sequence (user_id, last_seq, state_rev)
+VALUES (?1, CASE WHEN ?2 = 0
+  OR EXISTS (SELECT 1 FROM sync_sequence WHERE user_id = ?1) THEN 0 END, 1)
 ON CONFLICT (user_id) DO UPDATE
   SET state_rev = CASE WHEN state_rev = ?2 THEN state_rev + 1 END
 ```
@@ -1074,6 +1076,13 @@ snapshot reads: `COALESCE(state_rev, 0)`, so 0 when the user has no row.
   with `state_rev` 1 and `last_seq` 0, even when every change is refused
   (FIRST). When two first pushes race, the second meets the first's row with
   `state_rev` 1, the `CASE` yields null, and it is judged again.
+- **The row went between the snapshot and the batch** (`?2` > 0, no row),
+  as when the account is deleted in between: `last_seq` is null, and the
+  insert fails with `NOT NULL constraint failed: sync_sequence.last_seq`.
+  The route answers 401 and does not judge again, since a fresh read would
+  find no row and create the user anew (Revision 4, item 11; GONE). A first
+  push that races a deletion still creates the row: the deletion's own
+  limit, as before #856.
 - D1 runs a batch's statements in sequence, as one transaction, with no
   other query interleaved (`sync-push-atomicity-spec.md` §6). So one guard
   at the start covers every later statement, and no statement needs a
@@ -1505,6 +1514,12 @@ Feature: The server keeps refused families and their waiting rows (Revision 3)
     Then at 10,000 rows the tag push takes under 5 s and each fix under 10 s
     And no statement binds 100 parameters, has 100 KB of SQL, or binds a 2 MB string
     And the evidence records the curve
+
+  Scenario: GONE a push judged before an account deletion cannot land after it (round 5, V5-6)
+    Given A's push of T1 (invalid) and T2 is judged
+    When the account is deleted before the push's batch runs
+    Then the guard's insert fails and the route answers 401
+    And no sync_* table keeps a row of that user
 ```
 
 **Properties** (generated trees and push sequences with `fast-check`,
@@ -1612,7 +1627,7 @@ Pre-1.0 (rule 8), with no compatibility path:
   devices showing the stored session and the counts everywhere; indexed
   lookups and a 10,000-row test; the missing concurrency test, the test and
   evidence corrections, the required protocol fields, and refusing a push
-  that lands after the account is deleted. Items 9 and 10 match that
+  that lands after the account is deleted. Items 9–11 match that
   proposal and are approved with it; any item beyond it stays pending.
   1. **REVAL's T2 waits; it is not applied.** The scenario says "T2 is
      applied". Re-validation turns T1 into a bad row at T1's own arrival,
@@ -1694,6 +1709,13 @@ table_name, row_id` uses SQLite's BINARY collation, so the judge
 QUERY PLAN` in the evidence). The judge lists a blocker only when it
       differs from the one stored with the record, which `RefusalRecord`
       now carries. BUDGET gains the 10,000-row curve.
+
+  11. **A push judged before an account deletion cannot land after it
+      (round 5, V5-6).** The approved guard inserted `(?1, 0, 1)` whatever
+      `?2` was, so a push judged before the deletion recreated the user's
+      sequence row and wrote its rows and waiting payloads after it. The
+      insert's `last_seq` is now null unless `?2` is 0 or the row exists;
+      the route answers that failure with 401 and no retry (GONE).
 
 - **Revision 2 (2026-10-16), during implementation.** Items 1–5 approved by
   the maintainer, 2026-10-16: "Approve, file issue", answering "Approve the

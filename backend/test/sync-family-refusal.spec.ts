@@ -1195,6 +1195,42 @@ describe('SNAP the snapshot reads state_rev before anything else', () => {
   });
 });
 
+describe('GONE a push judged before the account is deleted cannot land after it (V5-6)', () => {
+  async function userRows(): Promise<number> {
+    let n = 0;
+    for (const table of ['sync_rows', 'sync_sequence', 'sync_idempotency', 'sync_refusals']) {
+      const found = await env.DB.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE user_id = ?`)
+        .bind(USER)
+        .first<{ n: number }>();
+      n += found!.n;
+    }
+    return n;
+  }
+
+  it('the guard fails on a missing sequence row it expected, and nothing of the user is written', async () => {
+    await push([S(), R('r1')]);
+    const gate = gateD1(env.DB, { kind: 'pause', at: 4 });
+    const pending = pushThrough(gate.d1, [T('t1', 'r1', true), T('t2', 'r1')]);
+    await gate.paused;
+    // The account deletion's cascade (routes/account.ts) commits in between.
+    for (const table of ['sync_rows', 'sync_sequence', 'sync_idempotency', 'sync_refusals']) {
+      await env.DB.prepare(`DELETE FROM ${table} WHERE user_id = ?`).bind(USER).run();
+    }
+    gate.release();
+
+    const response = await pending;
+
+    expect(response.status).toBe(401);
+    expect(await userRows()).toBe(0);
+  });
+
+  it('a first push still creates the sequence row', async () => {
+    expect(await userRows()).toBe(0);
+    const [ack] = await push([S()]);
+    expect(ack).toMatchObject({ status: 'applied', arrival: 1 });
+  });
+});
+
 describe('DISCARD a tombstone of the blocker releases the family', () => {
   it('B tombstones T2, which only A ever held; S1’s waiting rows are applied', async () => {
     await push([S(), R('r1')]);

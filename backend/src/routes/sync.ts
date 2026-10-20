@@ -18,6 +18,7 @@ import {
   applyPush,
   createDb,
   pullTablePage,
+  PushAccountGoneError,
   PushBusyError,
   readRefusals,
   toChangeRow,
@@ -160,6 +161,10 @@ export function createSyncRoutes(authenticatorFor: (env: Env) => Authenticator) 
       acks = await applyPush(db, userId, parsed.data.changes, { invalid, revalidate: stillValid });
     } catch (error) {
       if (error instanceof PushBusyError) return c.json({ error: 'busy' }, 503);
+      // The account was deleted while the push was judged (V5-6).
+      if (error instanceof PushAccountGoneError) {
+        return c.json({ error: 'unauthenticated' }, 401);
+      }
       throw error;
     }
 

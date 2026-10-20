@@ -142,6 +142,17 @@ const MUTANTS = [
     replace: '${syncSequence.stateRev} + 1',
   },
   {
+    name: 'a push judged before an account deletion recreates the user',
+    find: 'OR EXISTS (SELECT 1 FROM sync_sequence WHERE user_id = ${userId}) THEN 0 END`,',
+    replace: 'OR true THEN 0 END`,',
+  },
+  {
+    name: 'a push after an account deletion is not answered 401',
+    file: ROUTE,
+    find: "        return c.json({ error: 'unauthenticated' }, 401);\n      }",
+    replace: "        return c.json({ error: 'busy' }, 503);\n      }",
+  },
+  {
     name: 'a guard failure is not retried',
     find: 'if (!isGuardFailure(error)) throw error;',
     replace: 'throw error;',
