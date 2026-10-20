@@ -14,7 +14,7 @@ export const JSON_EXPORT_FORMAT = 'shotledger.sessions';
  * of a newer file is the data-loss mode this guards.
  *
  * Additive optional fields do not bump it: a reader of the older shape still
- * reads the newer file correctly (CLAUDE.md hard rule 8, pre-1.0.0).
+ * reads the newer file correctly (AGENTS.md hard rule 8, pre-1.0.0).
  */
 export const JSON_EXPORT_VERSION = 1;
 

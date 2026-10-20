@@ -1,7 +1,7 @@
 // Native components that ship inside the app but appear in no npm manifest —
 // Gradle/Maven artifacts, CocoaPods and vendored C/C++ sources. `pnpm licenses:generate`
 // cannot see them, so this list is hand-maintained: update it when a native
-// dependency is added, removed or bumped (see CLAUDE.md hard rule 2).
+// dependency is added, removed or bumped (see AGENTS.md hard rule 2).
 //
 // Versions and license names verified from the artifacts themselves:
 // the Maven POMs (org.opencv:opencv, com.google.mlkit:text-recognition),

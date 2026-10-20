@@ -1,6 +1,6 @@
 # docs/
 
-Rules that apply everywhere are in the root `CLAUDE.md`, including that a
+Rules that apply everywhere are in the root `AGENTS.md`, including that a
 user-visible change updates `docs/manual/` in the same PR.
 
 `docs/manual/` is the **user** manual, written for shooters, not

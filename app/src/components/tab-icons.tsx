@@ -1,7 +1,7 @@
 // Tab bar glyphs. `@expo/vector-icons` is not actually in this project's
 // dependency tree (checked: absent from pnpm-lock.yaml and node_modules,
 // despite being commonly bundled with Expo) — adding it needs the
-// maintainer's OK per CLAUDE.md's no-new-deps rule, so these are drawn with
+// maintainer's OK per AGENTS.md's no-new-deps rule, so these are drawn with
 // `react-native-svg`, already a dependency (see target-face.tsx).
 import type { ColorValue } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
