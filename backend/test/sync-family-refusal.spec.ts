@@ -989,7 +989,7 @@ describe('a release skips a row the server already holds later or deleted', () =
     expect(await records()).toEqual([]);
   });
 
-  it('keeps a stored version that arrived at or after the record, and deletes the record', async () => {
+  it('keeps a stored version that arrived after the record, and deletes the record', async () => {
     await push([S()]);
     await push([live('sessions', 's1', { name: 'later' })]);
     await seedWaiting('s1', 1, 'older');
@@ -997,6 +997,18 @@ describe('a release skips a row the server already holds later or deleted', () =
     await push([live('tags', 'g1')]);
 
     expect(await nameOf('sessions', 's1')).toBe('later');
+    expect(await records()).toEqual([]);
+  });
+
+  it('keeps a stored version that arrived at the record’s own arrival, and deletes the record', async () => {
+    await push([S()]);
+    await push([live('sessions', 's1', { name: 'stored' })]);
+    expect(await storedRow('sessions', 's1')).toMatchObject({ arrival_rev: 2 });
+    await seedWaiting('s1', 2, 'waiting');
+
+    await push([live('tags', 'g1')]);
+
+    expect(await nameOf('sessions', 's1')).toBe('stored');
     expect(await records()).toEqual([]);
   });
 });

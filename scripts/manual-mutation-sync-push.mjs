@@ -190,6 +190,11 @@ const MUTANTS = [
     replace: 'AND s.deleted_at IS NOT NULL)',
   },
   {
+    name: 'a release overwrites a stored version of its own arrival',
+    find: 'AND (s.deleted_at IS NOT NULL OR s.arrival_rev >= r.arrival))',
+    replace: 'AND (s.deleted_at IS NOT NULL OR s.arrival_rev > r.arrival))',
+  },
+  {
     name: 'a release resurrects a tombstone',
     find: 'AND (s.deleted_at IS NOT NULL OR s.arrival_rev >= r.arrival))',
     replace: 'AND s.arrival_rev >= r.arrival)',
