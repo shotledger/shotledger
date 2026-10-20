@@ -123,8 +123,8 @@ What the deployed config already does:
       60 seconds from one address is refused with `429`.
 - [ ] Point the app at production: set `expo.extra.apiBaseUrl` in
       `app/app.json` (or `EXPO_PUBLIC_API_BASE_URL` for a one-off build) to
-      the production origin. The default is the `https://api.shotledger.app`
-      placeholder, which does not resolve.
+      the production origin. The default is already
+      `https://web.shotledger.app` (#887); check it resolves.
 - [ ] Play Console **Data safety** form now has real answers to give: with
       sync enabled the app collects an email address and the logbook rows
       and photos the user chooses to sync, all deletable in-app via

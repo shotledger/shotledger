@@ -2,7 +2,7 @@
 
 Gäller från: 20 oktober 2026.
 
-Villkoren gäller den valfria synktjänsten på `api.shotledger.app` och
+Villkoren gäller den valfria synktjänsten på `web.shotledger.app` och
 webbappen som körs därifrån (tillsammans "tjänsten"). De gäller inte appens
 källkod; se [Programvaran är din](#programvaran-ar-din).
 
