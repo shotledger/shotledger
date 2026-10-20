@@ -55,6 +55,12 @@ jobs:
       - name: Backend tests
         run: pnpm --filter @shotledger/backend test
 
+      # The photo-scoring CV on synthetic photos with known holes (#864): about
+      # a minute, so outside `pnpm check`. Real photos stay with the local
+      # tools/cv/eval runs.
+      - name: CV regression (synthetic photos)
+        run: pnpm cv:regression
+
       # Requirement↔test traceability (ADR 0015). `pnpm check` has already run
       # both test suites, so the JUnit results reqstool matches against are on
       # disk by now. Kept out of `pnpm check` itself because the client is

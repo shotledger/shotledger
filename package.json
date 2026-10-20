@@ -24,6 +24,7 @@
     "gauntlet": "pnpm typecheck && pnpm lint && pnpm format && pnpm coverage && (cd app && pnpm exec jest --passWithNoTests --coverage) && pnpm mutation && pnpm mutation:schema && pnpm mutation:webshooter-schema",
     "schema:generate": "node scripts/generate-export-schema.mjs",
     "schema:check": "node scripts/generate-export-schema.mjs --check",
+    "cv:regression": "vitest run -c tools/cv/vitest.config.ts regression.check",
     "cv:fixtures": "CV_FIXTURES=1 vitest run --silent=false -c tools/cv/vitest.config.ts fixtures.tool",
     "docs:translations": "node scripts/docs-translation-check.mjs",
     "docs:anchors": "node scripts/docs-anchor-check.mjs",
