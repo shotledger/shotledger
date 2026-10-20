@@ -1,9 +1,10 @@
 # M4 flow (§4 M4 "Done when"): create a firearm, add a license, log a
-# session against it (reusing the m3 series-entry steps minimally), then
-# assert the round count incremented and the maintenance indicator went
-# amber (a low maintenance interval makes the crossing reachable within one
-# short 5-shot series). Text assertions use English labels — see m2/m3
-# flows, which assume the emulator's default (English) system locale.
+# session against it (reusing the log-session series-entry steps
+# minimally), then assert the round count incremented and the maintenance
+# indicator went amber (a low maintenance interval makes the crossing
+# reachable within one short 5-shot series). Text assertions use English
+# labels — see the tabs-smoke and log-session flows, which assume the
+# emulator's default (English) system locale.
 appId: app.shotledger
 ---
 - launchApp:
@@ -30,7 +31,7 @@ appId: app.shotledger
     id: 'firearm-model'
 - inputText: 'GSP'
 - pressKey: Back
-- takeScreenshot: m4-01-new-firearm
+- takeScreenshot: firearm-and-license-01-new-firearm
 - scrollUntilVisible:
     element:
       id: 'create-firearm'
@@ -43,7 +44,7 @@ appId: app.shotledger
     visible:
       id: 'round-count'
     timeout: 15000
-- takeScreenshot: m4-02-firearm-detail
+- takeScreenshot: firearm-and-license-02-firearm-detail
 - assertVisible:
     id: 'round-count'
     text: '0'
@@ -87,9 +88,9 @@ appId: app.shotledger
       id: 'license-status'
     direction: UP
     timeout: 15000
-- takeScreenshot: m4-03-firearm-license
+- takeScreenshot: firearm-and-license-03-firearm-license
 
-# --- Log a session against this firearm (reusing m3 series-entry steps) ---
+# --- Log a session against this firearm (reusing log-session series-entry steps) ---
 # Not tapOn 'Home': it can match Android's own Home button and leave the app.
 - openLink: 'shotledger://'
 - extendedWaitUntil:
@@ -195,4 +196,4 @@ appId: app.shotledger
     text: '5'
 - assertVisible:
     id: 'maintenance-status'
-- takeScreenshot: m4-04-round-count-and-maintenance
+- takeScreenshot: firearm-and-license-04-round-count-and-maintenance

@@ -45,7 +45,7 @@ appId: app.shotledger
     visible:
       id: 'stat-mean-series'
     timeout: 15000
-- takeScreenshot: m5-01-stats-default
+- takeScreenshot: stats-01-stats-default
 - assertVisible:
     id: 'stats-headline-chart'
 # The CI emulator's screen is small (320x640), so each figure is scrolled to.
@@ -96,7 +96,7 @@ appId: app.shotledger
 - extendedWaitUntil:
     visible: 'All time · .*'
     timeout: 15000
-- takeScreenshot: m5-02-stats-all-time
+- takeScreenshot: stats-02-stats-all-time
 
 - scrollUntilVisible:
     element:
@@ -128,4 +128,4 @@ appId: app.shotledger
     id: 'session-stat-sd'
 - assertVisible:
     id: 'session-stat-x-count'
-- takeScreenshot: m5-03-session-stats
+- takeScreenshot: stats-03-session-stats
