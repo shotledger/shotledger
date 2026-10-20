@@ -1,6 +1,6 @@
 # shared/ — domain logic shared by app and backend
 
-Rules that apply everywhere are in the root `CLAUDE.md`. Changes to
+Rules that apply everywhere are in the root `AGENTS.md`. Changes to
 `src/scoring/`, `src/compliance/` and the sync engine go through the
 old-coder loop (`.claude/skills/old-coder/`).
 

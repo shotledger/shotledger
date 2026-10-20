@@ -1,6 +1,6 @@
 # backend/ — the Cloudflare Worker (ELv2)
 
-Rules that apply everywhere are in the root `CLAUDE.md`.
+Rules that apply everywhere are in the root `AGENTS.md`.
 
 - **Never deploy.** `wrangler deploy` is forbidden for an agent.
 - `wrangler dev` serves the web app from `../web/dist` (ADR 0013) and will

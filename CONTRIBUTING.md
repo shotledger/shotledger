@@ -5,7 +5,7 @@ out, how to build and check it, and the terms your contribution arrives under.
 What the app does is in the [`README`](README.md).
 
 The working rules — branch per change, Conventional Commits, the checks CI
-runs — are in [`CLAUDE.md`](CLAUDE.md) and the `CLAUDE.md` files in each
+runs — are in [`AGENTS.md`](AGENTS.md) and the `CLAUDE.md` files in each
 folder, and apply to human contributors just as much. Running the app is in
 [`.claude/skills/run-app/`](.claude/skills/run-app/SKILL.md).
 
@@ -152,7 +152,7 @@ the first run after a switch starts with a cold cache.
 - A change that alters what a user sees updates `docs/manual/` in the same
   pull request.
 
-`CLAUDE.md` (with the `CLAUDE.md` in `app/`, `shared/`, `backend/` and
+`AGENTS.md` (with the `CLAUDE.md` in `app/`, `shared/`, `backend/` and
 `docs/`) is the full set of rules; it applies to human contributors just as
 much.
 
@@ -191,7 +191,7 @@ Kit without asking every contributor again.
 Third-party code keeps its own license and is listed in
 `app/src/constants/licenses.json` (bundled JavaScript) or
 `app/src/constants/native-licenses.ts` (native artifacts). Adding a dependency
-is a maintainer decision — see hard rule 2 in `CLAUDE.md`.
+is a maintainer decision — see hard rule 2 in `AGENTS.md`.
 
 ### Two things every contributor does
 
@@ -253,5 +253,5 @@ that license is compatible with the directory it lands in, and it must keep
 its original notices. This is what the DCO's clause (b) and the CLA's
 section 3(d) refer to.
 
-Never contribute personal data of any kind — hard rule 7 in `CLAUDE.md` lists
+Never contribute personal data of any kind — hard rule 7 in `AGENTS.md` lists
 what that covers.

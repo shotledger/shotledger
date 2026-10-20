@@ -10,7 +10,7 @@ go through `shared/src/sync-client/` (`session-entry.ts`, `falt-entry.ts`,
 `settings-edit.ts`, `bulk-edit.ts`, `ammo-lot-merge.ts`, `session-edit.ts`,
 `direct-push.ts`).
 
-- **Parity with the phone** (root `CLAUDE.md` rule 11): every write mirrors
+- **Parity with the phone** (root `AGENTS.md` rule 11): every write mirrors
   a named phone function (`app/src/db/queries/`) and is tested against it on
   the phone's schema (`app/src/db/queries/web-*.test.ts`). The phone decides
   any open question; a gap is stated in the spec, never left silent.

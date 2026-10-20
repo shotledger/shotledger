@@ -1,6 +1,6 @@
 // Custom uncompressed archive format for `.shotledger` backup bundles.
 // No zip library exists in this repo's lockfile (fflate/jszip/etc — none),
-// and CLAUDE.md hard rule 2 forbids adding a dependency without asking, so
+// and AGENTS.md hard rule 2 forbids adding a dependency without asking, so
 // bundles use this small hand-rolled container instead. Layout: an 8-byte
 // magic, a little-endian uint32 entry count, then per entry a little-endian
 // uint16 name length + UTF-8 name + little-endian uint32 content length +

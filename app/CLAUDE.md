@@ -1,6 +1,6 @@
 # app/ — the Expo app
 
-Rules that apply everywhere are in the root `CLAUDE.md`. Running and driving
+Rules that apply everywhere are in the root `AGENTS.md`. Running and driving
 the app is the `run-app` skill.
 
 ## Checks specific to the app
