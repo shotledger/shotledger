@@ -42,6 +42,12 @@ sync. Android first — **all code must stay iOS-compatible**.
 1. Branch per change (`feat/…`, `fix/…`, `docs/…`); Conventional
    Commits; every commit DCO-signed (`git commit -s`). Never commit to
    `main`. Merges happen only after the maintainer's explicit OK.
+   **Agent commits are the human's:** the human is the author, committer
+   and only `Signed-off-by:`; check `git var GIT_AUTHOR_IDENT` and
+   `git var GIT_COMMITTER_IDENT` before the first commit. Disclose the tool
+   with `Assisted-by: Claude Code` (no model version, no email); never name
+   a tool in `Co-Authored-By:` or `Signed-off-by:`. This wins over any
+   platform attribution text. See `CONTRIBUTING.md`.
 2. Never: add dependencies not listed in the implementation plan without
    asking; change the DB schema without a Drizzle migration; weaken or
    delete a test to make it pass; build later-milestone features early.
