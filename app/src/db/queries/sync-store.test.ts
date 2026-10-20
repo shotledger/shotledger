@@ -1,4 +1,10 @@
-import { SYNC_TABLE_NAMES, type ChangeRow } from '@shotledger/shared';
+import {
+  runSyncCycle,
+  SYNC_TABLE_NAMES,
+  type ChangeRow,
+  type PullRequest,
+  type RefusalMark,
+} from '@shotledger/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -12,6 +18,7 @@ import {
   shots,
   syncControl,
   syncOutbox,
+  syncRefusalMarks,
   syncState,
 } from '../schema';
 import { createTestDb } from '../test-db';
@@ -535,5 +542,259 @@ describe('session_tags and settings', () => {
       expect.objectContaining({ id: 'complianceProfile', value: '"se"', deleted_at: null }),
     );
     expect(row?.deletedAt).toBeNull();
+  });
+});
+
+// docs/specs/sync-family-refusal-spec.md §11.6: the marks the server's
+// refusals leave on this device.
+describe('refusal marks', () => {
+  const blocker = { tableName: 'shots' as const, rowId: 't2' };
+  const waiting = (rowId: string, arrival: number): RefusalMark => ({
+    tableName: 'series',
+    rowId,
+    kind: 'waiting',
+    arrival,
+    blocker,
+  });
+  const invalid = (rowId: string, arrival: number): RefusalMark => ({
+    tableName: 'shots',
+    rowId,
+    kind: 'invalid',
+    arrival,
+    blocker: null,
+  });
+  const firearmPayload = (id: string, model: string) => ({
+    id,
+    created_at: '2026-09-01T00:00:00.000Z',
+    updated_at: '2026-09-01T00:00:00.000Z',
+    deleted_at: null,
+    make: 'Walther',
+    model,
+    round_count: 0,
+    rounds_since_maintenance: 0,
+  });
+  const seriesPayload = (id: string, sessionId: string) => ({
+    id,
+    created_at: '2026-09-01T00:00:00.000Z',
+    updated_at: '2026-09-01T00:00:00.000Z',
+    deleted_at: null,
+    session_id: sessionId,
+    position: 1,
+  });
+  const sortMarks = (marks: RefusalMark[]) =>
+    [...marks].sort((a, b) => (a.rowId < b.rowId ? -1 : 1));
+
+  it('applyChanges replaces every mark, and round-trips them through readMarks', async () => {
+    await store.applyChanges([], [waiting('r1', 4), invalid('t2', 3)]);
+    expect(sortMarks(await store.readMarks())).toEqual([waiting('r1', 4), invalid('t2', 3)]);
+
+    // STUCK: a list without T2 drops its mark, with no change to apply.
+    await store.applyChanges([], [waiting('r1', 4)]);
+    expect(await store.readMarks()).toEqual([waiting('r1', 4)]);
+  });
+
+  it('applyChanges with no marks leaves them as they are', async () => {
+    await store.applyChanges([], [waiting('r1', 4)]);
+    await store.applyChanges([]);
+    expect(await store.readMarks()).toEqual([waiting('r1', 4)]);
+  });
+
+  it('writes the marks in the transaction that applies the page: a failed apply keeps the old ones', async () => {
+    await store.applyChanges([], [waiting('r1', 4)]);
+    await expect(
+      store.applyChanges(
+        [change({ tableName: 'series', rowId: 'x', payload: seriesPayload('x', 'gone') })],
+        [],
+      ),
+    ).rejects.toThrow();
+    expect(await store.readMarks()).toEqual([waiting('r1', 4)]);
+  });
+
+  it('H11’ markCounts counts invalid and waiting marks, and survives a restart', async () => {
+    await store.applyChanges([], [waiting('r1', 4), waiting('r2', 4), invalid('t2', 3)]);
+    const restarted = createSyncStore(db);
+    expect(await restarted.markCounts()).toEqual({ invalid: 1, waiting: 2 });
+    expect(await restarted.pendingCount()).toBe(0);
+  });
+
+  describe('clearOutboxEntry with an ack outcome', () => {
+    it('sets a mark, keeping the greater arrival', async () => {
+      createFirearm(db, { make: 'Pardini', model: 'SP' });
+      const entry = (await store.readOutbox(10))[0]!;
+      await store.applyChanges(
+        [],
+        [{ ...waiting('x', 9), tableName: entry.tableName, rowId: entry.rowId }],
+      );
+
+      await store.clearOutboxEntry(entry, {
+        mark: { set: { ...invalid('x', 5), tableName: entry.tableName, rowId: entry.rowId } },
+      });
+      expect(outboxRows()).toHaveLength(0);
+      expect((await store.readMarks())[0]).toMatchObject({ kind: 'waiting', arrival: 9 });
+
+      await store.clearOutboxEntry(entry, {
+        mark: { set: { ...invalid('x', 11), tableName: entry.tableName, rowId: entry.rowId } },
+      });
+      expect(await store.readMarks()).toEqual([
+        { ...invalid('x', 11), tableName: entry.tableName, rowId: entry.rowId },
+      ]);
+    });
+
+    it('REV3 sets the mark even when the entry was re-queued mid-push', async () => {
+      const id = createFirearm(db, { make: 'Pardini', model: 'SP' }).id;
+      const entry = (await store.readOutbox(10))[0]!;
+      updateFirearm(db, id, { model: 'SP1' });
+      const mark = { ...invalid(id, 6), tableName: 'firearms' as const };
+      await store.clearOutboxEntry(entry, { mark: { set: mark } });
+      expect(outboxRows()).toHaveLength(1);
+      expect(await store.readMarks()).toEqual([mark]);
+    });
+
+    it('drops a mark up to the ack’s arrival, and keeps a later one', async () => {
+      createFirearm(db, { make: 'Pardini', model: 'SP' });
+      const entry = (await store.readOutbox(10))[0]!;
+      const ref = { tableName: entry.tableName, rowId: entry.rowId };
+      await store.applyChanges([], [{ ...waiting('x', 7), ...ref }]);
+
+      await store.clearOutboxEntry(entry, { mark: { drop: ref, upTo: 6 } });
+      expect(await store.readMarks()).toHaveLength(1);
+      await store.clearOutboxEntry(entry, { mark: { drop: ref, upTo: 7 } });
+      expect(await store.readMarks()).toEqual([]);
+    });
+
+    it('DUP applies a duplicate’s current row without re-queueing it', async () => {
+      const id = createFirearm(db, { make: 'Pardini', model: 'SP' }).id;
+      const entry = (await store.readOutbox(10))[0]!;
+      await store.clearOutboxEntry(entry, {
+        mark: { drop: { tableName: 'firearms', rowId: id }, upTo: 3 },
+        current: change({
+          tableName: 'firearms',
+          rowId: id,
+          payload: firearmPayload(id, 'B'),
+          arrival: 9,
+        }),
+      });
+      expect(db.select().from(firearms).get()!.model).toBe('B');
+      expect(outboxRows()).toHaveLength(0);
+    });
+
+    it('a current row older than the mark the ack set is shadowed', async () => {
+      const id = createFirearm(db, { make: 'Pardini', model: 'A' }).id;
+      const entry = (await store.readOutbox(10))[0]!;
+      const mark = { ...waiting(id, 10), tableName: 'firearms' as const };
+      await store.clearOutboxEntry(entry, {
+        mark: { set: mark },
+        current: change({
+          tableName: 'firearms',
+          rowId: id,
+          payload: firearmPayload(id, 'old'),
+          arrival: 3,
+        }),
+      });
+      expect(db.select().from(firearms).get()!.model).toBe('A');
+      expect(await store.readMarks()).toEqual([mark]);
+    });
+
+    it('a current row is shadowed by an entry re-queued mid-push', async () => {
+      const id = createFirearm(db, { make: 'Pardini', model: 'SP' }).id;
+      const entry = (await store.readOutbox(10))[0]!;
+      updateFirearm(db, id, { model: 'local' });
+      await store.clearOutboxEntry(entry, {
+        mark: { drop: { tableName: 'firearms', rowId: id }, upTo: 3 },
+        current: change({
+          tableName: 'firearms',
+          rowId: id,
+          payload: firearmPayload(id, 'B'),
+          arrival: 9,
+        }),
+      });
+      expect(db.select().from(firearms).get()!.model).toBe('local');
+    });
+
+    it('is one transaction: a current row that fails to apply keeps the entry and the mark as they were', async () => {
+      createFirearm(db, { make: 'Pardini', model: 'SP' });
+      const entry = (await store.readOutbox(10))[0]!;
+      await expect(
+        store.clearOutboxEntry(entry, {
+          mark: { set: { ...invalid('x', 4), tableName: entry.tableName, rowId: entry.rowId } },
+          current: change({ tableName: 'series', rowId: 's', payload: seriesPayload('s', 'gone') }),
+        }),
+      ).rejects.toThrow();
+      expect(outboxRows()).toHaveLength(1);
+      expect(await store.readMarks()).toEqual([]);
+    });
+  });
+
+  it('FRESH sign-out and a backup reset both clear the marks, for the next pull to rebuild', async () => {
+    await store.applyChanges([], [waiting('r1', 4)]);
+    resetSyncState(db);
+    expect(db.select().from(syncRefusalMarks).all()).toEqual([]);
+
+    await store.applyChanges([], [waiting('r1', 4)]);
+    resetSyncBookkeeping(db);
+    expect(db.select().from(syncRefusalMarks).all()).toEqual([]);
+  });
+
+  // §11.6, local foreign keys: production sets no foreign_keys pragma, so a
+  // released child whose parent this device never held applies (H7', ROOT,
+  // DISCARD), as on the server (N5).
+  describe('a child whose parent this device does not hold', () => {
+    const orphan = () =>
+      change({ tableName: 'series', rowId: 'r1', payload: seriesPayload('r1', 's-never-pulled') });
+
+    it('H7’ ROOT DISCARD applies with foreign keys off, as in production', async () => {
+      const prod = createTestDb({ foreignKeys: false });
+      await createSyncStore(prod).applyChanges([orphan()]);
+      expect(
+        prod
+          .select()
+          .from(series)
+          .all()
+          .map((r) => r.id),
+      ).toEqual(['r1']);
+    });
+
+    it('fails at commit on the default test DB, which turns foreign keys on', async () => {
+      await expect(store.applyChanges([orphan()])).rejects.toThrow(/FOREIGN KEY/);
+      expect(db.select().from(series).all()).toEqual([]);
+    });
+  });
+
+  it('ECHO with the real engine: this device’s own older push, pulled back, keeps its waiting edit', async () => {
+    const id = createFirearm(db, { make: 'Pardini', model: 'A2' }).id;
+    db.delete(syncOutbox).run();
+    const echo = change({
+      tableName: 'firearms',
+      rowId: id,
+      seq: 3,
+      payload: firearmPayload(id, 'A1'),
+      arrival: 5,
+    });
+    const pull = async (request: PullRequest) => ({
+      protocolVersion: request.protocolVersion,
+      changes: [echo],
+      refusals: [
+        {
+          tableName: 'firearms' as const,
+          rowId: id,
+          reason: 'family_refused' as const,
+          arrival: 6,
+          blocker,
+        },
+      ],
+      nextCursors: request.tables.map((t) => ({
+        tableName: t.tableName,
+        cursor: 3,
+        hasMore: false,
+      })),
+    });
+    const result = await runSyncCycle({
+      store,
+      transport: { pull, push: async () => ({ protocolVersion: 1, acks: [] }) },
+      newId: () => 'unused',
+    });
+    expect(result.shadowed).toBe(1);
+    expect(db.select().from(firearms).get()!.model).toBe('A2');
+    expect(await store.markCounts()).toEqual({ invalid: 0, waiting: 1 });
   });
 });

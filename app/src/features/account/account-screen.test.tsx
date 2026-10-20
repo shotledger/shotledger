@@ -1,7 +1,8 @@
 // The refused-changes line on the Account & Sync screen (app/account.tsx)
 // (docs/specs/sync-payload-validation-spec.md C3, P12): shown with its count
-// once the server has refused a change, and absent until then. The held line
-// beside it is docs/specs/sync-family-refusal-spec.md §2.4.
+// once the server has refused a change, and absent until then. The waiting line
+// beside it is docs/specs/sync-family-refusal-spec.md §11.6; both count the
+// account's durable refusal marks.
 import { render, screen } from '@testing-library/react-native';
 import type { SyncStatus } from '@shotledger/shared';
 import { initialSyncStatus } from '@shotledger/shared';
@@ -70,8 +71,8 @@ describe('the refused-changes line', () => {
   });
 });
 
-// docs/specs/sync-family-refusal-spec.md §2.4, H1, H11: a second line while
-// any queued change waits on a refused one.
+// docs/specs/sync-family-refusal-spec.md §11.6, H1', H11': a second line while
+// the server holds any change back behind a refused one.
 describe('the held-changes line', () => {
   it('is absent while nothing is held', async () => {
     mockStatus.value = { ...initialSyncStatus, refusedCount: 1 };
@@ -88,7 +89,7 @@ describe('the held-changes line', () => {
     expect(screen.getByTestId('sync-refused')).toBeTruthy();
   });
 
-  it('shows it after a restart, when the refused line is gone (C5)', async () => {
+  it('shows on its own, before a pull lists a refused change another device made', async () => {
     mockStatus.value = { ...initialSyncStatus, heldCount: 3 };
     await renderAccount();
     expect(screen.getByTestId('sync-held')).toHaveTextContent(

@@ -1,5 +1,5 @@
-import type { ChangeRow, SyncTableName } from '../sync/protocol';
-import type { OutboxEntry } from './ports';
+import type { ChangeRow, RefusalEntry, SyncTableName } from '../sync/protocol';
+import type { MarkUpdate, OutboxEntry, RefusalMark } from './ports';
 
 /**
  * Local-edit shadowing (docs/specs/sync-app-spec.md §5a).
@@ -44,4 +44,76 @@ export function tombstoneFromRejection(entry: OutboxEntry, deletedAt: string): C
     deletedAt,
     updatedAt: deletedAt,
   };
+}
+
+/**
+ * Which pulled changes this device applies, and which marks survive them
+ * (docs/specs/sync-family-refusal-spec.md §11.6). A queued entry shadows
+ * anything, as above. A mark means the server holds a version of this row
+ * that has not landed: a tombstone still wins (R2), and a live change wins
+ * when it arrived at the server no earlier than the held version; an older
+ * one, such as this device's own echo, is shadowed. Arrivals are the
+ * server's, never a clock.
+ */
+export function shadowPull(
+  changes: readonly ChangeRow[],
+  pendingKeys: ReadonlySet<string>,
+  marks: readonly RefusalMark[],
+): { applicable: ChangeRow[]; marks: RefusalMark[]; shadowed: number } {
+  const byKey = new Map(marks.map((mark) => [rowKey(mark.tableName, mark.rowId), mark]));
+  const applicable: ChangeRow[] = [];
+  for (const change of changes) {
+    const key = rowKey(change.tableName, change.rowId);
+    if (pendingKeys.has(key)) continue;
+    const mark = byKey.get(key);
+    if (mark !== undefined) {
+      if (change.deletedAt === null && (change.arrival ?? 0) < mark.arrival) continue;
+      byKey.delete(key);
+    }
+    applicable.push(change);
+  }
+  return {
+    applicable,
+    marks: [...byKey.values()],
+    shadowed: changes.length - applicable.length,
+  };
+}
+
+/** The marks a pull's `refusals` list stands for (§11.6). */
+export function marksFromRefusals(entries: readonly RefusalEntry[]): RefusalMark[] {
+  return entries.map((entry) => ({
+    tableName: entry.tableName,
+    rowId: entry.rowId,
+    kind: entry.reason === 'invalid_payload' ? 'invalid' : 'waiting',
+    arrival: entry.arrival,
+    blocker: entry.blocker,
+  }));
+}
+
+/**
+ * The two Account & Sync counts (spec §11.6): refused changes (`invalid`
+ * marks) and changes waiting on one (`waiting` marks). The phone counts its
+ * marks; the web counts the marks of its pull's `refusals`.
+ */
+export function countMarks(marks: readonly Pick<RefusalMark, 'kind'>[]): {
+  invalid: number;
+  waiting: number;
+} {
+  const invalid = marks.filter((m) => m.kind === 'invalid').length;
+  return { invalid, waiting: marks.length - invalid };
+}
+
+/**
+ * An ack's mark update (docs/specs/sync-family-refusal-spec.md §11.6): a set
+ * keeps the greater arrival, and a drop spares a mark that arrived after the
+ * ack's change, which only a later push or another device can have caused.
+ */
+export function applyMarkUpdate(marks: readonly RefusalMark[], update: MarkUpdate): RefusalMark[] {
+  const target = 'set' in update ? update.set : update.drop;
+  const key = rowKey(target.tableName, target.rowId);
+  const old = marks.find((mark) => rowKey(mark.tableName, mark.rowId) === key);
+  const others = marks.filter((mark) => mark !== old);
+  const upTo = 'set' in update ? update.set.arrival : update.upTo;
+  if (old !== undefined && old.arrival > upTo) return [...others, old];
+  return 'set' in update ? [...others, update.set] : others;
 }

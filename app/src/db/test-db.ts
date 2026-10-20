@@ -16,10 +16,17 @@ const metaUrl: string | null = import.meta.url;
 const dirname = metaUrl ? path.dirname(fileURLToPath(metaUrl)) : __dirname;
 const migrationsDir = path.join(dirname, 'migrations');
 
-/** Creates a fresh in-memory DB with the current schema applied. */
-export function createTestDb() {
+/**
+ * Creates a fresh in-memory DB with the current schema applied. Foreign keys
+ * are on unless `foreignKeys: false`, which matches production:
+ * `app/src/db/client.ts` sets no pragma and expo-sqlite builds SQLite without
+ * SQLITE_DEFAULT_FOREIGN_KEYS, so they are off there
+ * (docs/specs/sync-family-refusal-spec.md §11.6). better-sqlite3 turns them
+ * on by default, so off is set explicitly.
+ */
+export function createTestDb(options: { foreignKeys?: boolean } = {}) {
   const sqlite = new Database(':memory:');
-  sqlite.pragma('foreign_keys = ON');
+  sqlite.pragma(`foreign_keys = ${options.foreignKeys === false ? 'OFF' : 'ON'}`);
 
   const journal = JSON.parse(
     fs.readFileSync(path.join(migrationsDir, 'meta', '_journal.json'), 'utf-8'),
