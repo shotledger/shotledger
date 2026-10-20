@@ -426,6 +426,30 @@ async function pushThrough(
 }
 
 /** Another push commits before every batch this binding runs, so the guard always fails. */
+/** Another push commits before each of the first `times` batches; counts the batches tried. */
+function racingD1(real: D1Database, times: number) {
+  let attempts = 0;
+  const d1 = new Proxy(real, {
+    get(target, prop) {
+      if (prop === 'batch') {
+        return async (statements: D1PreparedStatement[]) => {
+          attempts += 1;
+          if (attempts <= times) {
+            await target
+              .prepare('UPDATE sync_sequence SET state_rev = state_rev + 1 WHERE user_id = ?')
+              .bind(USER)
+              .run();
+          }
+          return target.batch(statements);
+        };
+      }
+      const value = Reflect.get(target, prop) as unknown;
+      return typeof value === 'function' ? (value as () => unknown).bind(target) : value;
+    },
+  });
+  return { d1, attempts: () => attempts };
+}
+
 function bumpBeforeEveryBatch(real: D1Database): D1Database {
   return new Proxy(real, {
     get(target, prop) {
@@ -926,6 +950,57 @@ describe('TOMBROOT the root walk stops at a tombstoned row', () => {
   });
 });
 
+describe('TOMBROOT the walk reads two steps up from a row whose own link is unreadable', () => {
+  it('an invalid shot with series_id null under a tombstoned session is inert', async () => {
+    await push([S(), R('r1'), T('t2', 'r1')]);
+    await push([tombstone('sessions', 's1')]);
+
+    const [ack] = await push([live('shots', 't2', { series_id: null })]);
+
+    // T2 links to R1 from its stored row, and R1 to S1: two steps, to a tombstone.
+    expect(ack).toMatchObject({ status: 'rejected', reason: 'invalid_payload' });
+    expect(await records()).toEqual([]);
+  });
+});
+
+// §11.5's release skips two kinds of rows that the records table says cannot
+// coexist with a waiting record. A defect could leave one (the release list
+// "also catches any record that a defect left unblocked"), so the state is
+// written directly, as REVAL writes its tightened payload.
+describe('a release skips a row the server already holds later or deleted', () => {
+  async function seedWaiting(rowId: string, arrival: number, name: string) {
+    await env.DB.prepare(
+      `INSERT INTO sync_refusals (user_id, table_name, row_id, reason, parent_table, parent_row_id,
+         payload, updated_at, arrival)
+       VALUES (?, 'sessions', ?, 'family_refused', NULL, NULL, ?, ?, ?)`,
+    )
+      .bind(USER, rowId, JSON.stringify(row('sessions', rowId, T0, { name })), T0, arrival)
+      .run();
+  }
+
+  it('keeps a stored tombstone of the row, and deletes the record', async () => {
+    await push([S()]);
+    await push([tombstone('sessions', 's1')]);
+    await seedWaiting('s1', 5, 'waiting');
+
+    await push([live('tags', 'g1')]);
+
+    expect(await storedRow('sessions', 's1')).toMatchObject({ deleted_at: T1 });
+    expect(await records()).toEqual([]);
+  });
+
+  it('keeps a stored version that arrived at or after the record, and deletes the record', async () => {
+    await push([S()]);
+    await push([live('sessions', 's1', { name: 'later' })]);
+    await seedWaiting('s1', 1, 'older');
+
+    await push([live('tags', 'g1')]);
+
+    expect(await nameOf('sessions', 's1')).toBe('later');
+    expect(await records()).toEqual([]);
+  });
+});
+
 describe('GAP C4’s remaining gap', () => {
   it('T3 is applied while nothing links R2 to S1; when R1 and R2 arrive, both wait', async () => {
     const acks = await push([T('t1', 'r1', true), T('t3', 'r2')]);
@@ -1005,6 +1080,27 @@ describe('CONC two devices push into one family at once', () => {
     expect(response.status).toBe(503);
     expect(response.body).toEqual({ error: 'busy' });
     expect(await storedRow('series', 'r1')).toBeNull();
+  });
+
+  it('tries the batch four times: a guard that fails three times then holds applies the push', async () => {
+    await push([S()]);
+    const racing = racingD1(env.DB, 3);
+
+    const response = await pushThrough(racing.d1, [R('r1')]);
+
+    expect(response.status).toBe(200);
+    expect(racing.attempts()).toBe(4);
+    expect(await storedRow('series', 'r1')).not.toBeNull();
+  });
+
+  it('gives up after the fourth failed guard, with no fifth batch', async () => {
+    await push([S()]);
+    const racing = racingD1(env.DB, Number.POSITIVE_INFINITY);
+
+    const response = await pushThrough(racing.d1, [R('r1')]);
+
+    expect(response.status).toBe(503);
+    expect(racing.attempts()).toBe(4);
   });
 });
 
