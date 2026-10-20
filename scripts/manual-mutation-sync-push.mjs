@@ -353,13 +353,15 @@ let lastError = '';
 
 /**
  * Runs one suite, stopping at the first failing test, since one is a kill;
- * returns 'pass', 'fail' (a test failed) or 'error'.
+ * returns 'pass', 'fail' (a test failed) or 'error'. The backend files run
+ * one at a time: a bail while workerd pool workers are still starting
+ * crashes the run ("Message sent to Worker before initialisation").
  */
 function runSuite(suite) {
   const [cwd, args] =
     suite === 'store'
       ? ['.', ['vitest', 'run', '--bail=1', ...STORE_TESTS]]
-      : ['backend', ['vitest', 'run', '--bail=1', ...BACKEND_TESTS]];
+      : ['backend', ['vitest', 'run', '--bail=1', '--no-file-parallelism', ...BACKEND_TESTS]];
   try {
     execFileSync('npx', args, { cwd, encoding: 'utf8', stdio: 'pipe' });
     return 'pass';
