@@ -8,7 +8,8 @@ change itself: a session you
 [edit or delete](editing-a-session-on-the-web.md), sessions you
 [edit in bulk](editing-many-sessions-on-the-web.md), and the settings below.
 
-Sign in with the email and password of your sync account, then open
+Sign in with the email and password of your sync account, or with a
+[passkey](#passkeys) you have added, then open
 **Account** in the menu: on the left, or along the bottom on a narrow screen,
 as the phone's tabs are. Closing the tab signs you out of this
 browser and leaves nothing behind: the sign-in lives only in that tab, with no
@@ -98,6 +99,28 @@ longer have. A browser leaves the list by itself 12 hours after it signed in.
 The list needs a recent sign-in. If it does not load, sign out of the web app
 and sign in again.
 
+## Passkeys
+
+A passkey lets you sign in with your fingerprint, face or screen lock instead
+of typing your password. It is kept by your browser, your phone or your
+password manager, and can follow you to your other devices the way your saved
+passwords do. Your password keeps working, so you are never locked out on a
+device without one.
+
+To add one, sign in with your password and choose **Add Passkey** under
+**Passkeys**. Your browser asks you to confirm with your fingerprint, face or
+screen lock, and the passkey is listed under the name of this browser. Add one
+from each browser or password manager you use. **Remove** next to a passkey
+takes it off your account; delete it from your browser or password manager
+too.
+
+To sign in with it, choose **Sign In with a Passkey** on the sign-in page.
+Where the browser supports it, your passkey is also offered when you click
+the email field.
+
+Passkeys work only on the real ShotLedger web address, over a secure
+connection. The phone app does not use them yet.
+
 ## Photo storage
 
 How much of your photo allowance the uploaded target photos use.
@@ -119,7 +142,7 @@ it in `missing.txt`.
 
 **Delete Account** first shows what would be removed: synced rows, photos
 and signed-in devices. **Delete** then removes the account and everything on
-the server, and signs out every device. The logbook on your phone is not
+the server, passkeys included, and signs out every device. The logbook on your phone is not
 touched. This cannot be undone, so download everything first if you want a
 copy.
 

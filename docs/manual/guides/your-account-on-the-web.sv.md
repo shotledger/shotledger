@@ -9,7 +9,8 @@ bara det som telefonen själv kan ändra: ett pass du
 [ändrar flera åt gången](editing-many-sessions-on-the-web.md), och
 inställningarna nedan.
 
-Logga in med e-postadressen och lösenordet för ditt synkkonto och öppna sedan
+Logga in med e-postadressen och lösenordet för ditt synkkonto, eller med en
+[nyckel](#nycklar) som du har lagt till, och öppna sedan
 **Konto** i menyn: till vänster, eller längs nederkanten på en smal skärm, som
 telefonens flikar. När du stänger fliken loggas du ut från den
 här webbläsaren och ingenting lämnas kvar: inloggningen finns bara i den
@@ -100,6 +101,28 @@ telefon du inte längre har. En webbläsare försvinner från listan av sig sjä
 Listan kräver en ny inloggning. Om den inte visas, logga ut ur webbappen och
 logga in igen.
 
+## Nycklar
+
+Med en nyckel (passkey) loggar du in med fingeravtryck, ansikte eller
+skärmlås i stället för att skriva ditt lösenord. Den sparas i din webbläsare,
+din telefon eller din lösenordshanterare och kan följa med till dina andra
+enheter på samma sätt som dina sparade lösenord. Ditt lösenord fungerar som
+förut, så du blir aldrig utelåst på en enhet som saknar nyckel.
+
+Lägg till en genom att logga in med lösenord och välja **Lägg till nyckel**
+under **Nycklar**. Webbläsaren ber dig bekräfta med fingeravtryck, ansikte
+eller skärmlås, och nyckeln listas med namnet på den här webbläsaren. Lägg
+till en från varje webbläsare eller lösenordshanterare du använder. **Ta
+bort** bredvid en nyckel tar bort den från ditt konto; ta bort den ur
+webbläsaren eller lösenordshanteraren också.
+
+Logga in med den genom att välja **Logga in med nyckel** på
+inloggningssidan. Där webbläsaren stöder det erbjuds nyckeln också när du
+klickar i e-postfältet.
+
+Nycklar fungerar bara på ShotLedgers riktiga webbadress, över en säker
+anslutning. Telefonappen använder dem inte ännu.
+
 ## Fotolagring
 
 Hur mycket av ditt fotoutrymme de uppladdade tavelfotona använder.
@@ -120,8 +143,8 @@ Ett foto som inte går att hämta stoppar inte resten. Zip-filen listar det då 
 ## Radera konto
 
 **Radera konto** visar först vad som skulle tas bort: synkade rader, foton och
-inloggade enheter. **Radera** tar sedan bort kontot och allt på servern och
-loggar ut alla enheter. Loggboken i telefonen rörs inte. Det går inte att
+inloggade enheter. **Radera** tar sedan bort kontot och allt på servern, även
+nycklar, och loggar ut alla enheter. Loggboken i telefonen rörs inte. Det går inte att
 ångra, så ladda ner allt först om du vill ha en kopia.
 
 ## Källkod

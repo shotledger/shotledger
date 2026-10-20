@@ -14,6 +14,8 @@ declare namespace Cloudflare {
     BETTER_AUTH_SECRET?: string;
     BETTER_AUTH_URL?: string;
     BETTER_AUTH_TRUSTED_ORIGINS?: string;
+    // Optional: the passkey rp id when it is not BETTER_AUTH_URL's host (#681).
+    PASSKEY_RP_ID?: string;
   }
 }
 interface Env extends Cloudflare.Env {}

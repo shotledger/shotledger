@@ -1669,6 +1669,24 @@
     },
     "firearms": {
       "readOnly": "The web shows your firearms as the app has recorded them. Add, change or archive a firearm in the app on your phone."
+    },
+    "passkey": {
+      "title": "Passkeys",
+      "body": "Sign in with your fingerprint, face or screen lock instead of your password. A passkey is kept by your browser, phone or password manager; the server stores only its public key. Your password keeps working.",
+      "add": "Add Passkey",
+      "added": "Added {{date}}",
+      "unnamed": "Passkey",
+      "remove": "Remove",
+      "removeFailed": "Could not remove the passkey. Try again.",
+      "listFailed": "Could not list your passkeys.",
+      "unsupported": "This browser cannot use passkeys.",
+      "signIn": "Sign In with a Passkey",
+      "error": {
+        "alreadyAdded": "This browser's passkey is already on your account.",
+        "notRegistered": "That passkey is not on any ShotLedger account. Sign in with your password and add it again.",
+        "network": "Could not reach the server. Try again.",
+        "unknown": "The passkey did not work. Try again, or sign in with your password."
+      }
     }
   },
   "notifications": {

@@ -35,7 +35,8 @@ app.get('/', (c) => c.text('ShotLedger backend — hello world'));
 
 // better-auth's own handler serves sign-up/sign-in/sign-out/session
 // endpoints (docs/specs/backend-auth-photos-spec.md §2).
-// Bearer only: no cookie goes in or comes out (lib/cookies.ts).
+// Bearer only: no cookie goes in or comes out, bar the passkey challenge,
+// which travels as a header (lib/cookies.ts).
 app.on(['POST', 'GET'], '/api/auth/*', async (c) =>
   responseWithoutCookies(await createAuth(c.env).handler(requestWithoutCookies(c.req.raw))),
 );

@@ -103,6 +103,27 @@ export interface AccountDevice {
   isCurrent: boolean;
 }
 
+/** One registered passkey, as the account page lists it. */
+export interface AccountPasskey {
+  id: string;
+  name: string | null;
+  createdAt: string | null;
+  /** The authenticator model; all zeros when the platform keeps it private. */
+  aaguid: string | null;
+}
+
+/**
+ * A passkey ceremony's options (WebAuthn's JSON form, passed through to the
+ * platform untouched) and the challenge handle its verify call must send
+ * back (`x-passkey-challenge`, backend/src/lib/cookies.ts).
+ */
+export interface PasskeyCeremony {
+  options: Record<string, unknown>;
+  challenge: string;
+}
+
+const PASSKEY_CHALLENGE_HEADER = 'x-passkey-challenge';
+
 export class AuthError extends Error {
   constructor(
     readonly status: number,
@@ -118,25 +139,40 @@ async function authRequest(
   path: string,
   body: unknown,
   token?: string | null,
+  extraHeaders: Record<string, string> = {},
 ): Promise<{ response: Response; json: unknown }> {
   const headers: Record<string, string> = {
     'content-type': 'application/json',
     // better-auth requires an Origin it trusts; on a device there is no
     // browser origin, so we send the API's own.
     origin: config.baseUrl,
+    ...extraHeaders,
   };
   if (token) headers.authorization = `Bearer ${token}`;
 
   const response = await config.fetchImpl(`${config.baseUrl}/api/auth${path}`, {
-    method: 'POST',
+    method: body === undefined ? 'GET' : 'POST',
     headers,
-    body: JSON.stringify(body ?? {}),
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
   const text = await response.text();
   if (!response.ok) {
     throw new AuthError(response.status, text.slice(0, 300));
   }
   return { response, json: text.length > 0 ? (JSON.parse(text) as unknown) : null };
+}
+
+async function passkeyCeremony(
+  config: HttpClientConfig,
+  path: string,
+  token: string | null,
+): Promise<PasskeyCeremony> {
+  const { response, json } = await authRequest(config, path, undefined, token);
+  const challenge = response.headers.get(PASSKEY_CHALLENGE_HEADER);
+  if (!challenge || typeof json !== 'object' || json === null) {
+    throw new AuthError(response.status, 'passkey options carried no challenge');
+  }
+  return { options: json as Record<string, unknown>, challenge };
 }
 
 function sessionFrom(response: Response, json: unknown): AccountSession {
@@ -174,6 +210,65 @@ export function createAccountApi(config: HttpClientConfig) {
         options.remember === false ? { email, password, rememberMe: false } : { email, password };
       const { response, json } = await authRequest(config, '/sign-in/email', body);
       return sessionFrom(response, json);
+    },
+
+    /** Options for adding a passkey to the signed-in account. */
+    passkeyRegistrationOptions(): Promise<PasskeyCeremony> {
+      return passkeyCeremony(config, '/passkey/generate-register-options', config.getToken());
+    },
+
+    /** Stores the platform's new credential on the account. */
+    async addPasskey(ceremony: PasskeyCeremony, response: unknown, name: string): Promise<void> {
+      await authRequest(
+        config,
+        '/passkey/verify-registration',
+        { response, name },
+        config.getToken(),
+        {
+          [PASSKEY_CHALLENGE_HEADER]: ceremony.challenge,
+        },
+      );
+    },
+
+    /** Options for signing in with any passkey; no account is named. */
+    passkeySignInOptions(): Promise<PasskeyCeremony> {
+      return passkeyCeremony(config, '/passkey/generate-authenticate-options', null);
+    },
+
+    /** `remember: false` as for `signIn`; it goes in the query (backend asksNotToBeRemembered). */
+    async signInWithPasskey(
+      ceremony: PasskeyCeremony,
+      response: unknown,
+      options: { remember?: boolean } = {},
+    ): Promise<AccountSession> {
+      const query = options.remember === false ? '?rememberMe=false' : '';
+      const result = await authRequest(
+        config,
+        `/passkey/verify-authentication${query}`,
+        { response },
+        null,
+        { [PASSKEY_CHALLENGE_HEADER]: ceremony.challenge },
+      );
+      return sessionFrom(result.response, result.json);
+    },
+
+    async listPasskeys(): Promise<AccountPasskey[]> {
+      const { json } = await authRequest(
+        config,
+        '/passkey/list-user-passkeys',
+        undefined,
+        config.getToken(),
+      );
+      return (json as Partial<AccountPasskey>[]).map((row) => ({
+        id: row.id ?? '',
+        name: row.name ?? null,
+        createdAt: row.createdAt ?? null,
+        aaguid: row.aaguid ?? null,
+      }));
+    },
+
+    async removePasskey(id: string): Promise<void> {
+      await authRequest(config, '/passkey/delete-passkey', { id }, config.getToken());
     },
 
     async signOut(): Promise<void> {

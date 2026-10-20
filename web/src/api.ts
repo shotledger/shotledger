@@ -1,6 +1,12 @@
 // Same-origin calls to the Worker (ADR 0013). The token lives in
 // sessionStorage, so it goes when the tab does, and a sign-in here asks not
 // to be remembered, so the server ends it after a few hours as well.
+import {
+  startAuthentication,
+  startRegistration,
+  type PublicKeyCredentialCreationOptionsJSON,
+  type PublicKeyCredentialRequestOptionsJSON,
+} from '@simplewebauthn/browser';
 import { PROTOCOL_VERSION, type ClientChange } from '@shotledger/shared/src/sync';
 import { pushChanges, type PushOutcome } from '@shotledger/shared/src/sync-client/direct-push';
 import {
@@ -9,10 +15,12 @@ import {
   createHttpSyncTransport,
   createPhotoApi,
   type AccountDevice,
+  type AccountPasskey,
   type PhotoUsage,
   type HttpClientConfig,
 } from '@shotledger/shared/src/sync-client/http';
 
+import { passkeyError, type PasskeyError } from './passkey-error';
 import { createFetchPhoto } from './photo-fetch';
 import { pullAll, type PulledTables, type WebTable } from './pull';
 
@@ -86,6 +94,49 @@ export async function signInAgain(
   } catch (error: unknown) {
     return { error: signInError(error) };
   }
+}
+
+/**
+ * Signs in with a passkey; the browser asks which one. With `autofill` it
+ * waits on the email field's suggestions instead (WebAuthn conditional UI),
+ * until the passkey is picked or another ceremony aborts it.
+ */
+export async function signInWithPasskey(autofill = false): Promise<PasskeyError | null> {
+  try {
+    const ceremony = await account.passkeySignInOptions();
+    const response = await startAuthentication({
+      optionsJSON: ceremony.options as unknown as PublicKeyCredentialRequestOptionsJSON,
+      useBrowserAutofill: autofill,
+    });
+    const session = await account.signInWithPasskey(ceremony, response, { remember: false });
+    memoryToken = session.token;
+    writeToken(session.token);
+    return null;
+  } catch (error: unknown) {
+    return passkeyError(error);
+  }
+}
+
+/** Adds a passkey from this browser to the signed-in account. */
+export async function addPasskey(name: string): Promise<PasskeyError | null> {
+  try {
+    const ceremony = await account.passkeyRegistrationOptions();
+    const response = await startRegistration({
+      optionsJSON: ceremony.options as unknown as PublicKeyCredentialCreationOptionsJSON,
+    });
+    await account.addPasskey(ceremony, response, name);
+    return null;
+  } catch (error: unknown) {
+    return passkeyError(error);
+  }
+}
+
+export function listPasskeys(): Promise<AccountPasskey[]> {
+  return account.listPasskeys();
+}
+
+export function removePasskey(id: string): Promise<void> {
+  return account.removePasskey(id);
 }
 
 export async function signOut(): Promise<void> {
