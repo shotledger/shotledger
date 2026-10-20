@@ -374,6 +374,7 @@ const BACKEND_TESTS = [
   'test/sync-contract.spec.ts',
   'test/sync-payload-validation.spec.ts',
   'test/sync-family-refusal.spec.ts',
+  'test/sync-family-refusal.property.spec.ts',
 ];
 // The phone's SQLite store runs on the root vitest, not the app's jest
 // (app/jest.config.js ignores src/db/).

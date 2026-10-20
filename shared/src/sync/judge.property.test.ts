@@ -1,8 +1,9 @@
 // docs/specs/sync-family-refusal-spec.md §11.10, properties I1 and I2 over the
 // pure judge. A model server applies each plan the way the D1 batch does
 // (§11.5's table), and an oracle written separately from judge.ts checks the
-// invariants after every push. backend/test/sync-family-refusal.spec.ts
-// replays seeded sequences against the real Worker.
+// invariants after every push. backend/test/sync-family-refusal.property.spec.ts
+// replays seeded sequences of the same cast through the real Worker and D1,
+// with its own oracle over the stored state.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
