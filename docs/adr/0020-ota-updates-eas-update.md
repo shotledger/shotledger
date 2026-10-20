@@ -39,9 +39,11 @@ JS-only changes.
    `eas init`; the id was already committed, so the URL followed.) Builds
    made before it run with `expo.modules.updates.ENABLED=false`.
 5. **Publishing** goes through the EAS Update workflow
-   (`.github/workflows/eas-update.yml`): dispatched on a release tag or a
+   (`.github/workflows/eas-update.yml`): dispatched on a
    `hotfix/*`/`release/*` branch, it stamps that release's version, runs
    the CI checks and publishes behind the `release` environment.
+   (Amended 2026-10-20: no longer on a release tag, because the `release`
+   environment now deploys from protected branches only.)
    `docs/release.md` has the steps.
 
 ## Consequences
@@ -50,8 +52,9 @@ JS-only changes.
   defaults check on every launch and never wait for the download
   (`EXPO_UPDATES_LAUNCH_WAIT_MS` 0), so launch never waits on the network.
   That matches the offline-first principle (ADR 0001).
-- A JS update must be published from the release's tag or `hotfix/*` branch
-  with the same version stamped. Publishing from `main` with the `0.0.0`
+- A JS update must be published from a `hotfix/*` or `release/*` branch
+  containing the release's tag, with the same version stamped. Publishing
+  from `main` with the `0.0.0`
   placeholder targets runtime `0.0.0`, which no build has.
 - Locally built APKs (`run-app`'s standalone APK) are not EAS builds and
   carry no channel, so they receive no updates.

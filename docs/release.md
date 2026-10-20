@@ -228,18 +228,21 @@ Every update:
    sync server, and a phone that has not taken the update has its changes
    to that table refused, as step 0 of a release says.
 1. Run the **EAS Update** workflow (`.github/workflows/eas-update.yml`,
-   Actions → EAS Update → Run workflow). Dispatch it on the release's tag,
-   or on its `hotfix/*` or `release/*` branch with the release version as
-   input. The runtime version is the app version, so the update has to
-   be built from that release with that version stamped; the workflow
-   refuses `main`, where the version is the `0.0.0` placeholder. Pick
+   Actions → EAS Update → Run workflow). Dispatch it on a `hotfix/*` or
+   `release/*` branch that contains the release's tag, with the release
+   version as input. The runtime version is the app version, so the update
+   has to be built from that release with that version stamped; the
+   workflow refuses `main`, where the version is the `0.0.0` placeholder.
+   It cannot run on the tag itself: the `release` environment deploys from
+   protected branches only. To publish the tagged code as it is, push
+   `release/<version>` at the tag first. Pick
    `preview` first to try it on a preview APK, then run it again with
    `production`. It runs the same checks as a release, then waits on the
    `release` environment.
 2. Phones pick it up on the next launch after the download finishes, so
    expect it on the second launch.
 
-By hand, the same thing is: check out the tag (or hotfix branch),
+By hand, the same thing is: check out the release or hotfix branch,
 `cd app && npm pkg set version=<release version>` (don't commit it), then
 `eas update --channel <preview|production> --platform android --message "<what changed>"`.
 
@@ -366,14 +369,16 @@ on 2026-10-14 (Free plan). Organization settings are declared in the
 `shotledger/.github`, `safe-settings/suborgs/product.yml`; checked against
 `GET /repos/shotledger/shotledger/rules/branches/main` after the sync):
 
-- `protect-main` on the default branch: required checks `check` (GitHub
-  Actions, 15368), `DCO` (DCO App, 1861) and `license/cla` (CLA Assistant,
+- `protect-main` on the default branch, `release/*` and `hotfix/*`:
+  required checks `check` (GitHub Actions, 15368), `DCO` (DCO App, 1861) and `license/cla` (CLA Assistant,
   a commit status); "require branch up to date" off; one approval, given
   to Renovate's minor, patch and pin PRs by the `renovate-approve` App;
   stale approvals dismissed on push; every review thread resolved; no
   deletion or force-push. Organization admins may bypass; Renovate may
   not, because a bypass skips the checks too.
 - `protect-tags`: tags cannot be deleted or moved.
+- The `release` environment needs the maintainer's approval and deploys
+  from protected branches only, so never from a tag.
 - `allow_auto_merge` on, so Renovate merges through GitHub auto-merge
   once the ruleset is satisfied.
 - A new job that runs on every PR is ungated until it is added to the
