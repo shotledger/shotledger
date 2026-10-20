@@ -5,7 +5,15 @@ import { SYNC_TABLE_NAMES, type ChangeRow, type SyncTableName } from '../sync/pr
 import { APPLY_ORDER, applyRank, sortChangesForApply } from './order';
 
 function change(tableName: SyncTableName, seq: number, rowId = `r${seq}`): ChangeRow {
-  return { tableName, rowId, seq, payload: {}, deletedAt: null, updatedAt: '2026-09-02T00:00:00Z' };
+  return {
+    tableName,
+    rowId,
+    seq,
+    payload: {},
+    deletedAt: null,
+    updatedAt: '2026-09-02T00:00:00Z',
+    arrival: seq,
+  };
 }
 
 describe('APPLY_ORDER', () => {

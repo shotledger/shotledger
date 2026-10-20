@@ -7,6 +7,7 @@ import {
   type PullResponse,
   type PushRequest,
   type PushResponse,
+  type RefusalEntry,
   type SyncTableName,
 } from '../sync/protocol';
 import { MAX_PULL_ITERATIONS, MAX_PUSH_ITERATIONS, runSyncCycle } from './engine';
@@ -100,6 +101,7 @@ function emptyPull(request: PullRequest): PullResponse {
   return {
     protocolVersion: request.protocolVersion,
     changes: [],
+    refusals: [],
     nextCursors: request.tables.map((t) => ({
       tableName: t.tableName,
       cursor: t.cursor,
@@ -113,7 +115,11 @@ function createTransport(over: Partial<SyncTransport> = {}): SyncTransport {
     pull: async (request) => emptyPull(request),
     push: async (request) => ({
       protocolVersion: request.protocolVersion,
-      acks: request.changes.map((c) => ({ clientChangeId: c.clientChangeId, status: 'applied' })),
+      acks: request.changes.map((c) => ({
+        clientChangeId: c.clientChangeId,
+        status: 'applied',
+        arrival: 1,
+      })),
     }),
     ...over,
   };
@@ -140,6 +146,7 @@ describe('runSyncCycle — pull', () => {
         seenRequest = request;
         return {
           protocolVersion: request.protocolVersion,
+          refusals: [],
           changes: [
             {
               tableName: 'shots',
@@ -148,6 +155,7 @@ describe('runSyncCycle — pull', () => {
               payload: {},
               deletedAt: null,
               updatedAt: 'u',
+              arrival: 1,
             },
             {
               tableName: 'firearms',
@@ -156,6 +164,7 @@ describe('runSyncCycle — pull', () => {
               payload: {},
               deletedAt: null,
               updatedAt: 'u',
+              arrival: 1,
             },
           ],
           nextCursors: request.tables.map((t) => ({
@@ -194,6 +203,7 @@ describe('runSyncCycle — pull', () => {
         const first = requests.length === 1;
         return {
           protocolVersion: request.protocolVersion,
+          refusals: [],
           changes: [],
           nextCursors: request.tables.map((t) => ({
             tableName: t.tableName,
@@ -232,6 +242,7 @@ describe('runSyncCycle — pull', () => {
     const transport = createTransport({
       pull: async (request) => ({
         protocolVersion: request.protocolVersion,
+        refusals: [],
         changes: [],
         nextCursors: request.tables.map((t) => ({
           tableName: t.tableName,
@@ -255,6 +266,7 @@ describe('runSyncCycle — pull', () => {
         calls += 1;
         return {
           protocolVersion: request.protocolVersion,
+          refusals: [],
           changes: [],
           nextCursors: request.tables.map((t) => ({
             tableName: t.tableName,
@@ -288,6 +300,7 @@ describe('runSyncCycle — push', () => {
           acks: request.changes.map((c) => ({
             clientChangeId: c.clientChangeId,
             status: 'applied' as const,
+            arrival: 1,
             seq: 1,
           })),
         };
@@ -315,7 +328,7 @@ describe('runSyncCycle — push', () => {
         sent = request;
         return {
           protocolVersion: request.protocolVersion,
-          acks: [{ clientChangeId: existing, status: 'duplicate' as const, seq: 4 }],
+          acks: [{ clientChangeId: existing, status: 'duplicate' as const, seq: 4, arrival: 1 }],
         };
       },
     });
@@ -335,6 +348,7 @@ describe('runSyncCycle — push', () => {
     const transport = createTransport({
       pull: async (request) => ({
         protocolVersion: request.protocolVersion,
+        refusals: [],
         changes: [
           {
             tableName: 'sessions',
@@ -343,6 +357,7 @@ describe('runSyncCycle — push', () => {
             payload: { id: 'row-1', name: 'stale server copy' },
             deletedAt: null,
             updatedAt: 'u',
+            arrival: 1,
           },
         ],
         nextCursors: request.tables.map((t) => ({
@@ -374,6 +389,7 @@ describe('runSyncCycle — push', () => {
         acks: request.changes.map((c) => ({
           clientChangeId: c.clientChangeId,
           status: 'rejected' as const,
+          arrival: 1,
           reason: 'tombstoned',
         })),
       }),
@@ -393,6 +409,7 @@ describe('runSyncCycle — push', () => {
         payload: null,
         deletedAt: '2026-09-02T09:00:00.000Z',
         updatedAt: '2026-09-02T09:00:00.000Z',
+        arrival: 1,
       },
     ]);
   });
@@ -408,6 +425,7 @@ describe('runSyncCycle — push', () => {
         acks: request.changes.map((c) => ({
           clientChangeId: c.clientChangeId,
           status: 'rejected' as const,
+          arrival: 1,
           reason: 'something-new',
         })),
       }),
@@ -438,6 +456,7 @@ describe('runSyncCycle — push', () => {
             clientChangeId: c.clientChangeId,
             status,
             reason: 'invalid_payload',
+            arrival: 1,
           })),
         }),
       });
@@ -469,10 +488,11 @@ describe('runSyncCycle — push', () => {
         protocolVersion: request.protocolVersion,
         acks: request.changes.map((c) =>
           c.rowId === 'b'
-            ? { clientChangeId: c.clientChangeId, status: 'applied' as const, seq: 1 }
+            ? { clientChangeId: c.clientChangeId, status: 'applied' as const, seq: 1, arrival: 1 }
             : {
                 clientChangeId: c.clientChangeId,
                 status: 'rejected' as const,
+                arrival: 1,
                 reason: 'invalid_payload',
               },
         ),
@@ -547,9 +567,14 @@ describe('runSyncCycle — push', () => {
         protocolVersion: request.protocolVersion,
         acks: request.changes.map((c) =>
           c.rowId === 'a'
-            ? { clientChangeId: c.clientChangeId, status: 'applied' as const, seq: 1 }
+            ? { clientChangeId: c.clientChangeId, status: 'applied' as const, seq: 1, arrival: 1 }
             : c.rowId === 'b'
-              ? { clientChangeId: c.clientChangeId, status: 'rejected' as const, reason: 'other' }
+              ? {
+                  clientChangeId: c.clientChangeId,
+                  status: 'rejected' as const,
+                  reason: 'other',
+                  arrival: 1,
+                }
               : {
                   clientChangeId: c.clientChangeId,
                   status: 'duplicate' as const,
@@ -582,6 +607,7 @@ describe('runSyncCycle — push', () => {
           acks: request.changes.map((c) => ({
             clientChangeId: c.clientChangeId,
             status: 'applied' as const,
+            arrival: 1,
           })),
         };
       },
@@ -624,6 +650,7 @@ describe('runSyncCycle — push', () => {
           acks: request.changes.map((c) => ({
             clientChangeId: c.clientChangeId,
             status: 'applied' as const,
+            arrival: 1,
           })),
         };
       },
@@ -670,7 +697,9 @@ describe('runSyncCycle — push', () => {
     const transport = createTransport({
       push: async (request): Promise<PushResponse> => ({
         protocolVersion: request.protocolVersion,
-        acks: [{ clientChangeId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', status: 'applied' }],
+        acks: [
+          { clientChangeId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', status: 'applied', arrival: 1 },
+        ],
       }),
     });
 
@@ -753,12 +782,20 @@ describe('runSyncCycle — refusal marks (Revision 3)', () => {
     arrival,
   });
   const pullOf =
-    (changes: ChangeRow[], refusals?: PullResponse['refusals']) =>
+    (changes: ChangeRow[], refusals: PullResponse['refusals'] = []) =>
     async (request: PullRequest): Promise<PullResponse> => ({
       ...emptyPull(request),
       changes,
-      ...(refusals === undefined ? {} : { refusals }),
+      refusals,
     });
+  /** The pull's listing of a waiting session row; every pull lists the records (§11.7). */
+  const listed = (rowId: string, arrival: number): RefusalEntry => ({
+    tableName: 'sessions',
+    rowId,
+    reason: 'family_refused',
+    arrival,
+    blocker,
+  });
   const one = (rowId: string, tableName: SyncTableName = 'sessions', rev = 1): OutboxEntry => ({
     tableName,
     rowId,
@@ -812,7 +849,9 @@ describe('runSyncCycle — refusal marks (Revision 3)', () => {
 
     it('ECHO a live change older than the mark is shadowed and the mark kept', async () => {
       const fake = createFakeStore({ marks: [waiting('s1', 6)] });
-      const transport = createTransport({ pull: pullOf([pulled('s1', 5, 'A1')]) });
+      const transport = createTransport({
+        pull: pullOf([pulled('s1', 5, 'A1')], [listed('s1', 6)]),
+      });
 
       const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
 
@@ -823,7 +862,9 @@ describe('runSyncCycle — refusal marks (Revision 3)', () => {
 
     it('H2’ the release, at the mark’s arrival, is applied and drops the mark', async () => {
       const fake = createFakeStore({ marks: [waiting('s1', 6)] });
-      const transport = createTransport({ pull: pullOf([pulled('s1', 6, 'A2')]) });
+      const transport = createTransport({
+        pull: pullOf([pulled('s1', 6, 'A2')], [listed('s1', 6)]),
+      });
 
       const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
 
@@ -834,7 +875,9 @@ describe('runSyncCycle — refusal marks (Revision 3)', () => {
 
     it('AB another device’s later version is applied over the mark', async () => {
       const fake = createFakeStore({ marks: [waiting('s1', 10)] });
-      const transport = createTransport({ pull: pullOf([pulled('s1', 12, 'B-name')]) });
+      const transport = createTransport({
+        pull: pullOf([pulled('s1', 12, 'B-name')], [listed('s1', 10)]),
+      });
 
       await runSyncCycle({ store: fake.store, transport, newId: ids() });
 
@@ -845,7 +888,7 @@ describe('runSyncCycle — refusal marks (Revision 3)', () => {
     it('VC a pulled tombstone is applied over a mark of any arrival', async () => {
       const fake = createFakeStore({ marks: [waiting('s1', 10)] });
       const tombstone = { ...pulled('s1', 3), payload: null, deletedAt: 'd' };
-      const transport = createTransport({ pull: pullOf([tombstone]) });
+      const transport = createTransport({ pull: pullOf([tombstone], [listed('s1', 10)]) });
 
       await runSyncCycle({ store: fake.store, transport, newId: ids() });
 
@@ -876,7 +919,7 @@ describe('runSyncCycle — refusal marks (Revision 3)', () => {
         rows: new Map([['sessions:s1', row({ id: 's1' })]]),
         marks: [waiting('s1', 3)],
       });
-      const transport = createTransport({ pull: pullOf([pulled('s1', 7)]) });
+      const transport = createTransport({ pull: pullOf([pulled('s1', 7)], [listed('s1', 3)]) });
 
       const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
 
@@ -956,33 +999,19 @@ describe('runSyncCycle — refusal marks (Revision 3)', () => {
       expect(fake.marks.size).toBe(0);
     });
 
-    it('an ack with no arrival drops any mark of its row', async () => {
-      const fake = createFakeStore({
-        outbox: [one('s1')],
-        rows: new Map([['sessions:s1', row({ id: 's1' })]]),
-        marks: [waiting('s1', 4)],
-      });
-
-      await runSyncCycle({ store: fake.store, transport: createTransport(), newId: ids() });
-
-      expect(fake.outcomes[0]?.outcome).toEqual({
-        mark: { drop: { tableName: 'sessions', rowId: 's1' }, upTo: Number.MAX_SAFE_INTEGER },
-      });
-    });
-
-    it('a refusal with no arrival or blocker still writes a mark', async () => {
+    it('a refusal with no blocker still writes a mark', async () => {
       const fake = createFakeStore({
         outbox: [one('r1', 'series')],
         rows: new Map([['series:r1', row({ id: 'r1' })]]),
       });
       const transport = createTransport({
-        push: ackAll(() => ({ status: 'rejected', reason: 'family_refused' })),
+        push: ackAll(() => ({ status: 'rejected', reason: 'family_refused', arrival: 1 })),
       });
 
       await runSyncCycle({ store: fake.store, transport, newId: ids() });
 
       expect(fake.outcomes[0]?.outcome).toEqual({
-        mark: { set: { ...waiting('r1', 0, 'series'), blocker: null } },
+        mark: { set: { ...waiting('r1', 1, 'series'), blocker: null } },
       });
     });
 

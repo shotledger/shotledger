@@ -14,7 +14,7 @@ import {
 } from './shadow';
 
 function change(rowId: string, tableName: ChangeRow['tableName'] = 'sessions'): ChangeRow {
-  return { tableName, rowId, seq: 1, payload: {}, deletedAt: null, updatedAt: 'u' };
+  return { tableName, rowId, seq: 1, payload: {}, deletedAt: null, updatedAt: 'u', arrival: 1 };
 }
 
 describe('rowKey', () => {
@@ -74,6 +74,7 @@ describe('tombstoneFromRejection', () => {
       payload: null,
       deletedAt: '2026-09-02T12:00:00.000Z',
       updatedAt: '2026-09-02T12:00:00.000Z',
+      arrival: 1,
     });
     expect(ChangeRowSchema.safeParse(row).success).toBe(true);
   });
@@ -143,10 +144,6 @@ describe('shadowPull', () => {
       marks,
       shadowed: 1,
     });
-  });
-
-  it('a live change with no arrival is older than any mark', () => {
-    expect(shadowPull([change('a')], new Set(), [mark('a', 1)]).shadowed).toBe(1);
   });
 
   it('neither: applied, as today; a mark of another table does not match', () => {

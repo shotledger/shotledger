@@ -218,6 +218,7 @@ describe('sync', () => {
     };
     const change = (p: Record<string, unknown>) => ({
       seq: 1,
+      arrival: 1,
       tableName: 'firearms' as const,
       rowId: 'remote-1',
       payload: p,

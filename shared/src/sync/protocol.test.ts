@@ -9,6 +9,7 @@ import {
   PROTOCOL_VERSION_UNSUPPORTED,
   PullRequestSchema,
   PullResponseSchema,
+  PushAckSchema,
   PushRequestSchema,
   PushResponseSchema,
   isSyncableSettingRow,
@@ -65,6 +66,7 @@ describe('ChangeRowSchema', () => {
       payload: { make: 'Anschutz' },
       deletedAt: null,
       updatedAt: '2026-08-01T00:00:00.000Z',
+      arrival: 1,
     });
     expect(result.success).toBe(true);
   });
@@ -77,6 +79,7 @@ describe('ChangeRowSchema', () => {
       payload: null,
       deletedAt: '2026-08-02T00:00:00.000Z',
       updatedAt: '2026-08-02T00:00:00.000Z',
+      arrival: 2,
     });
     expect(result.success).toBe(true);
   });
@@ -172,11 +175,55 @@ describe('PullRequestSchema / PullResponseSchema', () => {
           payload: { make: 'Anschutz' },
           deletedAt: null,
           updatedAt: '2026-08-01T00:00:00.000Z',
+          arrival: 1,
         },
       ],
+      refusals: [],
       nextCursors: [{ tableName: 'firearms', cursor: 1, hasMore: false }],
     };
     expect(PullResponseSchema.safeParse(response).success).toBe(true);
+  });
+});
+
+// docs/specs/sync-family-refusal-spec.md §11.7: the server sends `arrival` on
+// every row and every ack, and `refusals` on every pull response. Pre-1.0 there
+// is no older server to tolerate (CLAUDE.md rule 8), so a response without
+// them does not parse.
+describe('the arrival and refusals fields are required (V5-7)', () => {
+  const change = {
+    tableName: 'firearms',
+    rowId: 'row-1',
+    seq: 1,
+    payload: { make: 'Anschutz' },
+    deletedAt: null,
+    updatedAt: '2026-08-01T00:00:00.000Z',
+  };
+  const ack = {
+    clientChangeId: '11111111-1111-4111-8111-111111111111',
+    status: 'applied',
+    seq: 1,
+  };
+  const pull = {
+    protocolVersion: 1,
+    changes: [],
+    refusals: [],
+    nextCursors: [{ tableName: 'firearms', cursor: 1, hasMore: false }],
+  };
+
+  it('a change row without arrival does not parse; with it, it does', () => {
+    expect(ChangeRowSchema.safeParse(change).success).toBe(false);
+    expect(ChangeRowSchema.safeParse({ ...change, arrival: 1 }).success).toBe(true);
+  });
+
+  it('a push ack without arrival does not parse; with it, it does', () => {
+    expect(PushAckSchema.safeParse(ack).success).toBe(false);
+    expect(PushAckSchema.safeParse({ ...ack, arrival: 1 }).success).toBe(true);
+  });
+
+  it('a pull response without refusals does not parse; with them, it does', () => {
+    const { refusals: _omitted, ...without } = pull;
+    expect(PullResponseSchema.safeParse(without).success).toBe(false);
+    expect(PullResponseSchema.safeParse(pull).success).toBe(true);
   });
 });
 
@@ -203,13 +250,24 @@ describe('PushRequestSchema / PushResponseSchema', () => {
     const response = {
       protocolVersion: 1,
       acks: [
-        { clientChangeId: '11111111-1111-4111-8111-111111111111', status: 'applied', seq: 1 },
+        {
+          clientChangeId: '11111111-1111-4111-8111-111111111111',
+          status: 'applied',
+          seq: 1,
+          arrival: 1,
+        },
         {
           clientChangeId: '22222222-2222-4222-8222-222222222222',
           status: 'rejected',
           reason: 'tombstoned',
+          arrival: 1,
         },
-        { clientChangeId: '33333333-3333-4333-8333-333333333333', status: 'duplicate', seq: 1 },
+        {
+          clientChangeId: '33333333-3333-4333-8333-333333333333',
+          status: 'duplicate',
+          seq: 1,
+          arrival: 1,
+        },
       ],
     };
     expect(PushResponseSchema.safeParse(response).success).toBe(true);

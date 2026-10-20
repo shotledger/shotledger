@@ -73,10 +73,7 @@ async function runPull(
     // `refusals` list replaces the marks (docs/specs/sync-family-refusal-spec.md
     // §11.6).
     const pendingKeys = await deps.store.pendingRowKeys();
-    const marks =
-      response.refusals === undefined
-        ? await deps.store.readMarks()
-        : marksFromRefusals(response.refusals);
+    const marks = marksFromRefusals(response.refusals);
     const shadow = shadowPull(response.changes, pendingKeys, marks);
     shadowed += shadow.shadowed;
 
@@ -108,14 +105,14 @@ async function runPull(
  */
 function ackOutcome(entry: OutboxEntry, ack: PushAck): AckOutcome {
   const ref = { tableName: entry.tableName, rowId: entry.rowId };
-  const arrival = ack.arrival ?? 0;
+  const { arrival } = ack;
   let mark: MarkUpdate;
   if (ack.reason === REJECTED_INVALID_PAYLOAD) {
     mark = { set: { ...ref, kind: 'invalid', arrival, blocker: null } };
   } else if (ack.reason === REJECTED_FAMILY) {
     mark = { set: { ...ref, kind: 'waiting', arrival, blocker: ack.blocker ?? null } };
   } else {
-    mark = { drop: ref, upTo: ack.arrival ?? Number.MAX_SAFE_INTEGER };
+    mark = { drop: ref, upTo: arrival };
   }
   if (ack.status !== 'duplicate' || ack.current == null) return { mark };
   return { mark, current: ack.current };

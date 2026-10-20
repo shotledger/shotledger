@@ -56,7 +56,7 @@ export async function pullAll(
 
   while (cursors.length > 0) {
     const response = await transport.pull({ protocolVersion, tables: cursors });
-    refusals = response.refusals ?? [];
+    refusals = response.refusals;
     for (const change of response.changes) {
       const table = tables[change.tableName as WebTable] as
         Map<string, Record<string, unknown>> | undefined;

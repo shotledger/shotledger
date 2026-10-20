@@ -37,12 +37,13 @@ export function tombstoneFromRejection(entry: OutboxEntry, deletedAt: string): C
   return {
     tableName: entry.tableName,
     rowId: entry.rowId,
-    // Local-only: applyChanges ignores seq, and this row never goes back on
-    // the wire. 1 keeps it a valid positive int for the schema.
+    // Local-only: applyChanges ignores seq and arrival, and this row never
+    // goes back on the wire. 1 keeps each a valid positive int for the schema.
     seq: 1,
     payload: null,
     deletedAt,
     updatedAt: deletedAt,
+    arrival: 1,
   };
 }
 
@@ -67,7 +68,7 @@ export function shadowPull(
     if (pendingKeys.has(key)) continue;
     const mark = byKey.get(key);
     if (mark !== undefined) {
-      if (change.deletedAt === null && (change.arrival ?? 0) < mark.arrival) continue;
+      if (change.deletedAt === null && change.arrival < mark.arrival) continue;
       byKey.delete(key);
     }
     applicable.push(change);
