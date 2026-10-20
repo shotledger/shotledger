@@ -75,14 +75,14 @@
         // Passkeys bind to BETTER_AUTH_URL's host. Set this only to bind them
         // to a parent domain instead; that domain must then serve the app's
         // .well-known files. Decide before the first deploy (#681).
-        // "PASSKEY_RP_ID": "REPLACE_ME",
+        // "PASSKEY_RP_ID": "<parent domain>",
         // Passkeys in the phone app (#681): the SHA-256 fingerprints of the
         // certificates that sign it (Play Console > App integrity > App
         // signing key, plus any key that signs test builds), comma-separated,
         // and the Apple Developer Team ID. Unset, /.well-known answers 404
         // for that platform and the app cannot use passkeys there.
-        // "ANDROID_SIGNING_CERT_SHA256": "REPLACE_ME",
-        // "APPLE_TEAM_ID": "REPLACE_ME",
+        // "ANDROID_SIGNING_CERT_SHA256": "<AA:BB:…>,<CC:DD:…>",
+        // "APPLE_TEAM_ID": "<10-character Team ID>",
       },
       "secrets": {
         "required": ["BETTER_AUTH_SECRET"],
@@ -117,14 +117,14 @@
         // Passkeys bind to BETTER_AUTH_URL's host. Set this only to bind them
         // to a parent domain instead; that domain must then serve the app's
         // .well-known files. Decide before the first deploy (#681).
-        // "PASSKEY_RP_ID": "REPLACE_ME",
+        // "PASSKEY_RP_ID": "<parent domain>",
         // Passkeys in the phone app (#681): the SHA-256 fingerprints of the
         // certificates that sign it (Play Console > App integrity > App
         // signing key, plus any key that signs test builds), comma-separated,
         // and the Apple Developer Team ID. Unset, /.well-known answers 404
         // for that platform and the app cannot use passkeys there.
-        // "ANDROID_SIGNING_CERT_SHA256": "REPLACE_ME",
-        // "APPLE_TEAM_ID": "REPLACE_ME",
+        // "ANDROID_SIGNING_CERT_SHA256": "<AA:BB:…>,<CC:DD:…>",
+        // "APPLE_TEAM_ID": "<10-character Team ID>",
       },
       "secrets": {
         "required": ["BETTER_AUTH_SECRET"],
