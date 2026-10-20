@@ -409,12 +409,12 @@ on 2026-10-14 (Free plan). Organization settings are declared in the
    (<https://cla-assistant.io>), chosen 2026-10-19. Sign in there as the
    maintainer, put the text of `CLA.md` in a GitHub Gist (it lives at
    <https://gist.github.com/jimisola/9f7c846a410339a77b3a4346ea80b600>),
-   and link the gist to `shotledger/shotledger`. Allowlist bots (`renovate[bot]`,
-   `*[bot]`). Commits authored by the agents' identity
-   (`noreply@anthropic.com`) belong to no GitHub account, so the check
-   will flag them: open a test pull request and settle how those are
-   handled before the check becomes required. When `CLA.md` changes,
-   update the gist so contributors re-sign the new version.
+   and link the gist to the `shotledger` organization (done 2026-10-19 for
+   every repo in the org). Allowlist bots (`renovate[bot]`, `*[bot]`).
+   CLA Assistant checks each commit's author, so agent commits are
+   authored and signed off as the maintainer, who has signed (decided
+   2026-10-19; `CONTRIBUTING.md`, "AI-assisted commits"). When `CLA.md`
+   changes, update the gist so contributors re-sign the new version.
 4. **Make the repo public** (maintainer only).
 5. **Then, in safe-settings:** the rules above (shotledger/.github#1,
    2026-10-19), and a required reviewer (the maintainer, self-review
