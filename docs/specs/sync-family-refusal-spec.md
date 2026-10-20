@@ -1576,6 +1576,55 @@ Pre-1.0 (rule 8), with no compatibility path:
   answering "Approve the revised #856 design (Revision 3) with the
   recommended answers to Q1–Q4?". Q1 yes; Q2 Discard is a follow-up issue;
   Q3 drop item 6; Q4 protocol in place at version 1.
+- **Revision 4 (2026-10-20), during the Revision 3 build; pending the
+  maintainer.** Each item is a place where the approved text was wrong or
+  silent. The build follows the reading stated, and nothing here is
+  approved yet.
+  1. **REVAL's T2 waits; it is not applied.** The scenario says "T2 is
+     applied". Re-validation turns T1 into a bad row at T1's own arrival,
+     which is earlier than the push that fixes T2. By §11.4's blocked rule
+     and I2, T2 then arrives into a family whose first bad row is T1, so T2
+     is `family_refused`, blocked by T1, as R1 is. The test expects that.
+     The other lines of the scenario stand.
+  2. **The batch is 5N + 7 statements, and a statement binds up to 45
+     parameters.** §11.8 counts 5N + 6 and BUDGET says 2,506 and "no more
+     than 15 parameters". The build adds one statement, the demotion of
+     re-validated rows to bad rows (§11.5 names the step but §11.8 does
+     not count it): 2,507 for 500 changes. The per-change idempotency
+     insert binds each of `ok` and `notTombstoned` several times, so the
+     largest statement binds 45 parameters, measured in BUDGET. D1's limit
+     is 100 per statement, so BUDGET asserts fewer than 100 and records
+     the measured figure.
+  3. **ECHO needs two pushes.** As written, A pushes S1 "A1" and the
+     invalid T2 in one push. Under F2 that push refuses S1 with its
+     family, so "A1" is never applied and there is no echo to shadow. The
+     test sends T2 first and "A1" in a second push, then "A2", which
+     keeps the scenario's point: A's own older version comes back in a
+     pull and is shadowed by its later waiting edit.
+  4. **REV6's T2 is T3 of R2.** In the cast, T2 belongs to R1, so moving
+     R1 to S2 moves its bad row with it, and S1 is no longer blocked. The
+     test uses T3 of R2 as S1's bad row, which keeps the scenario's point.
+  5. **N3: existing assertions gain the new fields.** Tests that compare
+     whole acks with `toStrictEqual` now include `arrival`, `blocker` and,
+     on a `duplicate`, `current` (§11.7's N1 allows it).
+     `sync_idempotency` gains `blocker_table` and `blocker_row_id`, so a
+     `duplicate` replays its blocker. ADV1 counts 5 D1 calls (4 reads plus
+     the batch), where it counted 1. Every push bumps `state_rev`, a
+     replay too, so C4 and C9 compare the snapshot without `state_rev` and
+     assert its value apart.
+  6. **The production foreign-key check is read from the build flags,
+     not a dev build.** §11.6 says the build reads `PRAGMA foreign_keys`
+     in the dev build. No dev build ran here. The evidence instead cites
+     expo-sqlite 57.0.3's compile flags (`android/build.gradle`,
+     `ios/ExpoSQLite.podspec`), which do not set
+     `SQLITE_DEFAULT_FOREIGN_KEYS`, and `app/src/db/client.ts`, which sets
+     no pragma. The dev-build read is still open.
+  7. **Silent, decided by the phone (rule 11): the web's two lines show
+     only when non-zero**, as on the phone. The web page has no sync state
+     line, so its **Sync** card is absent when both counts are 0.
+  8. **Silent: release ties sort by code unit.** `ORDER BY arrival,
+table_name, row_id` uses SQLite's BINARY collation, so the judge
+     sorts ties the same way rather than with `localeCompare`.
 - **Revision 2 (2026-10-16), during implementation.** Items 1–5 approved by
   the maintainer, 2026-10-16: "Approve, file issue", answering "Approve the
   implementation corrections (Revision 2) to the #856 spec?"; item 4's web

@@ -65,27 +65,33 @@ sends nothing from the file on its own.
 
 If **Account & Sync** says that changes were refused by the server, the server
 found something in them it cannot store. That is a fault in the app, not
-something you did. The changes stay on this phone for now, but they are not on
-your other devices or in the web app. If you change the same thing on another
-device or in the web app, that change replaces the refused one on this phone.
-Changing the same thing again on this phone sends it again. If the line keeps
-coming back, report it, and make a backup before you sign out or restore.
+something you did. The server keeps the refused change aside: it is not on
+your other devices or in the web app until it arrives fixed. Changing the same
+entry again, on this phone, another device or the web app, sends a new
+version; if that one can be stored, the refusal ends. If the line keeps coming
+back, report it.
 
 A refused change also holds back the changes that belong with it, so your other
 devices never see half a session. While it does, **Account & Sync** shows
 "n change(s) waiting on a refused change". For a session that means every
 series, shot and station of it, and the session itself; for a firearm, its
 licenses, groups, calibers, maintenance and sight settings, but not the
-sessions shot with it. Deletions are never held. The held changes stay on this
-phone and are not lost: editing or deleting the refused entry on this phone, or
-changing it on another device, sends them with it at the next sync. One
-exception: if another device changes the same entry later than the held change
-here, that device's version wins and the held change is dropped. Which change
-is later is decided by the two devices' clocks. A deletion on another device
-always wins. Other
-devices show the session as it was before the refused change. If the session
-is deleted on another device, nothing is held back any more: the held changes
-are sent as they are.
+sessions shot with it. Deletions are never held.
+
+- The server keeps the held changes until the refused change arrives fixed,
+  or until it or its session is deleted, from any device. Then it stores them
+  all at once.
+- Changes to that session from your other devices and the web app wait on the
+  server too. They are not lost by signing out, restoring a backup or
+  reinstalling the app.
+- Both lines count the whole account: every device and the web app show the
+  same numbers.
+- When two devices change the same entry, the change that reached the server
+  last wins. A held change counts from when it reached the server, not from
+  when it is stored. A deletion always wins.
+
+Other devices show the session as it was before the refused change until the
+server stores the held changes.
 
 ## How often
 

@@ -88,6 +88,15 @@ inställningar, och dina osparade ändringar skickas inte dit.
 Allt annat i telefonens Inställningar — språk, tema, valfria fält, timrar,
 säkerhetskopior — hör till varje telefon och finns inte på webben.
 
+## Synk
+
+När servern har nekat en ändring börjar kontosidan med kortet **Synk**. Det
+visar samma två rader som **Konto & synk** på telefonen: ändringarna som
+servern nekade, och ändringarna som väntar på en nekad ändring. Båda räknar
+hela kontot, så telefonen och webben visar samma siffror. Kortet syns inte när
+ingenting är nekat. Vad raderna betyder, och hur de försvinner, står i
+[När servern nekar en ändring](backup-and-restore.md#nar-servern-nekar-en-andring).
+
 ## Inloggade enheter
 
 Alla telefoner och webbläsare som är inloggade på kontot, med när de loggade

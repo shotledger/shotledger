@@ -87,6 +87,16 @@ and your unsaved changes are not sent there.
 Everything else in the phone's Settings — language, theme, Optional Fields,
 timers, backups — belongs to each phone and is not on the web.
 
+## Sync
+
+When the server has refused a change, the account page opens with a **Sync**
+card. It shows the same two lines as **Account & Sync** on the phone: the
+changes refused by the server, and the changes waiting on a refused change.
+Both count the whole account, so the phone and the web show the same numbers.
+The card is not there when nothing is refused. What the lines mean, and how
+they clear, is in
+[When the server refuses a change](backup-and-restore.md#when-the-server-refuses-a-change).
+
 ## Signed-in devices
 
 Every phone and browser signed in to the account, with when it signed in and
