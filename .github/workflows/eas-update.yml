@@ -8,21 +8,19 @@ name: EAS Update
 #
 # The runtime is the app version (`runtimeVersion.policy: appVersion`), so the
 # update has to be built from that release's code with that version stamped.
-# Dispatch it on the release's tag (version = the tag), or on the release's
-# hotfix/* or release/* branch with the release version as input. Anything
-# that touches native code needs a release, not an update.
+# Dispatch it on a hotfix/* or release/* branch that contains the release's
+# tag, with the release version as input. Not on the tag itself: the `release`
+# environment deploys from protected branches only. Anything that touches
+# native code needs a release, not an update.
 
 on:
   workflow_dispatch:
     inputs:
       version:
         description: >-
-          Release version the update targets (bare semver, e.g. 0.1.0). Leave
-          empty when dispatching on the release's tag; required on hotfix/*
-          and release/* branches.
-        required: false
+          Release version the update targets (bare semver, e.g. 0.1.0).
+        required: true
         type: string
-        default: ''
       channel:
         description: 'EAS channel (app/eas.json). Try preview first.'
         required: true
@@ -70,13 +68,6 @@ jobs:
         run: |
           set -euo pipefail
           case "$REF" in
-            refs/tags/*)
-              if [ -n "$REQUESTED" ] && [ "$REQUESTED" != "$REF_NAME" ]; then
-                echo "::error::Dispatched on tag '$REF_NAME' but version '$REQUESTED' was given. Leave it empty."
-                exit 1
-              fi
-              VERSION="$REF_NAME"
-              ;;
             refs/heads/hotfix/* | refs/heads/release/*)
               if [ -z "$REQUESTED" ]; then
                 echo "::error::On '$REF_NAME', give the release version the update targets."
@@ -93,7 +84,7 @@ jobs:
               VERSION="$REQUESTED"
               ;;
             *)
-              echo "::error::Dispatch on a release tag, or a hotfix/* or release/* branch (got '$REF'). From main the version is the 0.0.0 placeholder, which no build has."
+              echo "::error::Dispatch on a hotfix/* or release/* branch (got '$REF'). From main the version is the 0.0.0 placeholder, which no build has; a tag is not a protected branch, so the release environment refuses it. To publish the tagged code as it is, push release/<version> at the tag first."
               exit 1
               ;;
           esac
