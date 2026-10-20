@@ -2,10 +2,12 @@
 
 ## Where it lives
 
-On your phone. There is no account, no sign-up, and nothing is uploaded unless
-you deliberately turn something on.
+On your phone. You need no account, and nothing is uploaded unless you
+deliberately turn something on.
 
-That is the default and the intended way to use the app.
+That is the default and the intended way to use the app. The formal
+[privacy policy](privacy-policy.md) and the [terms of service](terms.md) for
+the optional sync service say the same in full.
 
 ## What leaves the phone, and only if you ask
 
@@ -16,6 +18,7 @@ That is the default and the intended way to use the app.
 | **Passkeys** (optional)          | If you add one: its public key, an id for it, the kind of password manager or device that made it if that says, the name of the browser you added it from and when, on the sync backend. The private key and your fingerprint or face never leave your device.                                                                                                                                                                                        |
 | **Webshooter**                   | Your Webshooter password once, then a token, direct from your phone to webshooter.se. Never through any ShotLedger server.                                                                                                                                                                                                                                                                                                                            |
 | **Range suggestions** (optional) | What you type in a session's Location field goes to a geocoding service; "Use my location" sends your coordinates to a map service. Off by default.                                                                                                                                                                                                                                                                                                   |
+| **App updates**                  | The app version, platform and a random install id, to Expo's update service when the app starts, so fixes can arrive without a store update. Nothing from your logbook.                                                                                                                                                                                                                                                                               |
 | **Backups**                      | Wherever you send the file. That is your choice entirely.                                                                                                                                                                                                                                                                                                                                                                                             |
 
 ## What never leaves
@@ -23,6 +26,8 @@ That is the default and the intended way to use the app.
 - **Target photographs**, unless you include them in a backup you move
   yourself, or turn on sync.
 - **Photographs of a licence card.** Scanning one fills in the licence fields
-  and the photo is then deleted — the app has nowhere to keep it.
+  and the photo is then deleted — the app has nowhere to keep it. The text is
+  read on the phone by Google ML Kit, which sends Google usage and performance
+  metrics, never the image or the text.
 - **Training marks**, if you opt in to keeping them. They stay on the device to
   train a future hole detector, and you can delete them.

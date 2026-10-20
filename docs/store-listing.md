@@ -117,8 +117,9 @@ eller 32-bitars (armeabi-v7a) ARM-enhet.
 - Feature graphic (1024×500): not produced.
 - Phone screenshots (min. 2, Play Console requirement): not produced —
   capture from a real device/emulator run before submission.
-- Privacy policy URL: not produced. VERIFY — required by Play Console
-  even for a no-account, fully local-storage app; a short static page
-  describing "no data leaves the device" is likely sufficient. The domain
-  is no longer the blocker: `shotledger.app` was registered 2026-09-06
-  (decisions log), so what remains is writing and hosting the page.
+- Privacy policy URL:
+  <https://shotledger.github.io/shotledger/reference/privacy-policy/>
+  (source `docs/manual/reference/privacy-policy.md`; Swedish under `/sv/`).
+  Terms of service for the sync service: `reference/terms/` beside it.
+  Contact: privacy@shotledger.app (also the Play Console developer contact).
+  Both pages took effect on 2026-10-20.
