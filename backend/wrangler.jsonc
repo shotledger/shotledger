@@ -72,9 +72,9 @@
         "ENVIRONMENT": "staging",
         "BETTER_AUTH_URL": "https://web-staging.shotledger.app",
         "BETTER_AUTH_TRUSTED_ORIGINS": "shotledger://",
-        // Passkeys bind to BETTER_AUTH_URL's host. Set this only to bind them
-        // to a parent domain instead; that domain must then serve the app's
-        // .well-known files. Decide before the first deploy (#681).
+        // Passkeys bind to BETTER_AUTH_URL's host, by decision (#887): leave
+        // this unset. It would bind them to a parent domain instead, which
+        // must then serve the app's .well-known files.
         // "PASSKEY_RP_ID": "<parent domain>",
         // Passkeys in the phone app (#681): the SHA-256 fingerprints of the
         // certificates that sign it (Play Console > App integrity > App
@@ -114,9 +114,9 @@
         "ENVIRONMENT": "production",
         "BETTER_AUTH_URL": "https://web.shotledger.app",
         "BETTER_AUTH_TRUSTED_ORIGINS": "shotledger://",
-        // Passkeys bind to BETTER_AUTH_URL's host. Set this only to bind them
-        // to a parent domain instead; that domain must then serve the app's
-        // .well-known files. Decide before the first deploy (#681).
+        // Passkeys bind to BETTER_AUTH_URL's host, by decision (#887): leave
+        // this unset. It would bind them to a parent domain instead, which
+        // must then serve the app's .well-known files.
         // "PASSKEY_RP_ID": "<parent domain>",
         // Passkeys in the phone app (#681): the SHA-256 fingerprints of the
         // certificates that sign it (Play Console > App integrity > App
