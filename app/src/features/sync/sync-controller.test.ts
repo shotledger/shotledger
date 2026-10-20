@@ -17,8 +17,7 @@ const mockNewId = jest.fn(() => 'id-1');
 jest.mock('@/db/util', () => ({ newId: () => mockNewId() }));
 
 const mockPendingCount = jest.fn(async () => 0);
-const mockHeldCount = jest.fn(async () => 0);
-const mockStore = { pendingCount: () => mockPendingCount(), heldCount: () => mockHeldCount() };
+const mockStore = { pendingCount: () => mockPendingCount() };
 const mockCreateSyncStore = jest.fn((_db: unknown) => mockStore);
 jest.mock('@/db/queries/sync-store', () => ({
   createSyncStore: (db: unknown) => mockCreateSyncStore(db),
@@ -74,7 +73,6 @@ const OK_RESULT: SyncCycleResult = {
   pushed: 3,
   rejected: 0,
   invalid: 0,
-  held: 0,
   duplicates: 0,
 };
 
@@ -105,7 +103,6 @@ beforeEach(() => {
   mockClient.db = { tag: 'drizzle-db' };
   mockToken.value = 'session-token';
   mockPendingCount.mockResolvedValue(0);
-  mockHeldCount.mockResolvedValue(0);
   mockRunSyncCycle.mockResolvedValue(OK_RESULT);
 });
 
@@ -159,7 +156,6 @@ describe('subscribeToSync', () => {
       errorKey: null,
       attempt: 0,
       refusedCount: 0,
-      heldCount: 0,
     });
   });
 
@@ -201,29 +197,7 @@ describe('a successful cycle', () => {
       errorKey: null,
       attempt: 0,
       refusedCount: 0,
-      heldCount: 0,
     });
-  });
-});
-
-// docs/specs/sync-family-refusal-spec.md §2.4, C5: the held count is read
-// from the outbox after every cycle and on every refresh, so a restart shows it.
-describe('the held count', () => {
-  it('is read from the store after a cycle', async () => {
-    mockHeldCount.mockResolvedValue(3);
-    const { controller } = load();
-    await controller.requestSync();
-    expect(controller.getSyncStatus().heldCount).toBe(3);
-  });
-
-  it('is read from the store on a refresh, with no cycle (H11)', async () => {
-    mockToken.value = null;
-    mockPendingCount.mockResolvedValue(5);
-    mockHeldCount.mockResolvedValue(3);
-    const { controller } = load();
-    await controller.refreshPendingCount();
-    expect(controller.getSyncStatus()).toMatchObject({ pendingCount: 5, heldCount: 3 });
-    expect(mockRunSyncCycle).not.toHaveBeenCalled();
   });
 });
 

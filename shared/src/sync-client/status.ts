@@ -22,12 +22,6 @@ export interface SyncStatus {
    * (docs/specs/sync-payload-validation-spec.md C3). Not persisted.
    */
   refusedCount: number;
-  /**
-   * Queued changes held back because a row of their family was refused
-   * (docs/specs/sync-family-refusal-spec.md §2.4). Read from the outbox, so
-   * it survives a restart (C5).
-   */
-  heldCount: number;
 }
 
 export const initialSyncStatus: SyncStatus = {
@@ -37,22 +31,15 @@ export const initialSyncStatus: SyncStatus = {
   errorKey: null,
   attempt: 0,
   refusedCount: 0,
-  heldCount: 0,
 };
 
 export type SyncEvent =
   | { type: 'started' }
-  | {
-      type: 'succeeded';
-      at: string;
-      result: SyncCycleResult;
-      pendingCount: number;
-      heldCount: number;
-    }
+  | { type: 'succeeded'; at: string; result: SyncCycleResult; pendingCount: number }
   | { type: 'failed'; errorKey: SyncErrorKey }
   /** One `invalid_payload` refusal, reported as its entry clears (C3). */
   | { type: 'refused' }
-  | { type: 'pendingChanged'; pendingCount: number; heldCount: number };
+  | { type: 'pendingChanged'; pendingCount: number };
 
 export function reduceSyncStatus(status: SyncStatus, event: SyncEvent): SyncStatus {
   switch (event.type) {
@@ -72,12 +59,11 @@ export function reduceSyncStatus(status: SyncStatus, event: SyncEvent): SyncStat
         // Counted refusal by refusal ('refused'), so a cycle that fails
         // after one still shows it; the result's `invalid` is not added again.
         refusedCount: status.refusedCount,
-        heldCount: event.heldCount,
       };
     case 'failed':
       return { ...status, state: 'error', errorKey: event.errorKey, attempt: status.attempt + 1 };
     case 'pendingChanged':
-      return { ...status, pendingCount: event.pendingCount, heldCount: event.heldCount };
+      return { ...status, pendingCount: event.pendingCount };
     case 'refused':
       return { ...status, refusedCount: status.refusedCount + 1 };
   }

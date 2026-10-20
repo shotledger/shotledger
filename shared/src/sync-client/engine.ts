@@ -5,11 +5,10 @@ import {
   type PullRequest,
   type SyncTableName,
 } from '../sync/protocol';
-import { familyKind, familyRoot, ownerOf, type RowRef } from '../sync/family';
-import { REJECTED_FAMILY, REJECTED_INVALID_PAYLOAD, REJECTED_TOMBSTONED } from '../sync/merge';
+import { REJECTED_INVALID_PAYLOAD, REJECTED_TOMBSTONED } from '../sync/merge';
 import { APPLY_ORDER, sortChangesForApply } from './order';
 import { buildClientChange } from './outbox';
-import { filterShadowedChanges, replacesHeldEdit, rowKey, tombstoneFromRejection } from './shadow';
+import { filterShadowedChanges, tombstoneFromRejection } from './shadow';
 import type { LocalStore, OutboxEntry, SyncTransport } from './ports';
 
 /**
@@ -53,93 +52,7 @@ export interface SyncCycleResult {
    * §2.3).
    */
   invalid: number;
-  /**
-   * Entries held back this cycle because a row of their family was refused:
-   * `family_refused` acks and entries never sent
-   * (docs/specs/sync-family-refusal-spec.md §2.3). They stay queued.
-   */
-  held: number;
   duplicates: number;
-}
-
-/**
- * Drops from the refused set every refused row whose key is in `keys`: a
- * local write re-queued it, or a pull replaced it (§2.3 steps 1 and Pulls).
- * Its family is released by the next push's step 1, which judges every held
- * entry again.
- */
-async function forgetRefusals(store: LocalStore, keys: ReadonlySet<string>): Promise<void> {
-  const fixed = (await store.readRefused()).filter((ref) =>
-    keys.has(rowKey(ref.tableName, ref.rowId)),
-  );
-  await store.removeRefused(fixed);
-}
-
-/**
- * What a refused row blocks: the root session of every refused session-family
- * row, and every refused firearm (§2.3 step 2). A refused row of a firearm
- * blocks only itself, and it is not queued.
- */
-async function readBlocked(
-  store: LocalStore,
-): Promise<{ sessions: Set<string>; firearms: Set<string> }> {
-  const sessions = new Set<string>();
-  const firearms = new Set<string>();
-  for (const ref of await store.readRefused()) {
-    if (ref.tableName === 'firearms') firearms.add(ref.rowId);
-    if (familyKind(ref.tableName) !== 'session') continue;
-    const row = await store.readRow(ref.tableName, ref.rowId);
-    const root = await familyRoot(ref, row?.payload, (parent) => readPayload(store, parent));
-    // A session deleted here (a pulled tombstone) can no longer be reached
-    // to fix the refused row, so it blocks nothing: its live rows go out, as
-    // they did before family refusal (Revision 2 item 7).
-    if ((await store.readRow(root.tableName, root.rowId))?.deletedAt != null) continue;
-    sessions.add(rowKey(root.tableName, root.rowId));
-  }
-  return { sessions, firearms };
-}
-
-async function readPayload(store: LocalStore, ref: RowRef): Promise<unknown> {
-  return (await store.readRow(ref.tableName, ref.rowId))?.payload;
-}
-
-async function isBlocked(
-  store: LocalStore,
-  entry: OutboxEntry,
-  payload: unknown,
-  blocked: { sessions: ReadonlySet<string>; firearms: ReadonlySet<string> },
-): Promise<boolean> {
-  if (familyKind(entry.tableName) === 'firearm') {
-    const firearmId =
-      entry.tableName === 'firearms' ? entry.rowId : ownerOf(entry.tableName, payload)?.rowId;
-    return blocked.firearms.has(firearmId ?? '');
-  }
-  // No walk at all while nothing is refused, the common case (N4). A table
-  // with no family is its own root, which no session root equals.
-  if (blocked.sessions.size === 0) return false;
-  const root = await familyRoot(entry, payload, (parent) => readPayload(store, parent));
-  return blocked.sessions.has(rowKey(root.tableName, root.rowId));
-}
-
-/**
- * Releases every held entry no refused row blocks (§2.3 step 1, Revision 2
- * items 7 and 10) and returns how many stay held. One call names them all,
- * and a call that fails leaves every entry as it was, so it is safe to
- * repeat. A held entry whose row is gone or deleted is released too: step 2
- * clears or sends it.
- */
-async function releaseUnblocked(store: LocalStore): Promise<number> {
-  const heldEntries = await store.readHeld();
-  if (heldEntries.length === 0) return 0;
-  const blocked = await readBlocked(store);
-  const unblocked: OutboxEntry[] = [];
-  for (const entry of heldEntries) {
-    const row = await store.readRow(entry.tableName, entry.rowId);
-    if (row === undefined || row.deletedAt !== null) unblocked.push(entry);
-    else if (!(await isBlocked(store, entry, row.payload, blocked))) unblocked.push(entry);
-  }
-  if (unblocked.length > 0) await store.releaseHeld(unblocked);
-  return heldEntries.length - unblocked.length;
 }
 
 async function runPull(
@@ -159,25 +72,8 @@ async function runPull(
     };
     const response = await deps.transport.pull(request);
 
-    // A held edit is not sent this cycle, so it cannot win by arriving
-    // later: a pulled change that replaces it (shadow.ts, replacesHeldEdit)
-    // is applied and the entry dropped, as if the edit had been sent on time
-    // and lost to the later write (Revision 2 items 8 and 9). Any other
-    // pulled change for a held row, this device's own older push among
-    // them, is shadowed. Dropped before the apply: a crash between the two
-    // leaves the cursor where it was, and the page is pulled again.
-    const pulledByKey = new Map(response.changes.map((c) => [rowKey(c.tableName, c.rowId), c]));
-    for (const entry of await deps.store.readHeld()) {
-      const pulled = pulledByKey.get(rowKey(entry.tableName, entry.rowId));
-      if (pulled === undefined) continue;
-      const local = await deps.store.readRow(entry.tableName, entry.rowId);
-      if (replacesHeldEdit(pulled, local)) await deps.store.clearOutboxEntry(entry);
-    }
-
     // A row with an unsent local edit keeps that edit; the push later in
-    // this cycle sends it and the server's LWW settles it (shadow.ts). An
-    // entry rewritten since it was read above is pending again, so it
-    // shadows.
+    // this cycle sends it and the server's LWW settles it (shadow.ts).
     const pendingKeys = await deps.store.pendingRowKeys();
     const applicable = filterShadowedChanges(response.changes, pendingKeys);
     shadowed += response.changes.length - applicable.length;
@@ -187,12 +83,6 @@ async function runPull(
     // upsert, so at-least-once delivery is safe; at-most-once would not be.
     await deps.store.applyChanges(sortChangesForApply(applicable));
     pulled += applicable.length;
-    // Another device's version replaced a refused row, and it is valid: the
-    // server stored it. Its family is released at the push (§2.3, Pulls).
-    await forgetRefusals(
-      deps.store,
-      new Set(applicable.map((change) => rowKey(change.tableName, change.rowId))),
-    );
 
     const stillPending: SyncTableName[] = [];
     for (const next of response.nextCursors) {
@@ -212,7 +102,6 @@ async function runPush(deps: SyncCycleDeps): Promise<{
   pushed: number;
   rejected: number;
   invalid: number;
-  held: number;
   duplicates: number;
   drained: boolean;
 }> {
@@ -220,27 +109,11 @@ async function runPush(deps: SyncCycleDeps): Promise<{
   let pushed = 0;
   let rejected = 0;
   let invalid = 0;
-  let held = 0;
   let duplicates = 0;
-
-  // Step 1: a refused row queued again (a local write since the refusal)
-  // leaves the refused set. Then every held entry is judged against the
-  // refused set as it is now, and only those no refused row blocks are
-  // released, to go out at step 2. An entry is held only while a refused
-  // row still blocks its family: a `family_refused` ack whose blocker never
-  // entered the refused set (it was acked `tombstoned`) would otherwise stay
-  // held forever (Revision 2 item 7). Nothing still blocked is ever
-  // released, so a push that fails before step 2 reaches an entry cannot
-  // leave it unheld to shadow the next pull (Revision 2 item 10).
-  await forgetRefusals(deps.store, await deps.store.pendingRowKeys());
-  held += await releaseUnblocked(deps.store);
 
   for (let iteration = 0; iteration < MAX_PUSH_ITERATIONS; iteration += 1) {
     const entries = await deps.store.readOutbox(batchMax);
-    if (entries.length === 0) {
-      return { pushed, rejected, invalid, held, duplicates, drained: true };
-    }
-    const blocked = await readBlocked(deps.store);
+    if (entries.length === 0) return { pushed, rejected, invalid, duplicates, drained: true };
 
     const changes: ClientChange[] = [];
     const sent = new Map<string, { entry: OutboxEntry; change: ClientChange }>();
@@ -253,18 +126,6 @@ async function runPush(deps: SyncCycleDeps): Promise<{
         // Hard-deleted locally: nothing to send, and leaving it queued would
         // stall the outbox forever.
         await deps.store.clearOutboxEntry(entry);
-        continue;
-      }
-      // Step 2: a live row of a blocked family stays queued, unsent. A
-      // tombstone always goes (C3).
-      if (
-        change.deletedAt === null &&
-        // The local row's payload, which a tombstone keeps: its family is
-        // known, and the deletedAt check alone is what lets it through.
-        (await isBlocked(deps.store, entry, row!.payload, blocked))
-      ) {
-        await deps.store.holdOutboxEntry(entry, false);
-        held += 1;
         continue;
       }
       if (entry.clientChangeId === null) {
@@ -285,13 +146,6 @@ async function runPush(deps: SyncCycleDeps): Promise<{
       const record = sent.get(ack.clientChangeId);
       if (record === undefined) continue;
       const { entry, change } = record;
-      // Step 4: refused with its family, so not lost. Held, and sent as a
-      // new change once released: the server keeps the old id's refusal.
-      if (ack.reason === REJECTED_FAMILY) {
-        await deps.store.holdOutboxEntry(entry, true);
-        held += 1;
-        continue;
-      }
       // A refusal or its replay: the user is told, whichever ack carried it.
       if (ack.reason === REJECTED_INVALID_PAYLOAD) invalid += 1;
       else if (ack.status === 'rejected') {
@@ -307,15 +161,11 @@ async function runPush(deps: SyncCycleDeps): Promise<{
       // Every ack the protocol defines clears the entry: applied and
       // duplicate are on the server, and a rejection can never be accepted.
       await deps.store.clearOutboxEntry(entry);
-      if (ack.reason === REJECTED_INVALID_PAYLOAD) {
-        // Step 3: remembered, so its family is held until it is fixed.
-        await deps.store.addRefused({ tableName: entry.tableName, rowId: entry.rowId });
-        deps.onRefused?.();
-      }
+      if (ack.reason === REJECTED_INVALID_PAYLOAD) deps.onRefused?.();
     }
   }
 
-  return { pushed, rejected, invalid, held, duplicates, drained: false };
+  return { pushed, rejected, invalid, duplicates, drained: false };
 }
 
 export async function runSyncCycle(deps: SyncCycleDeps): Promise<SyncCycleResult> {
@@ -329,7 +179,6 @@ export async function runSyncCycle(deps: SyncCycleDeps): Promise<SyncCycleResult
     pushed: push.pushed,
     rejected: push.rejected,
     invalid: push.invalid,
-    held: push.held,
     duplicates: push.duplicates,
   };
 }

@@ -104,6 +104,14 @@ const seqSchema = z.number().int().positive();
 // producing the 409 version-handshake response rather than a generic 400.
 const protocolVersionSchema = z.number().int().nonnegative();
 
+/**
+ * The server's arrival clock (`sync_sequence.state_rev`): every change of
+ * one push arrives at that push's value (docs/specs/sync-family-refusal-spec.md
+ * §11.3). The server always sends it; it is optional on the type so a test's
+ * hand-written row need not invent one.
+ */
+const arrivalSchema = z.number().int().positive();
+
 export const ChangeRowSchema = z
   .object({
     tableName: SyncTableNameSchema,
@@ -112,6 +120,8 @@ export const ChangeRowSchema = z
     payload: z.unknown().nullable(),
     deletedAt: z.string().nullable(),
     updatedAt: z.string().min(1),
+    /** The arrival of the stored version (§11.7). */
+    arrival: arrivalSchema.optional(),
   })
   .refine((row) => (row.deletedAt === null ? true : row.payload === null), {
     message: 'payload must be null when deletedAt is set',
@@ -147,9 +157,27 @@ export const PullRequestSchema = z.object({
 });
 export type PullRequest = z.infer<typeof PullRequestSchema>;
 
+const RowRefSchema = z.object({ tableName: SyncTableNameSchema, rowId: z.string().min(1) });
+
+/**
+ * One of the user's refusal records (§11.7): a bad row (`invalid_payload`,
+ * no blocker) or a waiting row (`family_refused`, with the bad row that
+ * blocks it). No payload.
+ */
+export const RefusalEntrySchema = z.object({
+  tableName: SyncTableNameSchema,
+  rowId: z.string().min(1),
+  reason: z.enum(['invalid_payload', 'family_refused']),
+  arrival: arrivalSchema,
+  blocker: RowRefSchema.nullable(),
+});
+export type RefusalEntry = z.infer<typeof RefusalEntrySchema>;
+
 export const PullResponseSchema = z.object({
   protocolVersion: protocolVersionSchema,
   changes: z.array(ChangeRowSchema),
+  /** The user's refusal records, read before the pages (§11.7). */
+  refusals: z.array(RefusalEntrySchema).optional(),
   nextCursors: z.array(
     z.object({
       tableName: SyncTableNameSchema,
@@ -174,6 +202,12 @@ export const PushAckSchema = z.object({
   status: PushAckStatusSchema,
   seq: seqSchema.optional(),
   reason: z.string().optional(),
+  /** The change's arrival; on a `duplicate`, the original one (§11.7). */
+  arrival: arrivalSchema.optional(),
+  /** On a `family_refused` ack: the bad row that blocks it (§11.4). */
+  blocker: RowRefSchema.optional(),
+  /** On a `duplicate` ack: the row as stored now, or null when it is not stored. */
+  current: ChangeRowSchema.nullable().optional(),
 });
 export type PushAck = z.infer<typeof PushAckSchema>;
 

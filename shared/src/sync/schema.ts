@@ -445,24 +445,24 @@ export const syncOutbox = sqliteTable(
     // landing mid-push keeps the entry queued.
     rev: integer('rev').notNull(),
     clientChangeId: text('client_change_id'),
-    // 1 while a row of the entry's family is refused: it stays queued but
-    // readOutbox skips it (docs/specs/sync-family-refusal-spec.md §2.3, C5).
-    // The triggers' upsert leaves it as it is, so an edit stays held; a soft
-    // delete sets it to 0, because a deletion is never held (C3, Revision 2
-    // item 6).
-    held: integer('held').notNull().default(0),
   },
   (t) => [primaryKey({ columns: [t.tableName, t.rowId] })],
 );
 
-// A row whose latest pushed version the server refused as `invalid_payload`;
-// it holds back its family's later changes until an edit, a delete or a pull
-// replaces it (docs/specs/sync-family-refusal-spec.md §2.3).
-export const syncRefused = sqliteTable(
-  'sync_refused',
+// What the server holds back for a row: an `invalid` row it refused, or a
+// `waiting` row it keeps until its family is released
+// (docs/specs/sync-family-refusal-spec.md §11.6). Rebuilt from every pull's
+// `refusals`, so it decides nothing; it stops a pull overwriting the local
+// version with an older one, and Account & Sync counts it.
+export const syncRefusalMarks = sqliteTable(
+  'sync_refusal_marks',
   {
     tableName: text('table_name').notNull(),
     rowId: text('row_id').notNull(),
+    kind: text('kind', { enum: ['waiting', 'invalid'] }).notNull(),
+    arrival: integer('arrival').notNull(),
+    blockerTable: text('blocker_table'),
+    blockerRowId: text('blocker_row_id'),
   },
   (t) => [primaryKey({ columns: [t.tableName, t.rowId] })],
 );

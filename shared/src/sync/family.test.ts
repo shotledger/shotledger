@@ -3,15 +3,8 @@
 // these pin the function's edges.
 import { describe, expect, it } from 'vitest';
 
-import {
-  familyKind,
-  familyRefusals,
-  familyRoot,
-  OWNERSHIP_EDGES,
-  ownerOf,
-  REFERENCE_EDGES,
-  type RowRef,
-} from './family';
+import { familyKind, OWNERSHIP_EDGES, ownerOf, REFERENCE_EDGES } from './family';
+import { familyRefusals } from './judge';
 import type { ClientChange, SyncTableName } from './protocol';
 
 let n = 0;
@@ -119,9 +112,12 @@ describe('familyRefusals', () => {
     expect(sorted(familyRefusals(changes, new Set([0])))).toEqual([1]);
   });
 
-  it('refuses another change of the same session row with it', () => {
-    const changes = [session('s1'), session('s1')];
-    expect(sorted(familyRefusals(changes, new Set([0])))).toEqual([1]);
+  // Revision 3 (§11.4): a row's latest change in the push decides whether it
+  // is bad, so a later valid change of the same row clears the earlier one.
+  it('a later valid change of the same session row is not refused with it', () => {
+    const changes = [session('s1'), session('s1'), series('r1', 's1')];
+    expect(sorted(familyRefusals(changes, new Set([0])))).toEqual([]);
+    expect(sorted(familyRefusals(changes, new Set([1])))).toEqual([0, 2]);
   });
 
   it('refuses only below a refused firearm, never a sibling firearm row', () => {
@@ -132,7 +128,9 @@ describe('familyRefusals', () => {
 
   it('does not refuse another change of the same firearm row: it is not below it', () => {
     const changes = [firearm('f1'), firearm('f1'), license('l1', 'f1')];
-    expect(sorted(familyRefusals(changes, new Set([0])))).toEqual([2]);
+    expect(sorted(familyRefusals(changes, new Set([1])))).toEqual([2]);
+    // Revision 3 (§11.4): the latest change decides, so a later valid firearm frees l1.
+    expect(sorted(familyRefusals(changes, new Set([0])))).toEqual([]);
   });
 
   it('a table with no family refuses nothing else', () => {
@@ -165,50 +163,5 @@ describe('familyRefusals', () => {
   it('keeps two sessions apart', () => {
     const changes = [session('s1'), series('r1', 's1'), session('s2'), series('r2', 's2')];
     expect(sorted(familyRefusals(changes, new Set([1])))).toEqual([0]);
-  });
-});
-
-describe('familyRoot', () => {
-  const local = new Map<string, unknown>([
-    ['sessions:s1', {}],
-    ['series:r1', { session_id: 's1' }],
-    ['series:r9', { session_id: 'gone' }],
-    ['firearms:f1', {}],
-  ]);
-  const reads: string[] = [];
-  const readPayload = async (ref: RowRef) => {
-    reads.push(`${ref.tableName}:${ref.rowId}`);
-    return local.get(`${ref.tableName}:${ref.rowId}`);
-  };
-
-  it('walks a shot up to its session', async () => {
-    reads.length = 0;
-    await expect(
-      familyRoot({ tableName: 'shots', rowId: 't1' }, { series_id: 'r1' }, readPayload),
-    ).resolves.toEqual({ tableName: 'sessions', rowId: 's1' });
-    expect(reads).toEqual(['series:r1', 'sessions:s1']);
-  });
-
-  it('stops at the topmost row that exists locally', async () => {
-    await expect(
-      familyRoot({ tableName: 'shots', rowId: 't2' }, { series_id: 'r9' }, readPayload),
-    ).resolves.toEqual({ tableName: 'series', rowId: 'r9' });
-    await expect(
-      familyRoot({ tableName: 'shots', rowId: 't3' }, { series_id: 'nowhere' }, readPayload),
-    ).resolves.toEqual({ tableName: 'shots', rowId: 't3' });
-  });
-
-  it('is the row itself for a root table, without reading anything', async () => {
-    reads.length = 0;
-    await expect(
-      familyRoot({ tableName: 'sessions', rowId: 's1' }, {}, readPayload),
-    ).resolves.toEqual({ tableName: 'sessions', rowId: 's1' });
-    expect(reads).toEqual([]);
-  });
-
-  it('walks a license to its firearm', async () => {
-    await expect(
-      familyRoot({ tableName: 'licenses', rowId: 'l1' }, { firearm_id: 'f1' }, readPayload),
-    ).resolves.toEqual({ tableName: 'firearms', rowId: 'f1' });
   });
 });
