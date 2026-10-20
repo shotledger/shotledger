@@ -92,6 +92,7 @@ describe('ChangeRowSchema', () => {
       payload: { make: 'Anschutz' },
       deletedAt: '2026-08-02T00:00:00.000Z',
       updatedAt: '2026-08-02T00:00:00.000Z',
+      arrival: 2,
     });
     expect(result.success).toBe(false);
   });
@@ -105,6 +106,7 @@ describe('ChangeRowSchema', () => {
         payload: null,
         deletedAt: '2026-08-02T00:00:00.000Z',
         updatedAt: '2026-08-02T00:00:00.000Z',
+        arrival: 2,
       });
       expect(result.success).toBe(false);
     }
@@ -276,7 +278,9 @@ describe('PushRequestSchema / PushResponseSchema', () => {
   it('U5 rejects an unknown ack status (negative control)', () => {
     const response = {
       protocolVersion: 1,
-      acks: [{ clientChangeId: '11111111-1111-4111-8111-111111111111', status: 'bogus' }],
+      acks: [
+        { clientChangeId: '11111111-1111-4111-8111-111111111111', status: 'bogus', arrival: 1 },
+      ],
     };
     expect(PushResponseSchema.safeParse(response).success).toBe(false);
   });
