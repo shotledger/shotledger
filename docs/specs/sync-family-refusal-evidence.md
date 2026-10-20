@@ -10,23 +10,26 @@ end.
 maintainer on 2026-10-20: "Approve all", answering "Approve the revised #856
 design (Revision 3) with the recommended answers to Q1–Q4?". Recorded in
 `8246caa`. Q1 yes; Q2 the Discard action is a follow-up; Q3 item 6 dropped;
-Q4 the protocol changes in place at version 1. **Revision 4 is pending**:
-eight places where the approved text was wrong or silent, each stated in
-the spec's Revisions section, with the reading the build follows.
+Q4 the protocol changes in place at version 1. **Revision 4 approved**:
+items 1–8 by the maintainer on 2026-10-20 ("Approve", answering "Approve
+the 8 small corrections the rebuild made to the #856 spec (Revision 4)?"),
+and items 9–12, round 5's fixes, with the maintainer's "Fix, check again"
+the same day, answering "Fix the round-5 findings in #856 as proposed, then
+run a sixth independent check?". Both are recorded in the spec (`cdc4571`,
+then items 10–12 as they were built).
 
 - **Source state:** the head of `feature/856-sync-family-refusal` that this
-  report is committed in. Source last changed at `a8bebab`, tests at
-  `91e849d`, the mutation script at `7322fda`; the commits after it touch
-  docs only.
-- **Independent verification: pending, round 5.** No verifier has seen the
-  Revision 3 code. Rounds 1–4 attacked the phone-side hold this revision
-  removes (below, as history).
+  report is committed in. Source and tests last changed at `a0af247`; the
+  commit after it is this report.
+- **Independent verification: failed, round 5, at `27d3c0b`.** Round 5's
+  findings are fixed in the commits listed under Independent verification,
+  which no verifier has seen. Round 6 is approved and pending.
 - **Toolchain:** Node 24.21.0, pnpm 12.11.2, vitest 5.0.3,
   `@cloudflare/vitest-plugin` 1.4.0 (backend), Stryker 10.0.0 with the vitest
   runner, fast-check 4.10.2, jest-expo (app), expo-sqlite 57.0.3. No
   dependency added or removed.
 - **Entry point:** `pnpm check` from the repo root; then
-  `cd backend && npx vitest run --sequence.shuffle`; then
+  `cd backend && npx vitest run --sequence.shuffle --testTimeout=60000`; then
   `node scripts/manual-mutation-sync-push.mjs` (on a clean tree); then
   `npx stryker run --mutate 'shared/src/sync/judge.ts,shared/src/sync/family.ts,shared/src/sync/merge.ts,shared/src/sync/protocol.ts,shared/src/sync/schema.ts,shared/src/sync-client/engine.ts,shared/src/sync-client/rows.ts,shared/src/sync-client/shadow.ts,shared/src/sync-client/status.ts'`;
   then the docs gates (`docs/CLAUDE.md`). BUDGET's figures print with
@@ -46,51 +49,57 @@ running the shared engine against the real Worker), **JT**
 `shared/src/sync-client/shadow.test.ts`, **ST**
 `app/src/db/queries/sync-store.test.ts` (the phone's SQLite store),
 **CT** `app/src/features/sync/sync-controller.test.ts`, **AC**
-`backend/test/account.spec.ts`, **WP** `web/src/pull.test.ts`.
+`backend/test/account.spec.ts`, **WP** `web/src/pull.test.ts`, **FP**
+`backend/test/sync-family-refusal.property.spec.ts` (seeded sequences
+through the Worker and D1), **WA** `web/src/account/account.test.ts` (the
+web's Account page, rendered).
 
-| Scenario                         | Tests                                                                                                                                         |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| F1–F3, F5–F8, F10 (§4, standing) | FR `F…` describes; `shared/src/sync/family.test.ts` (`familyRefusals`)                                                                        |
-| F4, F9 (revised)                 | FR F4, F9 (the replay's ack carries `arrival`, `blocker`, `current`)                                                                          |
-| F11                              | FR F11; `shared/src/sync/family.test.ts` edge pins; `family.property.test.ts`                                                                 |
-| H1′, H3′                         | FR H1′; SC H1′; EN H1′                                                                                                                        |
-| H2′                              | FR H2′ (one batch, own arrivals, new seqs); SC H2′; EN H2′                                                                                    |
-| H4, H5, H6 (standing)            | SC H4, H5, H6                                                                                                                                 |
-| H7′, ROOT, DISCARD               | FR H7′, ROOT, DISCARD; ST H7′ ROOT DISCARD (foreign keys off, as in production) and the pin with them on                                      |
-| H8′, H10′, H13′                  | FR H8′, H10′, H13′                                                                                                                            |
-| H9′                              | SC H9′; EN H9′ (600 entries, a 500 batch: the outbox drains)                                                                                  |
-| H11′                             | ST H11′ (the counts survive a restart); CT H11′                                                                                               |
-| H12 (standing)                   | FR H12                                                                                                                                        |
-| V1, X5, X7, X8, X9, X10          | FR V1, X5, X7, X8, X9; SC X10; JT X8, X9, X10                                                                                                 |
-| X1, X1b                          | SC X1, X1b                                                                                                                                    |
-| AB, VC, REV1, REV3, L1, I3       | SC AB, VC, REV1, REV3, L1, I3; EN AB, VC, REV3; FR AB, L1                                                                                     |
-| ECHO                             | SC ECHO (two pushes, Revision 4 item 3); EN ECHO; SH ECHO; ST ECHO (real engine)                                                              |
-| FRESH, STUCK                     | SC FRESH, STUCK; EN FRESH, STUCK; ST FRESH; FR STUCK; WP (the web's list)                                                                     |
-| REV2, DUP                        | FR REV2, DUP; EN REV2, DUP; ST DUP                                                                                                            |
-| REV6                             | FR REV6 (T3 of R2, Revision 4 item 4); JT REV6                                                                                                |
-| RELEASEFAIL                      | FR RELEASEFAIL (a failure at each statement of the release batch leaves nothing)                                                              |
-| TOMBROOT, GAP, MOVEIN, OWN, FIRE | FR and JT, by id                                                                                                                              |
-| REVAL                            | FR REVAL (T2 waits on T1, Revision 4 item 1; the log line names table and columns); JT REVAL                                                  |
-| FIRST, CONC                      | FR FIRST (two, one paused at the guard); FR CONC (three, including the 503 after four guard failures)                                         |
-| ACCT                             | AC ACCT (the dry run counts `syncRefusals`; no `sync_*` row of the user is left)                                                              |
-| BUDGET                           | FR BUDGET, figures below                                                                                                                      |
-| I1, I2                           | JP I1, I2 and the release property (300 runs each); SC I1, I2                                                                                 |
-| Pull: `arrival`, `refusals`      | FR pull describe; WP refusals of the last response                                                                                            |
-| Both counts, phone and web       | `shared/src/sync-client/status.test.ts`; CT; `app/src/features/account/account-screen.test.tsx`; `countMarks` in SH; WP; the screenshot below |
-| Release order on ties            | JT "orders ties by code unit…" and "orders a tie by table before id" (Revision 4 item 8)                                                      |
+| Scenario                         | Tests                                                                                                                                            |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| F1–F3, F5–F8, F10 (§4, standing) | FR `F…` describes; `shared/src/sync/family.test.ts` (`familyRefusals`)                                                                           |
+| F4, F9 (revised)                 | FR F4, F9 (the replay's ack carries `arrival`, `blocker`, `current`)                                                                             |
+| F11                              | FR F11; `shared/src/sync/family.test.ts` edge pins; `family.property.test.ts`                                                                    |
+| H1′, H3′                         | FR H1′; SC H1′; EN H1′                                                                                                                           |
+| H2′                              | FR H2′ (one batch, own arrivals, new seqs); SC H2′; EN H2′                                                                                       |
+| H4, H5, H6 (standing)            | SC H4, H5, H6                                                                                                                                    |
+| H7′, ROOT, DISCARD               | FR H7′, ROOT, DISCARD; ST H7′ ROOT DISCARD (foreign keys off, as in production) and the pin with them on                                         |
+| H8′, H10′, H13′                  | FR H8′, H10′, H13′                                                                                                                               |
+| H9′                              | SC H9′; EN H9′ (600 entries, a 500 batch: the outbox drains)                                                                                     |
+| H11′                             | ST H11′ (the counts survive a restart); CT H11′                                                                                                  |
+| H12 (standing)                   | FR H12                                                                                                                                           |
+| V1, X5, X7, X8, X9, X10          | FR V1, X5, X7, X8, X9; SC X10; JT X8, X9, X10                                                                                                    |
+| X1, X1b                          | SC X1, X1b                                                                                                                                       |
+| AB, VC, REV1, REV3, L1, I3       | SC AB, VC, REV1, REV3, L1, I3; EN AB, VC, REV3; FR AB, L1                                                                                        |
+| ECHO                             | SC ECHO (two pushes, Revision 4 item 3); EN ECHO; SH ECHO; ST ECHO (real engine)                                                                 |
+| FRESH, STUCK                     | SC FRESH, STUCK; EN FRESH, STUCK; ST FRESH; FR STUCK; WP (the web's list); WA (the web page's two counts)                                        |
+| V5-1, V5-2 (Revision 4 item 9)   | SC V5-1 (a fresh device; a signed-out one), V5-2; EN and SH V5-1 (only an own mark shadows; the pull keeps `own` at the listed arrival); ST V5-1 |
+| REV2, DUP                        | FR REV2, DUP; EN REV2, DUP; ST DUP                                                                                                               |
+| REV6                             | FR REV6 (T3 of R2, Revision 4 item 4); JT REV6                                                                                                   |
+| RELEASEFAIL                      | FR RELEASEFAIL (a failure at each statement of the release batch leaves nothing)                                                                 |
+| TOMBROOT, GAP, MOVEIN, OWN, FIRE | FR and JT, by id                                                                                                                                 |
+| REVAL                            | FR REVAL (T2 waits on T1, Revision 4 item 1; the log line names table and columns); JT REVAL                                                     |
+| FIRST, CONC                      | FR FIRST (two, one paused at the guard); FR CONC (five: the guard's message, the retry, four attempts, no fifth, the 503)                        |
+| SNAP (§11.8's read order)        | FR SNAP: another push committed just before the `state_rev` read is seen by every later read; the read-order mutant                              |
+| ACCT, GONE (item 11)             | AC ACCT (the dry run counts `syncRefusals`; no `sync_*` row of the user is left); FR GONE (a push paused across the deletion writes nothing)     |
+| BUDGET (and item 10)             | FR BUDGET: the 500-change push, and the 1,000–10,000 row curve; figures below                                                                    |
+| I1, I2                           | JP I1, I2, the stored-blocker property and the release property (300 runs each); FP (seed 856, 100 runs, through the Worker and D1)              |
+| I3                               | SC I3, one fixed interleaving of two devices; no generated sequence (Known limits)                                                               |
+| Pull: `arrival`, `refusals`      | FR pull describe; WP refusals of the last response                                                                                               |
+| Both counts, phone and web       | `shared/src/sync-client/status.test.ts`; CT; `app/src/features/account/account-screen.test.tsx`; `countMarks` in SH; WP; the screenshot below    |
+| Release order on ties            | JT "orders ties by code unit…" and "orders a tie by table before id" (Revision 4 item 8)                                                         |
 
 ## Must NOT
 
-| Clause                                                  | How it is held                                                                                                                                                 |
-| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| N1 (amended): only the §11.7 fields change on the wire  | `protocol.test.ts`; the contract suite (`sync-contract.spec.ts`); every existing ack assertion, extended by the new fields only (Revision 4 item 5)            |
-| N2 (amended): the pull gains only `arrival`, `refusals` | `sync.spec.ts` pull tests unchanged apart from `arrival`; FR pull describe                                                                                     |
-| N3: payload validation and atomicity stand              | `sync-payload-validation.spec.ts`, `sync-concurrency.spec.ts`: assertions extended by the new fields only; `state_rev` compared apart (Revision 4 item 5)      |
-| N4: a valid change in a free family is applied as today | `sync.spec.ts`, `sync-concurrency.spec.ts` green; FR control rows                                                                                              |
-| N5: no foreign-key check on the server                  | FR H7′, ROOT                                                                                                                                                   |
-| N6: no id or value in a log line                        | FR REVAL and family-log assertions; manual mutants "the family log line names row ids", "the re-validation log names the row id", "the route logs the payload" |
-| Rule 8: no compatibility path                           | the baselines are edited in place (`app/src/db/migrations/0000_baseline.sql`, `backend/migrations/0000_sync_init.sql`); `migrations.test.ts` green             |
-| No new dependency                                       | `package.json` and the lockfile unchanged; `pnpm licenses:check` green                                                                                         |
+| Clause                                                  | How it is held                                                                                                                                                                                                                                                                                     |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| N1 (amended): only the §11.7 fields change on the wire  | `protocol.test.ts`; the contract suite (`sync-contract.spec.ts`); every existing ack assertion, extended by the new fields only (Revision 4 item 5)                                                                                                                                                |
+| N2 (amended): the pull gains only `arrival`, `refusals` | `sync.spec.ts` pull tests unchanged apart from `arrival`; FR pull describe                                                                                                                                                                                                                         |
+| N3: payload validation and atomicity stand              | `sync-payload-validation.spec.ts`, `sync-concurrency.spec.ts`: assertions extended by the new fields only; `state_rev` compared apart (Revision 4 item 5)                                                                                                                                          |
+| N4: a valid change in a free family is applied as today | `sync.spec.ts`, `sync-concurrency.spec.ts` green; FR control rows                                                                                                                                                                                                                                  |
+| N5: no foreign-key check on the server                  | FR H7′, ROOT                                                                                                                                                                                                                                                                                       |
+| N6: no id or value in a log line                        | FR REVAL and family-log assertions; manual mutants "the family log line names row ids", "the re-validation log names the row id", "the route logs the payload"                                                                                                                                     |
+| Rule 8: no compatibility path                           | the baselines are edited in place (`app/src/db/migrations/0000_baseline.sql`, `backend/migrations/0000_sync_init.sql`); `migrations.test.ts` green. `arrival` and `refusals` are required on the wire, with no fallback (`protocol.test.ts` "the arrival and refusals fields are required (V5-7)") |
+| No new dependency                                       | `package.json` and the lockfile unchanged; `pnpm licenses:check` green                                                                                                                                                                                                                             |
 
 **Tests removed, each pinning only superseded behaviour** (§11.2, §11.6:
 Revision 2 items 6–10, `sync_refused`, `sync_outbox.held`, the phone's
@@ -129,24 +138,39 @@ primed scenarios above:
   family across pushes" and "a held edit does not shadow a pull" (16, H1–H17
   of Revision 2): restored to `main`'s file and rewritten as the 18 Revision
   3 tests.
+- Round 5, V5-7 (`09c6f13`): three tests of the client's fallbacks for a
+  missing `arrival` or `refusals`, which rule 8 removes: EN "an ack with no
+  arrival drops any mark of its row", SH "a live change with no arrival is
+  older than any mark", and the no-arrival half of EN "a refusal with no
+  arrival or blocker still writes a mark" (its no-blocker half stays). The
+  protocol tests that a response without the fields does not parse replace
+  them.
+- Round 5, V5-1 (`af2986d`): EN "the shadowing rules run against the page's
+  refusals, not the marks they replace" asserted that a mark rebuilt at a
+  new arrival shadows. Under item 9 that mark is not the device's own, so
+  the test now asserts the stored version applies; it is the one assertion
+  that changed direction in round 5.
 
 ## Gauntlet
 
-All figures are from one fresh run after the last code change (`source last changed at `a8bebab`, tests at `91e849d`, the mutation script at `7322fda``).
+All figures are from one fresh run after the last code change (`a0af247`).
 
-| Layer                                     | Command                                                                                                                           | Result                                                                                                                                                                                                                                                                          |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Full suite, types, lint, format, coverage | `pnpm check`                                                                                                                      | exit 0: types (root, backend tests, app, web), export schema, i18n (1,541 keys each, 0 issues), licenses (98 packages), lint, format; vitest 252 files, 4,571 tests, coverage thresholds met; jest 112 suites, 1,071 tests                                                      |
-| Backend, shuffled                         | `cd backend && npx vitest run --sequence.shuffle`                                                                                 | 30 files, 336 tests, seed `1792520426467`                                                                                                                                                                                                                                       |
-| Mutation, shared (tool)                   | `npx stryker run --mutate '…'` (entry point above)                                                                                | 629 mutants: 603 killed, 4 timed out, 16 survived, 6 without coverage; 96.50% overall. `judge.ts` 95.62%, `family.ts` 95.83%, `merge.ts`, `protocol.ts`, `engine.ts`, `rows.ts`, `shadow.ts`, `status.ts` 100%; `schema.ts` 0% (below). Without `schema.ts`: 607 of 619, 98.06% |
-| Mutation, workerd and the store (manual)  | `node scripts/manual-mutation-sync-push.mjs`                                                                                      | 53/53 killed, both baselines pass (`exit 0`)                                                                                                                                                                                                                                    |
-| Properties                                | JP: I1, I2 and the release property, 300 runs each; `family.property.test.ts`                                                     | in `pnpm check`                                                                                                                                                                                                                                                                 |
-| Docs                                      | `mkdocs build --strict`, `node scripts/docs-translation-check.mjs`, `node scripts/docs-anchor-check.mjs`, `prettier --check docs` | mkdocs exit 0; translation check: 29 pages current; anchor check: no dangling anchors; prettier clean                                                                                                                                                                           |
-| Real execution                            | the web account page against `wrangler dev`, below                                                                                | screenshot                                                                                                                                                                                                                                                                      |
-| Supply chain                              | no dependency changed; `pnpm licenses:check` in `pnpm check`                                                                      | 98 packages, invariants hold                                                                                                                                                                                                                                                    |
+| Layer                                     | Command                                                                                                                                             | Result                                                                                                                                                                                                                     |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Full suite, types, lint, format, coverage | `pnpm check`                                                                                                                                        | exit 0: types (root, backend tests, app, web), export schema, i18n (1,541 keys each, 0 issues), licenses (98 packages), lint, format; vitest 253 files, 4,584 tests, coverage thresholds met; jest 112 suites, 1,071 tests |
+| Backend, shuffled                         | `cd backend && npx vitest run --sequence.shuffle --testTimeout=60000`                                                                               | 31 files, 345 tests, seed `1792527869226`                                                                                                                                                                                  |
+| Mutation, shared (tool)                   | `npx stryker run --mutate '…'` (entry point above)                                                                                                  | 96.57% (break 95): 616 killed, 4 timeouts, 16 survived, 6 no coverage; 98.10% without `schema.ts`. judge 95.75%, family 95.83%, protocol, merge and every `sync-client` file 100%                                          |
+| Mutation, workerd and the store (manual)  | `node scripts/manual-mutation-sync-push.mjs`                                                                                                        | 59/59 killed, exit 0; both baselines pass                                                                                                                                                                                  |
+| Properties                                | JP: I1, I2, the stored blocker and the release property, 300 runs each; FP, seed 856, 100 runs through the Worker and D1; `family.property.test.ts` | JP and `family.property` in `pnpm check`; FP in the backend run                                                                                                                                                            |
+| Query plans                               | `EXPLAIN QUERY PLAN` of every statement a push prepares, in workerd's D1 (below)                                                                    | every list is scanned once; every record is reached by primary key                                                                                                                                                         |
+| Docs                                      | `mkdocs build --strict`, `node scripts/docs-translation-check.mjs`, `node scripts/docs-anchor-check.mjs`, `prettier --check docs`                   | all four exit 0: mkdocs strict build clean; 29 translated pages current; no dangling anchors; prettier clean                                                                                                               |
+| Real execution                            | the web account page against `wrangler dev`, below                                                                                                  | screenshot (round 4's build; see below)                                                                                                                                                                                    |
+| Supply chain                              | no dependency changed; `pnpm licenses:check` in `pnpm check`                                                                                        | 98 packages, invariants hold                                                                                                                                                                                               |
 
-**Stryker survivors, classified.** Sixteen survivors and six without coverage, each equivalent or out of
-the vitest pool's reach:
+**Stryker survivors, classified.** Sixteen survivors and six without
+coverage, each equivalent or out of the vitest pool's reach. Line numbers
+are at `a0af247`; round 5's `RefusalRecord.blocker` moved them by 6 to 8
+lines, and the set is the one round 5 classified:
 
 - `schema.ts` (4 survived, 6 no coverage): the Drizzle declarations of the
   `tags` and `session_tags` indexes (unchanged by this branch) and the
@@ -154,35 +178,44 @@ the vitest pool's reach:
   loads them; the phone's tables come from the baseline SQL, which
   `app/src/db/migrations.test.ts` checks column by column, and the
   primary key the store relies on is in that SQL.
-- `judge.ts:135` and `:148`, `index === undefined ? undefined : …[index]`
+
+- `judge.ts:141` and `:154`, `index === undefined ? undefined : …[index]`
   to `…[index]`: indexing with `undefined` already gives `undefined`.
-- `judge.ts:149`, a tombstone's own link: a tombstoned row is deleted, so
+- `judge.ts:155`, a tombstone's own link: a tombstoned row is deleted, so
   `root` never follows its link.
-- `judge.ts:185`, every bad row indexed as a firearm blocker: lookups use a
+- `judge.ts:191`, every bad row indexed as a firearm blocker: lookups use a
   `firearms:` key only, which no other table produces.
-- `judge.ts:186`, every bad row indexed as a session blocker: a session
+- `judge.ts:192`, every bad row indexed as a session blocker: a session
   family's root is never a firearm-family key.
-- `judge.ts:188`, `< 0` to `<= 0`: two bad rows tie only if they are the
+- `judge.ts:194`, `< 0` to `<= 0`: two bad rows tie only if they are the
   same row, and each row is listed once.
-- `judge.ts:204` (two), a firearm's own link: a firearm has no ownership
+- `judge.ts:210` (two), a firearm's own link: a firearm has no ownership
   edge, so `link` is null either way.
-- `judge.ts:248`, demoted filtered without the reason check: the route
+- `judge.ts:256`, demoted filtered without the reason check: the route
   demotes only rows from the release list, which are all waiting rows.
-- `judge.ts:262` (two), `familyRefusals`' empty snapshot given a string
+- `judge.ts:270` (two), `familyRefusals`' empty snapshot given a string
   record or stored row: neither is a `family_refused` record nor a link,
-  so the verdicts are unchanged.
+  so the verdicts are unchanged. `familyRefusals` is called from tests
+  only (round 5's observation).
+- Round 5's first Stryker run left two more, in `protocol.ts:126`: V5-7
+  made `arrival` required, and C3, C4 and U5 then failed for the missing
+  field rather than for their own fault, so the payload refinement's
+  mutants survived. `a0af247` gives those fixtures `arrival`; the rerun
+  kills both.
 - `family.ts:77`, `typeof payload !== 'object'` dropped: property access on
   a string or number payload gives `undefined`, so the owner is still null
   (the same survivor as in rounds 1–3).
 
-**The manual mutants.** 53 mutants over `backend/src/db/queries.ts`,
+**The manual mutants.** 59 mutants over `backend/src/db/queries.ts`,
 `backend/src/routes/sync.ts` and `app/src/db/queries/sync-store.ts`: the
 seq and row writes, the verdict reaching the batch, the guard and its
 retries, the records following each push, the release (order, skips,
 `last_seq`, record deletion), the walk's depth, re-validation, `current`,
 `blocker`, the pull's `refusals`, the N6 log lines, and the phone's marks
 (pull replace, ack update, the ack transaction, `current` through the
-shadow rules, sign-out and restore resets). The script fails closed on a
+shadow rules, sign-out and restore resets, `own` read back), the snapshot's
+read order, the release's join, and the guard against a deleted account.
+The script fails closed on a
 pattern that does not match exactly once, a file that does not restore, a
 run that fails without a failing test, and any survivor.
 
@@ -202,11 +235,20 @@ How it got there, in order:
 3. Four were real gaps, each now pinned by a test seen failing against its
    mutant first (`91e849d`): the guard's four attempts ("tries the batch
    four times…", "gives up after the fourth failed guard…"), the release
-   skipping a stored tombstone and a stored version at or after the
-   record's arrival (written directly, as a defect would leave them; §11.5
-   calls the second "a guard" that "cannot happen"), and the walk's second
-   step from a row whose ownership column is unreadable (TOMBROOT, two
-   steps).
+   skipping a stored tombstone and a stored version after the record's
+   arrival (written directly, as a defect would leave them; §11.5 calls the
+   second "a guard" that "cannot happen"), and the walk's second step from
+   a row whose ownership column is unreadable (TOMBROOT, two steps). This
+   report said the release test pinned "at or after"; it seeded the record
+   below the stored version, so it pinned "after" only, and a `>` for `>=`
+   survived (round 5, E-3). `09486b9` adds the test at the record's own
+   arrival and the `>` mutant.
+4. Round 5 (six more): the snapshot reading `state_rev` last (V5-4,
+   `efd2e53`, with SNAP); the `>` above (`09486b9`); a stored mark read
+   back as the device's own (`af2986d`); the release joining its list on
+   the table alone (`ab5a583`); and the guard's two halves for a deleted
+   account (`956b4b4`). The blocker rewrite's mutant moved to the new
+   statement. Each was seen killed by hand before the run.
 
 **Stryker, in order.** The first run scored `judge.ts` 94.42% (235 killed and 2 timed out of 251).
 Three survivors were real: the code-unit tie order (`binary`'s `<=` and its
@@ -218,15 +260,47 @@ tests for them, each seen failing against a hand-made copy of its mutant.
 Read from Cloudflare's D1 limits page
 (<https://developers.cloudflare.com/d1/platform/limits/>) on 2026-10-20.
 
-| Limit (Free / Paid)                                                 | This push, measured by BUDGET (500 changes releasing 2,000 waiting rows)                                                                                                                       |
+| Limit (Free / Paid)                                                 | Measured by BUDGET                                                                                                                                                                             |
 | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Queries per Worker invocation: 50 / 1,000                           | at most 5 reads and 1 batch per attempt; 4 attempts make 24 calls. The page does not say whether a batch counts as one query or as its statements; the maintainer's ruling (§11.8) is one call |
 | Bound parameters per query: 100 / 100                               | 45 at most in one statement (lists are one JSON parameter)                                                                                                                                     |
-| Max SQL statement length: 100 KB / 100 KB, per statement in a batch | the statements are fixed text; lists are bound, not inlined                                                                                                                                    |
-| Max string, BLOB or row size: 2 MB / 2 MB                           | a payload is at most `MAX_PAYLOAD_BYTES` (16 KiB); the release list binds about 70 bytes a row, so 2 MB is about 28,000 rows                                                                   |
-| Max SQL query duration: 30 s, "the entire batch call"               | 4,423 ms for the whole push in workerd's local D1                                                                                                                                              |
+| Max SQL statement length: 100 KB / 100 KB, per statement in a batch | 1,833 characters at most; lists are bound, not inlined                                                                                                                                         |
+| Max string, BLOB or row size: 2 MB / 2 MB                           | a payload is at most `MAX_PAYLOAD_BYTES` (16 KiB). The longest bound string at 10,000 waiting rows is 338,988 characters, the release list; at that rate, 2 MB is about 59,000 rows            |
+| Max SQL query duration: 30 s, "the entire batch call"               | 500 changes releasing 2,000 rows: 408 ms for the whole push. At 10,000 waiting rows: below                                                                                                     |
 | Arguments per SQL function: 32 / 32                                 | at most 2 (`json_extract`, `strftime`, `MAX`, `COALESCE`)                                                                                                                                      |
 | Statements in the batch                                             | 2,507 = 5N + 7 for N = 500 (Revision 4 item 2)                                                                                                                                                 |
+
+**The growth curve** (round 5, V5-3; workerd's local D1, so the figures are
+local). Each point seeds the waiting rows directly, then times one push of
+one tag, a fix that moves every waiting row's blocker, and the fix that
+releases them all. BUDGET asserts, at 10,000, under 5 s for the tag push and
+under 10 s for each fix, and checks the parameter, SQL-length and string
+limits at every point.
+
+| Waiting rows | Tag push, before (`27d3c0b`) | Releasing fix, before | Tag push, after | Blocker-moving fix, after | Releasing fix, after |
+| ------------ | ---------------------------- | --------------------- | --------------- | ------------------------- | -------------------- |
+| 1,000        | 1,078 ms                     | 1,005 ms              | 32 ms           | 56 ms                     | 68 ms                |
+| 2,500        | 6,650 ms                     | 6,017 ms              | 48 ms           | 62 ms                     | 117 ms               |
+| 5,000        | 27,161 ms                    | 22,811 ms             | 97 ms           | 103 ms                    | 224 ms               |
+| 10,000       | 105,675 ms                   | 93,798 ms             | 147 ms          | 204 ms                    | 412 ms               |
+
+Before, the time grew with the square of the waiting rows (×4 rows, ×16 to
+×25 time) and passed D1's 30 s near 5,000; after, it grows with the rows.
+The "before" column is the same test run against `27d3c0b`'s statements;
+the "blocker-moving" case did not exist there. Memory: workerd gives no
+per-request figure in tests; the largest objects a push holds are the
+records it reads (no payloads) and, on a release, the waiting payloads it
+re-validates: 178 characters of JSON per shot in BUDGET, so about 1.8 MB of
+payload text at 10,000 shots, more once parsed.
+
+**Query plans.** `EXPLAIN QUERY PLAN` of every statement a push prepares,
+run in workerd's D1 with the push's own parameters (a scratch test, not
+committed): each list is read once (`SCAN json_each`, `LIST SUBQUERY`, or a
+materialized `SCAN b`), and every record and stored row is reached through
+its primary key (`SEARCH … USING INDEX sqlite_autoindex_… (user_id=? AND
+table_name=? AND row_id=?)`). The one full read of the user's records is
+`readRecords` (`SEARCH sync_refusals … (user_id=?)`), once per attempt and
+without payloads. No index was added.
 
 ## Local foreign keys (§11.6)
 
@@ -267,9 +341,20 @@ before the final `pnpm check`.
 
 ## Known limits
 
-- **Revision 4 is pending the maintainer** (eight items, in the spec).
-- **Independent verification has not seen Revision 3**: round 5 is
-  pending.
+- **Round 5's fixes are unverified**: round 6 is approved and pending.
+- **I3 is not a generated property.** §11.10 asks for generated two-device
+  sequences converging; SC I3 is one fixed interleaving (round 5, E-2).
+  FP generates single-writer push sequences against D1 and checks I1 and
+  I2, not convergence.
+- **A device's own version of a waiting row** is shown only on that device
+  until the release (Revision 4 item 9). Every other device, the web, and
+  this device after a sign-out, restore or reinstall show the stored
+  version, and the counts everywhere (the manual says so).
+- **A first push racing an account deletion** still creates the user's
+  sequence row (`?2` = 0 is the only case the guard cannot tell apart); a
+  push judged from an existing row cannot (GONE).
+- **The production `PRAGMA foreign_keys` read** in a dev build was not
+  made (Revision 4 item 6).
 - **The Discard action is a follow-up** (Q2): a refusal no edit can fix
   holds its family until the row or its session is deleted.
 - **The web entry page's message for a waiting save** is #863.
@@ -277,15 +362,69 @@ before the final `pnpm check`.
   server has never seen are not joined until those rows arrive.
 - **A held session's firearm counts its rounds anyway** (round 2's O-1):
   unchanged by Revision 3.
-- **BUDGET runs on workerd's local D1**, not production; its wall time is a
-  local figure.
+- **BUDGET runs on workerd's local D1**, not production; its wall times
+  are local figures. The curve's shape, not its milliseconds, is the claim.
+- **The screenshots are from round 4's build** (`27d3c0b`). Round 5
+  changed no screen: the Account & Sync lines and the web's Sync card read
+  the same counts, now pinned by WA for the web.
 
 ## Independent verification
 
-**Pending: round 5.** No verifier has seen the Revision 3 code. Rounds 1–4
-(below) attacked Revision 2's phone-side hold, which this revision removes;
-their findings are the reason for Revision 3 (spec §11.1). Round 5 needs
-the maintainer's approval.
+**Failed: round 5, at `27d3c0b`.** No verifier has seen the round-5 fixes.
+Round 6 is approved by the maintainer (2026-10-20) and pending.
+
+### Round 5, at `27d3c0b`
+
+- **Verifier:** a fresh-context Claude agent, blind first, in its own
+  detached worktree (`/home/claude/wtverify5`), experiments in an isolated
+  `git archive` copy. It read this report only after its blind record.
+- **Attacked:** which tree the tests run; the gauntlet (`pnpm check` exit 0,
+  4,571 and 1,071 tests; backend 336, shuffled; root vitest shuffled;
+  scoped Stryker, the same 12 equivalent survivors; manual mutants 53/53;
+  BUDGET); the approved spec against the contract (shadowing on devices
+  that never held the waiting version, the account-deletion race, scale,
+  the ack's mark rule, rule 8, duplicates in one push, the 503, web
+  parity); its own mutants (snapshot read order, the walk's seeds and its
+  tombstone stop, the release's `>=`); removed tests against their
+  successors; the mapping in both directions.
+- **Findings and resolutions:**
+  - **V5-1, V5-2 (behavioural; spec gap):** marks rebuilt from the
+    account's list shadowed on every device, so a fresh or signed-out
+    device hid stored rows, and a device that missed an applied edit kept
+    an older one. Resolved by Revision 4 item 9: only a device's own mark
+    shadows (`af2986d`; the backup refusal `039a44e`). Tests: SC V5-1 (two),
+    V5-2; EN, SH, ST.
+  - **V5-3 (behavioural, liveness):** push time grew with the square of
+    the waiting rows, past 30 s near 5,000. Resolved by item 10
+    (`ab5a583`); the curve above.
+  - **V5-4 (a gate that could not fail):** nothing pinned that the
+    snapshot reads `state_rev` first. SNAP and its mutant (`efd2e53`).
+  - **V5-5 (mapping):** (a) the release test pinned "after", not "at"
+    (`09486b9`); (b) there was no seeded replay against D1, and the
+    property file's header claimed one; FP now exists and the header names
+    it (`d5f9286`); I3 stays a fixed interleaving (Known limits); (c) the
+    web page's two counts had no rendering test; WA (`466de7e`).
+  - **V5-6 (low):** a push judged before an account deletion could land
+    after it. Resolved by item 11 (`956b4b4`), GONE.
+  - **V5-7 (low):** the client tolerated a missing `arrival` or
+    `refusals`. Now required, the fallbacks gone (`09c6f13`; the negative
+    tests' fixtures `a0af247`).
+  - **V5-8 (description):** the spec said an ack deletes the row's mark;
+    the code spares a later one. The spec now says what the code does, the
+    safer reading (item 12, `259e0f1`).
+  - **E-1 to E-7 (this report):** E-1, the "SC I1, I2" citation was a name
+    collision with sync-app-spec's I1 and I2 tests: removed, FP and JP
+    cited. E-2, I3 and the missing replay: mapped as above. E-3, "at or
+    after": corrected under the manual mutants. E-4, the 30 s row and the
+    28,000-row claim: the curve, and the size limit restated. E-5, fresh
+    and stale devices, and the manual's false sentence: item 9, and the
+    manual (en, sv) now says what other devices and a signed-out phone
+    show. E-6, the rule-8 row: now cites the required fields. E-7, the
+    snapshot read order: SNAP, and the CONC row no longer stands for it.
+- **Fixed after the last verified state, therefore unverified:**
+  `efd2e53`, `09486b9`, `09c6f13`, `af2986d`, `039a44e`, `ab5a583`,
+  `956b4b4`, `d5f9286`, `466de7e`, `259e0f1`, `a0af247` (with `cdc4571`
+  and this report, docs only); round 6 pending.
 
 ## History: verification rounds 1–4 (the phone-side hold, superseded)
 
