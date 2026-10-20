@@ -43,11 +43,11 @@
     "ENVIRONMENT": "development",
   },
   // TODO(maintainer): create each env's resources and replace every
-  // REPLACE_ME below; a deploy with a placeholder fails. The hostnames are
-  // the maintainer's decision, so the routes stay commented out until then.
+  // REPLACE_ME below (`pnpm cloudflare:setup`); a deploy with a placeholder
+  // fails. Hostnames (#887): web.shotledger.app and web-staging.shotledger.app.
   "env": {
     "staging": {
-      // "routes": [{ "pattern": "REPLACE_ME", "custom_domain": true }],
+      "routes": [{ "pattern": "web-staging.shotledger.app", "custom_domain": true }],
       // Only the custom domain serves it: no *.workers.dev or preview URLs.
       "workers_dev": false,
       "preview_urls": false,
@@ -70,7 +70,7 @@
       ],
       "vars": {
         "ENVIRONMENT": "staging",
-        "BETTER_AUTH_URL": "https://REPLACE_ME.invalid",
+        "BETTER_AUTH_URL": "https://web-staging.shotledger.app",
         "BETTER_AUTH_TRUSTED_ORIGINS": "shotledger://",
         // Passkeys bind to BETTER_AUTH_URL's host. Set this only to bind them
         // to a parent domain instead; that domain must then serve the app's
@@ -89,7 +89,7 @@
       },
     },
     "production": {
-      // "routes": [{ "pattern": "REPLACE_ME", "custom_domain": true }],
+      "routes": [{ "pattern": "web.shotledger.app", "custom_domain": true }],
       // Only the custom domain serves it: no *.workers.dev or preview URLs.
       "workers_dev": false,
       "preview_urls": false,
@@ -112,7 +112,7 @@
       ],
       "vars": {
         "ENVIRONMENT": "production",
-        "BETTER_AUTH_URL": "https://REPLACE_ME.invalid",
+        "BETTER_AUTH_URL": "https://web.shotledger.app",
         "BETTER_AUTH_TRUSTED_ORIGINS": "shotledger://",
         // Passkeys bind to BETTER_AUTH_URL's host. Set this only to bind them
         // to a parent domain instead; that domain must then serve the app's

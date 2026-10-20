@@ -222,12 +222,9 @@ jobs:
     permissions:
       contents: read
 
-  # THE APPROVAL GATE, and the only job that builds what ships.
-  #
-  # !! Advisory on this plan: a private repo on GitHub Free cannot have a
-  # required reviewer (the API answers 422), so the `release` environment has
-  # no protection rules and this job runs straight through. Add the maintainer
-  # as required reviewer once the repo is public or on Pro (#100).
+  # THE APPROVAL GATE, and the only job that builds what ships: the `release`
+  # environment requires the maintainer's approval (shotledger/.github,
+  # safe-settings/suborgs/product.yml).
   build:
     name: build on EAS
     needs: [prepare, checks]
