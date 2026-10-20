@@ -24,6 +24,10 @@ import { softAuthenticator, type SoftAuthenticator } from './soft-authenticator'
 
 const ORIGIN = 'https://localhost';
 const RP_ID = 'localhost';
+// Synthetic signing certificate (bytes 0x00..0x1f) and the origin Android's
+// Credential Manager writes for an app signed with it.
+const SIGNING_FP = Array.from({ length: 32 }, (_, i) => i.toString(16).padStart(2, '0')).join(':');
+const ANDROID_ORIGIN = 'android:apk-key-hash:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8';
 
 // A deployed env (wrangler.jsonc `env.production`) on the test host: the rp
 // id comes from BETTER_AUTH_URL, and the rate limiter is on.
@@ -33,6 +37,8 @@ const deployedEnv: Env = {
   BETTER_AUTH_SECRET: 'test-only-secret-0123456789abcdefghijklmnopqrstuvwxyz',
   BETTER_AUTH_URL: ORIGIN,
   BETTER_AUTH_TRUSTED_ORIGINS: 'shotledger://',
+  ANDROID_SIGNING_CERT_SHA256: SIGNING_FP,
+  APPLE_TEAM_ID: 'ABCDE12345',
 };
 
 let ipCounter = 0;
@@ -418,6 +424,74 @@ describe("the shared client's passkey calls", () => {
     token = session.token;
     await client.removePasskey(listed!.id);
     expect(await client.listPasskeys()).toEqual([]);
+  });
+});
+
+describe('the phone app', () => {
+  it('registers and signs in with a passkey made by the Android app', async () => {
+    const token = await signUp('android@example.com');
+    const authenticator = await softAuthenticator(RP_ID, ANDROID_ORIGIN);
+
+    expect((await register(token, authenticator, 'ShotLedger app on Android')).status).toBe(200);
+    const response = await signInWith(authenticator);
+
+    expect(response.status).toBe(200);
+    expect(await userIdOf(response.headers.get('set-auth-token')!)).toBe(await userIdOf(token));
+  });
+
+  it('refuses an app signed with a key that is not listed', async () => {
+    const token = await signUp('repackaged@example.com');
+    const other = `android:apk-key-hash:${'A'.repeat(43)}`;
+
+    const response = await register(token, await softAuthenticator(RP_ID, other));
+
+    expect(response.status).not.toBe(200);
+    expect(await passkeyRows(await userIdOf(token))).toEqual([]);
+  });
+
+  async function wellKnown(target: Env, file: string) {
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(new Request(`${ORIGIN}/.well-known/${file}`), target, ctx);
+    await waitOnExecutionContext(ctx);
+    return response;
+  }
+
+  it('serves assetlinks.json for the listed signing keys', async () => {
+    const response = await wellKnown(deployedEnv, 'assetlinks.json');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toMatch(/^application\/json/);
+    const [statement] = await response.json<
+      {
+        relation: string[];
+        target: { package_name: string; sha256_cert_fingerprints: string[] };
+      }[]
+    >();
+    expect(statement!.relation).toContain('delegate_permission/common.get_login_creds');
+    expect(statement!.target.package_name).toBe('app.shotledger');
+    expect(statement!.target.sha256_cert_fingerprints).toEqual([SIGNING_FP.toUpperCase()]);
+  });
+
+  it('serves the Apple association for the Team ID', async () => {
+    const response = await wellKnown(deployedEnv, 'apple-app-site-association');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toMatch(/^application\/json/);
+    expect(await response.json()).toEqual({
+      webcredentials: { apps: ['ABCDE12345.app.shotledger'] },
+    });
+  });
+
+  it.each(['assetlinks.json', 'apple-app-site-association'])(
+    'answers 404 for %s when the env has no value for it',
+    async (file) => {
+      const bare = { ...deployedEnv, ANDROID_SIGNING_CERT_SHA256: '', APPLE_TEAM_ID: undefined };
+      expect((await wellKnown(bare, file)).status).toBe(404);
+    },
+  );
+
+  it('a deployed env with a malformed fingerprint does not start', () => {
+    expect(() => createAuth({ ...deployedEnv, ANDROID_SIGNING_CERT_SHA256: 'REPLACE_ME' })).toThrow(
+      /ANDROID_SIGNING_CERT_SHA256/,
+    );
   });
 });
 

@@ -22,8 +22,20 @@ jest.mock('@/features/account/use-account', () => ({
     error: null,
     signUp: jest.fn(),
     signIn: jest.fn(),
+    signInWithPasskey: jest.fn(),
     signOut: jest.fn(),
     deleteAccount: jest.fn(),
+  }),
+}));
+
+jest.mock('@/features/account/use-passkeys', () => ({
+  usePasskeys: () => ({
+    supported: true,
+    passkeys: [],
+    busy: false,
+    error: null,
+    add: jest.fn(),
+    remove: jest.fn(),
   }),
 }));
 

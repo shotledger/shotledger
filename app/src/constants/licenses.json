@@ -395,6 +395,11 @@
     "license": "MIT"
   },
   {
+    "name": "react-native-passkey",
+    "version": "3.6.2",
+    "license": "MIT"
+  },
+  {
     "name": "react-native-reanimated",
     "version": "4.5.1",
     "license": "MIT"

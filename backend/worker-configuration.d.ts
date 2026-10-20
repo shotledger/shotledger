@@ -16,6 +16,10 @@ declare namespace Cloudflare {
     BETTER_AUTH_TRUSTED_ORIGINS?: string;
     // Optional: the passkey rp id when it is not BETTER_AUTH_URL's host (#681).
     PASSKEY_RP_ID?: string;
+    // Optional: the app's signing-certificate SHA-256 fingerprints and the
+    // Apple Team ID, for passkeys in the phone app (src/lib/app-association.ts).
+    ANDROID_SIGNING_CERT_SHA256?: string;
+    APPLE_TEAM_ID?: string;
   }
 }
 interface Env extends Cloudflare.Env {}

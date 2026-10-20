@@ -97,8 +97,12 @@ BETTER_AUTH_SECRET` — never committed, lives under `~/cloud/agents/secrets/sho
     signature.
   - `passkey()` from `@better-auth/passkey` (#681): `rpName` "ShotLedger",
     the rp id from `BETTER_AUTH_URL`'s host or `PASSKEY_RP_ID`
-    (`passkeyRpId`), and, in a deployed env, the web origin as the only
-    accepted origin. Its challenge handle, a signed cookie in the library,
+    (`passkeyRpId`), and, in a deployed env, the accepted origins: the web
+    origin plus `android:apk-key-hash:<…>` for each certificate in
+    `ANDROID_SIGNING_CERT_SHA256` (`backend/src/lib/app-association.ts`).
+    The same vars drive `/.well-known/assetlinks.json` and, with
+    `APPLE_TEAM_ID`, `/.well-known/apple-app-site-association`; unset, each
+    answers 404. Its challenge handle, a signed cookie in the library,
     crosses the Worker boundary as the `x-passkey-challenge` header
     (`backend/src/lib/cookies.ts`), so clients stay cookie-free. A sign-in
     that sends `?rememberMe=false` gets the web session length.
