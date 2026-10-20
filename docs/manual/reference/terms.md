@@ -1,6 +1,6 @@
 # Terms of service
 
-Effective: VERIFY (the date this page is published).
+Effective: 20 October 2026.
 
 These terms cover the optional sync service at `api.shotledger.app` and the web
 app served from it (together, "the service"). They do not cover the app's

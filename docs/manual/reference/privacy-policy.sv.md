@@ -1,6 +1,6 @@
 # Integritetspolicy
 
-Gäller från: VERIFY (dagen sidan publiceras).
+Gäller från: 20 oktober 2026.
 
 Policyn gäller ShotLedger-appen för Android och iOS, den valfria synktjänsten på
 `api.shotledger.app` och webbappen som körs därifrån. En kortare genomgång,

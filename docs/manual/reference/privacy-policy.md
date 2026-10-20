@@ -1,6 +1,6 @@
 # Privacy policy
 
-Effective: VERIFY (the date this page is published).
+Effective: 20 October 2026.
 
 This policy covers the ShotLedger app for Android and iOS, the optional sync
 service at `api.shotledger.app` and the web app served from it. A shorter,
