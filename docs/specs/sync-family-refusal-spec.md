@@ -1586,10 +1586,20 @@ Pre-1.0 (rule 8), with no compatibility path:
   answering "Approve the revised #856 design (Revision 3) with the
   recommended answers to Q1–Q4?". Q1 yes; Q2 Discard is a follow-up issue;
   Q3 drop item 6; Q4 protocol in place at version 1.
-- **Revision 4 (2026-10-20), during the Revision 3 build; pending the
-  maintainer.** Each item is a place where the approved text was wrong or
-  silent. The build follows the reading stated, and nothing here is
-  approved yet.
+- **Revision 4 (2026-10-20), during the Revision 3 build.** Each item is a
+  place where the approved text was wrong or silent; the build follows the
+  reading stated. Items 1–8 approved by the maintainer, 2026-10-20:
+  "Approve", answering "Approve the 8 small corrections the rebuild made to
+  the #856 spec (Revision 4)?". The round-5 fixes approved by the
+  maintainer, 2026-10-20: "Fix, check again", answering "Fix the round-5
+  findings in #856 as proposed, then run a sixth independent check?" (that
+  answer also approves a sixth round). The proposal it approves covers:
+  shadowing only on the device that sent the waiting change, with other
+  devices showing the stored session and the counts everywhere; indexed
+  lookups and a 10,000-row test; the missing concurrency test, the test and
+  evidence corrections, the required protocol fields, and refusing a push
+  that lands after the account is deleted. Item 9 matches that proposal
+  and is approved with it; any item beyond it stays pending.
   1. **REVAL's T2 waits; it is not applied.** The scenario says "T2 is
      applied". Re-validation turns T1 into a bad row at T1's own arrival,
      which is earlier than the push that fixes T2. By §11.4's blocked rule
