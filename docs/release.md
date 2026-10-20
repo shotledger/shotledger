@@ -346,7 +346,7 @@ Known risks:
 
 ## Repo configuration
 
-`github.com/shotledger/shotledger`, private. Modeled on the skillsgateway
+`github.com/shotledger/shotledger`, public since 2026-10-19. Modeled on the skillsgateway
 org, applied via API (2026-09-01): squash-merge only with `PR_TITLE`
 title + `COMMIT_MESSAGES` body (keeps DCO trailers on `main` through
 squashes), delete-branch-on-merge, allow-update-branch, web commit
@@ -359,16 +359,27 @@ The Renovate GitHub App is installed.
 
 The repo moved from `jimisola/shotledger` to the `shotledger` organization
 on 2026-10-14 (Free plan). Organization settings are declared in the
-private `shotledger/.github` repository and applied by the
+`shotledger/.github` repository and applied by the
 `shotledger-safe-settings` app.
 
-**Blocked until the repo is public or on a paid plan:** branch
-protection, rulesets, auto-merge and required reviewers on an environment
-are all unavailable on a free-plan private repo (confirmed 2026-09-10:
-the rulesets API answers 403 "Upgrade to GitHub Pro or make this
-repository public"). Merge discipline stays workflow-based until then.
+**In force since the repo went public** (declared in
+`shotledger/.github`, `safe-settings/suborgs/product.yml`; checked against
+`GET /repos/shotledger/shotledger/rules/branches/main` after the sync):
 
-**Going public** is issue #100, in this order:
+- `protect-main` on the default branch: required checks `check` (GitHub
+  Actions, 15368), `DCO` (DCO App, 1861) and `license/cla` (CLA Assistant,
+  a commit status); "require branch up to date" off; one approval, given
+  to Renovate's minor, patch and pin PRs by the `renovate-approve` App;
+  stale approvals dismissed on push; every review thread resolved; no
+  deletion or force-push. Organization admins may bypass; Renovate may
+  not, because a bypass skips the checks too.
+- `protect-tags`: tags cannot be deleted or moved.
+- `allow_auto_merge` on, so Renovate merges through GitHub auto-merge
+  once the ruleset is satisfied.
+- A new job that runs on every PR is ungated until it is added to the
+  required checks: change the workflow and `product.yml` in the same go.
+
+**Going public** was issue #100, in this order:
 
 1. **History audit.** Making the repo public publishes every commit
    reachable from a branch, a tag or a pull request (`refs/pull/*/head`),
@@ -394,9 +405,6 @@ repository public"). Merge discipline stays workflow-based until then.
    handled before the check becomes required. When `CLA.md` changes,
    update the gist so contributors re-sign the new version.
 4. **Make the repo public** (maintainer only).
-5. **Then, in safe-settings:** a `protect-main` ruleset requiring every
-   check that runs on every PR (today `check`; set "require branch up to
-   date" off; never require `renovate/stability-days`), one approval
-   satisfied by `renovate-approve` for bot PRs with no bypass for
-   Renovate, `allow_auto_merge: true`, and a required reviewer on the
-   `release` environment.
+5. **Then, in safe-settings:** the rules above (shotledger/.github#1,
+   2026-10-19). Still open: a required reviewer on the `release`
+   environment.
