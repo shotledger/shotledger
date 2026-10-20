@@ -52,6 +52,10 @@ Om du skapar ett konto lagrar synktjänsten:
 
 - **Konto:** din e-postadress och en hash av ditt lösenord. Själva lösenordet
   sparas aldrig.
+- **Nycklar,** om du lägger till en på webben: dess publika nyckel och id,
+  vilken sorts lösenordshanterare eller enhet som skapade den om den uppger
+  det, namnet på webbläsaren du lade till den från, och när. Den privata
+  nyckeln och ditt fingeravtryck eller ansikte lämnar aldrig din enhet.
 - **Din loggbok:** pass, serier, skott, foton, vapen, licenser, ammunition,
   taggar och övriga poster som appen synkar, samt inställningarna födelseår,
   klass, val om damklasser, efterlevnadsprofil och vilka funktioner du har
@@ -131,7 +135,7 @@ Ingen annan får de uppgifter synktjänsten lagrar.
 
 I appen: **Inställningar → Konto och synk → Radera konto**. På webben: din
 kontosida. Det raderar direkt och för gott ditt konto, alla synkade poster,
-alla uppladdade foton och alla inloggningar. Det som finns i telefonen stannar
+alla uppladdade foton, alla nycklar och alla inloggningar. Det som finns i telefonen stannar
 där tills du tar bort appen eller dess data.
 
 ## Dina rättigheter

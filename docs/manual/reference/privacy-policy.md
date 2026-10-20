@@ -52,6 +52,10 @@ If you create an account, the sync service stores:
 
 - **Account:** your email address and a hash of your password. The password
   itself is never stored.
+- **Passkeys,** if you add one on the web: its public key and id, the kind of
+  password manager or device that made it if that says, the name of the browser
+  you added it from, and when. The private key and your fingerprint or face
+  never leave your device.
 - **Your logbook:** the sessions, series, shots, photos, firearms, licences,
   ammunition, tags and other records the app syncs, and the settings birth year,
   class, women's classes choice, compliance profile and which features you have
@@ -129,7 +133,7 @@ No one else receives the data the sync service stores.
 
 In the app: **Settings → Account & Sync → Delete Account**. On the web: your
 account page. This deletes, straight away and for good, your account, every
-synced record, every uploaded photo and every sign-in. What is on your phone
+synced record, every uploaded photo, every passkey and every sign-in. What is on your phone
 stays there until you delete the app or its data.
 
 ## Your rights
