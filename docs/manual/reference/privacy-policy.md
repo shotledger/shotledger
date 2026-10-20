@@ -3,7 +3,7 @@
 Effective: 20 October 2026.
 
 This policy covers the ShotLedger app for Android and iOS, the optional sync
-service at `api.shotledger.app` and the web app served from it. A shorter,
+service at `web.shotledger.app` and the web app served from it. A shorter,
 feature-by-feature overview is in [Your data and privacy](privacy.md).
 
 ## The short version

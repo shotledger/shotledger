@@ -2,7 +2,7 @@
 
 Effective: 20 October 2026.
 
-These terms cover the optional sync service at `api.shotledger.app` and the web
+These terms cover the optional sync service at `web.shotledger.app` and the web
 app served from it (together, "the service"). They do not cover the app's
 source code; see [The software is yours](#the-software-is-yours).
 

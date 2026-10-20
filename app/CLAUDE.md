@@ -88,5 +88,5 @@ named …`. `migrations.test.ts` fails until the hash matches. An install that
 ## Sync backend URL
 
 `EXPO_PUBLIC_API_BASE_URL`, else `app.json`'s `expo.extra.apiBaseUrl`
-(placeholder `https://api.shotledger.app`). Never a secret — the session
+(`https://web.shotledger.app`, the production Worker; #887). Never a secret — the session
 token lives in SecureStore, never in the tree or the DB.
