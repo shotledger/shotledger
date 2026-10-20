@@ -117,10 +117,13 @@ Ingen annan får de uppgifter synktjänsten lagrar.
 
 ## Hur länge uppgifter sparas
 
-- **Kontouppgifter, din synkade loggbok och inloggningar:** tills du raderar
-  ditt konto. När du raderar en post i appen tas dess innehåll bort från
-  servern; en markering om att den raderats finns kvar så att dina andra
-  enheter får veta det.
+- **Kontouppgifter och din synkade loggbok:** tills du raderar ditt konto. När
+  du raderar en post i appen tas dess innehåll bort från servern; en markering
+  om att den raderats finns kvar så att dina andra enheter får veta det.
+- **Inloggningar (IP-adress och app- eller webbläsaridentifierare):** tills du
+  loggar ut eller tar bort enheten, eller tills inloggningen går ut: 7 dagar
+  efter att appen senast användes, 12 timmar på webben. En utgången inloggning
+  raderas inom 15 minuter.
 - **Inloggningsförsök (IP-adress):** högst 15 minuter.
 - **Felloggar:** Cloudflare sparar tjänstens loggar i högst 7 dagar.
 

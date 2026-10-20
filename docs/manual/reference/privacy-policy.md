@@ -115,10 +115,13 @@ No one else receives the data the sync service stores.
 
 ## How long data is kept
 
-- **Account data, your synced logbook and sign-in records:** until you delete
-  your account. Deleting a record in the app removes its contents from the
-  server; a marker that it was deleted remains so your other devices learn
-  about it.
+- **Account data and your synced logbook:** until you delete your account.
+  Deleting a record in the app removes its contents from the server; a marker
+  that it was deleted remains so your other devices learn about it.
+- **Sign-ins (IP address and app or browser identifier):** until you sign out
+  or revoke the device, or until the sign-in expires: 7 days after the app was
+  last used, 12 hours on the web. An expired sign-in is deleted within 15
+  minutes.
 - **Sign-in attempt records (IP address):** up to 15 minutes.
 - **Error logs:** Cloudflare keeps the service's logs for at most 7 days.
 
