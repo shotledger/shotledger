@@ -13,7 +13,7 @@ entry is deleted with it; git keeps the history.
 
 **`@better-auth/passkey@1.7.7`** (MIT) in `backend/` and
 **`@simplewebauthn/browser@13.3.0`** (MIT, no dependencies) in `web/` —
-**proposed 2026-10-19, awaiting the maintainer's approval** (#681). The plugin
+2026-10-20, for signing in with a passkey on the web (#681). The plugin
 is better-auth's own, at the version `better-auth` is pinned to; it brings
 `@simplewebauthn/server` (MIT) and `zod`. It runs on workerd: `@simplewebauthn/server`
 uses only `globalThis.crypto`, and `backend/test/passkey.spec.ts` runs real
