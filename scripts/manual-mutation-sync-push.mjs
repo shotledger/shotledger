@@ -175,14 +175,19 @@ const MUTANTS = [
   },
   {
     name: 'a still-blocked row keeps its old blocker',
-    find: '.where(sql`${mine} AND ${inList(blockers)}`)',
-    replace: '.where(sql`false`)',
+    find: 'AND ${syncRefusals.tableName} = b.t AND ${syncRefusals.rowId} = b.r`,',
+    replace: 'AND false`,',
   },
   // §11.5: the release.
   {
     name: 'the release applies in id order, not arrival order',
     find: 'ORDER BY r.arrival, r.table_name, r.row_id',
     replace: 'ORDER BY r.row_id DESC',
+  },
+  {
+    name: 'the release joins its list on the table alone',
+    find: "            AND r.row_id = json_extract(j.value, '$[1]')\n",
+    replace: '',
   },
   {
     name: 'a release overwrites a later stored version',

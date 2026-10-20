@@ -42,7 +42,10 @@ interface ModelRow {
 interface Model {
   stateRev: number;
   stored: Map<string, ModelRow>;
-  records: Map<string, { reason: RefusalRecord['reason']; arrival: number }>;
+  records: Map<
+    string,
+    { reason: RefusalRecord['reason']; arrival: number; blocker: RowRef | null }
+  >;
 }
 
 type Action = 'live' | 'invalid' | 'dead';
@@ -98,7 +101,13 @@ function snapshotOf(model: Model): PushSnapshot {
     recorded: new Set(),
     records: [...model.records].map(([key, r]): RefusalRecord => {
       const id = key.split(':')[1]!;
-      return { ...ref(id), reason: r.reason, parent: parentOf(id), arrival: r.arrival };
+      return {
+        ...ref(id),
+        reason: r.reason,
+        parent: parentOf(id),
+        arrival: r.arrival,
+        blocker: r.blocker,
+      };
     }),
     stored: [...model.stored].map(([key, s]): StoredLink => {
       const id = key.split(':')[1]!;
@@ -119,9 +128,16 @@ function push(model: Model, ops: { id: string; action: Action }[]) {
       model.stored.set(key, { deleted: changes[i]!.deletedAt !== null, arrival: plan.arrival });
       model.records.delete(key);
     } else if (verdict.kind === 'invalid_payload' || verdict.kind === 'family_refused') {
-      model.records.set(key, { reason: verdict.kind, arrival: plan.arrival });
+      model.records.set(key, {
+        reason: verdict.kind,
+        arrival: plan.arrival,
+        blocker: verdict.kind === 'family_refused' ? verdict.blocker : null,
+      });
     }
   });
+  for (const { row, blocker } of plan.blockers) {
+    model.records.get(keyOf(idOf(row)))!.blocker = blocker;
+  }
   for (const ref of plan.release) {
     const key = keyOf(idOf(ref));
     const record = model.records.get(key)!;
@@ -151,22 +167,31 @@ function badRows(model: Model): [string, number][] {
     return r.reason === 'invalid_payload' && !inert ? [[id, r.arrival] as [string, number]] : [];
   });
 }
+/** The bad rows that block `id` under §11.4, as [id, arrival]. */
+function blockingRows(model: Model, id: string): [string, number][] {
+  const kind = familyKind(CAST[id]!.tableName);
+  return badRows(model).filter(([bad]) => {
+    if (kind === 'session') {
+      return (
+        familyKind(CAST[bad]!.tableName) === 'session' && rootOf(model, bad) === rootOf(model, id)
+      );
+    }
+    return kind === 'firearm' && CAST[id]!.tableName !== 'firearms' && bad === CAST[id]!.parent;
+  });
+}
 /** The arrival of the first bad row that blocks `id`, or undefined. */
 function firstBlocker(model: Model, id: string): number | undefined {
-  const kind = familyKind(CAST[id]!.tableName);
-  const arrivals = badRows(model).flatMap(([bad, arrival]) => {
-    if (kind === 'session') {
-      return familyKind(CAST[bad]!.tableName) === 'session' &&
-        rootOf(model, bad) === rootOf(model, id)
-        ? [arrival]
-        : [];
-    }
-    if (kind === 'firearm' && CAST[id]!.tableName !== 'firearms') {
-      return bad === CAST[id]!.parent ? [arrival] : [];
-    }
-    return [];
-  });
+  const arrivals = blockingRows(model, id).map(([, arrival]) => arrival);
   return arrivals.length === 0 ? undefined : Math.min(...arrivals);
+}
+/** The first bad row that blocks `id`: oldest, then by table, then by id, in code units. */
+function firstBlockerId(model: Model, id: string): string | undefined {
+  const order = (a: [string, number], b: [string, number]) => {
+    const ka = `${CAST[a[0]]!.tableName}\u0000${a[0]}`;
+    const kb = `${CAST[b[0]]!.tableName}\u0000${b[0]}`;
+    return a[1] - b[1] || (ka < kb ? -1 : ka > kb ? 1 : 0);
+  };
+  return [...blockingRows(model, id)].sort(order)[0]?.[0];
 }
 
 function run(sequence: { id: string; action: Action }[][], check: (model: Model) => void) {
@@ -185,6 +210,21 @@ describe('judgePush over generated push sequences', () => {
           for (const [key, record] of model.records) {
             if (record.reason !== 'family_refused') continue;
             expect(firstBlocker(model, key.split(':')[1]!), key).toBeDefined();
+          }
+        });
+      }),
+      { numRuns: 300 },
+    );
+  });
+
+  it('I1 (V5-3): every waiting record’s stored blocker is its first blocking bad row', () => {
+    // The batch rewrites only the blockers that change, so a stale one would stay.
+    fc.assert(
+      fc.property(pushes, (sequence) => {
+        run(sequence, (model) => {
+          for (const [key, record] of model.records) {
+            if (record.reason !== 'family_refused') continue;
+            expect(record.blocker?.rowId, key).toBe(firstBlockerId(model, key.split(':')[1]!));
           }
         });
       }),

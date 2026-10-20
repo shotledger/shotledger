@@ -131,12 +131,16 @@ function tuples(rows: readonly (readonly unknown[])[]): string {
   return JSON.stringify(rows);
 }
 
-/** `table_name`/`row_id` (of `alias`, when given) is one of `list`'s first two items. */
-function inList(list: string, alias = '') {
-  const column = (name: string) => sql.raw(alias === '' ? name : `${alias}.${name}`);
-  return sql`EXISTS (SELECT 1 FROM json_each(${list}) AS item
-    WHERE json_extract(item.value, '$[0]') = ${column('table_name')}
-      AND json_extract(item.value, '$[1]') = ${column('row_id')})`;
+/**
+ * `table_name`/`row_id` is one of `list`'s first two items. As a row-value
+ * `IN`, SQLite reads the list once and probes the primary key for each pair
+ * (`SEARCH … USING INDEX … (user_id=? AND table_name=? AND row_id=?)`,
+ * `LIST SUBQUERY`), so the cost follows the list, not the user's rows
+ * (round 5, V5-3).
+ */
+function inList(list: string) {
+  return sql`(table_name, row_id) IN (SELECT json_extract(value, '$[0]'), json_extract(value, '$[1]')
+    FROM json_each(${list}))`;
 }
 
 // --- The snapshot (§11.4, §11.8): read outside the batch, guarded by state_rev.
@@ -169,6 +173,8 @@ async function readRecords(db: Db, userId: string): Promise<RefusalRecord[]> {
       parentTable: syncRefusals.parentTable,
       parentRowId: syncRefusals.parentRowId,
       arrival: syncRefusals.arrival,
+      blockerTable: syncRefusals.blockerTable,
+      blockerRowId: syncRefusals.blockerRowId,
     })
     .from(syncRefusals)
     .where(eq(syncRefusals.userId, userId));
@@ -178,6 +184,7 @@ async function readRecords(db: Db, userId: string): Promise<RefusalRecord[]> {
     reason: row.reason as RefusalRecord['reason'],
     parent: refOrNull(row.parentTable, row.parentRowId),
     arrival: row.arrival,
+    blocker: refOrNull(row.blockerTable, row.blockerRowId),
   }));
 }
 
@@ -490,9 +497,11 @@ function changeStatements(
 
 /**
  * What the batch does to the records after the changes (§11.5): turns the
- * demoted waiting rows into bad rows, rewrites every still-blocked waiting
- * row's blocker, applies the released rows in arrival order at new seqs,
- * raises last_seq past them, and deletes the released and inert records.
+ * demoted waiting rows into bad rows, rewrites the blockers that change,
+ * applies the released rows in arrival order at new seqs, raises last_seq
+ * past them, and deletes the released and inert records. Every list is read
+ * once and joined to the records by primary key, so a push costs what its
+ * lists hold, not what the user has waiting (round 5, V5-3).
  */
 function recordStatements(db: Db, userId: string, plan: PushPlan): BatchItem<'sqlite'>[] {
   const refs = (list: readonly RowRef[]) => tuples(list.map((r) => [r.tableName, r.rowId]));
@@ -500,10 +509,6 @@ function recordStatements(db: Db, userId: string, plan: PushPlan): BatchItem<'sq
   const blockers = tuples(
     plan.blockers.map((b) => [b.row.tableName, b.row.rowId, b.blocker.tableName, b.blocker.rowId]),
   );
-  const blockerPart = (index: 2 | 3) =>
-    sql`(SELECT json_extract(item.value, ${`$[${index}]`}) FROM json_each(${blockers}) AS item
-      WHERE json_extract(item.value, '$[0]') = sync_refusals.table_name
-        AND json_extract(item.value, '$[1]') = sync_refusals.row_id)`;
   const released = refs(plan.release);
 
   return [
@@ -517,10 +522,22 @@ function recordStatements(db: Db, userId: string, plan: PushPlan): BatchItem<'sq
         blockerRowId: null,
       })
       .where(sql`${mine} AND ${inList(refs(plan.demoted))}`),
+    // `LIMIT -1` keeps SQLite from flattening the list into the join, so it
+    // materializes it, scans it, and probes the primary key per pair (`SCAN
+    // b`, `SEARCH sync_refusals … (user_id=? AND table_name=? AND row_id=?)`)
+    // rather than scanning the list once per record.
     db
       .update(syncRefusals)
-      .set({ blockerTable: blockerPart(2), blockerRowId: blockerPart(3) })
-      .where(sql`${mine} AND ${inList(blockers)}`),
+      .set({ blockerTable: sql`b.bt`, blockerRowId: sql`b.br` })
+      .from(
+        sql`(SELECT json_extract(value, '$[0]') AS t, json_extract(value, '$[1]') AS r,
+          json_extract(value, '$[2]') AS bt, json_extract(value, '$[3]') AS br
+          FROM json_each(${blockers}) LIMIT -1) AS b`,
+      )
+      .where(
+        sql`${syncRefusals.userId} = ${userId}
+          AND ${syncRefusals.tableName} = b.t AND ${syncRefusals.rowId} = b.r`,
+      ),
     db
       .insert(syncRows)
       .select(
@@ -528,8 +545,11 @@ function recordStatements(db: Db, userId: string, plan: PushPlan): BatchItem<'sq
             (SELECT last_seq FROM sync_sequence WHERE user_id = ${userId})
               + row_number() OVER (ORDER BY r.arrival, r.table_name, r.row_id),
             r.payload, r.updated_at, NULL, r.arrival
-          FROM sync_refusals r
-          WHERE r.user_id = ${userId} AND r.reason = ${REJECTED_FAMILY} AND ${inList(released, 'r')}
+          FROM json_each(${released}) AS j
+          CROSS JOIN sync_refusals r ON r.user_id = ${userId}
+            AND r.table_name = json_extract(j.value, '$[0]')
+            AND r.row_id = json_extract(j.value, '$[1]')
+          WHERE r.reason = ${REJECTED_FAMILY}
             AND NOT EXISTS (SELECT 1 FROM sync_rows s
               WHERE s.user_id = r.user_id AND s.table_name = r.table_name AND s.row_id = r.row_id
                 AND (s.deleted_at IS NOT NULL OR s.arrival_rev >= r.arrival))`,

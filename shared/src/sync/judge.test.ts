@@ -29,15 +29,31 @@ function bad(
   arrival: number,
   parent: RowRef | null = null,
 ) {
-  return { tableName, rowId, reason: 'invalid_payload', parent, arrival } satisfies RefusalRecord;
+  return {
+    tableName,
+    rowId,
+    reason: 'invalid_payload',
+    parent,
+    arrival,
+    blocker: null,
+  } satisfies RefusalRecord;
 }
+/** A waiting record; `blocker` is the one stored with it (null: none stored yet). */
 function waiting(
   tableName: SyncTableName,
   rowId: string,
   arrival: number,
   parent: RowRef | null = null,
+  blocker: RowRef | null = null,
 ) {
-  return { tableName, rowId, reason: 'family_refused', parent, arrival } satisfies RefusalRecord;
+  return {
+    tableName,
+    rowId,
+    reason: 'family_refused',
+    parent,
+    arrival,
+    blocker,
+  } satisfies RefusalRecord;
 }
 function stored(
   tableName: SyncTableName,
@@ -498,6 +514,43 @@ describe('judgePush: release (§11.5)', () => {
     expect(plan.verdicts).toEqual([
       { kind: 'family_refused', parent: ref('sessions', 's1'), blocker: ref('sessions', 's1') },
     ]);
+  });
+});
+
+// Round 5 (V5-3): the batch rewrites a waiting record's blocker only when it
+// changes, so a push that touches no blocked family rewrites nothing, however
+// many rows wait.
+describe('judgePush: blockers lists only the waiting records whose blocker changes', () => {
+  const t1 = ref('shots', 't1');
+  const t2 = ref('shots', 't2');
+
+  it('a record already stored with its current blocker is not listed', () => {
+    const records = [
+      bad('shots', 't2', 3, ref('series', 'r1')),
+      waiting('series', 'r9', 5, ref('sessions', 's1'), t2),
+      waiting('sessions', 's1', 4, null, t2),
+    ];
+    const plan = judgePush([live('tags', 'g1')], new Set(), snapshot({ records, stored: FAMILY }));
+    expect(plan.blockers).toEqual([]);
+  });
+
+  it('a record whose stored blocker is no longer its blocker is listed with the current one', () => {
+    const records = [
+      bad('shots', 't2', 3, ref('series', 'r1')),
+      waiting('series', 'r9', 5, ref('sessions', 's1'), t2),
+      waiting('series', 'r8', 5, ref('sessions', 's1'), t1),
+    ];
+    const plan = judgePush([live('tags', 'g1')], new Set(), snapshot({ records, stored: FAMILY }));
+    expect(plan.blockers).toEqual([{ row: ref('series', 'r8'), blocker: t2 }]);
+  });
+
+  it('compares the blocker by table and row, not by row id alone', () => {
+    const records = [
+      bad('shots', 't2', 3, ref('series', 'r1')),
+      waiting('series', 'r9', 5, ref('sessions', 's1'), ref('series', 't2')),
+    ];
+    const plan = judgePush([live('tags', 'g1')], new Set(), snapshot({ records, stored: FAMILY }));
+    expect(plan.blockers).toEqual([{ row: ref('series', 'r9'), blocker: t2 }]);
   });
 });
 

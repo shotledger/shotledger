@@ -14,6 +14,8 @@ export interface RefusalRecord {
   reason: RefusalReason;
   parent: RowRef | null;
   arrival: number;
+  /** The blocker stored with a waiting record; null for a bad row. */
+  blocker: RowRef | null;
 }
 
 /** One stored row, as the walk reads it from `sync_rows`. */
@@ -48,7 +50,11 @@ export interface PushPlan {
   release: RowRef[];
   /** Bad records that are inert after this push, to delete. */
   inert: RowRef[];
-  /** Waiting records still blocked, with their blocker after this push. */
+  /**
+   * Waiting records still blocked whose blocker changes, with their blocker
+   * after this push. A record already stored with it is left out, so a push
+   * that touches no blocked family rewrites nothing (round 5, V5-3).
+   */
   blockers: { row: RowRef; blocker: RowRef }[];
   /** Waiting records turned into bad rows by re-validation. */
   demoted: RowRef[];
@@ -235,7 +241,9 @@ export function judgePush(
     if (record.reason !== 'family_refused' || demoted.has(key) || changed(key)) continue;
     const blocker = blockerOf(record);
     if (blocker === null) release.push({ ref: refOf(record), arrival: record.arrival });
-    else blockers.push({ row: refOf(record), blocker });
+    else if (record.blocker === null || keyOf(record.blocker) !== keyOf(blocker)) {
+      blockers.push({ row: refOf(record), blocker });
+    }
   }
 
   return {

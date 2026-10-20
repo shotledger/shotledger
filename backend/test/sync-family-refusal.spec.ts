@@ -468,10 +468,15 @@ function bumpBeforeEveryBatch(real: D1Database): D1Database {
   });
 }
 
-/** Counts the reads, each batch's statements, and the most parameters one statement binds. */
+/**
+ * Counts the reads, each batch's statements, the most parameters one
+ * statement binds, the longest SQL text and the longest bound string.
+ */
 function countingD1(real: D1Database) {
   let reads = 0;
   let maxParams = 0;
+  let maxSql = 0;
+  let maxBound = 0;
   const batches: number[] = [];
   const wrap = (statement: D1PreparedStatement): D1PreparedStatement =>
     new Proxy(statement, {
@@ -479,6 +484,9 @@ function countingD1(real: D1Database) {
         if (prop === 'bind') {
           return (...values: unknown[]) => {
             maxParams = Math.max(maxParams, values.length);
+            for (const value of values) {
+              if (typeof value === 'string') maxBound = Math.max(maxBound, value.length);
+            }
             return wrap(target.bind(...values));
           };
         }
@@ -489,7 +497,12 @@ function countingD1(real: D1Database) {
     });
   const d1 = new Proxy(real, {
     get(target, prop) {
-      if (prop === 'prepare') return (query: string) => wrap(target.prepare(query));
+      if (prop === 'prepare') {
+        return (query: string) => {
+          maxSql = Math.max(maxSql, query.length);
+          return wrap(target.prepare(query));
+        };
+      }
       if (prop === 'batch') {
         return (statements: D1PreparedStatement[]) => {
           batches.push(statements.length);
@@ -500,7 +513,14 @@ function countingD1(real: D1Database) {
       return typeof value === 'function' ? (value as () => unknown).bind(target) : value;
     },
   });
-  return { d1, reads: () => reads, batches: () => batches, maxParams: () => maxParams };
+  return {
+    d1,
+    reads: () => reads,
+    batches: () => batches,
+    maxParams: () => maxParams,
+    maxSql: () => maxSql,
+    maxBound: () => maxBound,
+  };
 }
 
 interface RecordRow {
@@ -1147,7 +1167,9 @@ function commitBeforeStateRevRead(real: D1Database, other: ClientChange[]): D1Da
       if (prop === 'prepare') {
         return (query: string) => {
           const statement = target.prepare(query);
-          return /select "state_rev" from "sync_sequence"/.test(query) ? wrap(statement) : statement;
+          return /select "state_rev" from "sync_sequence"/.test(query)
+            ? wrap(statement)
+            : statement;
         };
       }
       const value = Reflect.get(target, prop) as unknown;
@@ -1313,6 +1335,90 @@ describe('the pull carries arrival on every row and the refusals on every respon
 });
 
 describe('BUDGET the largest push stays within D1’s limits', () => {
+  /**
+   * `count` shots of R0 waiting on the bad T0 at arrival 3, written directly
+   * (as REVAL writes its payload): building them through pushes would time
+   * the thing under test.
+   */
+  async function seedWaitingShots(count: number) {
+    await push([S(), R('r0'), T('t0', 'r0')]);
+    await push([T('t0', 'r0', true)]);
+    const template = JSON.stringify(
+      row('shots', '__ID__', T0, { series_id: 'r0', value_tenths: 90 }),
+    );
+    await env.DB.prepare(
+      `WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < ?2)
+       INSERT INTO sync_refusals (user_id, table_name, row_id, reason, parent_table,
+         parent_row_id, payload, updated_at, arrival, blocker_table, blocker_row_id)
+       SELECT ?1, 'shots', 'w' || i, 'family_refused', 'series', 'r0',
+         replace(?3, '__ID__', 'w' || i), ?4, 3, 'shots', 't0' FROM n`,
+    )
+      .bind(USER, count, template, T0)
+      .run();
+    await env.DB.prepare('UPDATE sync_sequence SET state_rev = 3 WHERE user_id = ?')
+      .bind(USER)
+      .run();
+  }
+
+  async function timed(changes: ClientChange[]) {
+    const counting = countingD1(env.DB);
+    const started = Date.now();
+    const response = await pushThrough(counting.d1, changes);
+    return { response, elapsed: Date.now() - started, counting };
+  }
+
+  it('V5-3 a push of one tag, a fix that moves every blocker, and one that releases them stay fast with 10,000 waiting rows', async ({
+    annotate,
+  }) => {
+    const curve: string[] = [];
+    for (const count of [1_000, 2_500, 5_000, 10_000]) {
+      await env.DB.exec('DELETE FROM sync_rows');
+      await env.DB.exec('DELETE FROM sync_sequence');
+      await env.DB.exec('DELETE FROM sync_idempotency');
+      await env.DB.exec('DELETE FROM sync_refusals');
+      await seedWaitingShots(count);
+
+      const tag = await timed([live('tags', `g${count}`)]);
+      expect(tag.response.status).toBe(200);
+      expect((await records()).length).toBe(count + 1);
+
+      // A later bad row of the family, then the fix of the first: every
+      // waiting row's blocker moves to T9, the fix waits too, and nothing is
+      // released.
+      await push([T('t9', 'r0', true)]);
+      const move = await timed([T('t0', 'r0')]);
+      expect(move.response.status).toBe(200);
+      expect((await records()).filter((r) => r.blocker === 'shots:t9')).toHaveLength(count + 1);
+
+      const fix = await timed([T('t9', 'r0')]);
+      expect(fix.response.status).toBe(200);
+      expect(await records()).toEqual([]);
+      expect(await storedCount()).toBe(count + 5);
+
+      for (const run of [tag, move, fix]) {
+        // D1: 100 parameters and 100 KB of SQL per statement, 2 MB per string.
+        expect(run.counting.maxParams()).toBeLessThan(100);
+        expect(run.counting.maxSql()).toBeLessThan(100_000);
+        expect(run.counting.maxBound()).toBeLessThan(2_000_000);
+      }
+      const point =
+        `${count} waiting: tag push ${tag.elapsed} ms, blocker-moving fix ${move.elapsed} ms, ` +
+        `releasing fix ${fix.elapsed} ms ` +
+        `(longest SQL ${fix.counting.maxSql()} chars, longest bound string ` +
+        `${fix.counting.maxBound()} chars)`;
+      curve.push(point);
+      // Printed by the reporter as each point is measured, for the evidence report.
+      await annotate(`BUDGET point: ${point}`);
+      if (count === 10_000) {
+        // Well under D1's 30 s for the whole batch call.
+        expect(tag.elapsed).toBeLessThan(5_000);
+        expect(move.elapsed).toBeLessThan(10_000);
+        expect(fix.elapsed).toBeLessThan(10_000);
+      }
+    }
+    await annotate(`BUDGET curve: ${curve.join('; ')}`);
+  }, 900_000);
+
   it('releases 2,000 waiting rows in a 500-change push: one batch, at most 5 reads before it', async ({
     annotate,
   }) => {

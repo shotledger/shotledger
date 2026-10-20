@@ -1123,6 +1123,12 @@ passed as one bound JSON array, read with `json_each(?)`:
 So no statement binds more than about 15 parameters, against D1's 100.
 Nothing needs chunking.
 
+**Each list is read once and joined by primary key** (Revision 4, item 10).
+A statement reads its list with `(table_name, row_id) IN (SELECT … FROM
+json_each(?))`, or scans the list and probes `sync_refusals` per pair, so a
+push costs what its lists hold, not what the user has waiting. The batch
+rewrites only the blockers that change.
+
 **Against D1's production limits**, as `sync-push-atomicity-spec.md` §9 and
 its Revisions cite them:
 
@@ -1491,6 +1497,14 @@ Feature: The server keeps refused families and their waiting rows (Revision 3)
     Then the batch has 2,506 statements and no statement binds more than 15 parameters
     And the route makes at most 5 reads before it
     And the evidence records the batch's wall time against the 30 s limit
+
+  Scenario: BUDGET a large account stays fast (round 5, V5-3; Revision 4, item 10)
+    Given 1,000, 2,500, 5,000 and 10,000 waiting rows of one family
+    When one push of one tag, one fix that moves every blocker, and one fix
+      that releases them are each timed
+    Then at 10,000 rows the tag push takes under 5 s and each fix under 10 s
+    And no statement binds 100 parameters, has 100 KB of SQL, or binds a 2 MB string
+    And the evidence records the curve
 ```
 
 **Properties** (generated trees and push sequences with `fast-check`,
@@ -1598,8 +1612,8 @@ Pre-1.0 (rule 8), with no compatibility path:
   devices showing the stored session and the counts everywhere; indexed
   lookups and a 10,000-row test; the missing concurrency test, the test and
   evidence corrections, the required protocol fields, and refusing a push
-  that lands after the account is deleted. Item 9 matches that proposal
-  and is approved with it; any item beyond it stays pending.
+  that lands after the account is deleted. Items 9 and 10 match that
+  proposal and are approved with it; any item beyond it stays pending.
   1. **REVAL's T2 waits; it is not applied.** The scenario says "T2 is
      applied". Re-validation turns T1 into a bad row at T1's own arrival,
      which is earlier than the push that fixes T2. By §11.4's blocked rule
@@ -1650,21 +1664,37 @@ table_name, row_id` uses SQLite's BINARY collation, so the judge
      approved table shadows every live change below a mark's arrival, and
      every device rebuilds its marks from the account's list. So a device
      that never held the waiting version also shadowed the stored one:
+
      - a fresh, reinstalled or signed-out device never applied a stored row
        that has a record, and showed S1's shots with no session;
      - a device that missed an applied edit kept an older version (T1 = 90
        where the server stores 80).
-       That broke C6 ("other devices show the family as it was before the bad
-       row"), "No device stays behind", and the manual. The build now gives
-       each mark an `own` flag:
+
+     That broke C6 ("other devices show the family as it was before the bad
+     row"), "No device stays behind", and the manual. The build now gives
+     each mark an `own` flag:
+
      - an ack's mark is the device's own;
      - a pull's list keeps a mark its own only when the device's own mark of
        that row is at the listed arrival;
      - sign-out, a restore and a reinstall drop every mark, so the next
        pull rebuilds them all as not its own.
-       A mark that is not its own counts on Account & Sync and shadows
-       nothing. Scenarios V5-1 and V5-2 (backend `sync-client.spec.ts`) pin
-       it.
+
+     A mark that is not its own counts on Account & Sync and shadows
+     nothing. Scenarios V5-1 and V5-2 (backend `sync-client.spec.ts`) pin
+     it.
+
+  10. **Each list is read once and joined by primary key; only changed
+      blockers are rewritten (round 5, V5-3).** The approved statements
+      matched each record against each list with an `EXISTS` over
+      `json_each`, so a push's cost grew with the square of the user's
+      waiting rows: 40 s at 6,000, above D1's 30 s for a batch, after
+      which every push of the account would fail. Lists are now read with
+      a row-value `IN`, or scanned and joined by primary key (`EXPLAIN
+QUERY PLAN` in the evidence). The judge lists a blocker only when it
+      differs from the one stored with the record, which `RefusalRecord`
+      now carries. BUDGET gains the 10,000-row curve.
+
 - **Revision 2 (2026-10-16), during implementation.** Items 1–5 approved by
   the maintainer, 2026-10-16: "Approve, file issue", answering "Approve the
   implementation corrections (Revision 2) to the #856 spec?"; item 4's web
