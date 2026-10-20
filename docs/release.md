@@ -406,5 +406,6 @@ on 2026-10-14 (Free plan). Organization settings are declared in the
    update the gist so contributors re-sign the new version.
 4. **Make the repo public** (maintainer only).
 5. **Then, in safe-settings:** the rules above (shotledger/.github#1,
-   2026-10-19). Still open: a required reviewer on the `release`
-   environment.
+   2026-10-19), and a required reviewer (the maintainer, self-review
+   allowed) on the `release` environment (shotledger/.github#2,
+   2026-10-20).
