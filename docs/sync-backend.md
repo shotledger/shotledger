@@ -124,8 +124,10 @@ backend/migrations/0002_photos_init.sql  photos/quota/rate-limit tables DDL
   and on a `BETTER_AUTH_URL` that is missing, not `https:` or the
   `.invalid` placeholder, and better-auth's rate limiter is on, keyed by
   `CF-Connecting-IP`, stored in D1 (`rate_limit`), counting real endpoints
-  only, and purged by the env's cron trigger. The deploy steps are in
-  `docs/release.md`.
+  only, and purged by the env's cron trigger. The same cron deletes expired
+  `session` and `verification` rows, so a sign-in's IP address and user
+  agent go when the sign-in does, and ended photo upload windows
+  (`rate_limit_windows`). The deploy steps are in `docs/release.md`.
 - Photo uploads accept `image/jpeg`, `image/png` and `image/webp` only
   (`415 unsupported_media_type` otherwise); a photo is served with
   `Content-Security-Policy: default-src 'none'; sandbox`.

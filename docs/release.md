@@ -85,6 +85,18 @@ What the deployed config already does:
 
 - [ ] **Decide the hostname(s).** That decision is the maintainer's and is
       not recorded anywhere yet; nothing in the repo assumes one.
+- [ ] **Decide whether the data stays in the EU.** D1 and R2 take a
+      jurisdiction only when they are created; it cannot be added later.
+- [ ] Run `pnpm cloudflare:setup staging <hostname>` from the repo root
+      (add `--eu` for EU jurisdiction, `--dry-run` to see the changes
+      first; needs `npx wrangler login`). `scripts/cloudflare-setup.mjs`
+      does the next two steps: it creates the D1 database and R2 bucket,
+      fills in the env's block of `backend/wrangler.jsonc` (and, for
+      `production`, `apiBaseUrl` in `app/app.json`), generates
+      `BETTER_AUTH_SECRET` into `~/cloud/agents/secrets/shotledger/` and
+      uploads it. Running it again reuses what exists. Commit the config
+      change on a branch; the ids are not secrets. To do it by hand
+      instead:
 - [ ] Create the env's D1 database and R2 bucket, then in its
       `env.<name>` block of `backend/wrangler.jsonc` replace the
       `REPLACE_ME` `database_id`, check the `bucket_name`, set
@@ -204,28 +216,37 @@ dependency, `app.json` plugins or permissions) still needs a release.
 
 One-time, before the first update:
 
-- [ ] `cd app && eas init`, if `app/app.json` has no
-      `extra.eas.projectId` yet (the same step as in (a)).
-- [ ] `cd app && eas update:configure`. It adds `updates.url` to
-      `app/app.json`. `runtimeVersion` and the channels in `app/eas.json`
-      are already set, so commit only the URL and project id it writes.
-- [ ] Ship one release **after** that commit. Builds made before it have
-      no update URL and never check for updates.
+- [ ] `cd app && eas project:info` prints the project id in
+      `app/app.json` (`extra.eas.projectId`). `updates.url` is
+      `https://u.expo.dev/<that id>`, already committed. If the id is not
+      your project's, run `eas init` and fix both values together.
+- [ ] `cd app && eas update:configure` should change nothing. If it
+      writes to `app/app.json` or `app/eas.json`, review and commit that.
+- [ ] Add `EXPO_TOKEN` to the `release` environment if the release
+      workflow does not already have it there.
+- [ ] Ship one release **after** `updates.url` landed. Builds made before
+      it have no update URL and never check for updates.
 
 Every update:
 
 0. An update that carries a migration of a synced table waits for the
    sync server, and a phone that has not taken the update has its changes
    to that table refused, as step 0 of a release says.
-1. Check out the release's tag (or its `hotfix/*` branch with the fix on
-   top). The runtime version is the app version, so the update has to be
-   published with that release's version.
-2. Stamp it the way the release workflow does:
-   `cd app && npm pkg set version=<release version>`. Don't commit it.
-3. `cd app && eas update --channel production --message "<what changed>"`.
-   Use `--channel preview` to try it on a preview APK first.
-4. Phones pick it up on the next launch after the download finishes, so
+1. Run the **EAS Update** workflow (`.github/workflows/eas-update.yml`,
+   Actions → EAS Update → Run workflow). Dispatch it on the release's tag,
+   or on its `hotfix/*` or `release/*` branch with the release version as
+   input. The runtime version is the app version, so the update has to
+   be built from that release with that version stamped; the workflow
+   refuses `main`, where the version is the `0.0.0` placeholder. Pick
+   `preview` first to try it on a preview APK, then run it again with
+   `production`. It runs the same checks as a release, then waits on the
+   `release` environment.
+2. Phones pick it up on the next launch after the download finishes, so
    expect it on the second launch.
+
+By hand, the same thing is: check out the tag (or hotfix branch),
+`cd app && npm pkg set version=<release version>` (don't commit it), then
+`eas update --channel <preview|production> --platform android --message "<what changed>"`.
 
 Locally built APKs (the `run-app` standalone APK) have no channel and never
 receive updates.
@@ -274,6 +295,12 @@ The same statement, in user words, is in `docs/store-listing.md`.
   Releases. Google's developer verification requirement (enforcing
   2026-09-30 in BR/ID/SG/TH, global 2027) is satisfied by having a Play
   account — register the package name and signing key once.
+- **F-Droid:** not for now (maintainer, 2026-10-20; #876). F-Droid refuses
+  bundled proprietary libraries, and the build has three: ML Kit (licence-card
+  OCR), Firebase Messaging (pulled in by `expo-notifications`) and Play
+  Services Location (`expo-location`); EAS Update's OTA download breaks its
+  policy too. Listing would need a free-only build flavour; #876 has the
+  analysis. The GitHub Releases APK serves users without Play meanwhile.
 - **Donations:** a "Support development" row in Settings opens the
   configured funding link in the external browser; unlocks nothing, no
   purchase language. Also linked from the store listing and README. The
@@ -325,7 +352,7 @@ Known risks:
 
 ## Repo configuration
 
-`github.com/shotledger/shotledger`, private. Modeled on the skillsgateway
+`github.com/shotledger/shotledger`, public since 2026-10-19. Modeled on the skillsgateway
 org, applied via API (2026-09-01): squash-merge only with `PR_TITLE`
 title + `COMMIT_MESSAGES` body (keeps DCO trailers on `main` through
 squashes), delete-branch-on-merge, allow-update-branch, web commit
@@ -338,16 +365,27 @@ The Renovate GitHub App is installed.
 
 The repo moved from `jimisola/shotledger` to the `shotledger` organization
 on 2026-10-14 (Free plan). Organization settings are declared in the
-private `shotledger/.github` repository and applied by the
+`shotledger/.github` repository and applied by the
 `shotledger-safe-settings` app.
 
-**Blocked until the repo is public or on a paid plan:** branch
-protection, rulesets, auto-merge and required reviewers on an environment
-are all unavailable on a free-plan private repo (confirmed 2026-09-10:
-the rulesets API answers 403 "Upgrade to GitHub Pro or make this
-repository public"). Merge discipline stays workflow-based until then.
+**In force since the repo went public** (declared in
+`shotledger/.github`, `safe-settings/suborgs/product.yml`; checked against
+`GET /repos/shotledger/shotledger/rules/branches/main` after the sync):
 
-**Going public** is issue #100, in this order:
+- `protect-main` on the default branch: required checks `check` (GitHub
+  Actions, 15368), `DCO` (DCO App, 1861) and `license/cla` (CLA Assistant,
+  a commit status); "require branch up to date" off; one approval, given
+  to Renovate's minor, patch and pin PRs by the `renovate-approve` App;
+  stale approvals dismissed on push; every review thread resolved; no
+  deletion or force-push. Organization admins may bypass; Renovate may
+  not, because a bypass skips the checks too.
+- `protect-tags`: tags cannot be deleted or moved.
+- `allow_auto_merge` on, so Renovate merges through GitHub auto-merge
+  once the ruleset is satisfied.
+- A new job that runs on every PR is ungated until it is added to the
+  required checks: change the workflow and `product.yml` in the same go.
+
+**Going public** was issue #100, in this order:
 
 1. **History audit.** Making the repo public publishes every commit
    reachable from a branch, a tag or a pull request (`refs/pull/*/head`),
@@ -373,9 +411,7 @@ repository public"). Merge discipline stays workflow-based until then.
    handled before the check becomes required. When `CLA.md` changes,
    update the gist so contributors re-sign the new version.
 4. **Make the repo public** (maintainer only).
-5. **Then, in safe-settings:** a `protect-main` ruleset requiring every
-   check that runs on every PR (today `check`; set "require branch up to
-   date" off; never require `renovate/stability-days`), one approval
-   satisfied by `renovate-approve` for bot PRs with no bypass for
-   Renovate, `allow_auto_merge: true`, and a required reviewer on the
-   `release` environment.
+5. **Then, in safe-settings:** the rules above (shotledger/.github#1,
+   2026-10-19), and a required reviewer (the maintainer, self-review
+   allowed) on the `release` environment (shotledger/.github#2,
+   2026-10-20).

@@ -19,6 +19,11 @@ export type SaveStatus =
   | { kind: 'saving' }
   | { kind: 'invalid'; errors: EntryError[] }
   | { kind: 'saved'; refreshed: boolean; firearmRejected: boolean }
+  /**
+   * The server refused changes other than the firearm's counter: those were
+   * not saved (#863). The phone's Account screen counts them the same way.
+   */
+  | { kind: 'refused'; count: number; refreshed: boolean }
   /** `unconfirmed`: the server answered, but not with an ack per change sent. */
   | { kind: 'failed'; error: SyncErrorKey; unconfirmed?: true; photo?: PhotoError }
   /** The held request belongs to another account than the one signed in now. */
@@ -213,11 +218,14 @@ export async function save<C extends EntryContext>(
       nextSpare,
     );
   }
-  const firearmRejected =
-    outcome.kind === 'partlyRejected' &&
-    outcome.rejected.some((rejected) => rejected.tableName === 'firearms');
+  const rejected = outcome.kind === 'partlyRejected' ? outcome.rejected : [];
   const refreshed = await deps.refresh();
-  return { status: { kind: 'saved', refreshed, firearmRejected }, held: null };
+  // A refused firearm row only leaves its counter unmoved; anything else
+  // refused is part of the session, which is then not (wholly) saved.
+  if (rejected.some((change) => change.tableName !== 'firearms')) {
+    return { status: { kind: 'refused', count: rejected.length, refreshed }, held: null };
+  }
+  return { status: { kind: 'saved', refreshed, firearmRejected: rejected.length > 0 }, held: null };
 }
 
 /** An edit makes the held request stale: the next Save builds a new one. */

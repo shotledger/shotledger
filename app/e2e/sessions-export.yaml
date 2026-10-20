@@ -41,7 +41,7 @@ appId: app.shotledger
 - extendedWaitUntil:
     visible: 'Home'
     timeout: 15000
-- takeScreenshot: m7-01-home-seeded
+- takeScreenshot: sessions-export-01-home-seeded
 
 # --- Settings → Backup & Data: export sessions ----------------------------
 - tapOn: 'Settings'
@@ -71,7 +71,7 @@ appId: app.shotledger
       id: 'json-export-status'
     direction: DOWN
     timeout: 15000
-- takeScreenshot: m7-02-export-status
+- takeScreenshot: sessions-export-02-export-status
 
 # --- Dev menu: wipe data ---------------------------------------------------
 - openLink: 'shotledger://dev'
@@ -85,7 +85,7 @@ appId: app.shotledger
     visible: 'Home'
     timeout: 15000
 - assertVisible: 'No sessions yet'
-- takeScreenshot: m7-03-home-wiped
+- takeScreenshot: sessions-export-03-home-wiped
 
 # --- Settings → Backup & Data: import (best effort, see the header) --------
 - tapOn: 'Settings'
@@ -119,7 +119,7 @@ appId: app.shotledger
 - tapOn:
     text: 'Import'
     optional: true
-- takeScreenshot: m7-04-import-picker
+- takeScreenshot: sessions-export-04-import-picker
 # Close the picker (still open if the file wasn't found above).
 - pressKey: Back
 - pressKey: Back
@@ -130,4 +130,4 @@ appId: app.shotledger
     visible: 'Home'
     timeout: 15000
     optional: true
-- takeScreenshot: m7-05-home-after-import
+- takeScreenshot: sessions-export-05-home-after-import

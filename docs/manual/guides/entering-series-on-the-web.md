@@ -137,6 +137,12 @@ included, or by the rounds fired; for fält, by six for each saved station,
 scratched and shoot-off ones included. Photos are sent first, and the session only
 once every photo has arrived; the phone downloads them like any synced photo.
 
+If the server refuses part of the session, the page says how many changes
+were refused and not saved, as the phone's Account screen counts refused
+changes, and your series stay on the page. **Sessions** shows what did arrive.
+A firearm deleted on another device is the one exception: the session is saved
+and only that firearm's round count does not change.
+
 If a photo cannot be sent, nothing is saved. When the server is unreachable,
 or more than 60 photos were sent in the last hour, **Save** becomes **Retry**,
 which sends only the photos that have not arrived, then the session. When your

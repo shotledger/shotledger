@@ -1,7 +1,20 @@
 # Maestro flows
 
 Flows live in `app/e2e/`; run one with `maestro test e2e/<flow>.yaml` from
-`app/`, against a dev build with Metro serving.
+`app/`, against a dev build with Metro serving. CI runs them all
+(`.github/workflows/e2e.yml`). They are named by what the user does:
+
+| Flow                       | Journey                                                    |
+| -------------------------- | ---------------------------------------------------------- |
+| `tabs-smoke.yaml`          | load demo data, walk every tab                             |
+| `log-session.yaml`         | log a precision competition session on the keypad          |
+| `firearm-and-license.yaml` | add a firearm and a license, shoot it into maintenance due |
+| `stats.yaml`               | the Stats tab and a session's stats on demo data           |
+| `license-activity.yaml`    | the Swedish license-activity views and a custom period     |
+| `sessions-export.yaml`     | export sessions, wipe, open the import picker              |
+
+Milestone reports in `docs/implementation-plan.md` and the specs cite the old
+milestone names (`m2-smoke` … `m7-export`), in the order above.
 
 ## Writing a flow
 
@@ -10,7 +23,7 @@ Flows live in `app/e2e/`; run one with `maestro test e2e/<flow>.yaml` from
   `extendedWaitUntil` on a nonexistent id (its `timeout` acts as a delay,
   since unlike `assertVisible` it does not fail), then retry once with
   `runFlow: {when: {notVisible: '<target>'}, commands: [openLink: ...]}`.
-  `app/e2e/m5-stats.yaml` is the worked example.
+  `app/e2e/stats.yaml` is the worked example.
 - `extendedWaitUntil` does not scroll: wait for an element that stays on
   screen (e.g. `session-total`), or use `scrollUntilVisible`.
 - After `inputText` near the bottom of a form the keyboard covers the next

@@ -1547,6 +1547,7 @@
       "saved": "Sparat.",
       "savedReload": "Sparat. Ladda om sidan för att se det i statistiken.",
       "savedFirearmRejected": "Sparat, men vapnet har tagits bort på en annan enhet, så dess skottantal ändrades inte.",
+      "refused": "{{count}} ändring(ar) avvisades av servern och sparades inte. Serierna finns kvar.",
       "failedNetwork": "Kunde inte nå servern. Serierna finns kvar; Försök igen skickar samma pass igen.",
       "failedSignedOut": "Du har loggats ut. Logga in igen och spara sedan på nytt.",
       "failedOutdated": "Sidan är inaktuell. Kopiera dina serier och ladda sedan om sidan.",
@@ -1668,6 +1669,24 @@
     },
     "firearms": {
       "readOnly": "Webben visar dina vapen som appen har registrerat dem. Lägg till, ändra eller arkivera ett vapen i appen på telefonen."
+    },
+    "passkey": {
+      "title": "Nycklar",
+      "body": "Logga in med fingeravtryck, ansikte eller skärmlås i stället för lösenord. En nyckel sparas i din webbläsare, telefon eller lösenordshanterare; servern lagrar bara dess publika nyckel. Ditt lösenord fungerar som förut.",
+      "add": "Lägg till nyckel",
+      "added": "Tillagd {{date}}",
+      "unnamed": "Nyckel",
+      "remove": "Ta bort",
+      "removeFailed": "Kunde inte ta bort nyckeln. Försök igen.",
+      "listFailed": "Kunde inte visa dina nycklar.",
+      "unsupported": "Den här webbläsaren kan inte använda nycklar.",
+      "signIn": "Logga in med nyckel",
+      "error": {
+        "alreadyAdded": "Den här webbläsarens nyckel finns redan på ditt konto.",
+        "notRegistered": "Den nyckeln finns inte på något ShotLedger-konto. Logga in med lösenord och lägg till den igen.",
+        "network": "Kunde inte nå servern. Försök igen.",
+        "unknown": "Nyckeln fungerade inte. Försök igen, eller logga in med lösenord."
+      }
     }
   },
   "notifications": {

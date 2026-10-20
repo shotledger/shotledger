@@ -10,7 +10,8 @@ Everything runs from the repo root on Node. OpenCV calls go through OpenCV.js
 4.12 (`@techstark/opencv-js`, a root devDependency pinned to the device's
 OpenCV), so a measurement runs the code and the library the phone runs.
 ImageMagick (`magick`) decodes the photos. None of this is in `pnpm check`:
-apart from the fixtures, the tools read photos that are not in the repo.
+apart from the fixtures and the regression check, the tools read photos that
+are not in the repo.
 
 ## The stages they measure
 
@@ -127,6 +128,27 @@ CV_TIMING_IN=<canvas-dir> CV_TIMING_OUT=timing.jsonl [CV_TIMING_HALVE=1] \
     pnpm exec vitest run -c tools/cv/vitest.config.ts [--execArgv=--jitless] hole-size-timing
 node tools/cv/eval/hole-size-timing.mts timing.jsonl
 ```
+
+## `eval/regression.check.ts`: the check CI runs
+
+```bash
+pnpm cv:regression
+```
+
+runs the whole pipeline (the lock, its canvas, the hole proposals, the scorer)
+on four synthetic photos drawn with known holes: a whole target square on, one
+turned and tilted, a close-up, and a milsnabb face. A scene fails when its lock
+does not hold, it proposes a hole too many or too few, a hole's radius is off
+by more than the scene's tolerance, or a score changes. Holes are compared by
+radius because a ring lock does not fix the rotation. CI runs it on every PR,
+in about a minute. `CV_REGRESSION_OUT=<file.jsonl>` also writes each scene's
+radii and errors.
+
+A failure after a deliberate change to the CV code is a measurement to look
+at, not a number to loosen: check the change with an `eval/` run on real
+photos, and widen a tolerance only with that evidence. The scenes are drawn,
+not photographed, so they cannot stand in for the corpus; a consented subset of
+real photos can join them later (#864).
 
 ## `fit/`: hand marks and the two hole models
 

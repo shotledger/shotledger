@@ -95,6 +95,13 @@ BETTER_AUTH_SECRET` — never committed, lives under `~/cloud/agents/secrets/sho
 <sessionToken>` exactly like the existing dev stub's header shape, so the
     `Authenticator` interface (`backend/src/auth.ts`) needs no change to its
     signature.
+  - `passkey()` from `@better-auth/passkey` (#681): `rpName` "ShotLedger",
+    the rp id from `BETTER_AUTH_URL`'s host or `PASSKEY_RP_ID`
+    (`passkeyRpId`), and, in a deployed env, the web origin as the only
+    accepted origin. Its challenge handle, a signed cookie in the library,
+    crosses the Worker boundary as the `x-passkey-challenge` header
+    (`backend/src/lib/cookies.ts`), so clients stay cookie-free. A sign-in
+    that sends `?rememberMe=false` gets the web session length.
   - **Social sign-in: flagged TODO, not implemented.** Needs real OAuth app
     registrations (Google/Apple client IDs + secrets) only the maintainer can
     create. `plugins` array has a comment marking where `socialProviders`
@@ -135,7 +142,7 @@ createAuth(c.env).handler(c.req.raw))` — better-auth's own handler serves
     object does not abort the rest; an already-partially-deleted account
     must still finish), then `photos`/`sync_rows`/`sync_sequence`/
     `sync_idempotency`/`quota`/`rate_limit_windows` rows, then the better-auth `session`/
-    `account`/`user` rows, all `WHERE user_id = ?` (`user` by `id`).
+    `account`/`passkey`/`user` rows, all `WHERE user_id = ?` (`user` by `id`).
     **Revised from the original draft** (see `## Revisions`): rather than
     calling `auth.api.deleteUser` for the `user` row, `session`/`account`/
     `user` are deleted directly via drizzle in the same batch as the
@@ -441,3 +448,9 @@ secret`, never committed, provisioned by the maintainer.
   version-skew gap between the CLI package and the core library, not a
   design decision — documented inline in `auth-schema.ts`'s file header
   and in `docs/specs/backend-auth-photos-evidence.md`'s Honest Notes.
+- **§2/§3 passkeys (#681)**: the `passkey` table joins `0001_auth_init`
+  (rewritten in place, rule 8) with its credential id unique, not just
+  indexed, so one credential cannot sit on two accounts. Account deletion
+  removes its rows. The challenge rows a cancelled passkey prompt leaves
+  in `verification` go with the cron's expired-records purge (#875). `backend/test/passkey.spec.ts`
+  runs real ceremonies on workerd with a software authenticator.
