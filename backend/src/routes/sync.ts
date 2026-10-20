@@ -2,21 +2,43 @@ import { Hono } from 'hono';
 
 import {
   checkProtocolVersion,
-  familyRefusals,
   isSyncableSettingRow,
   MAX_PAYLOAD_BYTES,
   PROTOCOL_VERSION,
   PullRequestSchema,
   PushRequestSchema,
   REJECTED_FAMILY,
-  REJECTED_INVALID_PAYLOAD,
   type PullResponse,
   type PushResponse,
 } from '@shotledger/shared/src/sync';
 import { validatePayload } from '@shotledger/shared/src/sync/payload-schemas';
 
 import type { Authenticator } from '../auth';
-import { applyPush, createDb, pullTablePage, type PushRefusal } from '../db/queries';
+import {
+  applyPush,
+  createDb,
+  pullTablePage,
+  PushBusyError,
+  readRefusals,
+  toChangeRow,
+  type WaitingRow,
+} from '../db/queries';
+
+/**
+ * #697's validator, run again on a waiting row before the server applies it,
+ * since it may have tightened since the row arrived
+ * (docs/specs/sync-family-refusal-spec.md §11.5). The log names the table and
+ * the columns, never a value or an id (N6).
+ */
+function stillValid(row: WaitingRow): boolean {
+  const verdict = validatePayload({ ...row, deletedAt: null });
+  if (verdict.ok) return true;
+  const columns = verdict.issues.map((issue) => `${issue.path || '(row)'}:${issue.code}`);
+  console.warn(
+    `sync push: a waiting ${row.tableName} row no longer validates (${columns.join(', ')})`,
+  );
+  return false;
+}
 
 export interface SyncEnv {
   Bindings: Env;
@@ -52,25 +74,24 @@ export function createSyncRoutes(authenticatorFor: (env: Env) => Authenticator) 
     const db = createDb(c.env.DB);
     const userId = c.get('userId');
 
+    // Read before the pages, so a record the pages then release is listed
+    // and its release pulled, never the reverse (§11.7).
+    const refusals = await readRefusals(db, userId);
     const changes: PullResponse['changes'] = [];
     const nextCursors: PullResponse['nextCursors'] = [];
 
     for (const { tableName, cursor } of parsed.data.tables) {
       const page = await pullTablePage(db, userId, tableName, cursor);
-      for (const row of page.rows) {
-        changes.push({
-          tableName: row.tableName,
-          rowId: row.rowId,
-          seq: row.seq,
-          payload: row.payload,
-          deletedAt: row.deletedAt,
-          updatedAt: row.updatedAt,
-        });
-      }
+      for (const row of page.rows) changes.push(toChangeRow(row));
       nextCursors.push({ tableName, cursor: page.cursor, hasMore: page.hasMore });
     }
 
-    const response: PullResponse = { protocolVersion: PROTOCOL_VERSION, changes, nextCursors };
+    const response: PullResponse = {
+      protocolVersion: PROTOCOL_VERSION,
+      changes,
+      refusals,
+      nextCursors,
+    };
     return c.json(response);
   });
 
@@ -128,25 +149,31 @@ export function createSyncRoutes(authenticatorFor: (env: Env) => Authenticator) 
       console.warn(`sync push: refused ${change.tableName} payload (${columns.join(', ')})`);
     }
 
-    // The rows of a refused row's family in this push go with it, so a
-    // session reaches other devices whole or not at all
-    // (sync-family-refusal-spec.md §2.2). One line per push: the count and
-    // the tables, never an id or a value (N6).
-    const family = familyRefusals(parsed.data.changes, invalid);
-    if (family.size > 0) {
-      const tables = [...new Set([...family].map((i) => parsed.data.changes[i]!.tableName))];
-      console.warn(
-        `sync push: refused ${family.size} with their family (${tables.sort().join(', ')})`,
-      );
-    }
-    const refusals = parsed.data.changes.map((_change, index): PushRefusal | null =>
-      invalid.has(index) ? REJECTED_INVALID_PAYLOAD : family.has(index) ? REJECTED_FAMILY : null,
-    );
-
     const db = createDb(c.env.DB);
     const userId = c.get('userId');
 
-    const acks = await applyPush(db, userId, parsed.data.changes, refusals);
+    // The server judges every change against the account's refused families
+    // and applies the waiting rows when a family is released
+    // (sync-family-refusal-spec.md §11.4, §11.5).
+    let acks: PushResponse['acks'];
+    try {
+      acks = await applyPush(db, userId, parsed.data.changes, { invalid, revalidate: stillValid });
+    } catch (error) {
+      if (error instanceof PushBusyError) return c.json({ error: 'busy' }, 503);
+      throw error;
+    }
+
+    // One line per push: the count and the tables of the changes refused
+    // with their family, never an id or a value (N6).
+    const family = acks.flatMap((ack, index) =>
+      ack.status === 'rejected' && ack.reason === REJECTED_FAMILY
+        ? [parsed.data.changes[index]!.tableName]
+        : [],
+    );
+    if (family.length > 0) {
+      const tables = [...new Set(family)].sort();
+      console.warn(`sync push: refused ${family.length} with their family (${tables.join(', ')})`);
+    }
 
     const response: PushResponse = { protocolVersion: PROTOCOL_VERSION, acks };
     return c.json(response);

@@ -84,6 +84,7 @@ beforeEach(async () => {
   await env.DB.exec('DELETE FROM sync_rows');
   await env.DB.exec('DELETE FROM sync_sequence');
   await env.DB.exec('DELETE FROM sync_idempotency');
+  await env.DB.exec('DELETE FROM sync_refusals');
 });
 
 describe('V1 /sync/pull refuses a malformed request with 400 invalid_request', () => {
