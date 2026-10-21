@@ -10,9 +10,9 @@ import { MIN_SUPPORTED_PROTOCOL_VERSION, PROTOCOL_VERSION_UNSUPPORTED } from '@s
 
 import { Hono } from 'hono';
 
-import { devBearerAuthenticator } from '../src/auth';
-import { SYNC_MIGRATIONS } from '../src/db/migrations';
+import { ALL_MIGRATIONS } from '../src/db/migrations';
 import { createSyncRoutes } from '../src/routes/sync';
+import { devBearerWithAccount } from './dev-account';
 import { row, wholeRow } from './rows';
 
 // Mounted with the dev stub (bearer token = user id), which is what every
@@ -21,7 +21,7 @@ import { row, wholeRow } from './rows';
 const app = new Hono<{ Bindings: Env }>();
 app.route(
   '/sync',
-  createSyncRoutes(() => devBearerAuthenticator),
+  createSyncRoutes(() => devBearerWithAccount),
 );
 
 const USER_A_TOKEN = 'user-a-token';
@@ -75,7 +75,7 @@ function pushOne(clientChangeId: string, overrides: Record<string, unknown> = {}
 }
 
 beforeAll(async () => {
-  await applyD1Migrations(env.DB, SYNC_MIGRATIONS);
+  await applyD1Migrations(env.DB, ALL_MIGRATIONS);
 });
 
 beforeEach(async () => {

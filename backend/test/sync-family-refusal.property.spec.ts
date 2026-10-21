@@ -22,9 +22,9 @@ import {
   type SyncTableName,
 } from '@shotledger/shared';
 
-import { devBearerAuthenticator } from '../src/auth';
-import { SYNC_MIGRATIONS } from '../src/db/migrations';
+import { ALL_MIGRATIONS } from '../src/db/migrations';
 import { createSyncRoutes } from '../src/routes/sync';
+import { devBearerWithAccount } from './dev-account';
 import { row } from './rows';
 
 const USER = 'user-family-property';
@@ -33,7 +33,7 @@ const AT = '2026-10-20T10:00:00.000Z';
 const app = new Hono<{ Bindings: Env }>();
 app.route(
   '/sync',
-  createSyncRoutes(() => devBearerAuthenticator),
+  createSyncRoutes(() => devBearerWithAccount),
 );
 
 const transport = createHttpSyncTransport({
@@ -207,7 +207,7 @@ const pushes = fc.array(fc.array(op, { minLength: 1, maxLength: 4 }), {
 });
 
 beforeAll(async () => {
-  await applyD1Migrations(env.DB, SYNC_MIGRATIONS);
+  await applyD1Migrations(env.DB, ALL_MIGRATIONS);
 });
 
 describe('I1 and I2 over seeded push sequences, through the Worker and D1', () => {

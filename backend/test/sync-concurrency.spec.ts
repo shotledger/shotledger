@@ -15,10 +15,10 @@ import {
   type StoredRow,
 } from '@shotledger/shared/src/sync';
 
-import { devBearerAuthenticator } from '../src/auth';
-import { SYNC_MIGRATIONS } from '../src/db/migrations';
+import { ALL_MIGRATIONS } from '../src/db/migrations';
 import { applyPush, createDb, pullTablePage, type PullPage } from '../src/db/queries';
 import { createSyncRoutes } from '../src/routes/sync';
+import { devBearerWithAccount, ensureAccount } from './dev-account';
 
 import { gateD1, SimulatedCrash } from './gated-d1';
 import { wholeRow } from './rows';
@@ -145,7 +145,9 @@ function isCrash(error: unknown): boolean {
 }
 
 beforeAll(async () => {
-  await applyD1Migrations(env.DB, SYNC_MIGRATIONS);
+  await applyD1Migrations(env.DB, ALL_MIGRATIONS);
+  // applyPush is called directly here; the guard needs the account (V6-1).
+  await ensureAccount(USER);
 });
 
 beforeEach(wipe);
@@ -401,7 +403,7 @@ describe('C8 concurrent HTTP pushes converge (stress, supplementary)', () => {
   const app = new Hono<{ Bindings: Env }>();
   app.route(
     '/sync',
-    createSyncRoutes(() => devBearerAuthenticator),
+    createSyncRoutes(() => devBearerWithAccount),
   );
 
   async function call(path: string, body: unknown): Promise<unknown> {

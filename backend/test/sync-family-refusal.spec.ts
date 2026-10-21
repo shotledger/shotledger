@@ -24,9 +24,9 @@ import {
 } from '@shotledger/shared';
 import { SYNC_TABLES } from '@shotledger/shared/src/sync/tables';
 
-import { devBearerAuthenticator } from '../src/auth';
-import { SYNC_MIGRATIONS } from '../src/db/migrations';
+import { ALL_MIGRATIONS } from '../src/db/migrations';
 import { createSyncRoutes } from '../src/routes/sync';
+import { devBearerWithAccount } from './dev-account';
 import { gateD1 } from './gated-d1';
 import { row } from './rows';
 
@@ -37,7 +37,7 @@ const T1 = '2026-10-14T11:00:00.000Z';
 const app = new Hono<{ Bindings: Env }>();
 app.route(
   '/sync',
-  createSyncRoutes(() => devBearerAuthenticator),
+  createSyncRoutes(() => devBearerWithAccount),
 );
 
 async function fetchApp(input: string, init?: RequestInit): Promise<Response> {
@@ -136,7 +136,7 @@ const rejected = (
 });
 
 beforeAll(async () => {
-  await applyD1Migrations(env.DB, SYNC_MIGRATIONS);
+  await applyD1Migrations(env.DB, ALL_MIGRATIONS);
 });
 
 beforeEach(async () => {

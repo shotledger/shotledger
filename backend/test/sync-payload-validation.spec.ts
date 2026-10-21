@@ -20,9 +20,9 @@ import {
   type SyncTableName,
 } from '@shotledger/shared';
 
-import { devBearerAuthenticator } from '../src/auth';
-import { SYNC_MIGRATIONS } from '../src/db/migrations';
+import { ALL_MIGRATIONS } from '../src/db/migrations';
 import { createSyncRoutes } from '../src/routes/sync';
+import { devBearerWithAccount } from './dev-account';
 import { row } from './rows';
 
 const USER = 'user-p';
@@ -32,7 +32,7 @@ const T1 = '2026-09-03T10:00:00.000Z';
 const app = new Hono<{ Bindings: Env }>();
 app.route(
   '/sync',
-  createSyncRoutes(() => devBearerAuthenticator),
+  createSyncRoutes(() => devBearerWithAccount),
 );
 
 async function fetchApp(input: string, init?: RequestInit): Promise<Response> {
@@ -107,7 +107,7 @@ async function idempotency(clientChangeId: string) {
 }
 
 beforeAll(async () => {
-  await applyD1Migrations(env.DB, SYNC_MIGRATIONS);
+  await applyD1Migrations(env.DB, ALL_MIGRATIONS);
 });
 
 beforeEach(async () => {
