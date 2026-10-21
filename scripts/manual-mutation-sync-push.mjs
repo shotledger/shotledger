@@ -143,8 +143,13 @@ const MUTANTS = [
   },
   {
     name: 'a push judged before an account deletion recreates the user',
-    find: 'OR EXISTS (SELECT 1 FROM sync_sequence WHERE user_id = ${userId}) THEN 0 END`,',
-    replace: 'OR true THEN 0 END`,',
+    find: 'OR EXISTS (SELECT 1 FROM sync_sequence WHERE user_id = ${userId})) THEN 0 END`,',
+    replace: 'OR true) THEN 0 END`,',
+  },
+  {
+    name: 'a push judged again after an account deletion recreates the user',
+    find: 'CASE WHEN EXISTS (SELECT 1 FROM "user" WHERE id = ${userId})\n        AND (',
+    replace: 'CASE WHEN true\n        AND (',
   },
   {
     name: 'a push after an account deletion is not answered 401',

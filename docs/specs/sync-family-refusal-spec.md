@@ -1060,8 +1060,9 @@ The batch's **first statement** is the guard, and it also bumps
 
 ```sql
 INSERT INTO sync_sequence (user_id, last_seq, state_rev)
-VALUES (?1, CASE WHEN ?2 = 0
-  OR EXISTS (SELECT 1 FROM sync_sequence WHERE user_id = ?1) THEN 0 END, 1)
+VALUES (?1, CASE WHEN EXISTS (SELECT 1 FROM "user" WHERE id = ?1)
+  AND (?2 = 0 OR EXISTS (SELECT 1 FROM sync_sequence WHERE user_id = ?1))
+  THEN 0 END, 1)
 ON CONFLICT (user_id) DO UPDATE
   SET state_rev = CASE WHEN state_rev = ?2 THEN state_rev + 1 END
 ```
@@ -1081,13 +1082,16 @@ snapshot reads: `COALESCE(state_rev, 0)`, so 0 when the user has no row.
   with `state_rev` 1 and `last_seq` 0, even when every change is refused
   (FIRST). When two first pushes race, the second meets the first's row with
   `state_rev` 1, the `CASE` yields null, and it is judged again.
-- **The row went between the snapshot and the batch** (`?2` > 0, no row),
-  as when the account is deleted in between: `last_seq` is null, and the
-  insert fails with `NOT NULL constraint failed: sync_sequence.last_seq`.
-  The route answers 401 and does not judge again, since a fresh read would
-  find no row and create the user anew (Revision 4, item 11; GONE). A first
-  push that races a deletion still creates the row: the deletion's own
-  limit, as before #856.
+- **The account is gone by the batch:** its `user` row is gone, or the
+  push was judged with a sequence row that is gone (`?2` > 0, no row).
+  `last_seq` is null, and the insert fails with
+  `NOT NULL constraint failed: sync_sequence.last_seq`. The route answers
+  401 and does not judge again (Revision 4, items 11 and 13; GONE). Every
+  attempt runs the guard, so a push whose reads, first or retried, follow
+  the deletion cannot recreate the account either: it reads no sequence
+  row, but the `user` row is gone too. A push whose batch commits before
+  the deletion's is an ordinary push of a live account, and the deletion
+  removes what it wrote.
 - D1 runs a batch's statements in sequence, as one transaction, with no
   other query interleaved (`sync-push-atomicity-spec.md` §6). So one guard
   at the start covers every later statement, and no statement needs a
@@ -1525,6 +1529,14 @@ Feature: The server keeps refused families and their waiting rows (Revision 3)
     When the account is deleted before the push's batch runs
     Then the guard's insert fails and the route answers 401
     And no sync_* table keeps a row of that user
+
+  Scenario: GONE a push judged again after an account deletion cannot recreate it (round 6, V6-1; Revision 4, item 13)
+    Given A's push is judged from an existing sequence row
+    And another device's push commits, so A's first batch fails its guard
+    When the account is deleted before A's second attempt reads
+    Then the second attempt's guard fails on the missing user and the route answers 401
+    And no sync_* table keeps a row of that user, and the user stays deleted
+    And a push whose first read follows the deletion is answered the same way
 ```
 
 **Properties** (generated trees and push sequences with `fast-check`,
@@ -1553,6 +1565,7 @@ same seeded sequences replayed against the Worker's D1 in `backend/`:
 | A released payload no longer validates                          | REVAL                                                        |
 | A row moved into a blocked family is released early             | MOVEIN                                                       |
 | Account deletion leaves refused payloads behind                 | ACCT                                                         |
+| A push recreates a deleted account                              | GONE                                                         |
 | A concurrent push answers 500 instead of retrying               | CONC                                                         |
 | Sign-out, restore or a lost device drops a waiting row          | REV1, DISCARD                                                |
 | Two devices' concurrent pushes split a family                   | CONC; the guard's mutants                                    |
@@ -1731,7 +1744,22 @@ QUERY PLAN` in the evidence). The judge lists a blocker only when it
       insert's `last_seq` is now null unless `?2` is 0 or the row exists;
       the route answers that failure with 401 and no retry (GONE).
 
-  12. **An ack's delete spares a later mark (round 5, V5-8).** §11.6 said
+  12. **A push whose account is gone cannot recreate it, on any attempt
+      (round 6, V6-1).** Item 11 kept a push judged from an existing row
+      from recreating the account, and said the route does not judge
+      again since a fresh read would find no row. The retry loop did judge
+      again: when another device's push failed the first attempt's guard
+      and the deletion committed before the second attempt read, that
+      attempt read `state_rev` 0, its guard created the sequence row, and
+      the push answered 200 with its rows stored for the deleted user. The
+      guard's `last_seq` is now also null when the account's `user` row is
+      gone, which every attempt checks in its own batch. That closes the
+      limit item 11 left ("a first push that races a deletion still
+      creates the row") as well. Tests that trust the bearer token as the
+      user id create that user's row (`backend/test/dev-account.ts`), as
+      better-auth's session lookup needs it in the Worker.
+
+  13. **An ack's delete spares a later mark (round 5, V5-8).** §11.6 said
       `applied` and `tombstoned` delete the row's mark. The build deletes
       it only up to the ack's arrival, and keeps a mark that arrived after
       the acked change. The text now says what the build does. That is

@@ -1224,6 +1224,56 @@ describe('GONE a push judged before the account is deleted cannot land after it 
     expect(await userRows()).toBe(0);
   });
 
+  /** The account deletion's whole cascade (routes/account.ts), the `user` row included. */
+  async function deleteAccount() {
+    for (const table of ['sync_rows', 'sync_sequence', 'sync_idempotency', 'sync_refusals']) {
+      await env.DB.prepare(`DELETE FROM ${table} WHERE user_id = ?`).bind(USER).run();
+    }
+    await env.DB.prepare('DELETE FROM "user" WHERE id = ?').bind(USER).run();
+  }
+
+  async function accountExists(): Promise<boolean> {
+    return (await env.DB.prepare('SELECT 1 FROM "user" WHERE id = ?').bind(USER).first()) !== null;
+  }
+
+  // Round 6, V6-1: attempt 1 is judged from an existing row and fails its
+  // guard; the deletion commits before attempt 2 reads, which then sees no
+  // sequence row. The guard must refuse because the account is gone.
+  it('V6-1 a push judged again after its guard failed cannot recreate a deleted account', async () => {
+    await push([S(), R('r1')]);
+    const batch = gateD1(env.DB, { kind: 'pause', at: 4 });
+    const nextRead = gateD1(batch.d1, { kind: 'pause', at: 5 });
+    const pending = pushThrough(nextRead.d1, [R('r2'), T('t3', 'r2'), T('t4', 'r2')]);
+    await batch.paused;
+    // Another device's push commits, so attempt 1's guard fails.
+    await push([R('r9')]);
+    batch.release();
+    await nextRead.paused;
+    await deleteAccount();
+    nextRead.release();
+
+    const response = await pending;
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ error: 'unauthenticated' });
+    expect(await userRows()).toBe(0);
+    expect(await accountExists()).toBe(false);
+  });
+
+  it('V6-1 a push whose first read follows the deletion cannot recreate the account', async () => {
+    await push([S()]);
+    const gate = gateD1(env.DB, { kind: 'pause', at: 0 });
+    const pending = pushThrough(gate.d1, [R('r1')]);
+    await gate.paused;
+    await deleteAccount();
+    gate.release();
+
+    const response = await pending;
+
+    expect(response.status).toBe(401);
+    expect(await userRows()).toBe(0);
+  });
+
   it('a first push still creates the sequence row', async () => {
     expect(await userRows()).toBe(0);
     const [ack] = await push([S()]);

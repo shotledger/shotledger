@@ -324,18 +324,21 @@ async function planPush(
 
 /**
  * The one statement that writes `state_rev`: the arrival bump and the
- * snapshot guard. A push judged with a sequence row that is gone by the
- * batch, as when the account is deleted in between, must not create one:
- * its `last_seq` is null then, and the insert fails (round 5, V5-6). Only a
- * push judged from no row (`stateRev` 0) creates it.
+ * snapshot guard. A push whose account is gone by the batch must not create
+ * a sequence row: its `last_seq` is null then, and the insert fails. The
+ * account is gone when its `user` row is (round 6, V6-1: every attempt,
+ * however its reads fell around the deletion), or when the push was judged
+ * with a sequence row that is gone (round 5, V5-6). Only a push of an
+ * existing account judged from no row (`stateRev` 0) creates it.
  */
 function guardStatement(db: Db, userId: string, stateRev: number) {
   return db
     .insert(syncSequence)
     .values({
       userId,
-      lastSeq: sql`CASE WHEN ${stateRev} = 0
-        OR EXISTS (SELECT 1 FROM sync_sequence WHERE user_id = ${userId}) THEN 0 END`,
+      lastSeq: sql`CASE WHEN EXISTS (SELECT 1 FROM "user" WHERE id = ${userId})
+        AND (${stateRev} = 0
+          OR EXISTS (SELECT 1 FROM sync_sequence WHERE user_id = ${userId})) THEN 0 END`,
       stateRev: 1,
     })
     .onConflictDoUpdate({
@@ -353,7 +356,7 @@ function isGuardFailure(error: unknown): boolean {
   return hasMessage(error, GUARD_FAILED);
 }
 
-/** SQLite's message when the guard expected a sequence row that is gone. */
+/** SQLite's message when the guard finds the account gone: its user or its expected sequence row. */
 const ACCOUNT_GONE = 'NOT NULL constraint failed: sync_sequence.last_seq';
 
 function hasMessage(error: unknown, message: string): boolean {
@@ -364,9 +367,9 @@ function hasMessage(error: unknown, message: string): boolean {
 }
 
 /**
- * The user's sequence row went between the snapshot and the batch: the
- * account was deleted. Nothing is written, and the push is not tried again,
- * since a fresh read would find no row and recreate the user (V5-6).
+ * The account was deleted during the push: its `user` row, or the sequence
+ * row the push was judged with, is gone by the batch. Nothing is written,
+ * and the push is not tried again (V5-6, V6-1).
  */
 export class PushAccountGoneError extends Error {
   constructor() {
