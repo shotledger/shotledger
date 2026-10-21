@@ -1537,6 +1537,12 @@ Feature: The server keeps refused families and their waiting rows (Revision 3)
     Then the second attempt's guard fails on the missing user and the route answers 401
     And no sync_* table keeps a row of that user, and the user stays deleted
     And a push whose first read follows the deletion is answered the same way
+
+  Scenario: TENANT one account's push leaves another's records alone (round 6, V6-2)
+    Given accounts U1 and U2 that both hold S1 (a JSON import keeps a session's id)
+    And each has a bad T2 and a rename of S1 waiting on it
+    When U1 fixes T2, with S1's rename released, demoted, or moved to another blocker
+    Then U2's records and stored rows, payloads and blockers included, are unchanged
 ```
 
 **Properties** (generated trees and push sequences with `fast-check`,
@@ -1566,6 +1572,7 @@ same seeded sequences replayed against the Worker's D1 in `backend/`:
 | A row moved into a blocked family is released early             | MOVEIN                                                       |
 | Account deletion leaves refused payloads behind                 | ACCT                                                         |
 | A push recreates a deleted account                              | GONE                                                         |
+| One account's push changes another account's records            | TENANT                                                       |
 | A concurrent push answers 500 instead of retrying               | CONC                                                         |
 | Sign-out, restore or a lost device drops a waiting row          | REV1, DISCARD                                                |
 | Two devices' concurrent pushes split a family                   | CONC; the guard's mutants                                    |

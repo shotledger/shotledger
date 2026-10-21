@@ -194,6 +194,27 @@ const MUTANTS = [
     find: 'AND ${syncRefusals.tableName} = b.t AND ${syncRefusals.rowId} = b.r`,',
     replace: 'AND false`,',
   },
+  // §11.5: every record statement keeps to the pushing user (round 6, V6-2).
+  {
+    name: 'the demotion reaches another user’s records',
+    find: '.where(sql`${mine} AND ${inList(refs(plan.demoted))}`)',
+    replace: '.where(sql`${inList(refs(plan.demoted))}`)',
+  },
+  {
+    name: 'the blocker update reaches another user’s records',
+    find: 'sql`${syncRefusals.userId} = ${userId}\n          AND ${syncRefusals.tableName} = b.t',
+    replace: 'sql`${syncRefusals.tableName} = b.t',
+  },
+  {
+    name: 'the release reads another user’s records',
+    find: 'CROSS JOIN sync_refusals r ON r.user_id = ${userId}\n',
+    replace: 'CROSS JOIN sync_refusals r ON true\n',
+  },
+  {
+    name: 'the release and inert delete reaches another user’s records',
+    find: '.where(sql`${mine} AND ${inList(refs([...plan.release, ...plan.inert]))}`)',
+    replace: '.where(sql`${inList(refs([...plan.release, ...plan.inert]))}`)',
+  },
   // §11.5: the release.
   {
     name: 'the release applies in id order, not arrival order',

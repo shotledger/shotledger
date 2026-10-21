@@ -1281,6 +1281,110 @@ describe('GONE a push judged before the account is deleted cannot land after it 
   });
 });
 
+describe('TENANT one account’s push leaves another’s records alone (V6-2)', () => {
+  // Two accounts can hold the same ids: the JSON import keeps a session's
+  // id (app/src/db/json-export/apply-import.ts). Each statement that writes
+  // the records or applies them must keep to the pushing user.
+  const U1 = 'user-family-u1';
+  const U2 = 'user-family-u2';
+
+  async function pushAs(userId: string, changes: ClientChange[]): Promise<PushAck[]> {
+    const as = createHttpSyncTransport({
+      fetchImpl: fetchApp,
+      baseUrl: 'https://localhost',
+      getToken: () => userId,
+    });
+    return (await as.push({ protocolVersion: PROTOCOL_VERSION, changes })).acks;
+  }
+
+  /** Everything the server holds for `userId`, as one comparable value. */
+  async function holdings(userId: string) {
+    const refusals = await env.DB.prepare(
+      'SELECT * FROM sync_refusals WHERE user_id = ? ORDER BY table_name, row_id',
+    )
+      .bind(userId)
+      .all();
+    const rows = await env.DB.prepare(
+      'SELECT * FROM sync_rows WHERE user_id = ? ORDER BY table_name, row_id',
+    )
+      .bind(userId)
+      .all();
+    return { refusals: refusals.results, rows: rows.results };
+  }
+
+  /** S1, R1 and T2 stored; T2 made bad; then a rename of S1 that waits on it. */
+  async function waitingRename(userId: string) {
+    await pushAs(userId, [S(), R('r1'), T('t2', 'r1')]);
+    await pushAs(userId, [T('t2', 'r1', true)]);
+    const [rename] = await pushAs(userId, [live('sessions', 's1', { name: `${userId} later` })]);
+    expect(rename).toMatchObject({ reason: 'family_refused', blocker: ref('shots', 't2') });
+  }
+
+  it('U1’s fix releases U1’s waiting S1 and leaves U2’s waiting S1, its payload and blocker, as they were', async () => {
+    await waitingRename(U1);
+    await waitingRename(U2);
+    const before = await holdings(U2);
+
+    const [fix] = await pushAs(U1, [T('t2', 'r1')]);
+
+    expect(fix).toMatchObject({ status: 'applied' });
+    expect((await holdings(U1)).refusals).toEqual([]);
+    expect(await holdings(U2)).toEqual(before);
+    expect(before.refusals).toEqual([
+      expect.objectContaining({ table_name: 'sessions', row_id: 's1', reason: 'family_refused' }),
+      expect.objectContaining({ table_name: 'shots', row_id: 't2', reason: 'invalid_payload' }),
+    ]);
+  });
+
+  it('U1’s demoted S1 becomes a bad row; U2’s waiting S1 stays a waiting row with its payload', async () => {
+    await waitingRename(U1);
+    await waitingRename(U2);
+    // U1's waiting payload no longer validates, as in REVAL.
+    await env.DB.prepare(
+      `UPDATE sync_refusals SET payload = json_set(payload, '$.name', 42)
+       WHERE user_id = ? AND row_id = 's1'`,
+    )
+      .bind(U1)
+      .run();
+    const before = await holdings(U2);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    try {
+      await pushAs(U1, [T('t2', 'r1')]);
+    } finally {
+      warn.mockRestore();
+    }
+
+    // As in REVAL, the fix waits on the demoted S1.
+    expect((await holdings(U1)).refusals).toEqual([
+      expect.objectContaining({ row_id: 's1', reason: 'invalid_payload', payload: null }),
+      expect.objectContaining({ row_id: 't2', reason: 'family_refused', blocker_row_id: 's1' }),
+    ]);
+    expect(await holdings(U2)).toEqual(before);
+  });
+
+  it('U1’s moved blocker is written to U1’s waiting S1 only; U2’s S1 keeps its own', async () => {
+    await waitingRename(U1);
+    await pushAs(U1, [T('t5', 'r1', true)]);
+    await waitingRename(U2);
+    const before = await holdings(U2);
+
+    await pushAs(U1, [T('t2', 'r1')]);
+
+    expect((await holdings(U1)).refusals).toEqual([
+      expect.objectContaining({
+        row_id: 's1',
+        reason: 'family_refused',
+        blocker_table: 'shots',
+        blocker_row_id: 't5',
+      }),
+      expect.objectContaining({ row_id: 't2', reason: 'family_refused', blocker_row_id: 't5' }),
+      expect.objectContaining({ row_id: 't5', reason: 'invalid_payload' }),
+    ]);
+    expect(await holdings(U2)).toEqual(before);
+  });
+});
+
 describe('DISCARD a tombstone of the blocker releases the family', () => {
   it('B tombstones T2, which only A ever held; S1’s waiting rows are applied', async () => {
     await push([S(), R('r1')]);
