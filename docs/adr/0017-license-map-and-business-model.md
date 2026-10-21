@@ -153,9 +153,7 @@ intellectual creation" (Directive 2009/24/EC art. 1(3), _Infopaq_, _Painer_),
 and Digg states the Swedish reading: "Upphovsrätt kan enbart uppstå för verk
 som skapats av människor." A defendant copying the backend can argue that no
 copyright subsists in the agent-written expression, and then neither ELv2 nor
-AGPL has anything to bite on. Anthropic's terms assign the customer "its
-right, title and interest (if any)" in outputs — "if any" is the operative
-phrase.
+AGPL has anything to bite on.
 
 So the licenses are notice and posture; the moat is operational:
 
@@ -199,4 +197,3 @@ So the licenses are notice and posture; the moat is operational:
   <https://www.digg.se/ai-for-offentlig-forvaltning/riktlinjer-for-generativ-ai/bedom-upphovsratten-vid-anvandningen-av-generativ-ai>
 - Hugenholtz & Quintais, _Copyright and Artificial Creation_ (IViR):
   <https://www.ivir.nl/publicaties/download/AI-Copyright.pdf>
-- Anthropic's terms: <https://www.anthropic.com/legal>
