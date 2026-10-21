@@ -1150,12 +1150,12 @@ rewrites only the blockers that change.
 **Against D1's production limits**, as `sync-push-atomicity-spec.md` §9 and
 its Revisions cite them:
 
-| Limit                                                       | This design                                                                                                                                                                         |
-| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Queries per Worker invocation: 50 on the Free plan          | The maintainer decided that a batch is one call to D1, and that the design must hold on the Free plan. Each attempt is at most 5 reads plus 1 batch, so four attempts make 24 calls |
-| 100 bound parameters per statement                          | about 15 at most; lists are one JSON parameter                                                                                                                                      |
-| 30 s for "the entire batch call"                            | today's 2,000-statement batch took 200–299 ms locally. The build records BUDGET: a 500-change push that also releases 2,000 waiting rows                                            |
-| Row, string or bound-value size (2 MB, to confirm at build) | a payload is at most `MAX_PAYLOAD_BYTES` (16 KiB). A release key list is about 70 bytes a row, so about 28,000 rows. A session family is a few hundred rows                         |
+| Limit                                                       | This design                                                                                                                                                                                                                                                                                                 |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Queries per Worker invocation: 50 on the Free plan          | The maintainer decided that a batch is one call to D1, and that the design must hold on the Free plan. Each attempt is at most 5 reads plus 1 batch, so four attempts make 24 calls                                                                                                                         |
+| 100 bound parameters per statement                          | about 15 at most; lists are one JSON parameter                                                                                                                                                                                                                                                              |
+| 30 s for "the entire batch call"                            | today's 2,000-statement batch took 200–299 ms locally. The build records BUDGET: a 500-change push that also releases 2,000 waiting rows                                                                                                                                                                    |
+| Row, string or bound-value size (2 MB, to confirm at build) | a payload is at most `MAX_PAYLOAD_BYTES` (16 KiB). The longest bound string is the walk's seed list, which every push binds: about 34 characters per record of the user, so about 59,000 records, past which every push fails, a fix included (Revision 4, item 14). A session family is a few hundred rows |
 
 The build re-reads Cloudflare's D1 limits page, and records each figure in
 the evidence with the date it was read. The page could not be fetched while
@@ -1766,7 +1766,14 @@ QUERY PLAN` in the evidence). The judge lists a blocker only when it
       user id create that user's row (`backend/test/dev-account.ts`), as
       better-auth's session lookup needs it in the Worker.
 
-  13. **An ack's delete spares a later mark (round 5, V5-8).** §11.6 said
+  13. **The 2 MB string ceiling is the walk's seed list, on every push
+      (round 6, E6-1).** §11.8's limits table named the release key list.
+      The longest string a push binds is the walk's seed list, every
+      record of the user and its parent, which every push binds, a fix
+      included. At about 34 characters a record, D1's 2 MB string limit is
+      about 59,000 records; past it every push of the account would fail.
+
+  14. **An ack's delete spares a later mark (round 5, V5-8).** §11.6 said
       `applied` and `tombstoned` delete the row's mark. The build deletes
       it only up to the ack's arrival, and keeps a mark that arrived after
       the acked change. The text now says what the build does. That is
