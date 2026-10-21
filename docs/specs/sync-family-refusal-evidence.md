@@ -16,14 +16,17 @@ the 8 small corrections the rebuild made to the #856 spec (Revision 4)?"),
 and items 9–12, round 5's fixes, with the maintainer's "Fix, check again"
 the same day, answering "Fix the round-5 findings in #856 as proposed, then
 run a sixth independent check?". Both are recorded in the spec (`cdc4571`,
-then items 10–12 as they were built).
+then items 10–12 as they were built). Items 13 and 14, round 6's fixes,
+with the maintainer's "Fix, check again" on 2026-10-21, answering "Fix the
+round-6 findings in #856, then run a seventh independent check?", recorded
+in `1c78d79`.
 
 - **Source state:** the head of `feature/856-sync-family-refusal` that this
-  report is committed in. Source and tests last changed at `a0af247`; the
-  commit after it is this report.
-- **Independent verification: failed, round 5, at `27d3c0b`.** Round 5's
+  report is committed in. Source and tests last changed at `6b9227e`; the
+  commits after it are docs only.
+- **Independent verification: failed, round 6, at `969d0c4`.** Round 6's
   findings are fixed in the commits listed under Independent verification,
-  which no verifier has seen. Round 6 is approved and pending.
+  which no verifier has seen. Round 7 is approved and pending.
 - **Toolchain:** Node 24.21.0, pnpm 12.11.2, vitest 5.0.3,
   `@cloudflare/vitest-plugin` 1.4.0 (backend), Stryker 10.0.0 with the vitest
   runner, fast-check 4.10.2, jest-expo (app), expo-sqlite 57.0.3. No
@@ -54,39 +57,40 @@ running the shared engine against the real Worker), **JT**
 through the Worker and D1), **WA** `web/src/account/account.test.ts` (the
 web's Account page, rendered).
 
-| Scenario                         | Tests                                                                                                                                            |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| F1–F3, F5–F8, F10 (§4, standing) | FR `F…` describes; `shared/src/sync/family.test.ts` (`familyRefusals`)                                                                           |
-| F4, F9 (revised)                 | FR F4, F9 (the replay's ack carries `arrival`, `blocker`, `current`)                                                                             |
-| F11                              | FR F11; `shared/src/sync/family.test.ts` edge pins; `family.property.test.ts`                                                                    |
-| H1′, H3′                         | FR H1′; SC H1′; EN H1′                                                                                                                           |
-| H2′                              | FR H2′ (one batch, own arrivals, new seqs); SC H2′; EN H2′                                                                                       |
-| H4, H5, H6 (standing)            | SC H4, H5, H6                                                                                                                                    |
-| H7′, ROOT, DISCARD               | FR H7′, ROOT, DISCARD; ST H7′ ROOT DISCARD (foreign keys off, as in production) and the pin with them on                                         |
-| H8′, H10′, H13′                  | FR H8′, H10′, H13′                                                                                                                               |
-| H9′                              | SC H9′; EN H9′ (600 entries, a 500 batch: the outbox drains)                                                                                     |
-| H11′                             | ST H11′ (the counts survive a restart); CT H11′                                                                                                  |
-| H12 (standing)                   | FR H12                                                                                                                                           |
-| V1, X5, X7, X8, X9, X10          | FR V1, X5, X7, X8, X9; SC X10; JT X8, X9, X10                                                                                                    |
-| X1, X1b                          | SC X1, X1b                                                                                                                                       |
-| AB, VC, REV1, REV3, L1, I3       | SC AB, VC, REV1, REV3, L1, I3; EN AB, VC, REV3; FR AB, L1                                                                                        |
-| ECHO                             | SC ECHO (two pushes, Revision 4 item 3); EN ECHO; SH ECHO; ST ECHO (real engine)                                                                 |
-| FRESH, STUCK                     | SC FRESH, STUCK; EN FRESH, STUCK; ST FRESH; FR STUCK; WP (the web's list); WA (the web page's two counts)                                        |
-| V5-1, V5-2 (Revision 4 item 9)   | SC V5-1 (a fresh device; a signed-out one), V5-2; EN and SH V5-1 (only an own mark shadows; the pull keeps `own` at the listed arrival); ST V5-1 |
-| REV2, DUP                        | FR REV2, DUP; EN REV2, DUP; ST DUP                                                                                                               |
-| REV6                             | FR REV6 (T3 of R2, Revision 4 item 4); JT REV6                                                                                                   |
-| RELEASEFAIL                      | FR RELEASEFAIL (a failure at each statement of the release batch leaves nothing)                                                                 |
-| TOMBROOT, GAP, MOVEIN, OWN, FIRE | FR and JT, by id                                                                                                                                 |
-| REVAL                            | FR REVAL (T2 waits on T1, Revision 4 item 1; the log line names table and columns); JT REVAL                                                     |
-| FIRST, CONC                      | FR FIRST (two, one paused at the guard); FR CONC (five: the guard's message, the retry, four attempts, no fifth, the 503)                        |
-| SNAP (§11.8's read order)        | FR SNAP: another push committed just before the `state_rev` read is seen by every later read; the read-order mutant                              |
-| ACCT, GONE (item 11)             | AC ACCT (the dry run counts `syncRefusals`; no `sync_*` row of the user is left); FR GONE (a push paused across the deletion writes nothing)     |
-| BUDGET (and item 10)             | FR BUDGET: the 500-change push, and the 1,000–10,000 row curve; figures below                                                                    |
-| I1, I2                           | JP I1, I2, the stored-blocker property and the release property (300 runs each); FP (seed 856, 100 runs, through the Worker and D1)              |
-| I3                               | SC I3, one fixed interleaving of two devices; no generated sequence (Known limits)                                                               |
-| Pull: `arrival`, `refusals`      | FR pull describe; WP refusals of the last response                                                                                               |
-| Both counts, phone and web       | `shared/src/sync-client/status.test.ts`; CT; `app/src/features/account/account-screen.test.tsx`; `countMarks` in SH; WP; the screenshot below    |
-| Release order on ties            | JT "orders ties by code unit…" and "orders a tie by table before id" (Revision 4 item 8)                                                         |
+| Scenario                         | Tests                                                                                                                                                                                                                                                                                               |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F1–F3, F5–F8, F10 (§4, standing) | FR `F…` describes; `shared/src/sync/family.test.ts` (`familyRefusals`)                                                                                                                                                                                                                              |
+| F4, F9 (revised)                 | FR F4, F9 (the replay's ack carries `arrival`, `blocker`, `current`)                                                                                                                                                                                                                                |
+| F11                              | FR F11; `shared/src/sync/family.test.ts` edge pins; `family.property.test.ts`                                                                                                                                                                                                                       |
+| H1′, H3′                         | FR H1′; SC H1′; EN H1′                                                                                                                                                                                                                                                                              |
+| H2′                              | FR H2′ (one batch, own arrivals, new seqs); SC H2′; EN H2′                                                                                                                                                                                                                                          |
+| H4, H5, H6 (standing)            | SC H4, H5, H6                                                                                                                                                                                                                                                                                       |
+| H7′, ROOT, DISCARD               | FR H7′, ROOT, DISCARD; ST H7′ ROOT DISCARD (foreign keys off, as in production) and the pin with them on                                                                                                                                                                                            |
+| H8′, H10′, H13′                  | FR H8′, H10′, H13′                                                                                                                                                                                                                                                                                  |
+| H9′                              | SC H9′; EN H9′ (600 entries, a 500 batch: the outbox drains)                                                                                                                                                                                                                                        |
+| H11′                             | ST H11′ (the counts survive a restart); CT H11′                                                                                                                                                                                                                                                     |
+| H12 (standing)                   | FR H12                                                                                                                                                                                                                                                                                              |
+| V1, X5, X7, X8, X9, X10          | FR V1, X5, X7, X8, X9; SC X10; JT X8, X9, X10                                                                                                                                                                                                                                                       |
+| X1, X1b                          | SC X1, X1b                                                                                                                                                                                                                                                                                          |
+| AB, VC, REV1, REV3, L1, I3       | SC AB, VC, REV1, REV3, L1, I3; EN AB, VC, REV3; FR AB, L1                                                                                                                                                                                                                                           |
+| ECHO                             | SC ECHO (two pushes, Revision 4 item 3); EN ECHO; SH ECHO; ST ECHO (real engine)                                                                                                                                                                                                                    |
+| FRESH, STUCK                     | SC FRESH, STUCK; EN FRESH, STUCK; ST FRESH; FR STUCK; WP (the web's list); WA (the web page's two counts)                                                                                                                                                                                           |
+| V5-1, V5-2 (Revision 4 item 9)   | SC V5-1 (a fresh device; a signed-out one), V5-2; EN and SH V5-1 (only an own mark shadows; the pull keeps `own` at the listed arrival); ST V5-1                                                                                                                                                    |
+| REV2, DUP                        | FR REV2, DUP; EN REV2, DUP; ST DUP                                                                                                                                                                                                                                                                  |
+| REV6                             | FR REV6 (T3 of R2, Revision 4 item 4); JT REV6                                                                                                                                                                                                                                                      |
+| RELEASEFAIL                      | FR RELEASEFAIL (a failure at each statement of the release batch leaves nothing)                                                                                                                                                                                                                    |
+| TOMBROOT, GAP, MOVEIN, OWN, FIRE | FR and JT, by id                                                                                                                                                                                                                                                                                    |
+| REVAL                            | FR REVAL (T2 waits on T1, Revision 4 item 1; the log line names table and columns); JT REVAL                                                                                                                                                                                                        |
+| FIRST, CONC                      | FR FIRST (two, one paused at the guard); FR CONC (five: the guard's message, the retry, four attempts, no fifth, the 503)                                                                                                                                                                           |
+| SNAP (§11.8's read order)        | FR SNAP: another push committed just before the `state_rev` read is seen by every later read; the read-order mutant                                                                                                                                                                                 |
+| ACCT, GONE (items 11, 13)        | AC ACCT (the dry run counts `syncRefusals`; no `sync_*` row of the user is left); FR GONE (a push paused across the deletion writes nothing; V6-1: a push judged again after its guard failed, and one whose first read follows the deletion, answer 401, write nothing and leave the user deleted) |
+| TENANT (round 6, V6-2)           | FR TENANT (two accounts holding S1: U1's release, demotion and moved blocker leave U2's records and rows unchanged)                                                                                                                                                                                 |
+| BUDGET (and item 10)             | FR BUDGET: the 500-change push, and the 1,000–10,000 row curve; figures below                                                                                                                                                                                                                       |
+| I1, I2                           | JP I1, I2, the stored-blocker property and the release property (300 runs each); FP (seed 856, 100 runs, through the Worker and D1)                                                                                                                                                                 |
+| I3                               | SC I3, one fixed interleaving of two devices; no generated sequence (Known limits)                                                                                                                                                                                                                  |
+| Pull: `arrival`, `refusals`      | FR pull describe; WP refusals of the last response                                                                                                                                                                                                                                                  |
+| Both counts, phone and web       | `shared/src/sync-client/status.test.ts`; CT; `app/src/features/account/account-screen.test.tsx`; `countMarks` in SH; WP; the screenshot below                                                                                                                                                       |
+| Release order on ties            | JT "orders ties by code unit…" and "orders a tie by table before id" (Revision 4 item 8)                                                                                                                                                                                                            |
 
 ## Must NOT
 
@@ -153,14 +157,14 @@ primed scenarios above:
 
 ## Gauntlet
 
-All figures are from one fresh run after the last code change (`a0af247`).
+All figures are from one fresh run after the last code change (`6b9227e`).
 
 | Layer                                     | Command                                                                                                                                             | Result                                                                                                                                                                                                                     |
 | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Full suite, types, lint, format, coverage | `pnpm check`                                                                                                                                        | exit 0: types (root, backend tests, app, web), export schema, i18n (1,541 keys each, 0 issues), licenses (98 packages), lint, format; vitest 253 files, 4,584 tests, coverage thresholds met; jest 112 suites, 1,071 tests |
-| Backend, shuffled                         | `cd backend && npx vitest run --sequence.shuffle --testTimeout=60000`                                                                               | 31 files, 345 tests, seed `1792527869226`                                                                                                                                                                                  |
+| Backend, shuffled                         | `cd backend && npx vitest run --sequence.shuffle --testTimeout=60000`                                                                               | in order and shuffled: 31 files, 350 tests each; seed `1792619457895`                                                                                                                                                      |
 | Mutation, shared (tool)                   | `npx stryker run --mutate '…'` (entry point above)                                                                                                  | 96.57% (break 95): 616 killed, 4 timeouts, 16 survived, 6 no coverage; 98.10% without `schema.ts`. judge 95.75%, family 95.83%, protocol, merge and every `sync-client` file 100%                                          |
-| Mutation, workerd and the store (manual)  | `node scripts/manual-mutation-sync-push.mjs`                                                                                                        | 59/59 killed, exit 0; both baselines pass                                                                                                                                                                                  |
+| Mutation, workerd and the store (manual)  | `node scripts/manual-mutation-sync-push.mjs`                                                                                                        | 64/64 killed, exit 0; both baselines pass                                                                                                                                                                                  |
 | Properties                                | JP: I1, I2, the stored blocker and the release property, 300 runs each; FP, seed 856, 100 runs through the Worker and D1; `family.property.test.ts` | JP and `family.property` in `pnpm check`; FP in the backend run                                                                                                                                                            |
 | Query plans                               | `EXPLAIN QUERY PLAN` of every statement a push prepares, in workerd's D1 (below)                                                                    | every list is scanned once; every record is reached by primary key                                                                                                                                                         |
 | Docs                                      | `mkdocs build --strict`, `node scripts/docs-translation-check.mjs`, `node scripts/docs-anchor-check.mjs`, `prettier --check docs`                   | all four exit 0: mkdocs strict build clean; 29 translated pages current; no dangling anchors; prettier clean                                                                                                               |
@@ -206,7 +210,7 @@ lines, and the set is the one round 5 classified:
   a string or number payload gives `undefined`, so the owner is still null
   (the same survivor as in rounds 1–3).
 
-**The manual mutants.** 59 mutants over `backend/src/db/queries.ts`,
+**The manual mutants.** 64 mutants over `backend/src/db/queries.ts`,
 `backend/src/routes/sync.ts` and `app/src/db/queries/sync-store.ts`: the
 seq and row writes, the verdict reaching the batch, the guard and its
 retries, the records following each push, the release (order, skips,
@@ -214,7 +218,9 @@ retries, the records following each push, the release (order, skips,
 `blocker`, the pull's `refusals`, the N6 log lines, and the phone's marks
 (pull replace, ack update, the ack transaction, `current` through the
 shadow rules, sign-out and restore resets, `own` read back), the snapshot's
-read order, the release's join, and the guard against a deleted account.
+read order, the release's join, the guard against a deleted account (its
+user row and its sequence row), and the user filter of the demotion, the
+blocker rewrite, the release's read and the release/inert delete.
 The script fails closed on a
 pattern that does not match exactly once, a file that does not restore, a
 run that fails without a failing test, and any survivor.
@@ -249,6 +255,14 @@ How it got there, in order:
    the table alone (`ab5a583`); and the guard's two halves for a deleted
    account (`956b4b4`). The blocker rewrite's mutant moved to the new
    statement. Each was seen killed by hand before the run.
+5. Round 6 (five more): the guard without its account check (V6-1,
+   `18ec411`, killed by both new GONE tests), and the user filter dropped
+   from the demotion, the blocker rewrite, the release's join and the
+   release/inert delete (V6-2, `6b9227e`). The verifier found the first,
+   third and fourth of those filters surviving the whole suite, and the
+   join killed only by BUDGET's time bound; each is now killed by a TENANT
+   test, seen by hand before the run. The sequence-row mutant's pattern
+   follows the guard's new parenthesis.
 
 **Stryker, in order.** The first run scored `judge.ts` 94.42% (235 killed and 2 timed out of 251).
 Three survivors were real: the code-unit tie order (`binary`'s `<=` and its
@@ -341,18 +355,26 @@ before the final `pnpm check`.
 
 ## Known limits
 
-- **Round 5's fixes are unverified**: round 6 is approved and pending.
+- **Round 6's fixes are unverified**: round 7 is approved and pending.
 - **I3 is not a generated property.** §11.10 asks for generated two-device
   sequences converging; SC I3 is one fixed interleaving (round 5, E-2).
   FP generates single-writer push sequences against D1 and checks I1 and
   I2, not convergence.
 - **A device's own version of a waiting row** is shown only on that device
   until the release (Revision 4 item 9). Every other device, the web, and
-  this device after a sign-out, restore or reinstall show the stored
-  version, and the counts everywhere (the manual says so).
-- **A first push racing an account deletion** still creates the user's
-  sequence row (`?2` = 0 is the only case the guard cannot tell apart); a
-  push judged from an existing row cannot (GONE).
+  this device after a reinstall show the stored version, and the counts
+  everywhere. After a sign-out or a restore this device shows the stored
+  version of every row the server stores, but a new row the server only
+  holds back stays on it, since sign-out keeps the logbook and a restore
+  keeps the backup's (round 6, D-1; the manual says so).
+- **An account deletion and a push:** a push whose batch commits before
+  the deletion's is deleted with the account; any later attempt, first or
+  retried, is refused with 401 (items 11 and 13, GONE). No push recreates a
+  deleted account.
+- **About 59,000 records per account:** the walk's seed list, which every
+  push binds, passes D1's 2 MB string limit there, and every push of that
+  account, a fix included, would fail (round 6, E6-1). Far beyond a real
+  account; no test reaches it.
 - **The production `PRAGMA foreign_keys` read** in a dev build was not
   made (Revision 4 item 6).
 - **The Discard action is a follow-up** (Q2): a refusal no edit can fix
@@ -364,14 +386,50 @@ before the final `pnpm check`.
   unchanged by Revision 3.
 - **BUDGET runs on workerd's local D1**, not production; its wall times
   are local figures. The curve's shape, not its milliseconds, is the claim.
-- **The screenshots are from round 4's build** (`27d3c0b`). Round 5
-  changed no screen: the Account & Sync lines and the web's Sync card read
+- **The screenshots are from round 4's build** (`27d3c0b`). Rounds 5
+  and 6 changed no screen: the Account & Sync lines and the web's Sync card read
   the same counts, now pinned by WA for the web.
 
 ## Independent verification
 
-**Failed: round 5, at `27d3c0b`.** No verifier has seen the round-5 fixes.
-Round 6 is approved by the maintainer (2026-10-20) and pending.
+**Failed: round 6, at `969d0c4`.** No verifier has seen the round-6 fixes.
+Round 7 is approved by the maintainer (2026-10-21) and pending.
+
+### Round 6, at `969d0c4`
+
+- **Verifier:** a fresh-context Claude agent, blind first, with experiments
+  in a scratch copy; it read this report only after its blind record.
+- **Attacked:** the gauntlet (`pnpm check`, backend in order and shuffled,
+  manual mutants 59/59, scoped Stryker with the same 11 equivalent
+  `judge.ts` survivors); the spec against the contract; 16 shared
+  mutants, 12 backend mutants and 9 mutants of the D1 replay of its own;
+  SNAP, the `>=` release skip, BUDGET's ability to fail; the mapping both
+  ways; this report against its blind numbers.
+- **Findings and resolutions:**
+  - **V6-1 (behavioural, low likelihood):** a push whose first guard
+    failed, judged again after the account was deleted, read `state_rev` 0
+    and recreated the account: 200, 3 rows for the deleted user. Resolved
+    by item 13 (`18ec411`): the guard also refuses when the user row is
+    gone, on every attempt; GONE gains the race (nested pauses at the D1
+    calls) and a push whose first read follows the deletion, both seen
+    answering 200 before the fix. The dev-bearer specs now create the
+    user's row (`3ebd56d`), as better-auth's session lookup needs it.
+  - **V6-2 (a gate that could not fail):** the user filter of the
+    demotion, the blocker rewrite and the release/inert delete could be
+    dropped with the suite green. TENANT (`6b9227e`) and four manual
+    mutants, the release's join included. No code change.
+  - **D-1 (description):** the manual said a signed-out phone shows the
+    stored session; a new row the server only holds back stays on it. The
+    manual (en, sv) corrected (`75c9156`), and Known limits with it.
+  - **E6-1 (this report and the spec):** the 2 MB string ceiling was
+    attributed to the release list; it is the walk's seed list, on every
+    push. Corrected here and in §11.8, item 14 (`f0234ae`).
+  - Observations, no change: the replay property has no moves, replays or
+    concurrency (the example tests cover them); `sync-protocol-spec.md` §2
+    is historical.
+- **Fixed after the last verified state, therefore unverified:**
+  `3ebd56d`, `18ec411`, `6b9227e` (with `1c78d79`, `75c9156`, `f0234ae`
+  and this report, docs only); round 7 pending.
 
 ### Round 5, at `27d3c0b`
 
