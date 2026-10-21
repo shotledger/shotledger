@@ -5,8 +5,7 @@ Status: accepted (2026-09-30). Supersedes ADR 0004. Amended by ADR 0021
 ADR 0023 (accepted 2026-10-19): the copyright holder also offers commercial
 licenses (dual licensing).
 
-Not legal advice. The sources at the end were read in full; a lawyer's review
-is still owed, and it and the other open actions are tracked on #100.
+Not legal advice. The sources at the end were read in full.
 
 ## Context
 
@@ -166,9 +165,6 @@ So the licenses are notice and posture; the moat is operational:
   abuse per account instead of authenticating the binary; Play Integrity /
   App Attest are a later hardening option, never a precondition for sync;
 - server-side model weights are never published;
-- the **ShotLedger** trademark, to be registered (PRV / EUIPO) — unaffected by
-  authorship and the one instrument that stops someone else selling
-  "ShotLedger sync";
 - the design record — ADRs, `docs/specs/*-spec.md`, the implementation plan
   and the human review trail in git — which is what evidences human
   conception and redaction if copyright is ever contested. Keep writing it.
@@ -203,4 +199,4 @@ So the licenses are notice and posture; the moat is operational:
   <https://www.digg.se/ai-for-offentlig-forvaltning/riktlinjer-for-generativ-ai/bedom-upphovsratten-vid-anvandningen-av-generativ-ai>
 - Hugenholtz & Quintais, _Copyright and Artificial Creation_ (IViR):
   <https://www.ivir.nl/publicaties/download/AI-Copyright.pdf>
-- Anthropic Commercial Terms: <https://www.anthropic.com/legal/commercial-terms>
+- Anthropic's terms: <https://www.anthropic.com/legal>
