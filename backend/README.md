@@ -1,7 +1,7 @@
 # `backend/` — optional account, sync and photo backup
 
 A Cloudflare Worker written with Hono. It is the server half of the opt-in
-sync described in ADR 0003; the app never needs it. Storage is D1 (SQLite)
+sync described in ARCHITECTURE.md § Sync; the app never needs it. Storage is D1 (SQLite)
 for rows and R2 for photos; accounts are email and password through
 `better-auth`. The wire protocol and merge rules are shared with the app
 from [`../shared/src/sync`](../shared/README.md).

@@ -1,6 +1,6 @@
 # Config for the reqstool-ai Claude Code plugin (reqstool@reqstool-ai).
 # The plugin's skills and /reqstool:* commands read this; the reqstool CLI and
-# the CI gate do not — those read docs/reqstool/reqstool_config.yml. See ADR 0015.
+# the CI gate do not — those read docs/reqstool/reqstool_config.yml. See docs/reqstool/README.md.
 #
 # One dataset, no modules: shared/, backend/ and app/ are one deliverable app,
 # not separately released artifacts, so there is nothing to import or filter

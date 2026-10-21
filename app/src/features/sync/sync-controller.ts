@@ -1,5 +1,5 @@
 // The single sync loop (docs/specs/sync-app-spec.md §7). Module-level, so
-// ADR 0003's "no concurrent independent loops" is enforced by there being
+// The sync guardrail "no concurrent independent loops" (ARCHITECTURE.md § Sync) is enforced by there being
 // exactly one; every trigger funnels through requestSync().
 import {
   classifySyncError,

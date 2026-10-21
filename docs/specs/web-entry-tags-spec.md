@@ -4,7 +4,7 @@
 > `docs/specs/web-series-entry-spec.md`, whose C4 left tags out) and the web
 > bulk edit (#674, `docs/specs/web-bulk-edit-spec.md`, which already writes
 > tag links). Evidence report: `docs/specs/web-entry-tags-evidence.md`.
-> Decision record: ADR 0019.
+> Decision record: ARCHITECTURE.md § Web app.
 >
 > **Approval status: NOT approved — written and built in one autonomous run;
 > the key choices are listed in the PR for the maintainer.** C3 was decided
@@ -31,7 +31,7 @@
 
 ## 1. Settled inputs (not re-asked)
 
-1. ADR 0019: push whole rows through `/sync/push`, online only, no outbox. A
+1. ARCHITECTURE.md § Web app: push whole rows through `/sync/push`, online only, no outbox. A
    tag name is not unique on disk; readers resolve a name to its canonical
    tag, the live one with the smallest id (`shared/src/tags/canonical.ts`).
 2. #669 C2: one Save is one push request; Retry resends the identical request

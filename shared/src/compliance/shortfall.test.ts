@@ -267,7 +267,7 @@ it('Q1-Q3: the shortfall agrees with computeFirearmCriterion', () => {
 
 /**
  * Top-level, so reqstool can match this testcase back to its annotation — see
- * the convention in ADR 0015.
+ * the convention in docs/reqstool/README.md.
  *
  * @SVCs SVC_COMPL_004
  */

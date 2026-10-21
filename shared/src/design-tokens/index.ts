@@ -1,6 +1,6 @@
 // ShotLedger's design tokens: colour, data-viz, spacing, radius and type.
 // Pure TypeScript with no React Native import, so the app (`app/src/theme`)
-// and the web (`web/src/theme.ts`, ADR 0013) read the one object.
+// and the web (`web/src/theme.ts`, ARCHITECTURE.md § Web app) read the one object.
 // `app/DESIGN.md` documents them; `tokens.test.ts` asserts every contrast
 // pair the system draws.
 

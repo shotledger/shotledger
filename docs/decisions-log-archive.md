@@ -1,10 +1,11 @@
 # Decisions log archive
 
 Every decision `plan.md` recorded from 2026-08-31 through the file's
-retirement, verbatim. Kept so nothing narrower than an ADR — a specific
+retirement, verbatim. Kept so nothing narrower than `ARCHITECTURE.md` — a specific
 bug's root cause, a library pick, a wording call — is lost when
 `plan.md` goes away. Decisions substantial enough to need their own
-rationale document are ADRs in `docs/adr/`; this file is everything else.
+rationale are in `ARCHITECTURE.md` and `REGULATIONS.md`; this file is
+everything else.
 
 This is a historical record, not a task list — nothing here is open
 work. Open work lives in the topic issues #346–#355.

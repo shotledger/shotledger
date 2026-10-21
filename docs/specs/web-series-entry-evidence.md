@@ -121,7 +121,7 @@ string only the looser regex admits is one `new Date` rejects, probed:
 `12026-10-07`, `x2026-10-07`, `2026-10-071`). The fifth, in the shared module:
 `firstDisciplineFor`'s `(…)?.id` → `(…).id`. `disciplinesForRegulations`
 never returns an empty list, because the generic disciplines survive every
-filter (ADR 0011), so `available[0]` is always defined. The line moved
+filter (REGULATIONS.md § Regelverk), so `available[0]` is always defined. The line moved
 verbatim from the phone.
 
 The fresh run of this round has those same five (`firstDisciplineFor`'s
@@ -210,7 +210,7 @@ R12). A difference in how expo-sqlite binds a value would not show here.
   rather than failing; how each screen shows that has not been checked on a
   device. Two phones share this; it is not new with the web.
 - The firearm counter can be overwritten by a phone that edited the same
-  firearm offline (C1, ADR 0019 consequences).
+  firearm offline (C1, ARCHITECTURE.md § Web app, races).
 - Edit and delete of a saved session stay on the phone (C5, #692).
 - The preselected klass is kept when the discipline changes, so a
   competition under an ISSF discipline (no klass picker) stores the klass
@@ -264,7 +264,7 @@ The maintainer asked for every finding of the full review of #669 to be fixed
 - **R20:** a 5xx/408/429 from get-session is a network failure (tests in
   `http/current-user.test.ts`; the first draft of that test passed vacuously,
   because `classifySyncError(null)` is `network` — it now asserts a throw).
-- **R24:** documented in ADR 0019. The finding's premise that a slow browser
+- **R24:** documented in ARCHITECTURE.md § Web app. The finding's premise that a slow browser
   clock makes a phone discard the update is not how the protocol works: the
   winner is decided by server order (R3), so the clock only shows as an edit
   time. The overwrite race is the real cost, and is what the ADR records.

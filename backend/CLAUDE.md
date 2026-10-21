@@ -3,7 +3,7 @@
 Rules that apply everywhere are in the root `AGENTS.md`.
 
 - **Never deploy.** `wrangler deploy` is forbidden for an agent.
-- `wrangler dev` serves the web app from `../web/dist` (ADR 0013) and will
+- `wrangler dev` serves the web app from `../web/dist` (ARCHITECTURE.md § Web app) and will
   not start until it exists: `pnpm --filter @shotledger/web build` first. The
   tests do not need it.
 - `pnpm test` (in `backend/`) runs the Cloudflare Workers vitest suite. It

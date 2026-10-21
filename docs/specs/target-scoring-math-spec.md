@@ -1,6 +1,6 @@
 # Target-scoring math — executable specification
 
-> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) ([ADR 0018](../adr/0018-cv-tools-in-typescript.md)). The record below is as written.
+> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) ([ARCHITECTURE.md § Photo scoring](../../ARCHITECTURE.md#photo-scoring-computer-vision)). The record below is as written.
 
 > Old-coder SPEC artifact for the CV-spike math port (photo target scoring,
 > mathematics only).

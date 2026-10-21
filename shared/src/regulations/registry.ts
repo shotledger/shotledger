@@ -1,4 +1,4 @@
-// Regelverk — the rule sets a shooter competes under (ADR 0011).
+// Regelverk — the rule sets a shooter competes under (REGULATIONS.md § Regelverk).
 //
 // A Swedish pistol shooter is not under one set of rules. SPSF
 // (Svenska Pistolskytteförbundet) and SvSF (Svenska Skyttesportförbundet) are

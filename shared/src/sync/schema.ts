@@ -382,7 +382,7 @@ export const sightSettings = sqliteTable('sight_settings', {
 
 // Not unique by name: two devices can create the same name offline, and a
 // unique index would fail the second one's pull. Readers resolve a name to
-// its earliest live tag (shared/src/tags/canonical.ts, ADR 0019).
+// its earliest live tag (shared/src/tags/canonical.ts, ARCHITECTURE.md § Web app).
 export const tags = sqliteTable(
   'tags',
   {
@@ -421,7 +421,7 @@ export const settings = sqliteTable('settings', {
 // ---------------------------------------------------------------------------
 
 // Written by AFTER INSERT/UPDATE triggers on the 14 synced tables, so the
-// enqueue happens inside the caller's transaction (ADR 0003 guardrail) with
+// enqueue happens inside the caller's transaction (ARCHITECTURE.md § Sync guardrail) with
 // no query module having to remember it. Triggers live in 0000_baseline.sql.
 export const syncOutbox = sqliteTable(
   'sync_outbox',

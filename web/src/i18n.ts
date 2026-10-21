@@ -1,4 +1,4 @@
-// The app's own strings (ADR 0013: imported, not restated).
+// The app's own strings (ARCHITECTURE.md § Web app: imported, not restated).
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 

@@ -6,7 +6,7 @@ paths:
   - '.reqstool-ai.yaml'
 ---
 
-# reqstool (ADR 0015)
+# reqstool (docs/reqstool/README.md)
 
 CI runs `pnpm reqstool:tags` then `pnpm reqstool:status` after `pnpm check`;
 `--check-all-reqs-met` fails the build on a requirement with no
@@ -26,8 +26,8 @@ Adding a requirement, **in the same branch as the change**:
   reporters emit only the leaf. A nested or digit-initial tagged test fails
   loudly (`automated test missing`).
 
-ADR 0015 sets what belongs in `requirements.yml` versus `docs/reference/`,
-`docs/specs/` and an ADR — read it before the first requirement in a new
+docs/reqstool/README.md sets what belongs in `requirements.yml` versus `docs/reference/`,
+`docs/specs/` and `ARCHITECTURE.md` — read it before the first requirement in a new
 area. The **reqstool-ai** plugin's `reqstool-conventions` skill carries the
 annotation and decomposition conventions; `.reqstool-ai.yaml` configures it
 and `.mcp.json` wires the `reqstool mcp` server.

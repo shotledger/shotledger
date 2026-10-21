@@ -1,7 +1,7 @@
 # Sync backend overview
 
-Cloudflare Worker (Hono) implementing the server side of ADR 0003's DIY
-changelog sync protocol, plus the account (better-auth) and photo (R2)
+Cloudflare Worker (Hono) implementing the server side of the DIY
+changelog sync protocol (ARCHITECTURE.md § Sync), plus the account (better-auth) and photo (R2)
 layers on top of it. Full design rationale and the evidence-first gauntlet
 results live in `docs/specs/sync-protocol-spec.md` +
 `docs/specs/sync-protocol-evidence.md` (sync) and
@@ -43,7 +43,7 @@ backend/src/
   db/photo-queries.ts      upload/delete quota-transactional D1 batch queries
   config.ts               MAX_PHOTO_BYTES / DEFAULT_QUOTA_BYTES /
                            RATE_LIMIT_MAX_UPLOADS / RATE_LIMIT_WINDOW_MS
-                           (VERIFY: ADR 0003 "Photo policy" initial values)
+                           (VERIFY: ARCHITECTURE.md § Sync "Photo policy" initial values)
   lib/quota.ts             pure quota math (old-coder scope)
   lib/rate-limit.ts        pure rate-limit math + RateLimiter interface
                             (old-coder scope)
@@ -68,7 +68,7 @@ backend/migrations/0002_photos_init.sql  photos/quota/rate-limit tables DDL
 - **Server-assigned sequence number (`seq`)**, not client timestamps, is
   the sole ordering signal — both for merge conflict resolution
   (tombstone-wins + LWW) and for pull cursor pagination. See spec §2a for
-  why this reads as a deviation from one ADR 0003 bullet and why it is the
+  why this reads as a deviation from one ARCHITECTURE.md § Sync bullet and why it is the
   position taken.
 - **`/sync` runs behind real better-auth.** `backend/src/index.ts` mounts
   it with `betterAuthAuthenticator`, like `/photos`, `/account` and

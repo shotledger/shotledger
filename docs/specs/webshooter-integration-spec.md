@@ -3,8 +3,8 @@
 > Execution spec for implementing agents, in the style of
 > [`docs/implementation-plan.md`](../implementation-plan.md): says _exactly
 > how_, not just what and why. If a task here is ambiguous or contradicts
-> `docs/reference/spsf-shb-2026.md`, `docs/implementation-plan.md`, or an
-> accepted ADR, **STOP and ask** — do not improvise product decisions. Rules
+> `docs/reference/spsf-shb-2026.md`, `docs/implementation-plan.md`, or
+> `ARCHITECTURE.md`, **STOP and ask** — do not improvise product decisions. Rules
 > 0.1–0.6 of `docs/implementation-plan.md` (branch-per-task, DCO-signed
 > Conventional Commits, `pnpm check` green, no undeclared dependencies, no
 > schema change without a Drizzle migration, `VERIFY:` items confirmed
@@ -132,7 +132,7 @@ persisted.
 **The Webshooter access token is never a DB row.** It is entered by the
 user and stored in `expo-secure-store` (device keychain), keyed
 per-device. It is explicitly excluded from any future cloud-sync payload
-(ADR 0001 local-first sync) — this is a hard rule, not a default to
+(ARCHITECTURE.md § Local-first local-first sync) — this is a hard rule, not a default to
 revisit: the `settings` table (`key`/`value` JSON) is a sync boundary
 candidate, the token store is not.
 

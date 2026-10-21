@@ -1,6 +1,6 @@
 # CV spike — photo target scoring (v2)
 
-> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) ([ADR 0018](../adr/0018-cv-tools-in-typescript.md)). The record below is as written.
+> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) ([ARCHITECTURE.md § Photo scoring](../../ARCHITECTURE.md#photo-scoring-computer-vision)). The record below is as written.
 
 **Branch:** `spike/cv-target-scoring` · **Prototype:** `spike/cv/` (retired)
 · **Date:** 2026-09-01 · **Status:** spike complete, findings only — nothing
@@ -320,7 +320,7 @@ What can be said:
 
 1. **All on-device.** Nothing about this pipeline needs a server, and the
    photos are of a user's own range sessions. Consistent with the
-   local-first stance in ADR 0001.
+   local-first stance in ARCHITECTURE.md § Local-first.
 2. **Classical geometry stage** (find face → identify → deskew → refine to
    a 4 px/mm canvas), ported from this prototype.
 3. **Learned hole stage** on the rectified canvas, trained on corrections
@@ -415,7 +415,7 @@ worst error in this spike.
 
 Ship-photos-to-nothing, as intended. Nothing in the above needs a server:
 OpenCV runs in-process, the model file is bundled, and inference is local.
-Consistent with ADR 0001. The one thing to be deliberate about is the
+Consistent with ARCHITECTURE.md § Local-first. The one thing to be deliberate about is the
 opt-in corrections corpus in §4.3 — that _is_ photo upload, and it must be
 explicit, off by default, and separable from the scoring feature itself.
 

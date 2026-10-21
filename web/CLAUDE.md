@@ -1,8 +1,8 @@
 # web/ — the web app
 
-ADR 0013: a separate complement over `/sync/pull`, served same-origin by the
+ARCHITECTURE.md § Web app: a separate complement over `/sync/pull`, served same-origin by the
 Worker, keeping nothing after the tab closes (the session token is in
-`sessionStorage`, the rows in memory). ADR 0019: it writes only by pushing
+`sessionStorage`, the rows in memory). ARCHITECTURE.md § Web app: it writes only by pushing
 whole rows through `/sync/push`, online, with no outbox. The writers are
 `src/entry/` (series and fält), `src/settings/` (the synced settings),
 `src/bulk/` (bulk edit) and `src/edit/` (one session's edit and delete); all

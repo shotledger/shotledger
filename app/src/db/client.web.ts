@@ -1,6 +1,6 @@
 // Web DB connection: expo-sqlite's WASM build in a worker, persisted in the
 // browser's origin-private file system (OPFS). Needs `web.output` other
-// than `static` plus the COOP/COEP headers set in metro.config.js — ADR 0012.
+// than `static` plus the COOP/COEP headers set in metro.config.js — ARCHITECTURE.md § Web preview.
 //
 // Unlike client.ts this cannot open synchronously at import time: a cold
 // worker takes longer to fetch its chunk and compile the WASM than the sync
@@ -23,7 +23,9 @@ export async function openWebDatabase(): Promise<void> {
   // The sync channel spins on SharedArrayBuffer, which browsers expose only
   // to cross-origin isolated pages (COOP/COEP headers on the document).
   if (typeof SharedArrayBuffer === 'undefined') {
-    throw new Error('Page is not cross-origin isolated (COOP/COEP headers missing) — ADR 0012');
+    throw new Error(
+      'Page is not cross-origin isolated (COOP/COEP headers missing) — ARCHITECTURE.md § Web preview',
+    );
   }
   connection ??= await openDatabaseAsync(DATABASE_FILENAME, { enableChangeListener: false });
 }

@@ -9,8 +9,11 @@ sync. Android first — **all code must stay iOS-compatible**.
 - `app/PRODUCT.md` — what and why: users, positioning, operating
   context, capabilities/constraints, product principles. Update it in
   the same branch as a change that shifts one of these.
-- `docs/architecture.md` — the tech-choice table and iOS-readiness
-  rules, at a glance.
+- `ARCHITECTURE.md` — how the app is built and why: stack, local-first,
+  sync, web app, external sites, OTA updates, photo scoring, iOS
+  readiness, and what was rejected.
+- `REGULATIONS.md` — how rule books become code: regelverk and adoption,
+  scoring models, requirement traceability.
 - `LICENSE`, `CONTRIBUTING.md`, `CLA.md` — the license map (`app/` and
   `shared/` AGPL-3.0-or-later with the §7 permissions, `backend/` ELv2)
   and the terms contributions arrive under. ADR 0017 records why; ADR 0023
@@ -26,8 +29,10 @@ sync. Android first — **all code must stay iOS-compatible**.
   with links to its rule books. Every value carries a section/page
   citation; the source wins over the file. The `spsf-domain` skill
   summarizes the hard SPSF rules.
-- `docs/adr/` — architecture decision records. Add one when changing an
-  architectural decision; never silently contradict an accepted ADR.
+- **Decisions live in those files, not in decision records.** A change
+  that alters a decision updates `ARCHITECTURE.md` or `REGULATIONS.md` in
+  the same branch, including what it rejects; git keeps the history. Never
+  silently contradict either file.
 - `.claude/skills/old-coder/` — evidence-first development loop. **Mandatory
   for changes to `shared/scoring/`, `shared/compliance/` and the sync
   engine**: the maintainer does not read that code line by line;
@@ -84,7 +89,7 @@ sync. Android first — **all code must stay iOS-compatible**.
    v2, a shim or a "read both shapes" path for data only this machine has
    produced. This governs **new** compatibility work; it is not a license
    to rip out tolerance that already ships. The rule ends at the first
-   released build with other users, and the ADR that declares it says so.
+   released build with other users.
 9. **English (US)** for identifiers, filenames, i18n keys and English
    strings and comments (`license`, `caliber`, `center`). Swedish strings
    in `sv.json` and Swedish prose in `docs/reference/` are unaffected.

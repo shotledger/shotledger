@@ -1,7 +1,7 @@
 import type { ClientChange, SyncTableName } from './protocol';
 
 /**
- * Pure merge rules (ADR 0003, spec §3). No I/O, no clock reads — the only
+ * Pure merge rules (ARCHITECTURE.md § Sync, spec §3). No I/O, no clock reads — the only
  * ordering input is the server-assigned `seq` the caller provides.
  */
 

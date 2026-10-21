@@ -2,7 +2,7 @@
 
 > Old-coder SPEC for layer 3 of #301 (web write paths). Evidence report, once
 > written: `docs/specs/web-settings-edit-evidence.md`. Decision record:
-> ADR 0019 (web writes by pushing rows through `/sync/push`; settings sync
+> ARCHITECTURE.md § Web app (web writes by pushing rows through `/sync/push`; settings sync
 > per user for an allowlist of five keys). Builds on layer 2 (#669, the web
 > write client, `docs/specs/web-series-entry-spec.md`).
 >
@@ -30,7 +30,7 @@
 
 ## 1. Settled inputs (not re-asked)
 
-1. ADR 0019: the web pushes whole changed rows through `/sync/push`, online
+1. ARCHITECTURE.md § Web app: the web pushes whole changed rows through `/sync/push`, online
    only; no browser database, no outbox. A synced setting is one row whose id
    is the key; `value` is the stored JSON text; a setting is never tombstoned.
 2. `SYNCED_SETTING_KEYS` = `birthYear`, `skillClass`,
@@ -57,7 +57,7 @@ differs from the value the page opened with. Each changed key is one
 now, deleted_at: null }`, `created_at` kept from the pulled row (now when
 there is none), exactly what the phone's `setSetting` writes. A key the user
 did not touch is not pushed, so a phone's concurrent edit of another key
-survives. Two devices editing the same key: the later push wins (ADR 0019).
+survives. Two devices editing the same key: the later push wins (ARCHITECTURE.md § Web app).
 No re-pull before Save: a settings row has nothing to merge, so a fresh pull
 would not change what is pushed.
 

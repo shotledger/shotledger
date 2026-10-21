@@ -1,4 +1,4 @@
-// Settings → External Sites (ADR 0010): enabling a site is a preference and
+// Settings → External Sites (ARCHITECTURE.md § External sites): enabling a site is a preference and
 // connecting to it is a credential, so both live here rather than in Tools,
 // which is for using them.
 import { PROVIDERS } from '@shotledger/shared/src/integrations/providers/registry';

@@ -1,4 +1,4 @@
-// Same-origin calls to the Worker (ADR 0013). The token lives in
+// Same-origin calls to the Worker (ARCHITECTURE.md § Web app). The token lives in
 // sessionStorage, so it goes when the tab does, and a sign-in here asks not
 // to be remembered, so the server ends it after a few hours as well.
 import {
@@ -158,7 +158,7 @@ export function loadTables(only: readonly WebTable[]): Promise<PulledTables> {
   return pullAll(transport, PROTOCOL_VERSION, undefined, only);
 }
 
-/** One request, never retried here (ADR 0019); Retry is the user's. */
+/** One request, never retried here (ARCHITECTURE.md § Web app); Retry is the user's. */
 export function pushRows(changes: readonly ClientChange[]): Promise<PushOutcome> {
   return pushChanges(transport, PROTOCOL_VERSION, changes);
 }

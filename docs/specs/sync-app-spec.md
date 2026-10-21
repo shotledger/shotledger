@@ -1,7 +1,7 @@
 # Sync client (app side) — executable specification
 
 > Old-coder SPEC artifact for the ShotLedger v2 **client** sync engine,
-> accounts, and photo upload (ADR 0003).
+> accounts, and photo upload (ARCHITECTURE.md § Sync).
 > Absolute path: `/home/jimisola/cloud/dev/clones/jimisola/github/mobile-app/docs/specs/sync-app-spec.md`
 > Evidence report: `docs/specs/sync-app-evidence.md`.
 >
@@ -100,7 +100,7 @@ alone works**, and the reasoning is the load-bearing design decision here:
   reaches quiescence. Any fix requires marking applied rows, i.e. extra
   per-row state, i.e. the thing an outbox already is.
 - A hand-written outbox enqueue in every write path would mean editing
-  ~30 modules under `app/src/db/queries/`, and ADR 0003's guardrail —
+  ~30 modules under `app/src/db/queries/`, and the sync guardrail (ARCHITECTURE.md § Sync) —
   "local write + outbox enqueue happen in ONE SQLite transaction" — would
   then rest on 30 separate call sites each remembering to do it. The first
   forgotten one is silent data loss.
@@ -458,7 +458,7 @@ D1, real better-auth, in-process) — the end-to-end requirement:
 - **One local write can be pushed twice as two changes** if it is edited
   again mid-push. Both are accepted; the later `seq` wins. Correct, slightly
   chatty.
-- **No conflict UI.** LWW is resolved silently, per ADR 0003 ("one user, two
+- **No conflict UI.** LWW is resolved silently, per ARCHITECTURE.md § Sync ("one user, two
   devices, LWW-per-row: the hard part doesn't exist here").
 - **Photo download is best-effort**: a pulled `series.photo_uri` points at a
   file that exists only on the origin device until the download queue

@@ -1,4 +1,4 @@
-// One external site's features (ADR 0010). Reached from Tools, which shows
+// One external site's features (ARCHITECTURE.md § External sites). Reached from Tools, which shows
 // a single row per enabled site; everything that site can do lives here
 // rather than on the Tools screen itself.
 //
@@ -44,7 +44,7 @@ export default function ExternalSiteScreen() {
           it is rather than relying on the nav bar alone. */}
       <ScreenTitle>{provider.displayName}</ScreenTitle>
 
-      {/* The one screen where ADR 0010's two halves have to meet: the site is
+      {/* The one screen where two halves of ARCHITECTURE.md § External sites have to meet: the site is
           enabled here, but signing in happens in Settings. Saying "not
           connected" without a way there left the user to know, unaided, that
           the fix lives in another tab. */}

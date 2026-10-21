@@ -3,7 +3,7 @@
 TypeScript tools for the app's photo-scoring CV: they run the app's own locks
 and hole proposals on real photos, render the grids holes are marked on, fit
 the hole models, and write the lock-step fixtures. They began as the Python
-spike in `spike/cv/`, which [ADR 0018](../../docs/adr/0018-cv-tools-in-typescript.md)
+spike in `spike/cv/`, which [ARCHITECTURE.md § Photo scoring](../../ARCHITECTURE.md#photo-scoring-computer-vision)
 retired.
 
 Everything runs from the repo root on Node. OpenCV calls go through OpenCV.js
@@ -226,7 +226,7 @@ node tools/cv/fit/fit-hole-filter.mts --stage tight a.csv --test b.csv
 
 The stages run large-kernel morphology, which OpenCV.js does single-threaded:
 about 17 s a photo. On the 2026-09-16 marks the hole filter's fit
-reproduces the shipped table only on the spike's own canvases; ADR 0018
+reproduces the shipped table only on the spike's own canvases; ARCHITECTURE.md § Photo scoring
 says why.
 
 **3. The hole proposals** (`HOLE_PROPOSAL_WEIGHTS` in
@@ -254,7 +254,7 @@ pnpm cv:fixtures
 rewrites `hole-features.fixtures.json`, `hole-proposals.fixtures.json` and
 `closeup-lock.fixtures.json` from the TypeScript, on synthetic crops and
 canvases only. They are **snapshots**: they pin the TypeScript to its own past
-output, not to an independent implementation (ADR 0018). Regenerate after a
+output, not to an independent implementation (ARCHITECTURE.md § Photo scoring). Regenerate after a
 deliberate change to the CV code, and review the diff together with an `eval/`
 run on real photos before and after.
 

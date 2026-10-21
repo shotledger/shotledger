@@ -8,7 +8,7 @@
 > Old-coder SPEC for #689, a follow-up to the web series entry of #669
 > (`docs/specs/web-series-entry-spec.md`, whose C1–C9 and R1–R28 this layer
 > inherits unchanged). Evidence report: `docs/specs/web-rounds-final-evidence.md`.
-> Decision record: ADR 0019 (web writes push whole rows through `/sync/push`).
+> Decision record: ARCHITECTURE.md § Web app (web writes push whole rows through `/sync/push`).
 >
 > **Approval status: NOT approved — written and built in one autonomous run;
 > the key choices are listed in the PR for the maintainer.**
@@ -28,7 +28,7 @@
 
 ## 1. Settled inputs (not re-asked)
 
-1. ADR 0019 and #669 C1–C9 as approved: one Save is one push, Retry resends
+1. ARCHITECTURE.md § Web app and #669 C1–C9 as approved: one Save is one push, Retry resends
    the held request, a held request is bound to its account (R13, R14, R22),
    the firearm is pulled afresh just before the build (C1), `startedAt` must
    be in `toISOString`'s shape (R28).
@@ -236,15 +236,15 @@ Sessions page show it; refuse `2.5` rounds.
 
 ## 7. Failure model
 
-| Failure                           | Effect                                         | Guard                     |
-| --------------------------------- | ---------------------------------------------- | ------------------------- |
-| bad Rounds Fired text             | nothing sent, the field's error shown          | C4, RO2, RO4              |
-| firearm tombstoned elsewhere      | session saved, counter not moved, said so      | #669 W3, unchanged path   |
-| a phone moved the counter offline | last write wins on the firearm row             | ADR 0019, #669 C1 (as is) |
-| lost response                     | request held, Retry resends it                 | #669 C2, R13, unchanged   |
-| a final where none is offered     | build throws → `failed: unknown`, nothing sent | FS3, R18                  |
-| a final with nothing shot         | the final is not saved                         | FS5                       |
-| a final with no main round        | nothing sent, the error shown                  | FS6                       |
+| Failure                           | Effect                                         | Guard                                      |
+| --------------------------------- | ---------------------------------------------- | ------------------------------------------ |
+| bad Rounds Fired text             | nothing sent, the field's error shown          | C4, RO2, RO4                               |
+| firearm tombstoned elsewhere      | session saved, counter not moved, said so      | #669 W3, unchanged path                    |
+| a phone moved the counter offline | last write wins on the firearm row             | ARCHITECTURE.md § Web app, #669 C1 (as is) |
+| lost response                     | request held, Retry resends it                 | #669 C2, R13, unchanged                    |
+| a final where none is offered     | build throws → `failed: unknown`, nothing sent | FS3, R18                                   |
+| a final with nothing shot         | the final is not saved                         | FS5                                        |
+| a final with no main round        | nothing sent, the error shown                  | FS6                                        |
 
 ## 8. Questions for the maintainer
 

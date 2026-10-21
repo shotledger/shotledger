@@ -55,7 +55,7 @@ check` (typecheck + lint + unit tests) green, the relevant checkbox in
 │       ├── disciplines/  discipline definitions + JSON schema (§6.2)
 │       ├── compliance/   FAP 551-3 license-activity logic (§6.6)
 │       └── csv/          export/import (§6.8)
-├── docs/             this file, ADRs (docs/adr/NNN-title.md)
+├── docs/             this file, specs, rule-book references, the manual
 └── .github/workflows/ci.yml
 ```
 
@@ -81,7 +81,7 @@ check` (typecheck + lint + unit tests) green, the relevant checkbox in
 | Notifications | expo-notifications (local only in v1)                 | license/maintenance reminders                                                                              |
 | PDF           | expo-print (HTML → PDF)                               | Session Report                                                                                             |
 | E2E           | Maestro                                               | flows in `app/e2e/`, named by user journey (#864); the milestone reports below cite their old `mN-*` names |
-| OTA updates   | expo-updates (EAS Update)                             | JS-only updates per release; ADR 0020                                                                      |
+| OTA updates   | expo-updates (EAS Update)                             | JS-only updates per release; ARCHITECTURE.md § Over-the-air updates                                        |
 
 ## 3. Database schema (v1 — write exactly this, as Drizzle tables)
 
@@ -242,9 +242,9 @@ sight_settings  firearm_id FK NOT NULL,
 
 tags            name TEXT NOT NULL      -- not unique: readers resolve a
                                         -- name to its earliest live tag
-                                        -- (ADR 0019)
+                                        -- (ARCHITECTURE.md § Web app)
 session_tags    session_id FK, tag_id FK  -- one synced row per link; the
-                                        -- pair is not unique (ADR 0019)
+                                        -- pair is not unique (ARCHITECTURE.md § Web app)
 
 settings        value TEXT NOT NULL     -- JSON values; id = the key. Only
                                         -- SYNCED_SETTING_KEYS sync
@@ -299,7 +299,7 @@ expo-router/entry`); running `expo prebuild` itself is deferred
   (`Worker chunk not found for: .../expo-sqlite/web/worker.ts`); shipped
   native-first with a `client.web.ts`/`migration-gate.web.tsx` fallback (`db`
   is `null` on web) so `expo start --web` keeps booting — see M1 report for
-  detail. Revisited in ADR 0012 (`web.output: "single"`, OPFS-backed
+  detail. Revisited in ARCHITECTURE.md § Web preview (`web.output: "single"`, OPFS-backed
   connection on web). The `/dev` route itself isn't reachable in the web preview yet: the
   M0 root layout renders only `NativeTabs` (index/explore triggers), which
   has no host for non-tab routes — pre-existing scaffold gap, not new to M1;
@@ -833,7 +833,7 @@ shoots three faces, so program groups carry their own face (§6.3).
 disciplines via PR once public.
 
 - [x] **`scoring: 'hits'` and the fältskjutning definition** (#315,
-      ADR 0016). `targetFace` is rings-only — a fält round is shot
+      REGULATIONS.md § Scoring models). `targetFace` is rings-only — a fält round is shot
       against Del D's figure catalogue, not one face — and `spsf-falt`
       carries SHB's vapengrupper A, A optisk, B, C, R. The result model
       is `shared/src/scoring/falt.ts` (spec:
@@ -1252,7 +1252,7 @@ restates §0 rules 1–6 verbatim.
 > `docs/specs/backend-auth-photos-*`, `docs/specs/sync-app-*`. No new
 > dependency was added on the app side. The `VERIFY:` in
 > `sync-protocol-spec.md` §1 about `settings` and `session_tags` was resolved
-> on 2026-10-06 (ADR 0019): both sync, `settings` for an allowlist only.
+> on 2026-10-06 (ARCHITECTURE.md § Web app): both sync, `settings` for an allowlist only.
 >
 > **The server now refuses a row a device could not apply** (#697, spec and
 > evidence: `docs/specs/sync-payload-validation-*`). `/sync/push` checks each

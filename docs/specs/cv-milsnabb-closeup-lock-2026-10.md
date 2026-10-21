@@ -1,6 +1,6 @@
 # Close-up lock on the milsnabb face — measurement, 2026-10
 
-> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) ([ADR 0018](../adr/0018-cv-tools-in-typescript.md)). The record below is as written.
+> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) ([ARCHITECTURE.md § Photo scoring](../../ARCHITECTURE.md#photo-scoring-computer-vision)). The record below is as written.
 
 Issue #347, "Automatic geometry for the milsnabb face". Reference
 implementation: the `MILSNABB` ring model in `spike/cv/closeup_lock.py`;
@@ -203,7 +203,7 @@ a sibling of `closeup-lock.ts` that reuses its centre vote, polar ridge,
 ellipse and robust homography. Evaluation:
 `tools/cv/eval/milsnabb.eval.ts`, which runs the app's TypeScript in
 Node on 2048 px greyscale PGMs (ImageMagick, as `tools/cv/eval/prep.sh`).
-There is no Python twin: the TypeScript is the reference (ADR 0018).
+There is no Python twin: the TypeScript is the reference (ARCHITECTURE.md § Photo scoring).
 
 **Verdict: the bar holds for the milsnabb lock, and it is wired in.** It
 locks 23 of 37 real photos (9/15 close-ups, 13/21 whole targets with a card)

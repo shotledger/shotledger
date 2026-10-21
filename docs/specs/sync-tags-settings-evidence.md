@@ -74,5 +74,5 @@
 table>` only.
 - Add-wins: an untag on one device does not remove a link another device
   made concurrently without having seen it (E4). This is by design.
-- Same-name tag copies stay on disk until a later merge edit (ADR 0019).
+- Same-name tag copies stay on disk until a later merge edit (ARCHITECTURE.md § Web app).
 - The web tag-filter control and the web guldserie tile are not built.

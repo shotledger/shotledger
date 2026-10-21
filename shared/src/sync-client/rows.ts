@@ -1,6 +1,6 @@
 // Whole-row payloads for the rows the web creates
 // (docs/specs/web-series-entry-spec.md §3.2). A push replaces the whole row
-// (ADR 0019), so every column of the app's table is present, with the values
+// (ARCHITECTURE.md § Web app), so every column of the app's table is present, with the values
 // the app's own createSession / addSeries / addShot write. Keys are the
 // app's column names; app/src/db/queries/web-rows.test.ts holds them to
 // shared/src/sync/schema.ts.

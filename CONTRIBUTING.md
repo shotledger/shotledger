@@ -19,7 +19,7 @@ folder, and apply to human contributors just as much. Running the app is in
 | [`shared/`](shared/README.md)     | Pure TypeScript with no React Native imports: scoring, disciplines and regulations, compliance, exports, sync protocol. Used by the app and the backend.                                                                                        |
 | [`backend/`](backend/README.md)   | Optional Cloudflare Worker for account, sync and photo backup. Never deployed from this repo by an agent.                                                                                                                                       |
 | `web/`                            | The web app (Vite + React), served by the Worker: reads synced data and writes only through sync push, on par with the phone. `web/CLAUDE.md` has the rules.                                                                                    |
-| `docs/`                           | Architecture, ADRs, the implementation plan, verified rule-book references, evidence-first specs, release checklist, and the user manual.                                                                                                       |
+| `docs/`                           | Sync backend notes, the implementation plan, verified rule-book references, evidence-first specs, release checklist, and the user manual.                                                                                                       |
 | `docs/manual/`                    | The **user** manual (EN + SV), published with MkDocs from `mkdocs.yml`. Gated by `mkdocs build --strict` and the translation-freshness script.                                                                                                  |
 | `scripts/`                        | Repo gates and generators run by `pnpm check` and by hand — see below.                                                                                                                                                                          |
 | `patches/`                        | pnpm patches for two dependencies, each with its reason in `pnpm-workspace.yaml`.                                                                                                                                                               |
@@ -105,7 +105,7 @@ a flow's screens; it costs far more Actions minutes than `check`.
 | `manual-mutation-web-edit.mjs`                      | by hand                                        | Manual mutants for the web session edit, including its phone twin tests.                                |
 | `manual-mutation-web-bulk.mjs`                      | by hand                                        | Manual mutants for the web bulk edit, including its phone twin tests.                                   |
 | `mutate-volume.mjs`                                 | by hand                                        | Manual mutants for the app side of the one volume rule, which is outside Stryker's scope.               |
-| `reqstool-stem.js`                                  | the test runners                               | The test-name prefix reqstool matches JUnit results against (ADR 0015).                                 |
+| `reqstool-stem.js`                                  | the test runners                               | The test-name prefix reqstool matches JUnit results against (docs/reqstool/README.md).                  |
 | `i18n-check-negative-control.mjs`                   | by hand                                        | Proves the i18n gate can still fail (mutates the JSON, expects a nonzero exit, restores it).            |
 
 #### Mutation testing
@@ -159,9 +159,9 @@ much.
 ### Reading order
 
 1. [`app/PRODUCT.md`](app/PRODUCT.md) — what and why.
-2. [`docs/architecture.md`](docs/architecture.md) — the tech choices and
-   the iOS-readiness rules.
-3. [`docs/adr/`](docs/adr/) — the decisions behind them.
+2. [`ARCHITECTURE.md`](ARCHITECTURE.md) — how it is built, why, and what
+   was rejected.
+3. [`REGULATIONS.md`](REGULATIONS.md) — how rule books become code.
 4. [`docs/implementation-plan.md`](docs/implementation-plan.md) — the
    execution spec, milestone by milestone.
 5. [Open issues](https://github.com/shotledger/shotledger/issues) — what is

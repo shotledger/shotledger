@@ -144,7 +144,7 @@ export default tseslint.config(
     },
   },
   {
-    // web: the read-only browser app (ADR 0013), React DOM.
+    // web: the read-only browser app (ARCHITECTURE.md § Web app), React DOM.
     files: ['web/**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks },
     languageOptions: { globals: globals.browser },
@@ -188,7 +188,7 @@ export default tseslint.config(
     // Node-run tooling scripts and jest mocks (not bundled by Metro).
     files: [
       'scripts/**/*.mjs',
-      // CommonJS because app/jest.config.js has to require it (ADR 0015).
+      // CommonJS because app/jest.config.js has to require it (docs/reqstool/README.md).
       'scripts/reqstool-stem.js',
       'app/scripts/**/*.js',
       'app/plugins/**/*.js',

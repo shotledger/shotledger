@@ -46,7 +46,7 @@ Sync is opt-in and the app is fully functional without it, so these steps
 are only needed before a build that should offer accounts. `wrangler
 deploy` is forbidden to agents; every command below is the maintainer's.
 
-One Worker serves both the sync API and the read-only web app (ADR 0013):
+One Worker serves both the sync API and the read-only web app (ARCHITECTURE.md § Web app):
 `wrangler deploy` uploads `web/dist` as its static assets. There are two
 deployed environments in `backend/wrangler.jsonc`, `staging` and
 `production`, each with its own D1 database and R2 bucket. The top level of
@@ -211,7 +211,7 @@ Every release:
 
 ## Over-the-air JS updates (EAS Update)
 
-ADR 0020. A JS-only fix can reach installed EAS builds without a new
+ARCHITECTURE.md § Over-the-air updates. A JS-only fix can reach installed EAS builds without a new
 build. Anything that touches native code (a new or bumped native
 dependency, `app.json` plugins or permissions) still needs a release.
 

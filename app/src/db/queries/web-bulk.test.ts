@@ -141,7 +141,7 @@ function seed(db: Database): Ids {
   const gone = createTag(db, 'Gone');
   addSessionTag(db, s2, gone.id);
   softDeleteTag(db, gone.id);
-  // A second KM, as two devices create one offline (ADR 0019).
+  // A second KM, as two devices create one offline (ARCHITECTURE.md § Web app).
   addSessionTag(db, s4, createTag(db, 'KM').id);
   return { sessions: [s1, s2, s3, s4, s5], f1, f2, f3 };
 }

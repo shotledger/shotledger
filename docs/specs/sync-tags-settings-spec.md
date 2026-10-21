@@ -2,7 +2,7 @@
 
 > Old-coder SPEC for layer 1 of #301 (web write paths). Evidence report, once
 > written: `docs/specs/sync-tags-settings-evidence.md`. Decision record:
-> `docs/adr/0019-web-writes-through-sync-push.md`.
+> `ARCHITECTURE.md`.
 >
 > **Approval status: Approved 2026-10-06 by the maintainer (relayed by the
 > orchestrator session), with revision 1 (tag-name uniqueness folded in).**
@@ -23,8 +23,8 @@
 
 1. The web app writes by pushing changed rows through the existing
    `/sync/push`, online only: no browser database, no browser outbox, the
-   same per-row last-write-wins as a second phone. ADR 0019 records it and
-   supersedes ADR 0013's "never writes".
+   same per-row last-write-wins as a second phone. ARCHITECTURE.md § Web app records it and
+   supersedes the web app's earlier "never writes".
 2. `session_tags` syncs: it gains `id`/`created_at`/`updated_at`/`deleted_at`
    (UUIDv7 id), joins `SYNC_TABLE_NAMES`, and gets outbox triggers. The DB
    baseline is **reset**, not migrated (hard rule 8).
@@ -179,7 +179,7 @@ App query layer on top of it:
   the rows on disk; a later layer may, by repointing links and tombstoning
   the copy, like an ammo-lot merge.
 
-### 2.7 How the later web write layers map onto pushed rows (for ADR 0019)
+### 2.7 How the later web write layers map onto pushed rows (for ARCHITECTURE.md § Web app)
 
 | Web action                       | Rows pushed                                                                                                                  |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -190,7 +190,7 @@ App query layer on top of it:
 | Edit account/compliance settings | One `settings` row per changed allowlisted key, deterministic id = key, `value` JSON text                                    |
 | Keyboard series entry            | New `sessions`, `series`, `shots` rows (fresh UUIDv7 ids) in one push, parents first                                         |
 
-Rules the web writer will follow (recorded in ADR 0019, built in later
+Rules the web writer will follow (recorded in ARCHITECTURE.md § Web app, built in later
 layers): pull first, edit the pulled payload and push the **whole** row
 (a push replaces the row; there is no field-level patch); one push request
 per user action where it fits `PUSH_BATCH_MAX`, parents before children;
@@ -362,9 +362,9 @@ table>)` and `DELETE FROM <synced table>`, with a negative control. It
 
 ## 5. Docs that change in this PR
 
-- `docs/adr/0019-web-writes-through-sync-push.md` (new).
-- `docs/adr/0013-…`: status line becomes "accepted (2026-10-06);
-  its 'the web app never writes' stance is superseded by ADR 0019", and the
+- `ARCHITECTURE.md` (new).
+- `ARCHITECTURE.md`: status line becomes "accepted (2026-10-06);
+  its 'the web app never writes' stance is superseded by ARCHITECTURE.md § Web app", and the
   never-writes consequence bullet is edited in place to point at 0019 (ADR
   0015's pre-1.0 rule: edit in place, the replacement says "Supersedes").
   Architecture B itself stays accepted.

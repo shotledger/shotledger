@@ -33,7 +33,7 @@ import { listSessions } from '@/db/queries/sessions';
 import { listTags } from '@/db/queries/tags';
 
 // The filter state, period resolution and report composition are shared with
-// the web app (ADR 0013); re-exported so the screens' imports stay put.
+// the web app (ARCHITECTURE.md § Web app); re-exported so the screens' imports stay put.
 export {
   buildDistribution,
   decodeAnalyticsFilter,

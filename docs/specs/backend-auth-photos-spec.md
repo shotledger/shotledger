@@ -1,6 +1,6 @@
 # Backend auth + photos — executable specification
 
-> Old-coder SPEC artifact for the ShotLedger account + photo layer (ADR 0003).
+> Old-coder SPEC artifact for the ShotLedger account + photo layer (ARCHITECTURE.md § Sync).
 > Absolute path: `/home/jimisola/cloud/dev/clones/jimisola/github/mobile-app/docs/specs/backend-auth-photos-spec.md`
 > Evidence report: `docs/specs/backend-auth-photos-evidence.md`.
 >
@@ -165,7 +165,7 @@ createAuth(c.env).handler(c.req.raw))` — better-auth's own handler serves
 ## 4. Config constants (`backend/src/config.ts`)
 
 ```ts
-// VERIFY: initial values per docs/adr/0003-diy-changelog-sync.md "Photo
+// VERIFY: initial values per ARCHITECTURE.md "Photo
 // policy" section — maintainer-approved starting point, not derived from
 // measurement. Revisit if real usage data contradicts them.
 export const MAX_PHOTO_BYTES = 1_500_000; // ADR: "max object size (~1.5 MB)"

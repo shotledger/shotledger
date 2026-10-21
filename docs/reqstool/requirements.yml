@@ -3,7 +3,7 @@
 # The rules ShotLedger implements that a reader could otherwise only verify by
 # reading the code. A requirement earns a place here when getting it wrong
 # would mislead a shooter about a score, a märke, a licence renewal or their
-# own data — not for every function that exists. See ADR 0015.
+# own data — not for every function that exists. See docs/reqstool/README.md.
 #
 # A requirement is added in the same branch as the change that implements it,
 # the way the manual is (Definition of done). `revision` is the requirement's
@@ -297,7 +297,7 @@ requirements:
       regelverk that is no longer enabled.
     rationale: >-
       A shooter under ISSF alone is not offered SvSF's open snabbpistol class
-      (ADR 0011). But switching a regelverk off must not blank out a session
+      (REGULATIONS.md § Regelverk). But switching a regelverk off must not blank out a session
       already logged under it.
     categories:
       - functional-suitability

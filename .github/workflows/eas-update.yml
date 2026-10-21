@@ -2,7 +2,7 @@
 name: EAS Update
 
 # Publishes a JS-only over-the-air update to installed EAS builds of one
-# release (ADR 0020, docs/release.md "Over-the-air JS updates").
+# release (ARCHITECTURE.md § Over-the-air updates, docs/release.md "Over-the-air JS updates").
 #
 #   resolve version -> checks -> [approval] -> eas update on the channel
 #

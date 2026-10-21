@@ -6,7 +6,7 @@
 > maintenance log.
 
 > Old-coder SPEC for layer 2 of #301 (web write paths). Evidence report, once
-> written: `docs/specs/web-series-entry-evidence.md`. Decision record: ADR 0019
+> written: `docs/specs/web-series-entry-evidence.md`. Decision record: ARCHITECTURE.md § Web app
 > (web writes by pushing rows through `/sync/push`; accepted, merged with
 > layer 1 in #647).
 >
@@ -43,7 +43,7 @@
 
 1. The web app writes by pushing changed rows through the existing
    `/sync/push`, online only. No browser database, no outbox, the same per-row
-   last-write-wins as a second phone (ADR 0019).
+   last-write-wins as a second phone (ARCHITECTURE.md § Web app).
 2. This layer must not depend on layer 1: only tables already in
    `SYNC_TABLE_NAMES`. (Layer 1, #647, has since merged; the maintainer's C6
    change of 2026-10-08 makes this layer read its `settings` rows.)
@@ -63,7 +63,7 @@ firearm's row with both counters plus N. To keep the overwrite window small,
 the web pulls `firearms` again immediately before it builds the push. A phone
 that edited the same firearm offline can still overwrite the web's increment,
 or the web the phone's. That is the same race two phones already have
-(ADR 0019's consequences).
+(ARCHITECTURE.md § Web app, races).
 _Alternative:_ leave the counter alone and say so in the manual. I do not
 recommend it: it makes the round counter drift silently.
 
@@ -410,7 +410,7 @@ Appended by the session that took the work over (2026-10-07). None loosens a
 constraint; each needs the maintainer's OK, since the approval above was
 relayed rather than first-hand.
 
-- **R1 (text only).** "Not in scope", C6, the ADR 0019 pointer, the
+- **R1 (text only).** "Not in scope", C6, the ARCHITECTURE.md § Web app pointer, the
   isolation line and the screenshot location are made true for current main:
   layer 1 (#647) has merged and `session_tags` and `settings` sync. As
   first written this layer read neither, ranking events against an empty
@@ -511,7 +511,7 @@ Added after the full PR review of #669 (maintainer: fix all findings):
   R14's check stays as the second line. `reauth.ts` joins the gates.
 - **R23.** The form is disabled while a save is in flight, so what is shown is
   what was sent.
-- **R24 (documented, ADR 0019).** The firearm row carries the browser clock in
+- **R24 (documented, ARCHITECTURE.md § Web app).** The firearm row carries the browser clock in
   `updated_at`. Server order decides the winner, not that timestamp; the cost
   is the overwrite race with a phone between pull and push.
 - **R25.** `submitRequest` stays as the seam U7 tests the page's submit wiring

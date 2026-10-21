@@ -1,6 +1,6 @@
 # Backend auth + photos — evidence report
 
-> Old-coder EVIDENCE artifact for the ShotLedger account + photo layer (ADR 0003).
+> Old-coder EVIDENCE artifact for the ShotLedger account + photo layer (ARCHITECTURE.md § Sync).
 > Absolute path: `/home/jimisola/cloud/dev/clones/jimisola/github/mobile-app/docs/specs/backend-auth-photos-evidence.md`
 > Spec: `/home/jimisola/cloud/dev/clones/jimisola/github/mobile-app/docs/specs/backend-auth-photos-spec.md`
 

@@ -82,7 +82,7 @@ function makeFirearm() {
 
 /**
  * Top-level, so reqstool can match this testcase back to its annotation — see
- * the convention in ADR 0015.
+ * the convention in docs/reqstool/README.md.
  *
  * @SVCs SVC_SCORE_010
  */

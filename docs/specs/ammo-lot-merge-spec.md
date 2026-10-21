@@ -2,7 +2,7 @@
 
 > Old-coder SPEC for #784 (split out of #301): merge two ammo lots that are
 > really the same lot, on the **phone and the web together**. Decision
-> record: ADR 0019 ("Merge duplicate ammo lots" row of its write table).
+> record: ARCHITECTURE.md § Web app ("Merge duplicate ammo lots" row of its write table).
 > Open questions it settles: `docs/specs/web-bulk-edit-spec.md` §6.
 > Evidence report: `docs/specs/ammo-lot-merge-evidence.md` (after code).
 >
@@ -27,12 +27,12 @@
     `app/src/db/queries/web-ammo-merge.test.ts`,
     `backend/test/web-ammo-merge.spec.ts`, builder and page-model tests;
   - `docs/manual/guides/firearms-and-ammunition{,.sv}.md` and
-    `editing-many-sessions-on-the-web{,.sv}.md`; ADR 0019 consequences
+    `editing-many-sessions-on-the-web{,.sv}.md`; ARCHITECTURE.md § Web app, races
     gain one bullet (the straggler case, M7).
 
 ## 1. Settled inputs (not re-asked)
 
-1. ADR 0019: the web pushes whole rows through `/sync/push`, online only, one
+1. ARCHITECTURE.md § Web app: the web pushes whole rows through `/sync/push`, online only, one
    action is one push, same per-row last-write-wins as a second phone. Its
    write table fixes the rows: every session on the duplicate repointed to
    the kept lot, then the duplicate tombstoned.
@@ -78,7 +78,7 @@ back to the list; the outbox triggers queue the rows as for any edit. No lot
 other than the duplicate offers itself; with no other live lot the button is
 hidden.
 
-**M6. The web: a panel on Bulk Edit.** The web has no ammo page, and ADR 0019
+**M6. The web: a panel on Bulk Edit.** The web has no ammo page, and ARCHITECTURE.md § Web app
 files the merge under bulk edit. The panel has two pickers — **Duplicate**
 and **Keep** — each listing the live lots (label · caliber · N sessions), and
 **Merge**. Apply pulls `sessions` and `ammo_lots` afresh, builds one push,
@@ -97,7 +97,7 @@ It shows as today for any deleted lot: no lot on the phone's session screen
 the user pick the kept lot. Nothing repairs it automatically: no device
 knows which lot the duplicate went into without a new column (§1.4).
 _Alternative:_ a `merged_into` column so readers follow the link. Not
-recommended for one user pre-1.0; ADR 0019 gains the consequence instead.
+recommended for one user pre-1.0; ARCHITECTURE.md § Web app gains the consequence instead.
 
 **M8. An offline edit to the duplicate after the merge is lost** (the issue's
 open question 3, as proposed). The server rejects it as `tombstoned`; the
