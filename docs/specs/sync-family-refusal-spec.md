@@ -1633,7 +1633,16 @@ Pre-1.0 (rule 8), with no compatibility path:
   lookups and a 10,000-row test; the missing concurrency test, the test and
   evidence corrections, the required protocol fields, and refusing a push
   that lands after the account is deleted. Items 9–12 match that
-  proposal and are approved with it; any item beyond it stays pending.
+  proposal and are approved with it. The round-6 fixes approved by the
+  maintainer, 2026-10-21: "Fix, check again", answering "Fix the round-6
+  findings in #856, then run a seventh independent check?" (that answer
+  also approves a seventh round). The proposal it approves covers: the
+  guard refusing, on every attempt, a push whose account no longer exists,
+  with a test of the race; tests that pin the user filter of the demotion,
+  blocker and release/inert statements; and two wording corrections, the
+  manual's sign-out sentence and the bound-string ceiling. Items 13 and 14
+  match that proposal and are approved with it. Any item beyond these
+  approvals stays pending.
   1. **REVAL's T2 waits; it is not applied.** The scenario says "T2 is
      applied". Re-validation turns T1 into a bad row at T1's own arrival,
      which is earlier than the push that fixes T2. By §11.4's blocked rule
