@@ -56,8 +56,8 @@ contributed, and no build has been distributed to anyone.
   or that contribution could only ship under its inbound license. The
   signing mechanism is still on #100.
 - ADR 0017's caveat stands and matters more for a commercial license: what a
-  licensee pays for is partly thin copyright, so the trademark and the
-  hosted service remain the real moat.
+  licensee pays for is partly thin copyright, so the hosted service remains
+  the real moat.
 - Open: whether commercial licenses are sold by Jimisola Laursen personally
   or by a company (assigning copyright to a company would need a written
   assignment, and CLA §6.3 binds the assignee to the CLA).
