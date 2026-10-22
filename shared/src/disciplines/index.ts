@@ -215,7 +215,7 @@ export function selectableWeaponGroups(): readonly WeaponGroup[] {
 
 /**
  * The disciplines a shooter should be offered, given the regulations they have
- * enabled (ADR 0011).
+ * enabled (REGULATIONS.md § Regelverk).
  *
  * Filtering is silent — the discipline list simply contains what applies, and
  * the regulation is implied by the discipline rather than being a separate

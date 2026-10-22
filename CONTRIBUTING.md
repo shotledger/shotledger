@@ -13,18 +13,19 @@ folder, and apply to human contributors just as much. Running the app is in
 
 ### Where things are
 
-| Path                              | What it is                                                                                                                                                                                                                                      |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`app/`](app/README.md)           | The React Native + Expo app: screens, local SQLite database, i18n, platform wrappers. `app/PRODUCT.md` says what the product is and why.                                                                                                        |
-| [`shared/`](shared/README.md)     | Pure TypeScript with no React Native imports: scoring, disciplines and regulations, compliance, exports, sync protocol. Used by the app and the backend.                                                                                        |
-| [`backend/`](backend/README.md)   | Optional Cloudflare Worker for account, sync and photo backup. Never deployed from this repo by an agent.                                                                                                                                       |
-| `web/`                            | The web app (Vite + React), served by the Worker: reads synced data and writes only through sync push, on par with the phone. `web/CLAUDE.md` has the rules.                                                                                    |
-| `docs/`                           | Architecture, ADRs, the implementation plan, verified rule-book references, evidence-first specs, release checklist, and the user manual.                                                                                                       |
-| `docs/manual/`                    | The **user** manual (EN + SV), published with MkDocs from `mkdocs.yml`. Gated by `mkdocs build --strict` and the translation-freshness script.                                                                                                  |
-| `scripts/`                        | Repo gates and generators run by `pnpm check` and by hand — see below.                                                                                                                                                                          |
-| `patches/`                        | pnpm patches for two dependencies, each with its reason in `pnpm-workspace.yaml`.                                                                                                                                                               |
-| [`tools/cv/`](tools/cv/README.md) | TypeScript tools that run the app's photo-scoring CV on real photos kept outside the repo, label holes, fit the hole models and write the CV fixtures. Not part of `pnpm check`; CI runs its synthetic regression check (`pnpm cv:regression`). |
-| `stryker.config.json`             | Mutation-testing configuration for the evidence-first modules.                                                                                                                                                                                  |
+| Path                                                                     | What it is                                                                                                                                                                                                                                      |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`app/`](app/README.md)                                                  | The React Native + Expo app: screens, local SQLite database, i18n, platform wrappers. `app/PRODUCT.md` says what the product is and why.                                                                                                        |
+| [`shared/`](shared/README.md)                                            | Pure TypeScript with no React Native imports: scoring, disciplines and regulations, compliance, exports, sync protocol. Used by the app and the backend.                                                                                        |
+| [`backend/`](backend/README.md)                                          | Optional Cloudflare Worker for account, sync and photo backup. Never deployed from this repo by an agent.                                                                                                                                       |
+| `web/`                                                                   | The web app (Vite + React), served by the Worker: reads synced data and writes only through sync push, on par with the phone. `web/CLAUDE.md` has the rules.                                                                                    |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md), [`REGULATIONS.md`](REGULATIONS.md) | How the app is built and how rule books become code, with what was rejected.                                                                                                                                                                    |
+| `docs/`                                                                  | Sync backend notes, the implementation plan, verified rule-book references, evidence-first specs, release checklist, and the user manual.                                                                                                       |
+| `docs/manual/`                                                           | The **user** manual (EN + SV), published with MkDocs from `mkdocs.yml`. Gated by `mkdocs build --strict` and the translation-freshness script.                                                                                                  |
+| `scripts/`                                                               | Repo gates and generators run by `pnpm check` and by hand — see below.                                                                                                                                                                          |
+| `patches/`                                                               | pnpm patches for two dependencies, each with its reason in `pnpm-workspace.yaml`.                                                                                                                                                               |
+| [`tools/cv/`](tools/cv/README.md)                                        | TypeScript tools that run the app's photo-scoring CV on real photos kept outside the repo, label holes, fit the hole models and write the CV fixtures. Not part of `pnpm check`; CI runs its synthetic regression check (`pnpm cv:regression`). |
+| `stryker.config.json`                                                    | Mutation-testing configuration for the evidence-first modules.                                                                                                                                                                                  |
 
 ### Getting started
 
@@ -105,7 +106,7 @@ a flow's screens; it costs far more Actions minutes than `check`.
 | `manual-mutation-web-edit.mjs`                      | by hand                                        | Manual mutants for the web session edit, including its phone twin tests.                                |
 | `manual-mutation-web-bulk.mjs`                      | by hand                                        | Manual mutants for the web bulk edit, including its phone twin tests.                                   |
 | `mutate-volume.mjs`                                 | by hand                                        | Manual mutants for the app side of the one volume rule, which is outside Stryker's scope.               |
-| `reqstool-stem.js`                                  | the test runners                               | The test-name prefix reqstool matches JUnit results against (ADR 0015).                                 |
+| `reqstool-stem.js`                                  | the test runners                               | The test-name prefix reqstool matches JUnit results against (docs/reqstool/README.md).                  |
 | `i18n-check-negative-control.mjs`                   | by hand                                        | Proves the i18n gate can still fail (mutates the JSON, expects a nonzero exit, restores it).            |
 
 #### Mutation testing
@@ -159,9 +160,9 @@ much.
 ### Reading order
 
 1. [`app/PRODUCT.md`](app/PRODUCT.md) — what and why.
-2. [`docs/architecture.md`](docs/architecture.md) — the tech choices and
-   the iOS-readiness rules.
-3. [`docs/adr/`](docs/adr/) — the decisions behind them.
+2. [`ARCHITECTURE.md`](ARCHITECTURE.md) — how it is built, why, and what
+   was rejected.
+3. [`REGULATIONS.md`](REGULATIONS.md) — how rule books become code.
 4. [`docs/implementation-plan.md`](docs/implementation-plan.md) — the
    execution spec, milestone by milestone.
 5. [Open issues](https://github.com/shotledger/shotledger/issues) — what is
@@ -187,6 +188,38 @@ truth. A contribution is licensed under the terms of the directory it lands in:
 same app-store and platform-library permissions as the rest of the code, so
 the project can keep shipping through the stores and keep linking Google ML
 Kit without asking every contributor again.
+
+### Why the license map looks like this
+
+- **`backend/` is Elastic License 2.0** so anyone may read, run and
+  self-host the sync backend, but may not provide it to third parties as a
+  hosted or managed service. `LICENSES/Elastic-2.0.txt` governs.
+- **`shared/src/sync/` is Apache-2.0** so the Worker never compiles AGPL
+  code. It holds what the backend needs: the protocol schemas, the merge
+  rule and the Drizzle tables, whose columns are the wire format. ESLint
+  `no-restricted-imports` rules in `eslint.config.mjs` block package
+  specifiers: `backend/src` may import only `@shotledger/shared/src/sync`
+  (plus its `payload-schemas`), and `shared/src/sync/**` only `zod`,
+  `drizzle-orm`, `drizzle-zod` and its own files (its tests may add `vitest`
+  and `fast-check`). A relative path into `shared/` is caught only by the
+  bundle check: whenever the backend's imports change, bundle
+  `backend/src/index.ts` with an esbuild metafile and check that its only
+  `shared/` inputs are under `shared/src/sync/`.
+  `backend/test/` may import the AGPL sync client; tests are not part of the
+  bundle.
+- **Everything else is AGPL-3.0-or-later with two section 7 permissions**:
+  conveying through app stores whose terms conflict with the AGPL, provided
+  the source stays available under the AGPL elsewhere; and combining with
+  vendor platform libraries (Google ML Kit, Google Play services, Apple
+  system frameworks) that the Corresponding Source need not include. The
+  text is `LICENSES/LicenseRef-ShotLedger-AGPL-Permissions.txt`; it is a
+  `LicenseRef-` because `reuse` 6.2.0 rejects SPDX 3's `AdditionRef-`.
+- **The web app is network use under AGPL section 13**, so it links its
+  users to the source it runs (`web/src/shell/source-link.tsx`).
+- **The copyright holder also licenses commercially** (dual licensing). The
+  CLA's outbound clause allows that for contributions, provided each is also
+  offered under the license in force when it was submitted. Every AGPL
+  release stays AGPL for good.
 
 Third-party code keeps its own license and is listed in
 `app/src/constants/licenses.json` (bundled JavaScript) or
@@ -228,8 +261,8 @@ with outbound Option Five, which means:
   — for example under a future version of the additional permissions for a
   new store, or under a commercial license (ShotLedger is dual-licensed: the
   public licenses above, plus commercial licenses from the copyright holder;
-  ADR 0023) — and must always also offer it under the license the project
-  used the day you submitted it.
+  see "Why the license map looks like this") — and must always also offer it
+  under the license the project used the day you submitted it.
 - **Governing law is Sweden.**
 
 What the CLA cannot do: withdraw a version already released. Every release

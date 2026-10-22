@@ -12,7 +12,7 @@
   "observability": {
     "enabled": true,
   },
-  // The read-only web app (ADR 0013), served same-origin so sign-in needs no
+  // The read-only web app (ARCHITECTURE.md § Web app), served same-origin so sign-in needs no
   // CORS. Build it first: `pnpm --filter @shotledger/web build`. The Worker
   // answers its own routes; everything else falls back to the app's page.
   // Its security headers are in web/public/_headers.

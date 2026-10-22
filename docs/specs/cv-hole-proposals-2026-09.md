@@ -1,6 +1,6 @@
 # Hole proposals without a learned model (2026-09-22)
 
-> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) ([ADR 0018](../adr/0018-cv-tools-in-typescript.md)). The record below is as written.
+> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) (ADR 0018). The record below is as written.
 
 How good can hole detection get on the rectified canvas with classical image
 processing and fitted constants only — no neural network, no inference

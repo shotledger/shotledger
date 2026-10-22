@@ -32,7 +32,7 @@ Commercial licenses: as the copyright holder, Jimisola Laursen also
 licenses ShotLedger under separate commercial terms, for anyone who wants to
 use it without the obligations of the licenses above. Those terms are agreed
 case by case and are not part of this repository; they never withdraw the
-public licenses above. See docs/adr/0023-dual-licensing-agpl-and-commercial.md.
+public licenses above.
 
 Contributions: see CONTRIBUTING.md and CLA.md. The reasoning behind this map
-is recorded in docs/adr/0017-license-map-and-business-model.md.
+is in CONTRIBUTING.md, "Why the license map looks like this".

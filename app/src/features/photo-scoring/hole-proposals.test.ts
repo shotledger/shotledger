@@ -19,8 +19,8 @@ import type { RectifiedCanvas } from './tap-snap';
 
 /**
  * Relative tolerance against the fixture, set when it came from the Python
- * spike (until ADR 0018). Everything this module computes itself was float64
- * on both sides and agreed to ~1e-9. The six
+ * spike (retired 2026-10-03; ARCHITECTURE.md § Photo scoring). Everything
+ * this module computes itself was float64 on both sides and agreed to ~1e-9. The six
  * texture features come from `holeFeatures`, which mirrors an OpenCV float32
  * pipeline (see hole-features.test.ts), and on synthetic art with exactly
  * vertical edges a float32 rounding residue can move one edge pixel across an

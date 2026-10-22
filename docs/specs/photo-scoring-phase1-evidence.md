@@ -1,6 +1,6 @@
 # Photo scoring phase 1 — evidence report
 
-> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) ([ADR 0018](../adr/0018-cv-tools-in-typescript.md)). The record below is as written.
+> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) (ADR 0018). The record below is as written.
 
 > Evidence for [`docs/specs/photo-scoring-phase1-spec.md`](photo-scoring-phase1-spec.md).
 > Absolute path: `/home/jimisola/cloud/dev/clones/jimisola/github/mobile-app/docs/specs/photo-scoring-phase1-evidence.md`

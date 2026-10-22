@@ -1,6 +1,6 @@
 # Close-up lock on the milsnabb face — measurement, 2026-10
 
-> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) ([ADR 0018](../adr/0018-cv-tools-in-typescript.md)). The record below is as written.
+> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) (ADR 0018). The record below is as written.
 
 Issue #347, "Automatic geometry for the milsnabb face". Reference
 implementation: the `MILSNABB` ring model in `spike/cv/closeup_lock.py`;

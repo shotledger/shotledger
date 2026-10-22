@@ -1,6 +1,6 @@
 # CV spike — photo target scoring (v2)
 
-> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) ([ADR 0018](../adr/0018-cv-tools-in-typescript.md)). The record below is as written.
+> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) (ADR 0018). The record below is as written.
 
 **Branch:** `spike/cv-target-scoring` · **Prototype:** `spike/cv/` (retired)
 · **Date:** 2026-09-01 · **Status:** spike complete, findings only — nothing

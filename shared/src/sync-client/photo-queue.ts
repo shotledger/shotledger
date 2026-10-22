@@ -84,7 +84,7 @@ export function applyPhotoTaskOutcome(
 }
 
 /**
- * Client-side resize target (ADR 0003 photo policy: "~2048 px JPEG").
+ * Client-side resize target (ARCHITECTURE.md § Sync photo policy: "~2048 px JPEG").
  * Kept here rather than in the Expo adapter so the number is covered by the
  * gauntlet and shared with any future non-Expo client.
  */

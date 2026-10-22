@@ -60,7 +60,7 @@ export function writeSyncPhoto(photoId: string, bytes: Uint8Array): void {
 }
 
 /**
- * Resize before upload (ADR 0003: "~2048 px JPEG ≈ 300–600 KB; originals
+ * Resize before upload (ARCHITECTURE.md § Sync: "~2048 px JPEG ≈ 300–600 KB; originals
  * never leave the device"). Returns the JPEG bytes, never the original.
  */
 export async function prepareSyncPhotoBytes(localUri: string): Promise<Uint8Array> {

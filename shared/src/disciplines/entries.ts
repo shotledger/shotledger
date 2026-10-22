@@ -81,7 +81,10 @@ export interface ShooterClassDefinition {
 export interface EventDefinition {
   /** Stable id, `<disciplineId>:<gender>:<age>`. */
   id: string;
-  /** The regelverk that defines it (ADR 0011) — a registry id, so a second one can add its own. */
+  /**
+   * The regelverk that defines it (REGULATIONS.md § Regelverk) — a registry
+   * id, so a second one can add its own.
+   */
   regulationId: string;
   disciplineId: string;
   category: EntryCategory;
@@ -217,7 +220,7 @@ const OPEN_JUNIOR: EntryCategory = { gender: 'open', age: 'junior' };
  * ONLY the rows ISSF Rule 3.3 has no event for. Every other 15.1 row —
  * luftpistol herr/dam/herrjunior/damjunior, sportpistol dam/damjunior/
  * herrjunior, standardpistol herr/dam, and so on — is an ISSF event already
- * and arrives through adoption, never duplicated here (ADR 0011; maintainer,
+ * and arrives through adoption, never duplicated here (REGULATIONS.md § Regelverk; maintainer,
  * 2026-09-12: "Do not duplicate events. ISSF has prio"). A test asserts no
  * id below collides with an ISSF one.
  */

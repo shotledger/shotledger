@@ -1,7 +1,7 @@
 # Fältskjutning scoring model — evidence report
 
 Spec: [`docs/specs/falt-scoring-spec.md`](falt-scoring-spec.md) ·
-ADR: [`docs/adr/0016-hits-scoring-model-for-falt.md`](../adr/0016-hits-scoring-model-for-falt.md) ·
+ADR: ADR 0016 ·
 Issue: #315 · Tier 3.
 
 **Spec approval: not obtained (autonomous run).** Nobody outside this task

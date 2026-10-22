@@ -1,4 +1,4 @@
-// Which regelverk the shooter competes under (ADR 0011).
+// Which regelverk the shooter competes under (REGULATIONS.md § Regelverk).
 //
 // Stored one row per regulation rather than a single list, so a build that
 // adds a regulation does not have to migrate anyone's stored value — a row
