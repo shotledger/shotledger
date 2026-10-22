@@ -1661,8 +1661,14 @@ Pre-1.0 (rule 8), with no compatibility path:
   with a test of the race; tests that pin the user filter of the demotion,
   blocker and release/inert statements; and two wording corrections, the
   manual's sign-out sentence and the bound-string ceiling. Items 13 and 14
-  match that proposal and are approved with it. Any item beyond these
-  approvals stays pending.
+  match that proposal and are approved with it. The round-7 fixes approved
+  by the maintainer, 2026-10-22: "Fix, check again" (that answer also
+  approves an eighth round). The proposal it approves covers: a test that
+  pins the guard's account check to the pushing user, with its mutant; the
+  bound-string ceiling measured with the phone's ids; the manual's
+  sign-out wording; and the Revision 4 item references. It changes items
+  13 and 14 only in wording and figures. Any item beyond these approvals
+  stays pending.
   1. **REVAL's T2 waits; it is not applied.** The scenario says "T2 is
      applied". Re-validation turns T1 into a bad row at T1's own arrival,
      which is earlier than the push that fixes T2. By §11.4's blocked rule
