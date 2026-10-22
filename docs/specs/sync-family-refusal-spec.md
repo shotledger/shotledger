@@ -1681,7 +1681,13 @@ Pre-1.0 (rule 8), with no compatibility path:
   deletion, with a mutant that moves the account check out of the batch;
   the bound-string ceiling restated per table; a test comment; and the
   round-7 test's name and mapping. It changes item 14 only in its figures.
-  Any item beyond these approvals stays pending.
+  Round 9 passed at `457e5fd`; the maintainer graded its two findings as
+  description and chose "Pass, fix, merge", 2026-10-22: fix both, then
+  merge with no tenth round. That covers: the first-push test pausing on
+  the batch call itself, with a mutant that checks the account by a read
+  just before the batch; and the manual-mutation script counting each edit
+  against the text it is applied to. Neither changes an item. Any item
+  beyond these approvals stays pending.
   1. **REVAL's T2 waits; it is not applied.** The scenario says "T2 is
      applied". Re-validation turns T1 into a bad row at T1's own arrival,
      which is earlier than the push that fixes T2. By §11.4's blocked rule
