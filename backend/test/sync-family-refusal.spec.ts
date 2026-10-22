@@ -25,8 +25,9 @@ import {
 import { SYNC_TABLES } from '@shotledger/shared/src/sync/tables';
 
 import { ALL_MIGRATIONS } from '../src/db/migrations';
+import { applyPush, createDb, PushAccountGoneError } from '../src/db/queries';
 import { createSyncRoutes } from '../src/routes/sync';
-import { devBearerWithAccount } from './dev-account';
+import { devBearerWithAccount, ensureAccount } from './dev-account';
 import { gateD1 } from './gated-d1';
 import { row } from './rows';
 
@@ -1196,6 +1197,8 @@ describe('SNAP the snapshot reads state_rev before anything else', () => {
 });
 
 describe('GONE a push judged before the account is deleted cannot land after it (V5-6)', () => {
+  const OTHER = 'user-family-other';
+
   async function userRows(): Promise<number> {
     let n = 0;
     for (const table of ['sync_rows', 'sync_sequence', 'sync_idempotency', 'sync_refusals']) {
@@ -1240,6 +1243,8 @@ describe('GONE a push judged before the account is deleted cannot land after it 
   // guard; the deletion commits before attempt 2 reads, which then sees no
   // sequence row. The guard must refuse because the account is gone.
   it('V6-1 a push judged again after its guard failed cannot recreate a deleted account', async () => {
+    // Another account exists, as in production (round 7, F1).
+    await ensureAccount(OTHER);
     await push([S(), R('r1')]);
     const batch = gateD1(env.DB, { kind: 'pause', at: 4 });
     const nextRead = gateD1(batch.d1, { kind: 'pause', at: 5 });
@@ -1261,6 +1266,7 @@ describe('GONE a push judged before the account is deleted cannot land after it 
   });
 
   it('V6-1 a push whose first read follows the deletion cannot recreate the account', async () => {
+    await ensureAccount(OTHER);
     await push([S()]);
     const gate = gateD1(env.DB, { kind: 'pause', at: 0 });
     const pending = pushThrough(gate.d1, [R('r1')]);
@@ -1272,6 +1278,27 @@ describe('GONE a push judged before the account is deleted cannot land after it 
 
     expect(response.status).toBe(401);
     expect(await userRows()).toBe(0);
+  });
+
+  // Round 7, F1: the guard must check the pushing user's account. A check
+  // for any account passed while every test database held only this user.
+  it('F1 the guard checks the pushing user’s account, not whether any account exists', async () => {
+    await ensureAccount('acct-a');
+    await ensureAccount('acct-b');
+    await env.DB.prepare('DELETE FROM "user" WHERE id = ?').bind('acct-a').run();
+
+    await expect(
+      applyPush(createDb(env.DB), 'acct-a', [live('sessions', 's1')]),
+    ).rejects.toBeInstanceOf(PushAccountGoneError);
+
+    let stored = 0;
+    for (const table of ['sync_rows', 'sync_sequence', 'sync_idempotency', 'sync_refusals']) {
+      const found = await env.DB.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE user_id = ?`)
+        .bind('acct-a')
+        .first<{ n: number }>();
+      stored += found!.n;
+    }
+    expect(stored).toBe(0);
   });
 
   it('a first push still creates the sequence row', async () => {

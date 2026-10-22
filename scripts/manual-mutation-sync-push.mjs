@@ -152,6 +152,11 @@ const MUTANTS = [
     replace: 'CASE WHEN true\n        AND (',
   },
   {
+    name: 'the guard checks whether any account exists, not the pushing user’s',
+    find: 'EXISTS (SELECT 1 FROM "user" WHERE id = ${userId})',
+    replace: 'EXISTS (SELECT 1 FROM "user")',
+  },
+  {
     name: 'a push after an account deletion is not answered 401',
     file: ROUTE,
     find: "        return c.json({ error: 'unauthenticated' }, 401);\n      }",

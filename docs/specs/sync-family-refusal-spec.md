@@ -1531,12 +1531,15 @@ Feature: The server keeps refused families and their waiting rows (Revision 3)
     And no sync_* table keeps a row of that user
 
   Scenario: GONE a push judged again after an account deletion cannot recreate it (round 6, V6-1; Revision 4, item 13)
-    Given A's push is judged from an existing sequence row
+    Given another account exists
+    And A's push is judged from an existing sequence row
     And another device's push commits, so A's first batch fails its guard
     When the account is deleted before A's second attempt reads
     Then the second attempt's guard fails on the missing user and the route answers 401
     And no sync_* table keeps a row of that user, and the user stays deleted
     And a push whose first read follows the deletion is answered the same way
+    And a push of an account whose user row alone is gone, while another
+      account exists, is refused and stores nothing (round 7, F1)
 
   Scenario: TENANT one account's push leaves another's records alone (round 6, V6-2)
     Given accounts U1 and U2 that both hold S1 (a JSON import keeps a session's id)
