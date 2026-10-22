@@ -27,6 +27,10 @@
       groupName: 'expo core (manual)',
       matchPackageNames: [
         'expo{/,}**',
+        // SDK-versioned packages outside the `expo` name (#902 bumped them
+        // to v58 alone).
+        '@expo/**',
+        'jest-expo',
         'react-native{/,}**',
         'react',
         'react-dom',
