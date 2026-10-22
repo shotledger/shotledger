@@ -1670,8 +1670,14 @@ Pre-1.0 (rule 8), with no compatibility path:
   pins the guard's account check to the pushing user, with its mutant; the
   bound-string ceiling measured with the phone's ids; the manual's
   sign-out wording; and the Revision 4 item references. It changes items
-  13 and 14 only in wording and figures. Any item beyond these approvals
-  stays pending.
+  13 and 14 only in wording and figures. The round-8 fixes approved by the
+  maintainer, 2026-10-22: "Fix, check again", answering "Fix the round-8
+  findings in #856, then merge without a ninth check?". The proposal it
+  approves covers: a test of a first push whose batch follows the account
+  deletion, with a mutant that moves the account check out of the batch;
+  the bound-string ceiling restated per table; a test comment; and the
+  round-7 test's name and mapping. It changes item 14 only in its figures.
+  Any item beyond these approvals stays pending.
   1. **REVAL's T2 waits; it is not applied.** The scenario says "T2 is
      applied". Re-validation turns T1 into a bad row at T1's own arrival,
      which is earlier than the push that fixes T2. By §11.4's blocked rule
