@@ -416,7 +416,7 @@ export const settings = sqliteTable('settings', {
 });
 
 // ---------------------------------------------------------------------------
-// Client-only sync bookkeeping (docs/specs/sync-app-spec.md §2). These four
+// Client-only sync bookkeeping (docs/specs/sync-app-spec.md §2). These five
 // tables never leave the device and are absent from SYNC_TABLE_NAMES.
 // ---------------------------------------------------------------------------
 
@@ -432,6 +432,26 @@ export const syncOutbox = sqliteTable(
     // landing mid-push keeps the entry queued.
     rev: integer('rev').notNull(),
     clientChangeId: text('client_change_id'),
+  },
+  (t) => [primaryKey({ columns: [t.tableName, t.rowId] })],
+);
+
+// What the server holds back for a row: an `invalid` row it refused, or a
+// `waiting` row it keeps until its family is released
+// (docs/specs/sync-family-refusal-spec.md §11.6). Rebuilt from every pull's
+// `refusals`, so it decides nothing; it stops a pull overwriting the local
+// version with an older one, and Account & Sync counts it.
+export const syncRefusalMarks = sqliteTable(
+  'sync_refusal_marks',
+  {
+    tableName: text('table_name').notNull(),
+    rowId: text('row_id').notNull(),
+    kind: text('kind', { enum: ['waiting', 'invalid'] }).notNull(),
+    arrival: integer('arrival').notNull(),
+    blockerTable: text('blocker_table'),
+    blockerRowId: text('blocker_row_id'),
+    /** This device's own ack wrote the mark (RefusalMark.own). */
+    own: integer('own', { mode: 'boolean' }).notNull(),
   },
   (t) => [primaryKey({ columns: [t.tableName, t.rowId] })],
 );

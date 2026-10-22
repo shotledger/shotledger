@@ -23,6 +23,10 @@ export const REJECTED_TOMBSTONED = 'tombstoned';
  * table (docs/specs/sync-payload-validation-spec.md §2.2). */
 export const REJECTED_INVALID_PAYLOAD = 'invalid_payload';
 
+/** A valid live row refused because a row of its family in the same push
+ * was refused (docs/specs/sync-family-refusal-spec.md §2.2, C7). */
+export const REJECTED_FAMILY = 'family_refused';
+
 /** `lastSeq + 1` — the only place a "next" sequence number is computed. */
 export function nextSequence(lastSeq: number): number {
   return lastSeq + 1;

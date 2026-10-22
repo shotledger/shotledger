@@ -12,15 +12,15 @@ import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { MAX_PAYLOAD_BYTES, PUSH_BATCH_MAX } from '@shotledger/shared';
 
-import { devBearerAuthenticator } from '../src/auth';
-import { SYNC_MIGRATIONS } from '../src/db/migrations';
+import { ALL_MIGRATIONS } from '../src/db/migrations';
 import { createSyncRoutes } from '../src/routes/sync';
+import { devBearerWithAccount } from './dev-account';
 import { wholeRow } from './rows';
 
 const app = new Hono<{ Bindings: Env }>();
 app.route(
   '/sync',
-  createSyncRoutes(() => devBearerAuthenticator),
+  createSyncRoutes(() => devBearerWithAccount),
 );
 
 async function post(path: string, rawBody: string) {
@@ -77,13 +77,14 @@ function payloadOfBytes(
 }
 
 beforeAll(async () => {
-  await applyD1Migrations(env.DB, SYNC_MIGRATIONS);
+  await applyD1Migrations(env.DB, ALL_MIGRATIONS);
 });
 
 beforeEach(async () => {
   await env.DB.exec('DELETE FROM sync_rows');
   await env.DB.exec('DELETE FROM sync_sequence');
   await env.DB.exec('DELETE FROM sync_idempotency');
+  await env.DB.exec('DELETE FROM sync_refusals');
 });
 
 describe('V1 /sync/pull refuses a malformed request with 400 invalid_request', () => {

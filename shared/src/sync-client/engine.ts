@@ -3,13 +3,14 @@ import {
   PUSH_BATCH_MAX,
   type ClientChange,
   type PullRequest,
+  type PushAck,
   type SyncTableName,
 } from '../sync/protocol';
-import { REJECTED_INVALID_PAYLOAD, REJECTED_TOMBSTONED } from '../sync/merge';
+import { REJECTED_FAMILY, REJECTED_INVALID_PAYLOAD, REJECTED_TOMBSTONED } from '../sync/merge';
 import { APPLY_ORDER, sortChangesForApply } from './order';
 import { buildClientChange } from './outbox';
-import { filterShadowedChanges, tombstoneFromRejection } from './shadow';
-import type { LocalStore, OutboxEntry, SyncTransport } from './ports';
+import { marksFromRefusals, shadowPull, tombstoneFromRejection } from './shadow';
+import type { AckOutcome, LocalStore, MarkUpdate, OutboxEntry, SyncTransport } from './ports';
 
 /**
  * One strict pull -> apply -> push -> ack cycle (docs/specs/sync-app-spec.md
@@ -30,12 +31,6 @@ export interface SyncCycleDeps {
   /** Injected so no module in `shared/` generates ids or reads a clock. */
   newId: () => string;
   pushBatchMax?: number;
-  /**
-   * Called once per `invalid_payload` refusal, as its outbox entry clears.
-   * The entry is gone at that point, so a batch that fails later in the
-   * cycle must not take the refusal with it (spec §2.3, C3).
-   */
-  onRefused?: () => void;
 }
 
 export interface SyncCycleResult {
@@ -73,16 +68,20 @@ async function runPull(
     const response = await deps.transport.pull(request);
 
     // A row with an unsent local edit keeps that edit; the push later in
-    // this cycle sends it and the server's LWW settles it (shadow.ts).
+    // this cycle sends it and the server's LWW settles it. A row the server
+    // holds a later version of keeps its local one (shadow.ts). The server's
+    // `refusals` list replaces the marks (docs/specs/sync-family-refusal-spec.md
+    // §11.6).
     const pendingKeys = await deps.store.pendingRowKeys();
-    const applicable = filterShadowedChanges(response.changes, pendingKeys);
-    shadowed += response.changes.length - applicable.length;
+    const marks = marksFromRefusals(response.refusals, await deps.store.readMarks());
+    const shadow = shadowPull(response.changes, pendingKeys, marks);
+    shadowed += shadow.shadowed;
 
     // Apply BEFORE advancing any cursor: a throw here leaves the cursor
     // where it was, so the next cycle re-pulls the page. Applying is an
     // upsert, so at-least-once delivery is safe; at-most-once would not be.
-    await deps.store.applyChanges(sortChangesForApply(applicable));
-    pulled += applicable.length;
+    await deps.store.applyChanges(sortChangesForApply(shadow.applicable), shadow.marks);
+    pulled += shadow.applicable.length;
 
     const stillPending: SyncTableName[] = [];
     for (const next of response.nextCursors) {
@@ -96,6 +95,27 @@ async function runPull(
   }
 
   return { pulled, shadowed, drained: false };
+}
+
+/**
+ * The mark an ack leaves, and on a `duplicate` the row as stored now
+ * (docs/specs/sync-family-refusal-spec.md §11.6). A refusal marks the row
+ * at its arrival; anything else means the server stores this version or a
+ * later one, so the mark goes, up to that arrival.
+ */
+function ackOutcome(entry: OutboxEntry, ack: PushAck): AckOutcome {
+  const ref = { tableName: entry.tableName, rowId: entry.rowId };
+  const { arrival } = ack;
+  let mark: MarkUpdate;
+  if (ack.reason === REJECTED_INVALID_PAYLOAD) {
+    mark = { set: { ...ref, kind: 'invalid', arrival, blocker: null, own: true } };
+  } else if (ack.reason === REJECTED_FAMILY) {
+    mark = { set: { ...ref, kind: 'waiting', arrival, blocker: ack.blocker ?? null, own: true } };
+  } else {
+    mark = { drop: ref, upTo: arrival };
+  }
+  if (ack.status !== 'duplicate' || ack.current == null) return { mark };
+  return { mark, current: ack.current };
 }
 
 async function runPush(deps: SyncCycleDeps): Promise<{
@@ -159,9 +179,9 @@ async function runPush(deps: SyncCycleDeps): Promise<{
       } else if (ack.status === 'duplicate') duplicates += 1;
       else pushed += 1;
       // Every ack the protocol defines clears the entry: applied and
-      // duplicate are on the server, and a rejection can never be accepted.
-      await deps.store.clearOutboxEntry(entry);
-      if (ack.reason === REJECTED_INVALID_PAYLOAD) deps.onRefused?.();
+      // duplicate are on the server, a refused change is held there as a bad
+      // or a waiting row, and a rejection can never be accepted.
+      await deps.store.clearOutboxEntry(entry, ackOutcome(entry, ack));
     }
   }
 

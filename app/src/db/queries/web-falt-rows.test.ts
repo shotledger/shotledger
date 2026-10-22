@@ -107,6 +107,7 @@ describe('web-built fält rows on the phone schema', () => {
       tableName: change.tableName,
       rowId: change.rowId,
       seq: index + 1,
+      arrival: 1,
       payload: change.tableName === 'firearms' ? asBound(change.payload) : change.payload,
       deletedAt: change.deletedAt,
       updatedAt: change.updatedAt,

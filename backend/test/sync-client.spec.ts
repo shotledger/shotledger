@@ -19,12 +19,16 @@ import {
   createHttpSyncTransport,
   liveSessionTags,
   rowKey,
+  applyMarkUpdate,
+  shadowPull,
   runSyncCycle,
   type ChangeRow,
   type LocalRowSnapshot,
   type LocalStore,
   type OutboxEntry,
+  type RefusalMark,
   type SyncTableName,
+  type SyncTransport,
 } from '@shotledger/shared';
 
 import { ALL_MIGRATIONS } from '../src/db/migrations';
@@ -57,6 +61,8 @@ class Device {
   readonly rows = new Map<string, Record<string, unknown>>();
   readonly outbox = new Map<string, OutboxEntry>();
   readonly cursors = new Map<SyncTableName, number>();
+  /** sync_refusal_marks (sync-family-refusal-spec.md §11.6). */
+  readonly marks = new Map<string, RefusalMark>();
   private lastRev = 0;
   private token: string | null = null;
 
@@ -91,6 +97,32 @@ class Device {
     return this.rows.get(this.key(tableName, rowId));
   }
 
+  /** The adapter's apply: a tombstone of an unknown row is a no-op. */
+  applyRows(changes: readonly ChangeRow[]): void {
+    for (const change of changes) {
+      const key = this.key(change.tableName, change.rowId);
+      if (change.deletedAt !== null) {
+        const existing = this.rows.get(key);
+        // Same rule as the SQLite adapter: a tombstone for an unknown
+        // row is a no-op, not a shell insert.
+        if (existing) {
+          this.rows.set(key, {
+            ...existing,
+            deleted_at: change.deletedAt,
+            updated_at: change.updatedAt,
+          });
+        }
+        continue;
+      }
+      this.rows.set(key, change.payload as Record<string, unknown>);
+    }
+  }
+
+  replaceMarks(marks: readonly RefusalMark[]): void {
+    this.marks.clear();
+    for (const mark of marks) this.marks.set(this.key(mark.tableName, mark.rowId), mark);
+  }
+
   store(): LocalStore {
     return {
       readCursors: async () =>
@@ -101,24 +133,9 @@ class Device {
       setCursor: async (tableName, cursor) => {
         this.cursors.set(tableName, cursor);
       },
-      applyChanges: async (changes: ChangeRow[]) => {
-        for (const change of changes) {
-          const key = this.key(change.tableName, change.rowId);
-          if (change.deletedAt !== null) {
-            const existing = this.rows.get(key);
-            // Same rule as the SQLite adapter: a tombstone for an unknown
-            // row is a no-op, not a shell insert.
-            if (existing) {
-              this.rows.set(key, {
-                ...existing,
-                deleted_at: change.deletedAt,
-                updated_at: change.updatedAt,
-              });
-            }
-            continue;
-          }
-          this.rows.set(key, change.payload as Record<string, unknown>);
-        }
+      applyChanges: async (changes: ChangeRow[], marks?: readonly RefusalMark[]) => {
+        if (marks !== undefined) this.replaceMarks(marks);
+        this.applyRows(changes);
       },
       readOutbox: async (limit) =>
         [...this.outbox.values()].sort((a, b) => a.rev - b.rev).slice(0, limit),
@@ -135,14 +152,35 @@ class Device {
         const current = this.outbox.get(this.key(entry.tableName, entry.rowId));
         if (current && current.rev === entry.rev) current.clientChangeId = clientChangeId;
       },
-      clearOutboxEntry: async (entry) => {
+      // As the adapter: the rev-matched clear, the ack's mark, and a
+      // duplicate's current row through the shadowing rules, at once.
+      clearOutboxEntry: async (entry, outcome) => {
         const key = this.key(entry.tableName, entry.rowId);
         const current = this.outbox.get(key);
         if (current && current.rev === entry.rev) this.outbox.delete(key);
+        if (outcome === undefined) return;
+        let marks = applyMarkUpdate([...this.marks.values()], outcome.mark);
+        if (outcome.current !== undefined) {
+          const pending = new Set(
+            [...this.outbox.values()].map((e) => rowKey(e.tableName, e.rowId)),
+          );
+          const shadow = shadowPull([outcome.current], pending, marks);
+          this.applyRows(shadow.applicable);
+          marks = shadow.marks;
+        }
+        this.replaceMarks(marks);
       },
       pendingRowKeys: async () =>
         new Set([...this.outbox.values()].map((e) => rowKey(e.tableName, e.rowId))),
       pendingCount: async () => this.outbox.size,
+      readMarks: async () => [...this.marks.values()],
+      markCounts: async () => {
+        const marks = [...this.marks.values()];
+        return {
+          invalid: marks.filter((m) => m.kind === 'invalid').length,
+          waiting: marks.filter((m) => m.kind === 'waiting').length,
+        };
+      },
     };
   }
 
@@ -154,8 +192,20 @@ class Device {
     });
   }
 
-  sync() {
-    return runSyncCycle({ store: this.store(), transport: this.transport(), newId: uuid });
+  sync(options: { pushBatchMax?: number; transport?: SyncTransport; store?: LocalStore } = {}) {
+    return runSyncCycle({
+      store: options.store ?? this.store(),
+      transport: options.transport ?? this.transport(),
+      newId: uuid,
+      ...(options.pushBatchMax === undefined ? {} : { pushBatchMax: options.pushBatchMax }),
+    });
+  }
+
+  /** Sign-out, a backup restore or a reinstall: the outbox, the cursors and the marks go. */
+  reset(): void {
+    this.outbox.clear();
+    this.cursors.clear();
+    this.marks.clear();
   }
 }
 
@@ -558,5 +608,475 @@ describe('session tags and account settings travel between devices', () => {
     await deviceB.sync();
     expect(canonicalTags(tagsOn(deviceB))).toEqual([{ id: 't2', name: 'KM' }]);
     expect(taggedOn(deviceB)).toEqual(['s1:KM']);
+  });
+});
+
+// docs/specs/sync-family-refusal-spec.md §11 (Revision 3): the server keeps a
+// refused row's family and applies it when the bad row arrives fixed; the
+// device keeps marks so a pull never overwrites a version the server holds.
+describe('the server keeps refused families (Revision 3)', () => {
+  const TS = '2026-10-20T10:00:00.000Z';
+  const TL = '2026-10-20T11:00:00.000Z';
+  const S1 = (name: string | null, at = TS) => row('sessions', 's1', at, { name });
+  const R = (id: string, sessionId = 's1', at = TS) =>
+    row('series', id, at, { session_id: sessionId, position: 1 });
+  const T = (id: string, seriesId: string, value: number | null = 90, at = TS) =>
+    row('shots', id, at, { series_id: seriesId, value_tenths: value });
+  const marksOf = (device: Device) =>
+    [...device.marks.values()].map((m) => `${m.tableName}:${m.rowId}:${m.kind}`).sort();
+  const nameOn = (device: Device) => device.get('sessions', 's1')?.name;
+
+  /** A transport whose push runs `during` before the request goes out. */
+  function writingDuringPush(device: Device, during: () => void): SyncTransport {
+    const real = device.transport();
+    let done = false;
+    return {
+      pull: (request) => real.pull(request),
+      push: async (request) => {
+        if (!done) {
+          done = true;
+          during();
+        }
+        return real.push(request);
+      },
+    };
+  }
+
+  it('H1’ rows after a refused session wait on the server; the outbox drains', async () => {
+    deviceA.write('sessions', S1(null));
+    await deviceA.sync();
+    deviceA.write('series', R('r1'));
+    deviceA.write('shots', T('t1', 'r1'));
+    deviceA.write('shots', T('t2', 'r1'));
+
+    const result = await deviceA.sync();
+
+    expect(result).toMatchObject({ status: 'ok', rejected: 3 });
+    expect(deviceA.outbox.size).toBe(0);
+    expect(await deviceA.store().markCounts()).toEqual({ invalid: 1, waiting: 3 });
+    await deviceB.sync();
+    expect(deviceB.rows.size).toBe(0);
+    // B lists the same account-wide refusals.
+    expect(await deviceB.store().markCounts()).toEqual({ invalid: 1, waiting: 3 });
+  });
+
+  it('H2’ fixing the refused row lands the family on both devices, and the marks clear', async () => {
+    deviceA.write('sessions', S1(null));
+    await deviceA.sync();
+    deviceA.write('series', R('r1'));
+    deviceA.write('shots', T('t1', 'r1'));
+    await deviceA.sync();
+
+    deviceA.write('sessions', S1('fixed', TL));
+    await deviceA.sync();
+    await deviceA.sync();
+    await deviceB.sync();
+
+    for (const device of [deviceA, deviceB]) {
+      expect(nameOn(device)).toBe('fixed');
+      expect(device.get('series', 'r1')).toBeDefined();
+      expect(device.get('shots', 't1')).toBeDefined();
+      expect(device.marks.size).toBe(0);
+    }
+  });
+
+  it('H4 a refused shot freezes the session on other devices', async () => {
+    deviceA.write('sessions', S1('first'));
+    deviceA.write('series', R('r1'));
+    deviceA.write('shots', T('t1', 'r1'));
+    await deviceA.sync();
+    await deviceB.sync();
+    deviceA.write('shots', T('t2', 'r1', null));
+    await deviceA.sync();
+
+    deviceA.write('shots', T('t3', 'r1'));
+    deviceA.write('sessions', S1('renamed', TL));
+    await deviceA.sync();
+    await deviceB.sync();
+
+    expect(nameOn(deviceB)).toBe('first');
+    expect(deviceB.get('shots', 't3')).toBeUndefined();
+    expect(nameOn(deviceA)).toBe('renamed');
+  });
+
+  it('H5 a refused firearm holds its license; a session shot with it is applied', async () => {
+    deviceA.write('firearms', row('firearms', 'f1', TS, { make: null }));
+    await deviceA.sync();
+    deviceA.write('licenses', row('licenses', 'l1', TS, { firearm_id: 'f1' }));
+    deviceA.write('sessions', row('sessions', 's9', TS, { firearm_id: 'f1' }));
+    await deviceA.sync();
+    await deviceB.sync();
+
+    expect(deviceB.get('licenses', 'l1')).toBeUndefined();
+    expect(deviceB.get('sessions', 's9')).toBeDefined();
+  });
+
+  it('H6 a refused license holds only itself', async () => {
+    deviceA.write('firearms', row('firearms', 'f1', TS));
+    await deviceA.sync();
+    deviceA.write('licenses', row('licenses', 'l1', TS, { firearm_id: 'f1', purpose: 42 }));
+    await deviceA.sync();
+    deviceA.write('firearms', row('firearms', 'f1', TL, { model: 'renamed' }));
+    deviceA.write('firearm_groups', row('firearm_groups', 'g1', TS, { firearm_id: 'f1' }));
+    await deviceA.sync();
+    await deviceB.sync();
+
+    expect(deviceB.get('firearms', 'f1')).toMatchObject({ model: 'renamed' });
+    expect(deviceB.get('firearm_groups', 'g1')).toBeDefined();
+    expect(deviceB.get('licenses', 'l1')).toBeUndefined();
+  });
+
+  it('H9’ refused changes leave the outbox: 600 queued, 590 waiting, one cycle drains', async () => {
+    deviceA.write('sessions', S1(null));
+    await deviceA.sync();
+    deviceA.write('series', R('r1'));
+    for (let i = 0; i < 589; i += 1) deviceA.write('shots', T(`w${i}`, 'r1'));
+    for (let i = 0; i < 10; i += 1)
+      deviceA.write('tags', row('tags', `tag${i}`, TS, { name: `T${i}` }));
+
+    const result = await deviceA.sync();
+
+    expect(result).toMatchObject({ status: 'ok', pushed: 10, rejected: 590 });
+    expect(deviceA.outbox.size).toBe(0);
+  }, 60_000);
+
+  // A1 and T2 go in different pushes: in one push, the invalid T2 would
+  // refuse A1 with it (F2; spec Revision 4, item 3).
+  it('ECHO this device’s own older push, pulled back, keeps its waiting edit', async () => {
+    deviceA.write('sessions', S1('S'));
+    deviceA.write('series', R('r1'));
+    deviceA.write('shots', T('t1', 'r1'));
+    await deviceA.sync();
+    await deviceB.sync();
+
+    deviceA.write('sessions', S1('A1', TL));
+    // While A1's push is in flight, the user renames S1 to A2 and enters an
+    // invalid T2; the same cycle's next push carries both.
+    const result = await deviceA.sync({
+      transport: writingDuringPush(deviceA, () => {
+        deviceA.write('sessions', S1('A2', TL));
+        deviceA.write('shots', T('t2', 'r1', null, TL));
+      }),
+    });
+    expect(result).toMatchObject({ pushed: 1, invalid: 1, rejected: 1 });
+    expect(marksOf(deviceA)).toEqual(['sessions:s1:waiting', 'shots:t2:invalid']);
+
+    // The next pull brings A1 back, older than the waiting A2.
+    const echo = await deviceA.sync();
+    expect(echo.shadowed).toBe(1);
+    expect(nameOn(deviceA)).toBe('A2');
+
+    deviceB.write('shots', T('t2', 'r1', 95, TL));
+    await deviceB.sync();
+    await deviceB.sync();
+    await deviceA.sync();
+    expect(nameOn(deviceA)).toBe('A2');
+    expect(nameOn(deviceB)).toBe('A2');
+    expect(deviceA.marks.size).toBe(0);
+  });
+
+  it('X1 a crash while handling the invalid ack leaves nothing half-done', async () => {
+    deviceA.write('sessions', S1(null));
+    const store = deviceA.store();
+    let crashed = false;
+    const crashing: LocalStore = {
+      ...store,
+      clearOutboxEntry: async (entry, outcome) => {
+        if (!crashed) {
+          crashed = true;
+          throw new Error('crash');
+        }
+        return store.clearOutboxEntry(entry, outcome);
+      },
+    };
+    await expect(deviceA.sync({ store: crashing })).rejects.toThrow('crash');
+    expect(deviceA.outbox.size).toBe(1);
+
+    const result = await deviceA.sync();
+    expect(result.invalid).toBe(1);
+    expect(marksOf(deviceA)).toEqual(['sessions:s1:invalid']);
+
+    deviceA.write('series', R('r1'));
+    deviceA.write('shots', T('t1', 'r1'));
+    await deviceA.sync();
+    await deviceB.sync();
+    expect(deviceB.rows.size).toBe(0);
+  });
+
+  it('X1b a crash before the family_refused ack: B’s fix lands R1, and A’s replay brings it', async () => {
+    deviceA.write('sessions', S1('S'));
+    deviceA.write('series', R('r9'));
+    deviceA.write('shots', T('t2', 'r9'));
+    await deviceA.sync();
+    await deviceB.sync();
+    deviceA.write('shots', T('t2', 'r9', null, TL));
+    await deviceA.sync();
+
+    deviceA.write('series', R('r1'));
+    const store = deviceA.store();
+    const crashing: LocalStore = {
+      ...store,
+      clearOutboxEntry: async () => {
+        throw new Error('crash');
+      },
+    };
+    await expect(deviceA.sync({ store: crashing })).rejects.toThrow('crash');
+    expect(deviceA.outbox.size).toBe(1);
+
+    deviceB.write('shots', T('t2', 'r9', 95, TL));
+    await deviceB.sync();
+    await deviceB.sync();
+    expect(deviceB.get('series', 'r1')).toBeDefined();
+
+    const replay = await deviceA.sync();
+    expect(replay.duplicates).toBe(1);
+    expect(deviceA.marks.size).toBe(0);
+    expect(deviceA.get('shots', 't2')).toMatchObject({ value_tenths: 95 });
+  });
+
+  it('X10 a batch boundary cannot split a family', async () => {
+    deviceA.write('sessions', S1(null));
+    await deviceA.sync();
+    deviceA.write('series', R('r1'));
+    deviceA.write('shots', T('t1', 'r1'));
+    deviceA.write('sessions', S1(null, TL));
+
+    await deviceA.sync({ pushBatchMax: 2 });
+    await deviceB.sync();
+
+    expect(marksOf(deviceA)).toEqual([
+      'series:r1:waiting',
+      'sessions:s1:invalid',
+      'shots:t1:waiting',
+    ]);
+    expect(deviceB.rows.size).toBe(0);
+  });
+
+  it('REV1 sign-out or a restore loses no waiting row', async () => {
+    deviceA.write('sessions', S1('S'));
+    await deviceA.sync();
+    deviceA.write('shots', T('t1', 'r1', null));
+    await deviceA.sync();
+    deviceA.write('series', R('r1'));
+    await deviceA.sync();
+    expect(marksOf(deviceA)).toEqual(['series:r1:waiting', 'shots:t1:invalid']);
+
+    deviceA.reset();
+    deviceB.write('shots', T('t1', 'r1', 95, TL));
+    await deviceB.sync();
+    await deviceB.sync();
+
+    expect(deviceB.get('series', 'r1')).toBeDefined();
+    expect(deviceB.get('shots', 't1')).toBeDefined();
+  });
+
+  it('FRESH a reset device rebuilds the marks from its first pull', async () => {
+    deviceA.write('sessions', S1('S'));
+    deviceA.write('series', R('r9'));
+    await deviceA.sync();
+    deviceA.write('shots', T('t2', 'r9', null));
+    await deviceA.sync();
+    await deviceB.sync();
+    deviceB.write('series', R('r1'));
+    await deviceB.sync();
+
+    deviceA.reset();
+    await deviceA.sync();
+
+    expect(await deviceA.store().markCounts()).toEqual({ invalid: 1, waiting: 1 });
+  });
+
+  it('REV3 a refused re-edit stays visible and blocks its family', async () => {
+    deviceA.write('sessions', S1('S'));
+    deviceA.write('series', R('r1'));
+    deviceA.write('shots', T('t2', 'r1', 80));
+    await deviceA.sync({
+      transport: writingDuringPush(deviceA, () => deviceA.write('shots', T('t2', 'r1', null, TL))),
+    });
+    expect(marksOf(deviceA)).toEqual(['shots:t2:invalid']);
+
+    // A's next pull of v1, older than the mark, is shadowed.
+    await deviceA.sync();
+    expect(deviceA.get('shots', 't2')).toMatchObject({ value_tenths: null });
+    deviceA.write('sessions', S1('renamed', TL));
+    await deviceA.sync();
+    expect(deviceA.marks.get('sessions:s1')).toMatchObject({
+      kind: 'waiting',
+      blocker: { tableName: 'shots', rowId: 't2' },
+    });
+  });
+
+  it('VC another device’s deletion of a waiting row arrives at once', async () => {
+    deviceA.write('sessions', S1('S'));
+    deviceA.write('series', R('r1'));
+    deviceA.write('shots', T('t2', 'r1'));
+    await deviceA.sync();
+    await deviceB.sync();
+    deviceA.write('shots', T('t2', 'r1', null, TL));
+    await deviceA.sync();
+    deviceA.write('sessions', S1('A-name', TL));
+    await deviceA.sync();
+    expect(deviceA.marks.size).toBe(2);
+
+    deviceB.softDelete('series', 'r1', TL);
+    deviceB.softDelete('sessions', 's1', TL);
+    await deviceB.sync();
+    await deviceA.sync();
+
+    expect(deviceA.get('sessions', 's1')).toMatchObject({ deleted_at: TL });
+    expect(deviceA.get('series', 'r1')).toMatchObject({ deleted_at: TL });
+    expect(deviceA.marks.size).toBe(0);
+  });
+
+  it('STUCK a mark clears when its record goes, with nothing pulled for its row', async () => {
+    deviceA.write('sessions', S1('S'));
+    deviceA.write('series', R('r1'));
+    await deviceA.sync();
+    await deviceB.sync();
+    deviceA.write('shots', T('t2', 'r1', null));
+    await deviceA.sync();
+    expect(marksOf(deviceA)).toEqual(['shots:t2:invalid']);
+
+    deviceB.softDelete('sessions', 's1', TL);
+    await deviceB.sync();
+    await deviceA.sync();
+
+    expect(deviceA.marks.size).toBe(0);
+  });
+
+  it('L1 a fix written mid-push goes out in the same cycle and releases the family', async () => {
+    deviceA.write('sessions', S1(null));
+    deviceA.write('tags', row('tags', 'g1', TS, { name: 'KM' }));
+    deviceA.write(
+      'session_tags',
+      row('session_tags', 'st1', TS, { session_id: 's1', tag_id: 'g1' }),
+    );
+
+    await deviceA.sync({
+      pushBatchMax: 3,
+      transport: writingDuringPush(deviceA, () => deviceA.write('sessions', S1('fixed', TL))),
+    });
+    await deviceB.sync();
+
+    expect(nameOn(deviceB)).toBe('fixed');
+    expect(deviceB.get('session_tags', 'st1')).toBeDefined();
+  });
+
+  it('AB another device’s later edit of a waiting row wins on both devices', async () => {
+    deviceA.write('sessions', S1('S'));
+    deviceA.write('series', R('r1'));
+    deviceA.write('shots', T('t2', 'r1'));
+    await deviceA.sync();
+    await deviceB.sync();
+    deviceA.write('shots', T('t2', 'r1', null, TL));
+    deviceA.write('sessions', S1('A-name', TL));
+    await deviceA.sync();
+    deviceB.write('sessions', S1('B-name', TL));
+    await deviceB.sync();
+
+    deviceA.write('shots', T('t2', 'r1', 95, TL));
+    await deviceA.sync();
+    await deviceA.sync();
+    await deviceB.sync();
+
+    expect(nameOn(deviceA)).toBe('B-name');
+    expect(nameOn(deviceB)).toBe('B-name');
+  });
+
+  // Round 5 (V5-1, V5-2): only the device whose own ack made a mark holds
+  // the version it stands for. Marks rebuilt from the account's list on any
+  // other device, a fresh one included, are counts only and shadow nothing.
+  it('V5-1 a fresh device shows the stored rows of a family with a waiting row', async () => {
+    deviceA.write('sessions', S1('S'));
+    deviceA.write('series', R('r1'));
+    deviceA.write('shots', T('t1', 'r1'));
+    deviceA.write('shots', T('t2', 'r1'));
+    await deviceA.sync();
+    await deviceB.sync();
+    deviceA.write('shots', T('t2', 'r1', null, TL));
+    await deviceA.sync();
+    deviceA.write('sessions', S1('renamed', TL));
+    await deviceA.sync();
+    expect(marksOf(deviceA)).toEqual(['sessions:s1:waiting', 'shots:t2:invalid']);
+
+    const fresh = new Device();
+    fresh.setToken(tokenOf(deviceA));
+    await fresh.sync();
+
+    expect(nameOn(fresh)).toBe('S');
+    expect(fresh.get('series', 'r1')).toBeDefined();
+    expect(fresh.get('shots', 't1')).toBeDefined();
+    expect(fresh.get('shots', 't2')).toMatchObject({ value_tenths: 90 });
+    expect(await fresh.store().markCounts()).toEqual({ invalid: 1, waiting: 1 });
+    // A, whose own pushes made the marks, keeps its own versions.
+    await deviceA.sync();
+    expect(nameOn(deviceA)).toBe('renamed');
+    expect(deviceA.get('shots', 't2')).toMatchObject({ value_tenths: null });
+  });
+
+  it('V5-2 a device that missed an applied edit gets it, though a later version is refused', async () => {
+    deviceA.write('sessions', S1('S'));
+    deviceA.write('series', R('r1'));
+    deviceA.write('shots', T('t1', 'r1'));
+    await deviceA.sync();
+    await deviceB.sync();
+    deviceA.write('shots', T('t1', 'r1', 80, TL));
+    await deviceA.sync();
+    deviceA.write('shots', T('t1', 'r1', null, '2026-10-20T12:00:00.000Z'));
+    await deviceA.sync();
+
+    await deviceB.sync();
+
+    expect(deviceB.get('shots', 't1')).toMatchObject({ value_tenths: 80 });
+    expect(await deviceB.store().markCounts()).toEqual({ invalid: 1, waiting: 0 });
+  });
+
+  it('V5-1 a device signed out and in again holds no version of its own: it shows the stored rows', async () => {
+    deviceA.write('sessions', S1('S'));
+    deviceA.write('series', R('r1'));
+    deviceA.write('shots', T('t2', 'r1'));
+    await deviceA.sync();
+    deviceA.write('shots', T('t2', 'r1', null, TL));
+    await deviceA.sync();
+    deviceA.write('sessions', S1('renamed', TL));
+    await deviceA.sync();
+
+    deviceA.reset();
+    await deviceA.sync();
+
+    expect(nameOn(deviceA)).toBe('S');
+    expect(deviceA.get('shots', 't2')).toMatchObject({ value_tenths: 90 });
+    expect(await deviceA.store().markCounts()).toEqual({ invalid: 1, waiting: 1 });
+  });
+
+  it('I3 two devices that cycle until both outboxes are empty show the server’s rows', async () => {
+    // A fixed interleaving of the cast's writes, invalid ones included.
+    const plan: [Device, () => void][] = [
+      [deviceA, () => deviceA.write('sessions', S1('one'))],
+      [deviceB, () => deviceB.write('series', R('r1'))],
+      [deviceA, () => deviceA.write('shots', T('t2', 'r1', null))],
+      [deviceB, () => deviceB.write('shots', T('t1', 'r1'))],
+      [deviceA, () => deviceA.write('sessions', S1('two', TL))],
+      [deviceB, () => deviceB.write('series', R('r2'))],
+      [deviceA, () => deviceA.write('shots', T('t2', 'r1', 70, TL))],
+    ];
+    for (const [device, write] of plan) {
+      write();
+      await device.sync();
+    }
+    for (let round = 0; round < 3; round += 1) {
+      await deviceA.sync();
+      await deviceB.sync();
+    }
+    const fresh = new Device();
+    fresh.setToken((deviceA as unknown as { token: string }).token);
+    await fresh.sync();
+
+    expect(deviceA.outbox.size + deviceB.outbox.size).toBe(0);
+    const live = (device: Device) =>
+      Object.fromEntries([...device.rows].filter(([, value]) => value.deleted_at == null));
+    expect(live(deviceA)).toEqual(live(fresh));
+    expect(live(deviceB)).toEqual(live(fresh));
+    expect(nameOn(fresh)).toBe('two');
   });
 });

@@ -11,7 +11,7 @@ import {
 } from '../db/auth-schema';
 import { photos, quota, rateLimitWindows } from '../db/photo-schema';
 import { createDb, type Db } from '../db/queries';
-import { syncIdempotency, syncRows, syncSequence } from '../db/schema';
+import { syncIdempotency, syncRefusals, syncRows, syncSequence } from '../db/schema';
 
 export interface AccountEnv {
   Bindings: Env;
@@ -20,6 +20,7 @@ export interface AccountEnv {
 
 interface CascadeCounts {
   syncRows: number;
+  syncRefusals: number;
   photos: number;
   quota: number;
   sessions: number;
@@ -27,14 +28,16 @@ interface CascadeCounts {
 
 /** Counts every row this user's account deletion would touch (spec §3). */
 async function computeCascadeCounts(db: Db, userId: string): Promise<CascadeCounts> {
-  const [syncRowsCount, photoRows, quotaRows, sessionRows] = await Promise.all([
+  const [syncRowsCount, refusalRows, photoRows, quotaRows, sessionRows] = await Promise.all([
     db.select().from(syncRows).where(eq(syncRows.userId, userId)),
+    db.select().from(syncRefusals).where(eq(syncRefusals.userId, userId)),
     db.select().from(photos).where(eq(photos.userId, userId)),
     db.select().from(quota).where(eq(quota.userId, userId)),
     db.select().from(authSession).where(eq(authSession.userId, userId)),
   ]);
   return {
     syncRows: syncRowsCount.length,
+    syncRefusals: refusalRows.length,
     photos: photoRows.length,
     quota: quotaRows.length,
     sessions: sessionRows.length,
@@ -88,6 +91,7 @@ export function createAccountRoutes(
       db.delete(syncRows).where(eq(syncRows.userId, userId)),
       db.delete(syncSequence).where(eq(syncSequence.userId, userId)),
       db.delete(syncIdempotency).where(eq(syncIdempotency.userId, userId)),
+      db.delete(syncRefusals).where(eq(syncRefusals.userId, userId)),
       db.delete(quota).where(eq(quota.userId, userId)),
       db.delete(rateLimitWindows).where(eq(rateLimitWindows.userId, userId)),
       db.delete(authSession).where(eq(authSession.userId, userId)),

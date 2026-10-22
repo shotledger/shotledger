@@ -20,9 +20,9 @@ import {
   type SyncTableName,
 } from '@shotledger/shared';
 
-import { devBearerAuthenticator } from '../src/auth';
-import { SYNC_MIGRATIONS } from '../src/db/migrations';
+import { ALL_MIGRATIONS } from '../src/db/migrations';
 import { createSyncRoutes } from '../src/routes/sync';
+import { devBearerWithAccount } from './dev-account';
 import { row } from './rows';
 
 const USER = 'user-p';
@@ -32,7 +32,7 @@ const T1 = '2026-09-03T10:00:00.000Z';
 const app = new Hono<{ Bindings: Env }>();
 app.route(
   '/sync',
-  createSyncRoutes(() => devBearerAuthenticator),
+  createSyncRoutes(() => devBearerWithAccount),
 );
 
 async function fetchApp(input: string, init?: RequestInit): Promise<Response> {
@@ -107,13 +107,14 @@ async function idempotency(clientChangeId: string) {
 }
 
 beforeAll(async () => {
-  await applyD1Migrations(env.DB, SYNC_MIGRATIONS);
+  await applyD1Migrations(env.DB, ALL_MIGRATIONS);
 });
 
 beforeEach(async () => {
   await env.DB.exec('DELETE FROM sync_rows');
   await env.DB.exec('DELETE FROM sync_sequence');
   await env.DB.exec('DELETE FROM sync_idempotency');
+  await env.DB.exec('DELETE FROM sync_refusals');
 });
 
 describe('P1 a valid row of every synced table is applied', () => {
@@ -174,6 +175,7 @@ describe('P2 a malformed row is refused and stores nothing', () => {
       clientChangeId: change.clientChangeId,
       status: 'rejected',
       reason: 'invalid_payload',
+      arrival: 1,
     });
     expect(await storedRow('firearms', 'f1')).toBeNull();
     expect(await lastSeq()).toBe(before);
@@ -206,6 +208,7 @@ describe('a settings row whose value is not JSON', () => {
       clientChangeId: change.clientChangeId,
       status: 'rejected',
       reason: 'invalid_payload',
+      arrival: 1,
     });
     expect(await storedRow('settings', 'birthYear')).toBeNull();
     expect(await lastSeq()).toBe(before);
@@ -231,9 +234,14 @@ describe('P3 one bad row does not hold back the good ones', () => {
 
     const acks = await push([good, bad, series]);
     expect(acks).toStrictEqual([
-      { clientChangeId: good.clientChangeId, status: 'applied', seq: 1 },
-      { clientChangeId: bad.clientChangeId, status: 'rejected', reason: 'invalid_payload' },
-      { clientChangeId: series.clientChangeId, status: 'applied', seq: 2 },
+      { clientChangeId: good.clientChangeId, status: 'applied', seq: 1, arrival: 1 },
+      {
+        clientChangeId: bad.clientChangeId,
+        status: 'rejected',
+        reason: 'invalid_payload',
+        arrival: 1,
+      },
+      { clientChangeId: series.clientChangeId, status: 'applied', seq: 2, arrival: 1 },
     ]);
     expect(await lastSeq()).toBe(2);
     expect(await storedRow('sessions', 's1')).toBeNull();
@@ -253,6 +261,7 @@ describe('P3b a verdict belongs to its change, not to its clientChangeId', () =>
       clientChangeId: good.clientChangeId,
       status: 'applied',
       seq: 1,
+      arrival: 1,
     });
     expect(acks[1]).toMatchObject({ status: 'duplicate', seq: 1 });
     expect(await storedRow('firearms', 'f1')).not.toBeNull();
@@ -271,6 +280,8 @@ describe('P4 a refusal replays as a duplicate with its reason', () => {
       clientChangeId: refused.clientChangeId,
       status: 'duplicate',
       reason: 'invalid_payload',
+      arrival: 1,
+      current: null,
     });
     expect({ seq: await lastSeq(), row: await storedRow('firearms', 'f1') }).toStrictEqual(before);
   });
@@ -306,6 +317,7 @@ describe('P5 a tombstone outranks an invalid payload', () => {
       clientChangeId: invalid.clientChangeId,
       status: 'rejected',
       reason: 'tombstoned',
+      arrival: 3,
     });
     expect(await lastSeq()).toBe(before);
     expect(await idempotency(invalid.clientChangeId)).toMatchObject({ reason: 'tombstoned' });
@@ -344,12 +356,15 @@ describe('P6 a tombstone is never payload-validated', () => {
       clientChangeId: removal.clientChangeId,
       status: 'applied',
       seq: 2,
+      arrival: 2,
     });
     expect(await storedRow('firearms', 'f1')).toMatchObject({ deleted_at: T1 });
   });
 });
 
 describe('P8 the web sees the refusal', () => {
+  // The series belongs to s1, so since #856 the session goes with it as
+  // family_refused (sync-family-refusal-spec.md §2.2, Revision 2 item 1).
   it('pushChanges reports partlyRejected with the invalid series and its reason', async () => {
     const session = live('sessions', 's1', row('sessions', 's1', T0, { name: 'Training' }));
     const series = live(
@@ -362,9 +377,12 @@ describe('P8 the web sees the refusal', () => {
       pushChanges(transport, PROTOCOL_VERSION, [session, series]),
     ).resolves.toStrictEqual({
       kind: 'partlyRejected',
-      rejected: [{ tableName: 'series', rowId: 'ser-1', reason: 'invalid_payload' }],
+      rejected: [
+        { tableName: 'sessions', rowId: 's1', reason: 'family_refused' },
+        { tableName: 'series', rowId: 'ser-1', reason: 'invalid_payload' },
+      ],
     });
-    expect(await storedRow('sessions', 's1')).not.toBeNull();
+    expect(await storedRow('sessions', 's1')).toBeNull();
     expect(await storedRow('series', 'ser-1')).toBeNull();
   });
 });
@@ -403,8 +421,8 @@ describe('N6 a refusal is logged without values or ids', () => {
 describe('P10 the CHECK refuses non-JSON written past the route', () => {
   const insert = (rowId: string, payload: string | null) =>
     env.DB.prepare(
-      `INSERT INTO sync_rows (user_id, table_name, row_id, seq, payload, updated_at, deleted_at)
-       VALUES (?, 'firearms', ?, 1, ?, ?, NULL)`,
+      `INSERT INTO sync_rows (user_id, table_name, row_id, seq, payload, updated_at, deleted_at, arrival_rev)
+       VALUES (?, 'firearms', ?, 1, ?, ?, NULL, 1)`,
     )
       .bind(USER, rowId, payload, T0)
       .run();

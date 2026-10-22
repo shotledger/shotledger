@@ -1262,6 +1262,18 @@ restates §0 rules 1–6 verbatim.
 > with `drizzle-zod` (the tables moved to `shared/src/sync/schema.ts`,
 > ARCHITECTURE.md § Sync), and answers `rejected` / `invalid_payload`; Account &
 > Sync counts the refusals, and `sync_rows.payload` gains a JSON check.
+>
+> **A refused row now takes its family with it** (#856, spec and evidence:
+> `docs/specs/sync-family-refusal-*`). Within one push the server refuses
+> the rest of a refused row's family as `family_refused`
+> (`shared/src/sync/family.ts`). Across pushes the server keeps the
+> refused rows and the family's later changes in `sync_refusals`, judged by
+> `shared/src/sync/judge.ts` under a `state_rev` snapshot guard, and applies
+> the waiting rows in arrival order when the refused row arrives fixed or is
+> deleted (Revision 3, approved 2026-10-20). Every pull lists the account's
+> refusals; the phone keeps them as `sync_refusal_marks` so a pull does not
+> overwrite a held version, and Account & Sync and the web's account page
+> show the same two counts.
 
 > **All three timers have since shipped.** The time-limit/interval timer
 > (`feat/shot-timer`, `shared/src/timer/engine.ts`), the IPSC-style

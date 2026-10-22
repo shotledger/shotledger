@@ -27,6 +27,8 @@ import {
   PULL_PAGE_SIZE,
   PUSH_BATCH_MAX,
   rowKey,
+  applyMarkUpdate,
+  shadowPull,
   runSyncCycle,
   selectNextPhotoTask,
   SyncHttpError,
@@ -36,6 +38,7 @@ import {
   type LocalRowSnapshot,
   type LocalStore,
   type OutboxEntry,
+  type RefusalMark,
   type PhotoQueueAction,
   type PhotoQueueEntry,
   type PhotoTaskOutcome,
@@ -93,6 +96,8 @@ class Device {
   readonly rows = new Map<string, Record<string, unknown>>();
   readonly outbox = new Map<string, OutboxEntry>();
   readonly cursors = new Map<SyncTableName, number>();
+  /** sync_refusal_marks (sync-family-refusal-spec.md §11.6). */
+  readonly marks = new Map<string, RefusalMark>();
   private lastRev = 0;
   token: string | null = null;
   fetchImpl: FetchLike = fetchApp;
@@ -124,6 +129,30 @@ class Device {
       .map(([, row]) => row);
   }
 
+  /** The adapter's apply: a tombstone of an unknown row is a no-op. */
+  applyRows(changes: readonly ChangeRow[]): void {
+    for (const change of changes) {
+      const key = this.key(change.tableName, change.rowId);
+      if (change.deletedAt !== null) {
+        const existing = this.rows.get(key);
+        if (existing) {
+          this.rows.set(key, {
+            ...existing,
+            deleted_at: change.deletedAt,
+            updated_at: change.updatedAt,
+          });
+        }
+        continue;
+      }
+      this.rows.set(key, change.payload as Record<string, unknown>);
+    }
+  }
+
+  replaceMarks(marks: readonly RefusalMark[]): void {
+    this.marks.clear();
+    for (const mark of marks) this.marks.set(this.key(mark.tableName, mark.rowId), mark);
+  }
+
   store(): LocalStore {
     return {
       readCursors: async () =>
@@ -134,22 +163,9 @@ class Device {
       setCursor: async (tableName, cursor) => {
         this.cursors.set(tableName, cursor);
       },
-      applyChanges: async (changes: ChangeRow[]) => {
-        for (const change of changes) {
-          const key = this.key(change.tableName, change.rowId);
-          if (change.deletedAt !== null) {
-            const existing = this.rows.get(key);
-            if (existing) {
-              this.rows.set(key, {
-                ...existing,
-                deleted_at: change.deletedAt,
-                updated_at: change.updatedAt,
-              });
-            }
-            continue;
-          }
-          this.rows.set(key, change.payload as Record<string, unknown>);
-        }
+      applyChanges: async (changes: ChangeRow[], marks?: readonly RefusalMark[]) => {
+        if (marks !== undefined) this.replaceMarks(marks);
+        this.applyRows(changes);
       },
       readOutbox: async (limit) =>
         [...this.outbox.values()].sort((a, b) => a.rev - b.rev).slice(0, limit),
@@ -166,14 +182,35 @@ class Device {
         const current = this.outbox.get(this.key(entry.tableName, entry.rowId));
         if (current && current.rev === entry.rev) current.clientChangeId = clientChangeId;
       },
-      clearOutboxEntry: async (entry) => {
+      // As the adapter: the rev-matched clear, the ack's mark, and a
+      // duplicate's current row through the shadowing rules, at once.
+      clearOutboxEntry: async (entry, outcome) => {
         const key = this.key(entry.tableName, entry.rowId);
         const current = this.outbox.get(key);
         if (current && current.rev === entry.rev) this.outbox.delete(key);
+        if (outcome === undefined) return;
+        let marks = applyMarkUpdate([...this.marks.values()], outcome.mark);
+        if (outcome.current !== undefined) {
+          const pending = new Set(
+            [...this.outbox.values()].map((e) => rowKey(e.tableName, e.rowId)),
+          );
+          const shadow = shadowPull([outcome.current], pending, marks);
+          this.applyRows(shadow.applicable);
+          marks = shadow.marks;
+        }
+        this.replaceMarks(marks);
       },
       pendingRowKeys: async () =>
         new Set([...this.outbox.values()].map((e) => rowKey(e.tableName, e.rowId))),
       pendingCount: async () => this.outbox.size,
+      readMarks: async () => [...this.marks.values()],
+      markCounts: async () => {
+        const marks = [...this.marks.values()];
+        return {
+          invalid: marks.filter((m) => m.kind === 'invalid').length,
+          waiting: marks.filter((m) => m.kind === 'waiting').length,
+        };
+      },
     };
   }
 

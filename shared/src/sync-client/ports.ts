@@ -6,6 +6,7 @@ import type {
   PushResponse,
   SyncTableName,
 } from '../sync/protocol';
+import type { RowRef } from '../sync/family';
 
 /**
  * The two I/O seams of the client sync engine (docs/specs/sync-app-spec.md
@@ -31,15 +32,59 @@ export interface LocalRowSnapshot {
   deletedAt: string | null;
 }
 
+/**
+ * What the server holds back for one row (docs/specs/sync-family-refusal-spec.md
+ * §11.6): an `invalid` row it refused, or a `waiting` row it keeps until its
+ * family is released. Every mark is counted on Account & Sync. Only a mark
+ * this device's own ack wrote (`own`) stops a pull from overwriting the
+ * local version with an older one: only that device holds the version the
+ * server keeps back (round 5, V5-1). A mark decides nothing else.
+ */
+export interface RefusalMark {
+  tableName: SyncTableName;
+  rowId: string;
+  kind: 'waiting' | 'invalid';
+  /** The server record's arrival. */
+  arrival: number;
+  /** For `waiting`: the bad row that blocks it. */
+  blocker: RowRef | null;
+  /**
+   * This device's own ack wrote the mark, so the device holds the version
+   * the record keeps back. A mark rebuilt from a pull's `refusals` alone, as
+   * on a fresh or signed-out device, is not its own: it counts, and shadows
+   * nothing.
+   */
+  own: boolean;
+}
+
+/**
+ * What an ack does to its row's mark: `set` upserts it, keeping the greater
+ * arrival; `drop` deletes it unless the mark arrived after `upTo`.
+ */
+export type MarkUpdate = { set: RefusalMark } | { drop: RowRef; upTo: number };
+
+/**
+ * What an ack leaves to write, in the same transaction as the rev-matched
+ * clear (§11.6): its mark, and on a `duplicate` the row as the server stores
+ * it now, applied by the shadowing rules (`shadowPull`).
+ */
+export interface AckOutcome {
+  mark: MarkUpdate;
+  current?: ChangeRow;
+}
+
 export interface LocalStore {
   /** Cursor per synced table; a table never synced reads as 0. */
   readCursors(): Promise<Record<SyncTableName, number>>;
   setCursor(tableName: SyncTableName, cursor: number): Promise<void>;
   /**
    * Apply pulled rows in one transaction with the outbox triggers
-   * suppressed, so applying never re-queues what we just received.
+   * suppressed, so applying never re-queues what we just received. `marks`,
+   * when given, replaces every refusal mark in that same transaction, before
+   * the rows are applied (§11.6).
    */
-  applyChanges(changes: ChangeRow[]): Promise<void>;
+  applyChanges(changes: ChangeRow[], marks?: readonly RefusalMark[]): Promise<void>;
+  /** Queued entries in `rev` order, up to `limit`. */
   readOutbox(limit: number): Promise<OutboxEntry[]>;
   /**
    * `${tableName}:${rowId}` for every queued change — the set a pulled page
@@ -49,9 +94,17 @@ export interface LocalStore {
   pendingRowKeys(): Promise<ReadonlySet<string>>;
   readRow(tableName: SyncTableName, rowId: string): Promise<LocalRowSnapshot | undefined>;
   assignClientChangeId(entry: OutboxEntry, clientChangeId: string): Promise<void>;
-  /** Deletes only when the entry's `rev` still matches (spec §2). */
-  clearOutboxEntry(entry: OutboxEntry): Promise<void>;
+  /**
+   * Deletes the entry only when its `rev` still matches (spec §2), then
+   * writes `outcome` whatever the rev, in one transaction: the server's
+   * verdict stands either way.
+   */
+  clearOutboxEntry(entry: OutboxEntry, outcome?: AckOutcome): Promise<void>;
   pendingCount(): Promise<number>;
+  /** Every refusal mark (§11.6). */
+  readMarks(): Promise<RefusalMark[]>;
+  /** What Account & Sync shows: `invalid` and `waiting` marks. */
+  markCounts(): Promise<{ invalid: number; waiting: number }>;
 }
 
 export interface SyncTransport {

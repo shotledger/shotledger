@@ -61,11 +61,17 @@ function memoryServer(): SyncTransport & {
               clientChangeId: change.clientChangeId,
               status: 'rejected' as const,
               reason: result.reason,
+              arrival: 1,
             };
           }
           seq += 1;
           stored.set(key, result.row);
-          return { clientChangeId: change.clientChangeId, status: 'applied' as const, seq };
+          return {
+            clientChangeId: change.clientChangeId,
+            status: 'applied' as const,
+            seq,
+            arrival: 1,
+          };
         }),
       };
     },
@@ -74,10 +80,12 @@ function memoryServer(): SyncTransport & {
         .filter((row) =>
           request.tables.some((t) => t.tableName === row.tableName && row.seq > t.cursor),
         )
-        .sort((a, b) => a.seq - b.seq);
+        .sort((a, b) => a.seq - b.seq)
+        .map((row) => ({ ...row, arrival: 1 }));
       return {
         protocolVersion: PROTOCOL_VERSION,
         changes,
+        refusals: [],
         nextCursors: request.tables.map(({ tableName, cursor }) => ({
           tableName,
           cursor: Math.max(

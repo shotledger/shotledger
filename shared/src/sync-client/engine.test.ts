@@ -7,11 +7,20 @@ import {
   type PullResponse,
   type PushRequest,
   type PushResponse,
+  type RefusalEntry,
   type SyncTableName,
 } from '../sync/protocol';
 import { MAX_PULL_ITERATIONS, MAX_PUSH_ITERATIONS, runSyncCycle } from './engine';
 import { APPLY_ORDER } from './order';
-import type { LocalRowSnapshot, LocalStore, OutboxEntry, SyncTransport } from './ports';
+import type {
+  AckOutcome,
+  LocalRowSnapshot,
+  LocalStore,
+  OutboxEntry,
+  RefusalMark,
+  SyncTransport,
+} from './ports';
+import { applyMarkUpdate, rowKey, shadowPull } from './shadow';
 
 function emptyCursors(): Record<SyncTableName, number> {
   return Object.fromEntries(APPLY_ORDER.map((t) => [t, 0])) as Record<SyncTableName, number>;
@@ -22,6 +31,7 @@ interface FakeStoreOptions {
   outbox?: OutboxEntry[];
   rows?: Map<string, LocalRowSnapshot>;
   applyThrows?: boolean;
+  marks?: RefusalMark[];
 }
 
 function createFakeStore(options: FakeStoreOptions = {}) {
@@ -31,15 +41,22 @@ function createFakeStore(options: FakeStoreOptions = {}) {
   const applied: ChangeRow[][] = [];
   const cleared: OutboxEntry[] = [];
   const assigned: { entry: OutboxEntry; id: string }[] = [];
+  const marks = new Map((options.marks ?? []).map((m) => [rowKey(m.tableName, m.rowId), m]));
+  const outcomes: { entry: OutboxEntry; outcome: AckOutcome | undefined }[] = [];
+  const replaceMarks = (next: readonly RefusalMark[]) => {
+    marks.clear();
+    for (const m of next) marks.set(rowKey(m.tableName, m.rowId), m);
+  };
 
   const store: LocalStore = {
     readCursors: async () => ({ ...cursors }),
     setCursor: async (tableName, cursor) => {
       cursors[tableName] = cursor;
     },
-    applyChanges: async (changes) => {
+    applyChanges: async (changes, next) => {
       if (options.applyThrows) throw new Error('apply failed');
       applied.push(changes);
+      if (next !== undefined) replaceMarks(next);
     },
     readOutbox: async (limit) => outbox.slice(0, limit),
     readRow: async (tableName, rowId) => rows.get(`${tableName}:${rowId}`),
@@ -48,24 +65,43 @@ function createFakeStore(options: FakeStoreOptions = {}) {
       const found = outbox.find((e) => e.tableName === entry.tableName && e.rowId === entry.rowId);
       if (found) found.clientChangeId = id;
     },
-    clearOutboxEntry: async (entry) => {
+    // The adapter's contract (app/src/db/queries/sync-store.ts), kept small.
+    clearOutboxEntry: async (entry, outcome) => {
       cleared.push(entry);
+      outcomes.push({ entry, outcome });
       const index = outbox.findIndex(
         (e) => e.tableName === entry.tableName && e.rowId === entry.rowId && e.rev === entry.rev,
       );
       if (index >= 0) outbox.splice(index, 1);
+      if (outcome === undefined) return;
+      replaceMarks(applyMarkUpdate([...marks.values()], outcome.mark));
+      if (outcome.current !== undefined) {
+        const pending = new Set(outbox.map((e) => rowKey(e.tableName, e.rowId)));
+        const out = shadowPull([outcome.current], pending, [...marks.values()]);
+        applied.push(out.applicable);
+        replaceMarks(out.marks);
+      }
     },
     pendingRowKeys: async () => new Set(outbox.map((e) => `${e.tableName}:${e.rowId}`)),
     pendingCount: async () => outbox.length,
+    readMarks: async () => [...marks.values()],
+    markCounts: async () => {
+      const all = [...marks.values()];
+      return {
+        invalid: all.filter((m) => m.kind === 'invalid').length,
+        waiting: all.filter((m) => m.kind === 'waiting').length,
+      };
+    },
   };
 
-  return { store, cursors, outbox, applied, cleared, assigned };
+  return { store, cursors, outbox, applied, cleared, assigned, marks, outcomes };
 }
 
 function emptyPull(request: PullRequest): PullResponse {
   return {
     protocolVersion: request.protocolVersion,
     changes: [],
+    refusals: [],
     nextCursors: request.tables.map((t) => ({
       tableName: t.tableName,
       cursor: t.cursor,
@@ -79,7 +115,11 @@ function createTransport(over: Partial<SyncTransport> = {}): SyncTransport {
     pull: async (request) => emptyPull(request),
     push: async (request) => ({
       protocolVersion: request.protocolVersion,
-      acks: request.changes.map((c) => ({ clientChangeId: c.clientChangeId, status: 'applied' })),
+      acks: request.changes.map((c) => ({
+        clientChangeId: c.clientChangeId,
+        status: 'applied',
+        arrival: 1,
+      })),
     }),
     ...over,
   };
@@ -106,6 +146,7 @@ describe('runSyncCycle — pull', () => {
         seenRequest = request;
         return {
           protocolVersion: request.protocolVersion,
+          refusals: [],
           changes: [
             {
               tableName: 'shots',
@@ -114,6 +155,7 @@ describe('runSyncCycle — pull', () => {
               payload: {},
               deletedAt: null,
               updatedAt: 'u',
+              arrival: 1,
             },
             {
               tableName: 'firearms',
@@ -122,6 +164,7 @@ describe('runSyncCycle — pull', () => {
               payload: {},
               deletedAt: null,
               updatedAt: 'u',
+              arrival: 1,
             },
           ],
           nextCursors: request.tables.map((t) => ({
@@ -160,6 +203,7 @@ describe('runSyncCycle — pull', () => {
         const first = requests.length === 1;
         return {
           protocolVersion: request.protocolVersion,
+          refusals: [],
           changes: [],
           nextCursors: request.tables.map((t) => ({
             tableName: t.tableName,
@@ -198,6 +242,7 @@ describe('runSyncCycle — pull', () => {
     const transport = createTransport({
       pull: async (request) => ({
         protocolVersion: request.protocolVersion,
+        refusals: [],
         changes: [],
         nextCursors: request.tables.map((t) => ({
           tableName: t.tableName,
@@ -221,6 +266,7 @@ describe('runSyncCycle — pull', () => {
         calls += 1;
         return {
           protocolVersion: request.protocolVersion,
+          refusals: [],
           changes: [],
           nextCursors: request.tables.map((t) => ({
             tableName: t.tableName,
@@ -254,6 +300,7 @@ describe('runSyncCycle — push', () => {
           acks: request.changes.map((c) => ({
             clientChangeId: c.clientChangeId,
             status: 'applied' as const,
+            arrival: 1,
             seq: 1,
           })),
         };
@@ -281,7 +328,7 @@ describe('runSyncCycle — push', () => {
         sent = request;
         return {
           protocolVersion: request.protocolVersion,
-          acks: [{ clientChangeId: existing, status: 'duplicate' as const, seq: 4 }],
+          acks: [{ clientChangeId: existing, status: 'duplicate' as const, seq: 4, arrival: 1 }],
         };
       },
     });
@@ -301,6 +348,7 @@ describe('runSyncCycle — push', () => {
     const transport = createTransport({
       pull: async (request) => ({
         protocolVersion: request.protocolVersion,
+        refusals: [],
         changes: [
           {
             tableName: 'sessions',
@@ -309,6 +357,7 @@ describe('runSyncCycle — push', () => {
             payload: { id: 'row-1', name: 'stale server copy' },
             deletedAt: null,
             updatedAt: 'u',
+            arrival: 1,
           },
         ],
         nextCursors: request.tables.map((t) => ({
@@ -340,6 +389,7 @@ describe('runSyncCycle — push', () => {
         acks: request.changes.map((c) => ({
           clientChangeId: c.clientChangeId,
           status: 'rejected' as const,
+          arrival: 1,
           reason: 'tombstoned',
         })),
       }),
@@ -359,6 +409,7 @@ describe('runSyncCycle — push', () => {
         payload: null,
         deletedAt: '2026-09-02T09:00:00.000Z',
         updatedAt: '2026-09-02T09:00:00.000Z',
+        arrival: 1,
       },
     ]);
   });
@@ -374,6 +425,7 @@ describe('runSyncCycle — push', () => {
         acks: request.changes.map((c) => ({
           clientChangeId: c.clientChangeId,
           status: 'rejected' as const,
+          arrival: 1,
           reason: 'something-new',
         })),
       }),
@@ -404,6 +456,7 @@ describe('runSyncCycle — push', () => {
             clientChangeId: c.clientChangeId,
             status,
             reason: 'invalid_payload',
+            arrival: 1,
           })),
         }),
       });
@@ -435,10 +488,11 @@ describe('runSyncCycle — push', () => {
         protocolVersion: request.protocolVersion,
         acks: request.changes.map((c) =>
           c.rowId === 'b'
-            ? { clientChangeId: c.clientChangeId, status: 'applied' as const, seq: 1 }
+            ? { clientChangeId: c.clientChangeId, status: 'applied' as const, seq: 1, arrival: 1 }
             : {
                 clientChangeId: c.clientChangeId,
                 status: 'rejected' as const,
+                arrival: 1,
                 reason: 'invalid_payload',
               },
         ),
@@ -452,8 +506,11 @@ describe('runSyncCycle — push', () => {
   });
 
   // Round-2 verification: a refusal is cleared as its ack arrives, so it is
-  // reported then, not only in the result a later failing batch never returns.
-  it('reports each refusal as it clears, even when a later batch fails the cycle', async () => {
+  // recorded then, not only in the result a later failing batch never returns.
+  // Revision 3 (docs/specs/sync-family-refusal-spec.md §11.6) records it as a
+  // durable invalid mark, written with the clear, instead of an app-session
+  // event.
+  it('records each refusal as it clears, even when a later batch fails the cycle', async () => {
     const fake = createFakeStore({
       outbox: [
         { tableName: 'series', rowId: 'a', rev: 1, clientChangeId: null },
@@ -475,28 +532,24 @@ describe('runSyncCycle — push', () => {
             clientChangeId: c.clientChangeId,
             status: 'rejected' as const,
             reason: 'invalid_payload',
+            arrival: 4,
           })),
         };
       },
     });
-    const refused: string[] = [];
 
     await expect(
-      runSyncCycle({
-        store: fake.store,
-        transport,
-        newId: ids(),
-        pushBatchMax: 1,
-        onRefused: () => refused.push(`after ${fake.outbox.length} left`),
-      }),
+      runSyncCycle({ store: fake.store, transport, newId: ids(), pushBatchMax: 1 }),
     ).rejects.toThrow('network');
 
-    // Reported once, after its entry was cleared; b is still queued.
-    expect(refused).toEqual(['after 1 left']);
+    // Recorded once, with its entry's clear; b is still queued.
+    expect([...fake.marks.values()]).toEqual([
+      { tableName: 'series', rowId: 'a', kind: 'invalid', arrival: 4, blocker: null, own: true },
+    ]);
     expect(fake.outbox.map((e) => e.rowId)).toEqual(['b']);
   });
 
-  it('reports a replayed refusal and not an applied or rejected change', async () => {
+  it('records a replayed refusal and not an applied or rejected change', async () => {
     const fake = createFakeStore({
       outbox: [
         { tableName: 'series', rowId: 'a', rev: 1, clientChangeId: null },
@@ -514,29 +567,29 @@ describe('runSyncCycle — push', () => {
         protocolVersion: request.protocolVersion,
         acks: request.changes.map((c) =>
           c.rowId === 'a'
-            ? { clientChangeId: c.clientChangeId, status: 'applied' as const, seq: 1 }
+            ? { clientChangeId: c.clientChangeId, status: 'applied' as const, seq: 1, arrival: 1 }
             : c.rowId === 'b'
-              ? { clientChangeId: c.clientChangeId, status: 'rejected' as const, reason: 'other' }
+              ? {
+                  clientChangeId: c.clientChangeId,
+                  status: 'rejected' as const,
+                  reason: 'other',
+                  arrival: 1,
+                }
               : {
                   clientChangeId: c.clientChangeId,
                   status: 'duplicate' as const,
                   reason: 'invalid_payload',
+                  arrival: 2,
+                  current: null,
                 },
         ),
       }),
     });
-    let refused = 0;
 
-    const result = await runSyncCycle({
-      store: fake.store,
-      transport,
-      newId: ids(),
-      onRefused: () => {
-        refused += 1;
-      },
-    });
+    const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
 
-    expect(refused).toBe(1);
+    expect(await fake.store.markCounts()).toEqual({ invalid: 1, waiting: 0 });
+    expect(fake.marks.get('series:c')?.kind).toBe('invalid');
     expect(result).toMatchObject({ invalid: 1, pushed: 1, rejected: 1 });
   });
 
@@ -554,6 +607,7 @@ describe('runSyncCycle — push', () => {
           acks: request.changes.map((c) => ({
             clientChangeId: c.clientChangeId,
             status: 'applied' as const,
+            arrival: 1,
           })),
         };
       },
@@ -596,6 +650,7 @@ describe('runSyncCycle — push', () => {
           acks: request.changes.map((c) => ({
             clientChangeId: c.clientChangeId,
             status: 'applied' as const,
+            arrival: 1,
           })),
         };
       },
@@ -642,7 +697,9 @@ describe('runSyncCycle — push', () => {
     const transport = createTransport({
       push: async (request): Promise<PushResponse> => ({
         protocolVersion: request.protocolVersion,
-        acks: [{ clientChangeId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', status: 'applied' }],
+        acks: [
+          { clientChangeId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', status: 'applied', arrival: 1 },
+        ],
       }),
     });
 
@@ -693,5 +750,413 @@ describe('runSyncCycle — push', () => {
     expect(push).not.toHaveBeenCalled();
     expect(result.status).toBe('ok');
     expect(fake.outbox).toHaveLength(0);
+  });
+});
+
+// docs/specs/sync-family-refusal-spec.md §11.6: the server keeps refused
+// families; the phone keeps marks so a pull does not overwrite a version the
+// server is holding, and every ack clears its entry.
+describe('runSyncCycle — refusal marks (Revision 3)', () => {
+  const blocker = { tableName: 'shots' as const, rowId: 't2' };
+  // A mark an ack of this device wrote is its own (V5-1); one rebuilt from
+  // the pull's list alone is not.
+  const waiting = (
+    rowId: string,
+    arrival: number,
+    tableName: SyncTableName = 'sessions',
+    own = true,
+  ) => ({
+    tableName,
+    rowId,
+    kind: 'waiting' as const,
+    arrival,
+    blocker,
+    own,
+  });
+  const invalid = (rowId: string, arrival: number, tableName: SyncTableName = 'shots') => ({
+    tableName,
+    rowId,
+    kind: 'invalid' as const,
+    arrival,
+    blocker: null,
+    own: true,
+  });
+  const pulled = (rowId: string, arrival: number, name = 'server'): ChangeRow => ({
+    tableName: 'sessions',
+    rowId,
+    seq: arrival,
+    payload: { id: rowId, name },
+    deletedAt: null,
+    updatedAt: 'u',
+    arrival,
+  });
+  const pullOf =
+    (changes: ChangeRow[], refusals: PullResponse['refusals'] = []) =>
+    async (request: PullRequest): Promise<PullResponse> => ({
+      ...emptyPull(request),
+      changes,
+      refusals,
+    });
+  /** The pull's listing of a waiting session row; every pull lists the records (§11.7). */
+  const listed = (rowId: string, arrival: number): RefusalEntry => ({
+    tableName: 'sessions',
+    rowId,
+    reason: 'family_refused',
+    arrival,
+    blocker,
+  });
+  const one = (rowId: string, tableName: SyncTableName = 'sessions', rev = 1): OutboxEntry => ({
+    tableName,
+    rowId,
+    rev,
+    clientChangeId: null,
+  });
+  const ackAll =
+    (
+      ack: (
+        c: PushRequest['changes'][number],
+      ) => Omit<PushResponse['acks'][number], 'clientChangeId'>,
+    ) =>
+    async (request: PushRequest): Promise<PushResponse> => ({
+      protocolVersion: request.protocolVersion,
+      acks: request.changes.map((c) => ({ clientChangeId: c.clientChangeId, ...ack(c) })),
+    });
+
+  describe('pull', () => {
+    it('FRESH a pull’s refusals rebuild every mark, in the transaction that applies its page', async () => {
+      const fake = createFakeStore();
+      const transport = createTransport({
+        pull: pullOf(
+          [],
+          [
+            {
+              tableName: 'shots',
+              rowId: 't2',
+              reason: 'invalid_payload',
+              arrival: 3,
+              blocker: null,
+            },
+            { tableName: 'series', rowId: 'r1', reason: 'family_refused', arrival: 4, blocker },
+          ],
+        ),
+      });
+
+      await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(await fake.store.markCounts()).toEqual({ invalid: 1, waiting: 1 });
+      expect(fake.marks.get('series:r1')).toEqual(waiting('r1', 4, 'series', false));
+    });
+
+    it('STUCK a mark whose record is gone is dropped by the next pull, with nothing pulled for its row', async () => {
+      const fake = createFakeStore({ marks: [invalid('t2', 3)] });
+      const transport = createTransport({ pull: pullOf([], []) });
+
+      await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(await fake.store.markCounts()).toEqual({ invalid: 0, waiting: 0 });
+    });
+
+    it('ECHO a live change older than the mark is shadowed and the mark kept', async () => {
+      const fake = createFakeStore({ marks: [waiting('s1', 6)] });
+      const transport = createTransport({
+        pull: pullOf([pulled('s1', 5, 'A1')], [listed('s1', 6)]),
+      });
+
+      const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(result).toMatchObject({ pulled: 0, shadowed: 1 });
+      expect(fake.applied[0]).toEqual([]);
+      expect([...fake.marks.values()]).toEqual([waiting('s1', 6)]);
+    });
+
+    it('H2’ the release, at the mark’s arrival, is applied and drops the mark', async () => {
+      const fake = createFakeStore({ marks: [waiting('s1', 6)] });
+      const transport = createTransport({
+        pull: pullOf([pulled('s1', 6, 'A2')], [listed('s1', 6)]),
+      });
+
+      const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(result).toMatchObject({ pulled: 1, shadowed: 0 });
+      expect(fake.applied[0]).toEqual([pulled('s1', 6, 'A2')]);
+      expect(fake.marks.size).toBe(0);
+    });
+
+    it('AB another device’s later version is applied over the mark', async () => {
+      const fake = createFakeStore({ marks: [waiting('s1', 10)] });
+      const transport = createTransport({
+        pull: pullOf([pulled('s1', 12, 'B-name')], [listed('s1', 10)]),
+      });
+
+      await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(fake.applied[0]).toEqual([pulled('s1', 12, 'B-name')]);
+      expect(fake.marks.size).toBe(0);
+    });
+
+    it('VC a pulled tombstone is applied over a mark of any arrival', async () => {
+      const fake = createFakeStore({ marks: [waiting('s1', 10)] });
+      const tombstone = { ...pulled('s1', 3), payload: null, deletedAt: 'd' };
+      const transport = createTransport({ pull: pullOf([tombstone], [listed('s1', 10)]) });
+
+      await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(fake.applied[0]).toEqual([tombstone]);
+      expect(fake.marks.size).toBe(0);
+    });
+
+    it('V5-1 a listed version other than the one of the device’s own mark is counted, not shadowed', async () => {
+      // This device's own version arrived at 2; the server now holds another
+      // device's version at 9, which this device does not hold. The stored
+      // version at 5 is newer than the device's own, so it applies.
+      const fake = createFakeStore({ marks: [waiting('s1', 2)] });
+      const transport = createTransport({ pull: pullOf([pulled('s1', 5)], [listed('s1', 9)]) });
+
+      const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(result.shadowed).toBe(0);
+      expect(fake.applied[0]).toEqual([pulled('s1', 5)]);
+      expect([...fake.marks.values()]).toEqual([waiting('s1', 9, 'sessions', false)]);
+    });
+
+    it('V5-1 a device with no mark of its own applies an older stored version and keeps the count', async () => {
+      const fake = createFakeStore();
+      const transport = createTransport({ pull: pullOf([pulled('s1', 5)], [listed('s1', 9)]) });
+
+      const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(result).toMatchObject({ pulled: 1, shadowed: 0 });
+      expect(await fake.store.markCounts()).toEqual({ invalid: 0, waiting: 1 });
+    });
+
+    it('a queued entry still shadows a pulled change at any arrival', async () => {
+      const fake = createFakeStore({
+        outbox: [one('s1')],
+        rows: new Map([['sessions:s1', row({ id: 's1' })]]),
+        marks: [waiting('s1', 3)],
+      });
+      const transport = createTransport({ pull: pullOf([pulled('s1', 7)], [listed('s1', 3)]) });
+
+      const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(result.shadowed).toBe(1);
+      expect(fake.applied[0]).toEqual([]);
+    });
+  });
+
+  describe('acks', () => {
+    it('H1’ a family_refused ack clears the entry and writes a waiting mark with its blocker', async () => {
+      const fake = createFakeStore({
+        outbox: [one('r1', 'series')],
+        rows: new Map([['series:r1', row({ id: 'r1' })]]),
+      });
+      const transport = createTransport({
+        push: ackAll(() => ({ status: 'rejected', reason: 'family_refused', arrival: 5, blocker })),
+      });
+
+      const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(fake.outbox).toHaveLength(0);
+      expect([...fake.marks.values()]).toEqual([waiting('r1', 5, 'series')]);
+      expect(result).toMatchObject({ rejected: 1, invalid: 0 });
+    });
+
+    it('REV3 an invalid_payload ack of an entry rewritten mid-push keeps the entry and still marks it', async () => {
+      const fake = createFakeStore({
+        outbox: [one('t2', 'shots')],
+        rows: new Map([['shots:t2', row({ id: 't2' })]]),
+      });
+      const transport = createTransport({
+        push: async (request) => {
+          // The user edits T2 again while the push is in flight.
+          fake.outbox[0] = { ...fake.outbox[0]!, rev: 2, clientChangeId: null };
+          return ackAll(() => ({ status: 'rejected', reason: 'invalid_payload', arrival: 8 }))(
+            request,
+          );
+        },
+      });
+
+      await runSyncCycle({ store: fake.store, transport, newId: ids(), pushBatchMax: 1 });
+
+      expect(fake.outcomes[0]?.outcome).toEqual({ mark: { set: invalid('t2', 8) } });
+      expect(fake.marks.get('shots:t2')).toEqual(invalid('t2', 8));
+    });
+
+    it('an applied ack drops the row’s mark up to its arrival', async () => {
+      const fake = createFakeStore({
+        outbox: [one('s1')],
+        rows: new Map([['sessions:s1', row({ id: 's1' })]]),
+        marks: [waiting('s1', 4)],
+      });
+      const transport = createTransport({
+        push: ackAll(() => ({ status: 'applied', seq: 9, arrival: 6 })),
+      });
+
+      await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(fake.outcomes[0]?.outcome).toEqual({
+        mark: { drop: { tableName: 'sessions', rowId: 's1' }, upTo: 6 },
+      });
+      expect(fake.marks.size).toBe(0);
+    });
+
+    it('a tombstoned rejection drops the mark too', async () => {
+      const fake = createFakeStore({
+        outbox: [one('s1')],
+        rows: new Map([['sessions:s1', row({ id: 's1' })]]),
+        marks: [waiting('s1', 4)],
+      });
+      const transport = createTransport({
+        push: ackAll(() => ({ status: 'rejected', reason: 'tombstoned', arrival: 6 })),
+      });
+
+      await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(fake.marks.size).toBe(0);
+    });
+
+    it('a refusal with no blocker still writes a mark', async () => {
+      const fake = createFakeStore({
+        outbox: [one('r1', 'series')],
+        rows: new Map([['series:r1', row({ id: 'r1' })]]),
+      });
+      const transport = createTransport({
+        push: ackAll(() => ({ status: 'rejected', reason: 'family_refused', arrival: 1 })),
+      });
+
+      await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(fake.outcomes[0]?.outcome).toEqual({
+        mark: { set: { ...waiting('r1', 1, 'series'), blocker: null } },
+      });
+    });
+
+    it('H9’ refused entries leave the outbox: 600 queued, 590 refused, the cycle drains', async () => {
+      const outbox: OutboxEntry[] = [];
+      const rows = new Map<string, LocalRowSnapshot>();
+      for (let i = 0; i < 600; i += 1) {
+        outbox.push(one(`t${i}`, 'shots', i + 1));
+        rows.set(`shots:t${i}`, row({ id: `t${i}` }));
+      }
+      const fake = createFakeStore({ outbox, rows });
+      const transport = createTransport({
+        push: ackAll((c) =>
+          Number(c.rowId.slice(1)) < 10
+            ? { status: 'applied', seq: 1, arrival: 1 }
+            : { status: 'rejected', reason: 'family_refused', arrival: 1, blocker },
+        ),
+      });
+
+      const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(result.status).toBe('ok');
+      expect(fake.outbox).toHaveLength(0);
+      expect(await fake.store.markCounts()).toEqual({ invalid: 0, waiting: 590 });
+    });
+  });
+
+  describe('a duplicate ack’s current row', () => {
+    const replay = (rowId: string) => ({
+      tableName: 'sessions' as const,
+      rowId,
+      rev: 1,
+      clientChangeId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    });
+
+    it('DUP a replay of an applied change applies the row as stored now', async () => {
+      const fake = createFakeStore({
+        outbox: [replay('s1')],
+        rows: new Map([['sessions:s1', row({ id: 's1', name: 'E' })]]),
+      });
+      const current = pulled('s1', 9, 'B');
+      const transport = createTransport({
+        push: ackAll(() => ({ status: 'duplicate', seq: 4, arrival: 5, current })),
+      });
+
+      const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(fake.outcomes[0]?.outcome).toEqual({
+        mark: { drop: { tableName: 'sessions', rowId: 's1' }, upTo: 5 },
+        current,
+      });
+      expect(fake.applied.at(-1)).toEqual([current]);
+      expect(result.duplicates).toBe(1);
+    });
+
+    it('REV2 a replayed family_refused applies a later stored version and drops the mark', async () => {
+      const fake = createFakeStore({
+        outbox: [replay('s1')],
+        rows: new Map([['sessions:s1', row({ id: 's1', name: 'A' })]]),
+      });
+      const current = pulled('s1', 12, 'B');
+      const transport = createTransport({
+        push: ackAll(() => ({
+          status: 'duplicate',
+          reason: 'family_refused',
+          arrival: 10,
+          blocker,
+          current,
+        })),
+      });
+
+      await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(fake.applied.at(-1)).toEqual([current]);
+      expect(fake.marks.size).toBe(0);
+    });
+
+    it('a stored version older than the waiting one is shadowed, and the mark stays', async () => {
+      const fake = createFakeStore({
+        outbox: [replay('s1')],
+        rows: new Map([['sessions:s1', row({ id: 's1', name: 'A' })]]),
+      });
+      const transport = createTransport({
+        push: ackAll(() => ({
+          status: 'duplicate',
+          reason: 'family_refused',
+          arrival: 10,
+          blocker,
+          current: pulled('s1', 3, 'old'),
+        })),
+      });
+
+      await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(fake.applied.at(-1)).toEqual([]);
+      expect([...fake.marks.values()]).toEqual([waiting('s1', 10)]);
+    });
+
+    it('a null current (the row is not stored) passes nothing to apply', async () => {
+      const fake = createFakeStore({
+        outbox: [replay('s1')],
+        rows: new Map([['sessions:s1', row({ id: 's1' })]]),
+      });
+      const transport = createTransport({
+        push: ackAll(() => ({
+          status: 'duplicate',
+          reason: 'invalid_payload',
+          arrival: 2,
+          current: null,
+        })),
+      });
+
+      await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(fake.outcomes[0]?.outcome).toEqual({ mark: { set: invalid('s1', 2, 'sessions') } });
+    });
+
+    it('only a duplicate passes current on', async () => {
+      const fake = createFakeStore({
+        outbox: [one('s1')],
+        rows: new Map([['sessions:s1', row({ id: 's1' })]]),
+      });
+      const transport = createTransport({
+        push: ackAll(() => ({ status: 'applied', seq: 1, arrival: 2, current: pulled('s1', 2) })),
+      });
+
+      await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(fake.outcomes[0]?.outcome).not.toHaveProperty('current');
+    });
   });
 });

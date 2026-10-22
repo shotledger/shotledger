@@ -8,6 +8,8 @@ import {
   reduceSyncStatus,
   runSyncCycle,
   shouldRetry,
+  type LocalStore,
+  type SyncCounts,
   type SyncCycleResult,
   type SyncEvent,
   type SyncStatus,
@@ -61,9 +63,16 @@ export function canSync(): boolean {
   return getSessionTokenCache() !== null;
 }
 
+/** Account & Sync's three counts: the outbox, and the durable refusal marks. */
+async function readCounts(store: LocalStore): Promise<SyncCounts> {
+  const pendingCount = await store.pendingCount();
+  const marks = await store.markCounts();
+  return { pendingCount, refusedCount: marks.invalid, heldCount: marks.waiting };
+}
+
+/** Re-reads the counts, which survive a restart (docs/specs/sync-family-refusal-spec.md §11.6). */
 export async function refreshPendingCount(): Promise<void> {
-  const pendingCount = await createSyncStore(db).pendingCount();
-  emit({ type: 'pendingChanged', pendingCount });
+  emit({ type: 'countsChanged', counts: await readCounts(createSyncStore(db)) });
 }
 
 function cancelRetry(): void {
@@ -78,19 +87,14 @@ async function runOnce(): Promise<SyncCycleResult['status'] | null> {
   const store = createSyncStore(db);
   emit({ type: 'started' });
   try {
-    const result = await runSyncCycle({
-      store,
-      transport: getSyncTransport(),
-      newId,
-      onRefused: () => emit({ type: 'refused' }),
-    });
+    const result = await runSyncCycle({ store, transport: getSyncTransport(), newId });
     // A retry armed by an earlier failure in this loop has nothing left to do.
     cancelRetry();
     emit({
       type: 'succeeded',
       at: new Date().toISOString(),
       result,
-      pendingCount: await store.pendingCount(),
+      counts: await readCounts(store),
     });
     // Photos move after the rows that reference them, and never block a
     // cycle: a failed upload is the queue's problem, not sync's.
@@ -99,6 +103,8 @@ async function runOnce(): Promise<SyncCycleResult['status'] | null> {
   } catch (error) {
     const errorKey = classifySyncError(error);
     emit({ type: 'failed', errorKey });
+    // Acks before the failure cleared entries and wrote marks; show them.
+    void refreshPendingCount();
     if (errorKey === 'unauthenticated') {
       // The session is gone (signed out elsewhere, or the account deleted).
       // Dropping the token stops canSync() and with it every trigger — the

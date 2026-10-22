@@ -1,6 +1,8 @@
 // The refused-changes line on the Account & Sync screen (app/account.tsx)
 // (docs/specs/sync-payload-validation-spec.md C3, P12): shown with its count
-// once the server has refused a change, and absent until then.
+// once the server has refused a change, and absent until then. The waiting line
+// beside it is docs/specs/sync-family-refusal-spec.md §11.6; both count the
+// account's durable refusal marks.
 import { render, screen } from '@testing-library/react-native';
 import type { SyncStatus } from '@shotledger/shared';
 import { initialSyncStatus } from '@shotledger/shared';
@@ -77,6 +79,42 @@ describe('the refused-changes line', () => {
     await renderAccount();
     expect(screen.getByTestId('sync-refused')).toHaveTextContent(
       '2 change(s) refused by the server and not synced',
+    );
+  });
+});
+
+// docs/specs/sync-family-refusal-spec.md §11.6, H1', H11': a second line while
+// the server holds any change back behind a refused one.
+describe('the held-changes line', () => {
+  it('is absent while nothing is held', async () => {
+    mockStatus.value = { ...initialSyncStatus, refusedCount: 1 };
+    await renderAccount();
+    expect(screen.queryByTestId('sync-held')).toBeNull();
+  });
+
+  it('shows the count beside the refused line', async () => {
+    mockStatus.value = { ...initialSyncStatus, refusedCount: 1, heldCount: 3 };
+    await renderAccount();
+    expect(screen.getByTestId('sync-held')).toHaveTextContent(
+      '3 change(s) waiting on a refused change',
+    );
+    expect(screen.getByTestId('sync-refused')).toBeTruthy();
+  });
+
+  it('shows on its own, before a pull lists a refused change another device made', async () => {
+    mockStatus.value = { ...initialSyncStatus, heldCount: 3 };
+    await renderAccount();
+    expect(screen.getByTestId('sync-held')).toHaveTextContent(
+      '3 change(s) waiting on a refused change',
+    );
+    expect(screen.queryByTestId('sync-refused')).toBeNull();
+  });
+
+  it('shows a single held change', async () => {
+    mockStatus.value = { ...initialSyncStatus, heldCount: 1 };
+    await renderAccount();
+    expect(screen.getByTestId('sync-held')).toHaveTextContent(
+      '1 change(s) waiting on a refused change',
     );
   });
 });

@@ -17,7 +17,8 @@ const mockNewId = jest.fn(() => 'id-1');
 jest.mock('@/db/util', () => ({ newId: () => mockNewId() }));
 
 const mockPendingCount = jest.fn(async () => 0);
-const mockStore = { pendingCount: () => mockPendingCount() };
+const mockMarkCounts = jest.fn(async () => ({ invalid: 0, waiting: 0 }));
+const mockStore = { pendingCount: () => mockPendingCount(), markCounts: () => mockMarkCounts() };
 const mockCreateSyncStore = jest.fn((_db: unknown) => mockStore);
 jest.mock('@/db/queries/sync-store', () => ({
   createSyncStore: (db: unknown) => mockCreateSyncStore(db),
@@ -103,6 +104,7 @@ beforeEach(() => {
   mockClient.db = { tag: 'drizzle-db' };
   mockToken.value = 'session-token';
   mockPendingCount.mockResolvedValue(0);
+  mockMarkCounts.mockResolvedValue({ invalid: 0, waiting: 0 });
   mockRunSyncCycle.mockResolvedValue(OK_RESULT);
 });
 
@@ -156,6 +158,7 @@ describe('subscribeToSync', () => {
       errorKey: null,
       attempt: 0,
       refusedCount: 0,
+      heldCount: 0,
     });
   });
 
@@ -175,6 +178,7 @@ describe('subscribeToSync', () => {
 describe('a successful cycle', () => {
   it('runs the engine with the store, the transport and the id source, then the photo queue', async () => {
     mockPendingCount.mockResolvedValue(1);
+    mockMarkCounts.mockResolvedValue({ invalid: 2, waiting: 3 });
     const { controller } = load();
 
     await controller.requestSync();
@@ -196,25 +200,47 @@ describe('a successful cycle', () => {
       pendingCount: 1,
       errorKey: null,
       attempt: 0,
-      refusedCount: 0,
+      refusedCount: 2,
+      heldCount: 3,
     });
   });
 });
 
 // docs/specs/sync-payload-validation-spec.md §2.3: a refusal reaches the
-// screen as it clears, even when the cycle then fails.
+// screen as it clears, even when the cycle then fails. Revision 3
+// (docs/specs/sync-family-refusal-spec.md §11.6) records it as a durable mark,
+// so the screen re-reads the counts after a failed cycle too.
 describe('a refused change', () => {
-  it('counts each refusal the engine reports, though the cycle fails after it', async () => {
-    mockRunSyncCycle.mockImplementationOnce(async (deps: { onRefused: () => void }) => {
-      deps.onRefused();
-      deps.onRefused();
+  it('shows the marks the acks wrote, though the cycle fails after them', async () => {
+    mockRunSyncCycle.mockImplementationOnce(async () => {
+      mockMarkCounts.mockResolvedValue({ invalid: 2, waiting: 1 });
       throw new Error('network down');
     });
     const { controller } = load();
 
     await controller.requestSync();
+    await settle();
 
-    expect(controller.getSyncStatus()).toMatchObject({ state: 'error', refusedCount: 2 });
+    expect(controller.getSyncStatus()).toMatchObject({
+      state: 'error',
+      refusedCount: 2,
+      heldCount: 1,
+    });
+  });
+
+  it('H11’ reads both counts from the store with the pending count, so they survive a restart', async () => {
+    mockToken.value = null;
+    mockPendingCount.mockResolvedValue(4);
+    mockMarkCounts.mockResolvedValue({ invalid: 1, waiting: 3 });
+    const { controller } = load();
+
+    await controller.refreshPendingCount();
+
+    expect(controller.getSyncStatus()).toMatchObject({
+      pendingCount: 4,
+      refusedCount: 1,
+      heldCount: 3,
+    });
   });
 });
 
