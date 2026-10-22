@@ -363,10 +363,12 @@ before the final `pnpm check`.
 - **A device's own version of a waiting row** is shown only on that device
   until the release (Revision 4 item 9). Every other device, the web, and
   this device after a reinstall show the stored version, and the counts
-  everywhere. After a sign-out or a restore this device shows the stored
-  version of every row the server stores, but a new row the server only
-  holds back stays on it, since sign-out keeps the logbook and a restore
-  keeps the backup's (round 6, D-1; the manual says so).
+  everywhere. While signed out this device pulls nothing and keeps its own
+  versions. Once it syncs again, after a restore or after signing back in
+  to the same account, it shows the stored version of every row the server
+  stores, but a new row the server only holds back stays on it, since
+  sign-out keeps the logbook and a restore keeps the backup's (round 6,
+  D-1; round 7, F3; the manual says so).
 - **An account deletion and a push:** a push whose batch commits before
   the deletion's is deleted with the account; any later attempt, first or
   retried, is refused with 401 (items 11 and 13, GONE). No push recreates a

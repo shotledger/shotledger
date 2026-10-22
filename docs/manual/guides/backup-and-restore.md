@@ -93,10 +93,12 @@ sessions shot with it. Deletions are never held.
 Other devices and the web app show the session as the server stores it: as it
 was before the refused change, until the server stores the held changes. So
 does this phone after you reinstall the app. Signing out keeps your logbook on
-the phone, and a restore keeps what the backup holds. After either, the phone
-shows what the server stores of anything the server already had, but a new
-entry the server only holds back, such as a new series in that session, stays
-on the phone as it is.
+the phone, and a restore keeps what the backup holds. While you are signed out,
+the phone fetches nothing and shows its own versions. Once it syncs again,
+after a restore or when you sign back in to the same account, it shows what the
+server stores of anything the server already had, but a new entry the server
+only holds back, such as a new series in that session, stays on the phone as it
+is.
 
 ## How often
 

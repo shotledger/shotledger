@@ -96,10 +96,12 @@ Andra enheter och webbappen visar passet som servern har lagrat det: som det
 var före den nekade ändringen, tills servern lagrar de tillbakahållna
 ändringarna. Det gör även den här telefonen efter att du installerat om appen.
 När du loggar ut behåller telefonen din loggbok, och en återställning behåller
-det som säkerhetskopian innehåller. Efter båda visar telefonen det servern har
-lagrat av allt som servern redan hade, men en ny post som servern bara håller
-tillbaka, till exempel en ny serie i passet, ligger kvar på telefonen som den
-är.
+det som säkerhetskopian innehåller. Medan du är utloggad hämtar telefonen
+ingenting och visar sina egna versioner. När den synkar igen, efter en
+återställning eller när du loggar in på samma konto igen, visar den det servern
+har lagrat av allt som servern redan hade, men en ny post som servern bara
+håller tillbaka, till exempel en ny serie i passet, ligger kvar på telefonen
+som den är.
 
 ## Hur ofta
 
