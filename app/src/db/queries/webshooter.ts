@@ -216,7 +216,6 @@ function replaceOverrideSeries(db: Database, sessionId: string, row: ResultRow) 
         sessionId,
         position: index + 1,
         isFinal: m.isFinal,
-        isShootOff: m.isShootOff,
         isTotalOverride: true,
         totalOverrideTenths: m.totalOverrideTenths,
         totalOverrideShotCount: m.totalOverrideShotCount,

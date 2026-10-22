@@ -1,4 +1,4 @@
-// Tag names and tag links are not unique on disk (ADR 0019): names resolve
+// Tag names and tag links are not unique on disk (ARCHITECTURE.md § Sync): names resolve
 // through shared/src/tags/canonical.ts, and a link is live while its
 // deleted_at is null.
 import { and, eq, inArray, isNull } from 'drizzle-orm';

@@ -1,6 +1,6 @@
 # app/ — the Expo app
 
-Rules that apply everywhere are in the root `CLAUDE.md`. Running and driving
+Rules that apply everywhere are in the root `AGENTS.md`. Running and driving
 the app is the `run-app` skill.
 
 ## Checks specific to the app
@@ -81,14 +81,13 @@ named …`. `migrations.test.ts` fails until the hash matches. An install that
 - Deep link `shotledger://dev` (the scheme is `shotledger`, distinctive so no
   other app can claim the redirects it will receive; #671).
 - On web the DB needs the page cross-origin isolated; Metro cannot send the
-  COOP/COEP headers, so put a header-adding proxy in front (ADR 0012).
+  COOP/COEP headers, so put a header-adding proxy in front (ARCHITECTURE.md §
+  Web preview).
 - `EXPO_PUBLIC_ENABLE_DEV_TOOLS=1` at build time opens `/dev` in a release
   build. **Never set it for a Play build — it ships a wipe button.**
-- `EXPO_PUBLIC_EVAL_EXPIRES_AT=<ISO date>` makes an evaluation build that
-  blocks itself after that date (`docs/release.md`). Never for a Play build.
 
 ## Sync backend URL
 
 `EXPO_PUBLIC_API_BASE_URL`, else `app.json`'s `expo.extra.apiBaseUrl`
-(placeholder `https://api.shotledger.app`). Never a secret — the session
+(`https://web.shotledger.app`, the production Worker; #887). Never a secret — the session
 token lives in SecureStore, never in the tree or the DB.

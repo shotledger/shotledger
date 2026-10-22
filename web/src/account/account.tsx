@@ -1,11 +1,26 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { browserSupportsWebAuthn } from '@simplewebauthn/browser';
 import type { RefusalEntry } from '@shotledger/shared/src/sync';
-import type { AccountDevice, PhotoUsage } from '@shotledger/shared/src/sync-client/http';
+import type {
+  AccountDevice,
+  AccountPasskey,
+  PhotoUsage,
+} from '@shotledger/shared/src/sync-client/http';
 import { countMarks, marksFromRefusals } from '@shotledger/shared/src/sync-client/shadow';
 
 import { version } from '../../../app/package.json';
-import { deleteAccount, downloadPhoto, listDevices, photoUsage, revokeDevice } from '../api';
+import {
+  addPasskey,
+  deleteAccount,
+  downloadPhoto,
+  listDevices,
+  listPasskeys,
+  photoUsage,
+  removePasskey,
+  revokeDevice,
+} from '../api';
+import type { PasskeyError } from '../passkey-error';
 import type { PulledAccount, PulledTables } from '../pull';
 import { buildArchive, type ArchiveProgress } from './archive';
 import { deviceLabel } from './device-label';
@@ -111,6 +126,92 @@ function Devices() {
               );
             })}
         </ul>
+      )}
+    </section>
+  );
+}
+
+function Passkeys() {
+  const { t } = useTranslation();
+  const { date } = useFormat();
+  const [passkeys, reload] = useLoad(listPasskeys);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<PasskeyError | 'removeFailed' | null>(null);
+  const supported = browserSupportsWebAuthn();
+
+  // Named after this browser, as the device list names its sessions.
+  const thisBrowser = () => {
+    const label = deviceLabel(navigator.userAgent);
+    return label.kind === 'browser'
+      ? t('web.account.deviceBrowser', label)
+      : t('web.account.deviceUnknown');
+  };
+
+  const add = () => {
+    setBusy('add');
+    setError(null);
+    void addPasskey(thisBrowser()).then((failure) => {
+      setBusy(null);
+      if (failure !== 'cancelled') setError(failure);
+      if (failure === null) reload();
+    });
+  };
+
+  const remove = (id: string) => {
+    setBusy(id);
+    setError(null);
+    removePasskey(id)
+      .catch(() => setError('removeFailed'))
+      .finally(() => {
+        setBusy(null);
+        reload();
+      });
+  };
+
+  return (
+    <section className="card">
+      <h2>{t('account.passkey.title')}</h2>
+      <p className="muted">{t('account.passkey.body')}</p>
+      {passkeys.kind === 'loading' && <p className="muted">{t('web.account.loading')}</p>}
+      {passkeys.kind === 'failed' && <p className="danger">{t('account.passkey.listFailed')}</p>}
+      {passkeys.kind === 'ready' && passkeys.value.length > 0 && (
+        <ul className="devices">
+          {passkeys.value.map((passkey: AccountPasskey) => (
+            <li key={passkey.id}>
+              <div>
+                <strong>{passkey.name ?? t('account.passkey.unnamed')}</strong>
+                {passkey.createdAt && (
+                  <div className="muted">
+                    {t('account.passkey.added', { date: date(passkey.createdAt) })}
+                  </div>
+                )}
+              </div>
+              <button
+                className="secondary"
+                disabled={busy !== null}
+                onClick={() => remove(passkey.id)}
+              >
+                {t('account.passkey.remove')}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {error !== null && (
+        <p className="danger">
+          {t(
+            error === 'removeFailed'
+              ? 'account.passkey.removeFailed'
+              : `account.passkey.error.${error}`,
+          )}
+        </p>
+      )}
+      {supported ? (
+        <button onClick={add} disabled={busy !== null}>
+          {t('account.passkey.add')}
+        </button>
+      ) : (
+        <p className="muted">{t('account.passkey.unsupported')}</p>
       )}
     </section>
   );
@@ -269,6 +370,7 @@ export function Account({ tables, onDeleted }: { tables: PulledAccount; onDelete
     <div className="account">
       <Refusals refusals={tables.refusals} />
       <Devices />
+      <Passkeys />
       <Storage />
       <Download tables={tables} />
       <Delete onDeleted={onDeleted} />

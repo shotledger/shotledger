@@ -17,10 +17,13 @@ import type { PulledAccount } from '../pull';
 vi.mock('../i18n', () => ({ default: { language: 'en' } }));
 // Static markup runs no effects, so the page never calls the server.
 vi.mock('../api', () => ({
+  addPasskey: vi.fn(),
   deleteAccount: vi.fn(),
   downloadPhoto: vi.fn(),
   listDevices: vi.fn(),
+  listPasskeys: vi.fn(),
   photoUsage: vi.fn(),
+  removePasskey: vi.fn(),
   revokeDevice: vi.fn(),
 }));
 vi.resetModules();

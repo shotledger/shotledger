@@ -118,7 +118,7 @@ describe('ISSF events', () => {
   it('still recognizes 25 m standard pistol and 50 m pistol', () => {
     // Both are absent from the Olympic program, which is not the same as
     // being dropped: STPM/STPW and FPM/FPW are WCH events in the 2026 book.
-    // So SvSF needs no definition of its own for either (ADR 0011).
+    // So SvSF needs no definition of its own for either (REGULATIONS.md § Regelverk).
     for (const disciplineId of ['issf-standard-pistol', 'issf-free-pistol']) {
       expect(categories(disciplineId, ISSF)).toEqual([
         'men:open',
@@ -184,7 +184,7 @@ describe('SvSF events', () => {
   });
 
   it('never duplicates an ISSF event — "ISSF has prio"', () => {
-    // The do-not-duplicate rule (ADR 0011) as an executable check: an SvSF
+    // The do-not-duplicate rule (REGULATIONS.md § Regelverk) as an executable check: an SvSF
     // row with an ISSF id would be the same event defined twice.
     const issfIds = new Set(ISSF_EVENTS.map((e) => e.id));
     for (const event of SVSF_EVENTS) expect(issfIds.has(event.id)).toBe(false);
@@ -432,7 +432,7 @@ describe('categoryKey', () => {
 
 /**
  * Top-level, so reqstool can match this testcase back to its annotation — see
- * the convention in ADR 0015.
+ * the convention in docs/reqstool/README.md.
  *
  * @SVCs SVC_DISC_002
  */

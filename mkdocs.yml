@@ -25,7 +25,7 @@ edit_uri: edit/main/docs/manual/
 copyright: Free and open source. Donations unlock nothing.
 
 # docs/ already holds the material the app's contributors and agents work from —
-# ADRs, specs, the implementation plan. The user manual is a different audience
+# specs, references, the implementation plan. The user manual is a different audience
 # and gets its own clean directory rather than taking over docs/ wholesale.
 docs_dir: docs/manual
 
@@ -115,7 +115,6 @@ plugins:
             How usual form is worked out: Hur vanlig form räknas fram
             How the app finds the holes: Hur appen hittar hålen
             How the timer hears a shot: Hur timern hör ett skott
-            Evaluation builds: Utvärderingsversioner
             Logging a session: Logga ett pass
             Statistics: Statistik
             Scoring from a photo: Räkna från foto
@@ -135,6 +134,8 @@ plugins:
             Weapon group and class: Vapengrupp och klass
             Glossary: Ordlista
             Your data and privacy: Dina data och integritet
+            Privacy policy: Integritetspolicy
+            Terms of service: Användarvillkor
   - search:
       lang:
         - en
@@ -153,7 +154,6 @@ nav:
       - How usual form is worked out: explanation/usual-form.md
       - How the app finds the holes: explanation/how-holes-are-found.md
       - How the timer hears a shot: explanation/shot-detection.md
-      - Evaluation builds: explanation/evaluation-builds.md
   - Guides:
       - Logging a session: guides/logging-a-session.md
       - Statistics: guides/statistics.md
@@ -174,3 +174,5 @@ nav:
       - Weapon group and class: reference/weapon-group-and-class.md
       - Glossary: reference/glossary.md
       - Your data and privacy: reference/privacy.md
+      - Privacy policy: reference/privacy-policy.md
+      - Terms of service: reference/terms.md

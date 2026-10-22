@@ -126,7 +126,7 @@ export function createSyncRoutes(authenticatorFor: (env: Env) => Authenticator) 
       );
     }
 
-    // Device-local settings never reach the server, from any client (ADR 0019).
+    // Device-local settings never reach the server, from any client (ARCHITECTURE.md § Sync).
     const localSetting = parsed.data.changes.find(
       (change) =>
         change.tableName === 'settings' && !isSyncableSettingRow(change.rowId, change.payload),

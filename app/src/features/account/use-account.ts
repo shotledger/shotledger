@@ -1,13 +1,15 @@
 // Settings -> Account & sync (docs/specs/sync-app-spec.md §1). Email +
-// password only: the backend's better-auth config enables emailAndPassword
-// and the bearer plugin and configures no social provider, so there is no
-// Google/Apple button to render that could work.
+// password, or a passkey (#681): the backend's better-auth config enables
+// emailAndPassword, passkey and the bearer plugin and configures no social
+// provider, so there is no Google/Apple button to render that could work.
 import { AuthError } from '@shotledger/shared';
 import { useCallback, useEffect, useState } from 'react';
 
 import { db } from '@/db/client';
 import { resetSyncState } from '@/db/queries/sync-store';
+import { getPasskey } from '@/platform/passkey';
 import { clearSessionToken, setSessionToken } from '@/platform/secure-store';
+import { passkeyErrorKey, type PasskeyErrorKey } from '@/features/account/passkey-error';
 import { getAccountApi, loadSessionTokenCache, setSessionTokenCache } from '@/features/sync/client';
 import {
   refreshPendingCount,
@@ -25,6 +27,8 @@ export interface AccountState {
   error: AccountErrorKey | null;
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
+  /** Resolves to why it failed, or null once signed in. A dismissed prompt is `cancelled`. */
+  signInWithPasskey: () => Promise<PasskeyErrorKey | null>;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<boolean>;
 }
@@ -120,6 +124,23 @@ export function useAccount(): AccountState {
     [finishSignIn],
   );
 
+  const signInWithPasskey = useCallback(async (): Promise<PasskeyErrorKey | null> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const api = getAccountApi();
+      const ceremony = await api.passkeySignInOptions();
+      const response = await getPasskey(ceremony.options);
+      const session = await api.signInWithPasskey(ceremony, response);
+      await finishSignIn(session.token, session.email);
+      return null;
+    } catch (err) {
+      return passkeyErrorKey(err, 'signIn');
+    } finally {
+      setLoading(false);
+    }
+  }, [finishSignIn]);
+
   const forgetSession = useCallback(async () => {
     setSessionTokenCache(null);
     await clearSessionToken();
@@ -158,5 +179,15 @@ export function useAccount(): AccountState {
     }
   }, [forgetSession]);
 
-  return { loading, signedIn, email, error, signUp, signIn, signOut, deleteAccount };
+  return {
+    loading,
+    signedIn,
+    email,
+    error,
+    signUp,
+    signIn,
+    signInWithPasskey,
+    signOut,
+    deleteAccount,
+  };
 }

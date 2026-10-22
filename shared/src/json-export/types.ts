@@ -14,7 +14,7 @@ export const JSON_EXPORT_FORMAT = 'shotledger.sessions';
  * of a newer file is the data-loss mode this guards.
  *
  * Additive optional fields do not bump it: a reader of the older shape still
- * reads the newer file correctly (CLAUDE.md hard rule 8, pre-1.0.0).
+ * reads the newer file correctly (AGENTS.md hard rule 8, pre-1.0.0).
  */
 export const JSON_EXPORT_VERSION = 1;
 
@@ -35,8 +35,6 @@ export interface SeriesExport {
   position: number;
   isSighter: boolean;
   isFinal: boolean;
-  /** A särskjutning series (#727). */
-  isShootOff: boolean;
   shots: ShotExport[];
   /** Set on a total-only series, whose `shots` is then empty. */
   totalOverride: TotalOverrideExport | null;
@@ -82,10 +80,6 @@ export interface SessionExport {
   startedAt: string;
   location: string | null;
   notes: string | null;
-  /** Tens and inner tens stored on the session; set only where no shot rows
-   *  exist to count them from (a ShotLog import), `null` otherwise. */
-  tenCount: number | null;
-  innerTenCount: number | null;
   decimalScoring: boolean;
   /** Shots per series chosen at creation; `null` means the program's or discipline's. */
   seriesLength: number | null;
@@ -191,10 +185,6 @@ const seriesSchema = z
       .boolean()
       .describe('A sighter (provserie) is shot but not counted towards the session total.'),
     isFinal: z.boolean().describe('Whether the series belongs to a championship final.'),
-    isShootOff: z
-      .boolean()
-      .default(false)
-      .describe('A särskjutning series, shot to decide a placement. Scored like any other series.'),
     shots: z
       .array(shotSchema)
       .describe('The shots of this series, in the order they were entered.'),
@@ -359,23 +349,6 @@ export const sessionExportSchema = z.object({
   startedAt: z.iso.datetime().describe('When the session started, ISO 8601.'),
   location: z.string().nullable().describe('Where it was shot, as free text.'),
   notes: z.string().nullable().describe("The session's notes."),
-  tenCount: z
-    .number()
-    .int()
-    .min(0)
-    .nullable()
-    .default(null)
-    .describe(
-      'Tens recorded for the session itself. Set only where there are no shots to count ' +
-        'them from (a ShotLog import); null otherwise.',
-    ),
-  innerTenCount: z
-    .number()
-    .int()
-    .min(0)
-    .nullable()
-    .default(null)
-    .describe('Inner tens (X) recorded for the session itself, on the same terms as `tenCount`.'),
   decimalScoring: z
     .boolean()
     .describe('Whether scores are decimal. Affects how `valueTenths` reads, never what it stores.'),

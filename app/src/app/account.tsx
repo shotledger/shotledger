@@ -16,6 +16,8 @@ import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { apiBaseUrl } from '@/constants/backend';
 import { useAccount } from '@/features/account/use-account';
+import type { PasskeyErrorKey } from '@/features/account/passkey-error';
+import { usePasskeys } from '@/features/account/use-passkeys';
 import { useSync } from '@/features/sync/use-sync';
 import { useDateFormat } from '@/features/dates/use-date-format';
 
@@ -26,6 +28,8 @@ export default function AccountScreen() {
   const dates = useDateFormat();
   const account = useAccount();
   const { status, syncNow } = useSync(account.signedIn);
+  const passkeys = usePasskeys(account.signedIn);
+  const [passkeySignInError, setPasskeySignInError] = useState<PasskeyErrorKey | null>(null);
 
   const [mode, setMode] = useState<Mode>('signIn');
   const [email, setEmail] = useState('');
@@ -34,6 +38,14 @@ export default function AccountScreen() {
   function onSubmit() {
     if (mode === 'signUp') void account.signUp(email, password);
     else void account.signIn(email, password);
+  }
+
+  function onPasskeySignIn() {
+    setPasskeySignInError(null);
+    void account.signInWithPasskey().then((failure) => {
+      // Closing the OS prompt is a choice, not a failure.
+      setPasskeySignInError(failure === 'cancelled' ? null : failure);
+    });
   }
 
   function onDelete() {
@@ -112,6 +124,54 @@ export default function AccountScreen() {
           </Card>
 
           <Card>
+            <ThemedText type="smallBold">{t('account.passkey.title')}</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('account.passkey.body')}
+            </ThemedText>
+            {passkeys.passkeys?.map((passkey) => (
+              <ListRow
+                key={passkey.id}
+                title={passkey.name ?? t('account.passkey.unnamed')}
+                subtitle={
+                  passkey.createdAt
+                    ? t('account.passkey.added', { date: dates.date(passkey.createdAt) })
+                    : undefined
+                }
+                trailing={
+                  <SecondaryButton
+                    label={t('account.passkey.remove')}
+                    onPress={() => void passkeys.remove(passkey.id)}
+                    disabled={passkeys.busy}
+                    testID={`passkey-remove-${passkey.id}`}
+                  />
+                }
+                testID={`passkey-${passkey.id}`}
+              />
+            ))}
+            {passkeys.error && (
+              <ThemedText type="small" themeColor="textSecondary" testID="passkey-error">
+                {t(
+                  passkeys.error === 'removeFailed' || passkeys.error === 'listFailed'
+                    ? `account.passkey.${passkeys.error}`
+                    : `account.passkey.error.${passkeys.error}`,
+                )}
+              </ThemedText>
+            )}
+            {passkeys.supported ? (
+              <PrimaryButton
+                label={t('account.passkey.add')}
+                onPress={() => void passkeys.add()}
+                disabled={passkeys.busy}
+                testID="passkey-add"
+              />
+            ) : (
+              <ThemedText type="small" themeColor="textSecondary" testID="passkey-unsupported">
+                {t('account.passkey.unsupportedPhone')}
+              </ThemedText>
+            )}
+          </Card>
+
+          <Card>
             <ListRow
               title={t('account.deleteTitle')}
               subtitle={t('account.deleteSubtitle')}
@@ -157,6 +217,19 @@ export default function AccountScreen() {
           {account.error && (
             <ThemedText type="small" themeColor="textSecondary" testID="account-error">
               {t(`account.error.${account.error}`)}
+            </ThemedText>
+          )}
+          {mode === 'signIn' && passkeys.supported && (
+            <SecondaryButton
+              label={t('account.passkey.signIn')}
+              onPress={onPasskeySignIn}
+              disabled={account.loading}
+              testID="account-passkey-sign-in"
+            />
+          )}
+          {passkeySignInError && (
+            <ThemedText type="small" themeColor="textSecondary" testID="account-passkey-error">
+              {t(`account.passkey.error.${passkeySignInError}`)}
             </ThemedText>
           )}
         </Card>

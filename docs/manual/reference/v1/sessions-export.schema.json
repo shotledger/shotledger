@@ -167,34 +167,6 @@
               "null"
             ]
           },
-          "tenCount": {
-            "default": null,
-            "description": "Tens recorded for the session itself. Set only where there are no shots to count them from (a ShotLog import); null otherwise.",
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "innerTenCount": {
-            "default": null,
-            "description": "Inner tens (X) recorded for the session itself, on the same terms as `tenCount`.",
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "decimalScoring": {
             "type": "boolean",
             "description": "Whether scores are decimal. Affects how `valueTenths` reads, never what it stores."
@@ -250,11 +222,6 @@
                 "isFinal": {
                   "type": "boolean",
                   "description": "Whether the series belongs to a championship final."
-                },
-                "isShootOff": {
-                  "default": false,
-                  "description": "A särskjutning series, shot to decide a placement. Scored like any other series.",
-                  "type": "boolean"
                 },
                 "shots": {
                   "type": "array",
@@ -330,7 +297,6 @@
                 "position",
                 "isSighter",
                 "isFinal",
-                "isShootOff",
                 "shots",
                 "totalOverride"
               ],
@@ -514,8 +480,6 @@
           "startedAt",
           "location",
           "notes",
-          "tenCount",
-          "innerTenCount",
           "decimalScoring",
           "seriesLength",
           "extraRounds",

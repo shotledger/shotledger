@@ -1,0 +1,153 @@
+---
+name: EAS Update
+
+# Publishes a JS-only over-the-air update to installed EAS builds of one
+# release (ARCHITECTURE.md § Over-the-air updates, docs/release.md "Over-the-air JS updates").
+#
+#   resolve version -> checks -> [approval] -> eas update on the channel
+#
+# The runtime is the app version (`runtimeVersion.policy: appVersion`), so the
+# update has to be built from that release's code with that version stamped.
+# Dispatch it on a hotfix/* or release/* branch that contains the release's
+# tag, with the release version as input. Not on the tag itself: the `release`
+# environment deploys from protected branches only. Anything that touches
+# native code needs a release, not an update.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: >-
+          Release version the update targets (bare semver, e.g. 0.1.0).
+        required: true
+        type: string
+      channel:
+        description: 'EAS channel (app/eas.json). Try preview first.'
+        required: true
+        type: choice
+        options:
+          - preview
+          - production
+        default: preview
+      message:
+        description: 'What changed, shown in the EAS dashboard.'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eas-update
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: resolve version
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: ./.github/actions/check-version
+        with:
+          version: ${{ inputs.version }}
+
+      - name: Resolve the version from the ref
+        id: resolve
+        env:
+          REF: ${{ github.ref }}
+          REF_NAME: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          REQUESTED: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          case "$REF" in
+            refs/heads/hotfix/* | refs/heads/release/*)
+              if [ -z "$REQUESTED" ]; then
+                echo "::error::On '$REF_NAME', give the release version the update targets."
+                exit 1
+              fi
+              if ! git rev-parse -q --verify "refs/tags/$REQUESTED" >/dev/null; then
+                echo "::error::No tag '$REQUESTED'. An update targets a released version."
+                exit 1
+              fi
+              if ! git merge-base --is-ancestor "refs/tags/$REQUESTED" "$SHA"; then
+                echo "::error::'$REF_NAME' does not contain release '$REQUESTED'."
+                exit 1
+              fi
+              VERSION="$REQUESTED"
+              ;;
+            *)
+              echo "::error::Dispatch on a hotfix/* or release/* branch (got '$REF'). From main the version is the 0.0.0 placeholder, which no build has; a tag is not a protected branch, so the release environment refuses it. To publish the tagged code as it is, push release/<version> at the tag first."
+              exit 1
+              ;;
+          esac
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publishing for runtime $VERSION from ${SHA:0:12}"
+
+  checks:
+    name: checks
+    needs: prepare
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
+  # Same gate as the release build: the `release` environment requires the
+  # maintainer's approval.
+  publish:
+    name: publish on EAS
+    needs: [prepare, checks]
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    environment: release
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v6.1.0
+        with:
+          version: 12.11.2
+
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Uncommitted on purpose, as in the release workflow: the runtime version
+      # is read from this stamp.
+      - name: Stamp the version
+        working-directory: app
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: npm pkg set "version=$VERSION"
+
+      - name: Check the update URL is configured
+        working-directory: app
+        run: |
+          set -euo pipefail
+          URL="$(jq -r '.expo.updates.url // empty' app.json)"
+          if [ -z "$URL" ]; then
+            echo "::error::app/app.json has no expo.updates.url; builds would never fetch this update. See docs/release.md."
+            exit 1
+          fi
+
+      - uses: expo/expo-github-action@9.0.0
+        with:
+          eas-version: 24.12.1
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      # Android only, like the release workflow; add ios once iOS builds ship.
+      - name: Publish the update
+        working-directory: app
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          MESSAGE: ${{ inputs.message }}
+        run: eas update --channel "$CHANNEL" --platform android --message "$MESSAGE" --non-interactive

@@ -271,12 +271,21 @@ describe('applyChanges', () => {
           external_ref: '1:2',
           external_synced_at: at,
           webshooter_competition_id: '1',
+          ten_count: 3,
+          inner_ten_count: 1,
         },
       }),
       change({
         tableName: 'series',
         rowId: 'old-r',
-        payload: { id: 'old-r', ...common, session_id: 'old-s', position: 1, note: 'särskjutning' },
+        payload: {
+          id: 'old-r',
+          ...common,
+          session_id: 'old-s',
+          position: 1,
+          note: 'särskjutning',
+          is_shoot_off: 1,
+        },
       }),
       change({
         tableName: 'shots',
@@ -296,7 +305,7 @@ describe('applyChanges', () => {
     expect(db.select().from(sessions).where(eq(sessions.id, 'old-s')).get()?.externalRef).toBe(
       '1:2',
     );
-    expect(db.select().from(series).where(eq(series.id, 'old-r')).get()?.isShootOff).toBe(0);
+    expect(db.select().from(series).where(eq(series.id, 'old-r')).get()?.position).toBe(1);
     expect(db.select().from(shots).where(eq(shots.id, 'old-h')).get()?.isInnerTen).toBe(1);
   });
 

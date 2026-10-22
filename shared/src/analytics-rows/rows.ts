@@ -1,5 +1,5 @@
 // The Statistics inputs built from plain table rows, so the phone (SQLite)
-// and the web app (`/sync/pull`, ADR 0013) feed the report from one join.
+// and the web app (`/sync/pull`, ARCHITECTURE.md § Web app) feed the report from one join.
 // Rows are the column set the joins read, camelCase as Drizzle returns them,
 // SQLite booleans as 0/1. Callers pass live rows only.
 import { disciplineSeriesLength, getDiscipline, seriesStage } from '../disciplines';

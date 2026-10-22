@@ -1,0 +1,199 @@
+# M4 flow (§4 M4 "Done when"): create a firearm, add a license, log a
+# session against it (reusing the log-session series-entry steps
+# minimally), then assert the round count incremented and the maintenance
+# indicator went amber (a low maintenance interval makes the crossing
+# reachable within one short 5-shot series). Text assertions use English
+# labels — see the tabs-smoke and log-session flows, which assume the
+# emulator's default (English) system locale.
+appId: app.shotledger
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: 'Home'
+    timeout: 30000
+
+# --- Create firearm ---------------------------------------------------
+- tapOn: 'Firearms'
+- extendedWaitUntil:
+    visible: 'Firearms'
+    timeout: 15000
+- tapOn:
+    id: 'firearms-fab'
+- extendedWaitUntil:
+    visible:
+      id: 'firearm-make'
+    timeout: 15000
+- tapOn:
+    id: 'firearm-make'
+- inputText: 'Walther'
+- tapOn:
+    id: 'firearm-model'
+- inputText: 'GSP'
+- pressKey: Back
+- takeScreenshot: firearm-and-license-01-new-firearm
+- scrollUntilVisible:
+    element:
+      id: 'create-firearm'
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: 'create-firearm'
+
+- extendedWaitUntil:
+    visible:
+      id: 'round-count'
+    timeout: 15000
+- takeScreenshot: firearm-and-license-02-firearm-detail
+- assertVisible:
+    id: 'round-count'
+    text: '0'
+
+# --- Set a low maintenance interval so 5 rounds land in the amber band
+# (80-99% of interval) rather than tipping straight into red.
+- scrollUntilVisible:
+    element:
+      id: 'maintenance-interval'
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: 'maintenance-interval'
+- inputText: '6'
+- pressKey: Back
+- tapOn:
+    id: 'save-interval'
+
+# --- Add a license -----------------------------------------------------
+- scrollUntilVisible:
+    element:
+      id: 'add-license'
+    direction: UP
+    timeout: 20000
+- tapOn:
+    id: 'add-license'
+- tapOn:
+    id: 'license-number'
+- inputText: 'A999999202601'
+- pressKey: Back
+- scrollUntilVisible:
+    element:
+      id: 'save-license'
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: 'save-license'
+# The saved license sits above the fold, and extendedWaitUntil does not scroll.
+- scrollUntilVisible:
+    element:
+      id: 'license-status'
+    direction: UP
+    timeout: 15000
+- takeScreenshot: firearm-and-license-03-firearm-license
+
+# --- Log a session against this firearm (reusing log-session series-entry steps) ---
+# Not tapOn 'Home': it can match Android's own Home button and leave the app.
+- openLink: 'shotledger://'
+- extendedWaitUntil:
+    visible: 'Log Your First Session'
+    timeout: 15000
+# Still no session, so Home's empty state offers the first (#822 removed the FAB).
+- tapOn: 'Log Your First Session'
+- extendedWaitUntil:
+    visible: 'Discipline'
+    timeout: 15000
+# Vapengrupp and klass are asked only for a competition; a training session
+# takes the group from the gun.
+- tapOn: 'Competition'
+- tapOn:
+    id: 'discipline-spsf-precision'
+- scrollUntilVisible:
+    element:
+      id: 'group-spsf:C'
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: 'group-spsf:C'
+- scrollUntilVisible:
+    element:
+      id: 'class-2'
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: 'class-2'
+- scrollUntilVisible:
+    element: 'Walther GSP'
+    direction: DOWN
+    timeout: 20000
+- tapOn: 'Walther GSP'
+- scrollUntilVisible:
+    element:
+      id: 'create-session'
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: 'create-session'
+
+- scrollUntilVisible:
+    element:
+      id: 'add-series'
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: 'add-series'
+# Add Series asks keypad or photo first.
+- extendedWaitUntil:
+    visible:
+      id: 'series-entry-manual'
+    timeout: 15000
+- tapOn:
+    id: 'series-entry-manual'
+- extendedWaitUntil:
+    visible: 'Save series'
+    timeout: 15000
+- repeat:
+    times: 5
+    commands:
+      - tapOn:
+          id: 'key-9'
+- scrollUntilVisible:
+    element:
+      id: 'save-series'
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: 'save-series'
+# The saved series leaves the screen scrolled to Add Series, below the total.
+- extendedWaitUntil:
+    visible:
+      id: 'add-series'
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: 'session-total'
+    direction: UP
+    timeout: 20000
+
+# --- Assert the round count incremented and maintenance went amber ---
+# Session detail has no tab bar; back out to the tabs.
+- pressKey: Back
+- extendedWaitUntil:
+    visible: 'Firearms'
+    timeout: 15000
+- tapOn: 'Firearms'
+- extendedWaitUntil:
+    visible: 'Firearms'
+    timeout: 15000
+- tapOn: 'Walther GSP'
+- extendedWaitUntil:
+    visible:
+      id: 'round-count'
+    timeout: 15000
+- assertVisible:
+    id: 'round-count'
+    text: '5'
+- assertVisible:
+    id: 'rounds-since-maintenance'
+    text: '5'
+- assertVisible:
+    id: 'maintenance-status'
+- takeScreenshot: firearm-and-license-04-round-count-and-maintenance

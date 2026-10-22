@@ -1,7 +1,7 @@
 // Native components that ship inside the app but appear in no npm manifest —
 // Gradle/Maven artifacts, CocoaPods and vendored C/C++ sources. `pnpm licenses:generate`
 // cannot see them, so this list is hand-maintained: update it when a native
-// dependency is added, removed or bumped (see CLAUDE.md hard rule 2).
+// dependency is added, removed or bumped (see AGENTS.md hard rule 2).
 //
 // Versions and license names verified from the artifacts themselves:
 // the Maven POMs (org.opencv:opencv, com.google.mlkit:text-recognition),
@@ -10,8 +10,8 @@
 // FastOpenCV-iOS 1.0.4's opencv2 core/version.hpp. That pod quotes OpenCV's
 // pre-4.5 BSD text, but OpenCV is Apache-2.0 from 4.5.
 //
-// expo-updates (OTA delivery, ADR 0020) ships native code only; nothing in the
-// JS bundle imports it, so the generator cannot see it either. Its Android
+// expo-updates (OTA delivery, ARCHITECTURE.md § Over-the-air updates) ships
+// native code only; nothing in the JS bundle imports it, so the generator cannot see it either. Its Android
 // artifacts are from its build.gradle. Its iOS pods (ReachabilitySwift and the
 // vendored BSD-2-Clause bspatch) still need adding from the first iOS build
 // with it installed.

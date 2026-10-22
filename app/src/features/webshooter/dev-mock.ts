@@ -113,8 +113,7 @@ const MOCK_RESULTS: ResultRow[] = [
     weaponclass: MOCK_SIGNUP.weaponclass!,
     results: [1, 2, 3, 4, 5, 6, 7].map((n) => mockStation(n, 47)),
     results_finals: [],
-    // A särskjutning series, so the Shoot-off chip shows on an imported
-    // precision session (#727).
+    // A precision särskjutning, which the import skips (#727).
     results_distinguish: [{ ...mockStation(8, 45), distinguish: 1 as const }],
   },
 ];

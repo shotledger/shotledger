@@ -3,7 +3,7 @@
 # One SVC per requirement, each verified by a test tagged `@SVCs` with this id.
 # That test is top-level and its title is a single identifier token — reqstool
 # matches a JUnit testcase by the leading identifier of its name, so a test
-# nested in a `describe` matches the describe instead. See ADR 0015.
+# nested in a `describe` matches the describe instead. See docs/reqstool/README.md.
 
 cases:
   - id: SVC_SCORE_001

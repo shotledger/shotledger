@@ -547,13 +547,7 @@
     "licensesNativeTitle": "Inbyggda komponenter",
     "licensesNativeNote": "Kompileras in i appen i stället för att buntas som JavaScript. Alla är inte öppen källkod, och Android-plattformens egna bibliotek listas inte.",
     "licensesJsTitle": "JavaScript-paket",
-    "repoLink": "GitHub-repo",
-    "evaluationExpires": "Utvärderingsversion endast för personlig testning; ingen annan licens ges. Går ut {{date}}."
-  },
-  "evaluation": {
-    "expiredTitle": "Utvärderingsversionen har gått ut",
-    "expiredBody": "Den här utvärderingsversionen av ShotLedger gick ut {{date}}. Be om en ny version för att fortsätta använda appen.",
-    "expiredExportNote": "Dina pass finns kvar på telefonen. Exportera dem för att spara en kopia."
+    "repoLink": "GitHub-repo"
   },
   "jsonExport": {
     "sectionTitle": "Passexport",
@@ -1337,6 +1331,27 @@
       "weakPassword": "Välj ett längre lösenord.",
       "network": "Ingen kontakt med servern.",
       "unknown": "Något gick fel. Försök igen."
+    },
+    "passkey": {
+      "title": "Nycklar",
+      "body": "Logga in med fingeravtryck, ansikte eller skärmlås i stället för lösenord. En nyckel sparas i din webbläsare, telefon eller lösenordshanterare; servern lagrar bara dess publika nyckel. Ditt lösenord fungerar som förut.",
+      "add": "Lägg till nyckel",
+      "added": "Tillagd {{date}}",
+      "unnamed": "Nyckel",
+      "remove": "Ta bort",
+      "removeFailed": "Kunde inte ta bort nyckeln. Försök igen.",
+      "listFailed": "Kunde inte visa dina nycklar.",
+      "unsupported": "Den här webbläsaren kan inte använda nycklar.",
+      "signIn": "Logga in med nyckel",
+      "error": {
+        "alreadyAdded": "Nyckeln finns redan på ditt konto.",
+        "notRegistered": "Den nyckeln finns inte på något ShotLedger-konto. Logga in med lösenord och lägg till den igen.",
+        "network": "Kunde inte nå servern. Försök igen.",
+        "unknown": "Nyckeln fungerade inte. Försök igen, eller logga in med lösenord.",
+        "signInAgain": "Logga ut och in igen och lägg sedan till nyckeln."
+      },
+      "appName": "ShotLedger-appen på {{os}}",
+      "unsupportedPhone": "Den här telefonen kan inte använda nycklar."
     }
   },
   "shotlog": {
@@ -1554,6 +1569,7 @@
       "saved": "Sparat.",
       "savedReload": "Sparat. Ladda om sidan för att se det i statistiken.",
       "savedFirearmRejected": "Sparat, men vapnet har tagits bort på en annan enhet, så dess skottantal ändrades inte.",
+      "refused": "{{count}} ändring(ar) avvisades av servern och sparades inte. Serierna finns kvar.",
       "failedNetwork": "Kunde inte nå servern. Serierna finns kvar; Försök igen skickar samma pass igen.",
       "failedSignedOut": "Du har loggats ut. Logga in igen och spara sedan på nytt.",
       "failedOutdated": "Sidan är inaktuell. Kopiera dina serier och ladda sedan om sidan.",

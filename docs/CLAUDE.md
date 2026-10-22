@@ -1,11 +1,11 @@
 # docs/
 
-Rules that apply everywhere are in the root `CLAUDE.md`, including that a
+Rules that apply everywhere are in the root `AGENTS.md`, including that a
 user-visible change updates `docs/manual/` in the same PR.
 
 `docs/manual/` is the **user** manual, written for shooters, not
 contributors, and published with MkDocs (`docs_dir: docs/manual`).
-Contributor material — `adr/`, `specs/`, `implementation-plan.md` — is not
+Contributor material — `specs/`, `reference/`, `implementation-plan.md` — is not
 part of it.
 
 ## Where a new paragraph goes

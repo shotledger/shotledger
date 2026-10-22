@@ -547,13 +547,7 @@
     "licensesNativeTitle": "Native Components",
     "licensesNativeNote": "Compiled into the app rather than bundled as JavaScript. Not all of these are open source, and the Android platform libraries the build links against are not listed.",
     "licensesJsTitle": "JavaScript Packages",
-    "repoLink": "GitHub Repository",
-    "evaluationExpires": "Evaluation build for personal testing only; no other license is granted. Expires {{date}}."
-  },
-  "evaluation": {
-    "expiredTitle": "Evaluation Build Expired",
-    "expiredBody": "This evaluation build of ShotLedger expired on {{date}}. Ask for a new build to keep using the app.",
-    "expiredExportNote": "Your sessions are still on this phone. Export them to keep a copy."
+    "repoLink": "GitHub Repository"
   },
   "jsonExport": {
     "sectionTitle": "Sessions Export",
@@ -1337,6 +1331,27 @@
       "weakPassword": "Choose a longer password.",
       "network": "No connection to the server.",
       "unknown": "Something went wrong. Try again."
+    },
+    "passkey": {
+      "title": "Passkeys",
+      "body": "Sign in with your fingerprint, face or screen lock instead of your password. A passkey is kept by your browser, phone or password manager; the server stores only its public key. Your password keeps working.",
+      "add": "Add Passkey",
+      "added": "Added {{date}}",
+      "unnamed": "Passkey",
+      "remove": "Remove",
+      "removeFailed": "Could not remove the passkey. Try again.",
+      "listFailed": "Could not list your passkeys.",
+      "unsupported": "This browser cannot use passkeys.",
+      "signIn": "Sign In with a Passkey",
+      "error": {
+        "alreadyAdded": "This passkey is already on your account.",
+        "notRegistered": "That passkey is not on any ShotLedger account. Sign in with your password and add it again.",
+        "network": "Could not reach the server. Try again.",
+        "unknown": "The passkey did not work. Try again, or sign in with your password.",
+        "signInAgain": "Sign out and in again, then add the passkey."
+      },
+      "appName": "ShotLedger app on {{os}}",
+      "unsupportedPhone": "This phone cannot use passkeys."
     }
   },
   "shotlog": {
@@ -1554,6 +1569,7 @@
       "saved": "Saved.",
       "savedReload": "Saved. Reload the page to see it in Statistics.",
       "savedFirearmRejected": "Saved, but the firearm was deleted on another device, so its round count did not change.",
+      "refused": "{{count}} change(s) refused by the server and not saved. Your series are still here.",
       "failedNetwork": "Could not reach the server. Your series are still here; Retry sends the same session again.",
       "failedSignedOut": "You have been signed out. Sign in again, then save again.",
       "failedOutdated": "This page is out of date. Copy your series, then reload the page.",

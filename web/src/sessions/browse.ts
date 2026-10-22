@@ -58,8 +58,6 @@ export interface BrowseSeries {
   photo: PhotoRef;
   isSighter: boolean;
   isFinal: boolean;
-  /** A särskjutning series (#727); shown, scored like any other. */
-  isShootOff: boolean;
   shots: EntryShot[];
   /** The shots' sum, or the stored total of an imported series with no shots. */
   totalTenths: number;
@@ -88,7 +86,6 @@ function photoUris(rows: { sessionId: string; position: number; photoUri?: strin
 
 function browseSession(
   session: SessionExport,
-  storedInnerTens: number | null,
   seriesPhotos: PhotoUris,
   stationPhotos: PhotoUris,
 ): BrowseSession {
@@ -99,7 +96,6 @@ function browseSession(
     photo: photoAt(seriesPhotos, row.position),
     isSighter: row.isSighter,
     isFinal: row.isFinal,
-    isShootOff: row.isShootOff,
     shots: row.shots.map(({ valueTenths, isInnerTen }) => ({ valueTenths, isInnerTen })),
     totalTenths: row.totalOverride
       ? row.totalOverride.tenths
@@ -132,8 +128,7 @@ function browseSession(
     results: sessionResults(forResults),
     stageSubtotals: program ? stageSubtotals(programStages(program), series) : [],
     seriesAverageTenths: seriesAverageTenths(forResults),
-    // A ShotLog import stores its count and has no shot flags to count.
-    innerTenCount: storedInnerTens ?? sessionInnerTenCount(forResults),
+    innerTenCount: sessionInnerTenCount(forResults),
     innerTenAverage: seriesInnerTenAverage(forResults),
     falt: scoresHits
       ? faltSummaryOf(session.faltResultMode, faltSessionResultOf(session.stations))
@@ -161,10 +156,7 @@ export function seriesSections(series: readonly BrowseSeries[]): SeriesSection[]
 
 /** Every live session, newest first. */
 export function browseSessions(tables: PulledTables): BrowseSession[] {
-  const sessionRows = liveRows<ExportSessionRow & { innerTenCount?: number | null }>(
-    tables.sessions,
-  );
-  const storedInnerTens = new Map(sessionRows.map((row) => [row.id, row.innerTenCount ?? null]));
+  const sessionRows = liveRows<ExportSessionRow>(tables.sessions);
   const { tags, links } = tagRecords(tables);
   type WithPhoto = { photoUri?: string | null };
   const seriesRows = liveRows<ExportSeriesRow & WithPhoto>(tables.series);
@@ -183,9 +175,7 @@ export function browseSessions(tables: PulledTables): BrowseSession[] {
     .sort(
       (a, b) => b.startedAt.localeCompare(a.startedAt) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
     )
-    .map((session) =>
-      browseSession(session, storedInnerTens.get(session.id) ?? null, seriesPhotos, stationPhotos),
-    );
+    .map((session) => browseSession(session, seriesPhotos, stationPhotos));
 }
 
 /** An uploaded photo with the series or station it belongs to. */

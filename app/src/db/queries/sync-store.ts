@@ -58,7 +58,7 @@ function quoteIdentifier(name: string): string {
  * identifier).
  */
 function applyOne(db: Database, change: ChangeRow): void {
-  // A device-local key the server should never have held (ADR 0019).
+  // A device-local key the server should never have held (ARCHITECTURE.md § Sync).
   if (change.tableName === 'settings' && !isSyncableSettingRow(change.rowId, change.payload)) {
     return;
   }

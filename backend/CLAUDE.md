@@ -1,11 +1,11 @@
 # backend/ — the Cloudflare Worker (ELv2)
 
-Rules that apply everywhere are in the root `CLAUDE.md`.
+Rules that apply everywhere are in the root `AGENTS.md`.
 
 - **Never deploy.** `wrangler deploy` is forbidden for an agent.
-- `wrangler dev` serves the web app from `../web/dist` (ADR 0013) and will
-  not start until it exists: `pnpm --filter @shotledger/web build` first. The
-  tests do not need it.
+- `wrangler dev` serves the web app from `../web/dist` (ARCHITECTURE.md § Web
+  app) and will not start until it exists: `pnpm --filter @shotledger/web build`
+  first. The tests do not need it.
 - `pnpm test` (in `backend/`) runs the Cloudflare Workers vitest suite. It
   is not part of the root `pnpm check`; CI runs it as its own step.
 - On this sandbox the Workers pool is slow enough that

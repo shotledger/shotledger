@@ -1,16 +1,14 @@
 # web/ — the web app
 
-ADR 0013: a separate complement over `/sync/pull`, served same-origin by the
-Worker, keeping nothing after the tab closes (the session token is in
-`sessionStorage`, the rows in memory). ADR 0019: it writes only by pushing
-whole rows through `/sync/push`, online, with no outbox. The writers are
+What the web app is and how it writes, with what was rejected, is
+[ARCHITECTURE.md § Web app](../ARCHITECTURE.md#web-app). The writers are
 `src/entry/` (series and fält), `src/settings/` (the synced settings),
 `src/bulk/` (bulk edit) and `src/edit/` (one session's edit and delete); all
 go through `shared/src/sync-client/` (`session-entry.ts`, `falt-entry.ts`,
 `settings-edit.ts`, `bulk-edit.ts`, `ammo-lot-merge.ts`, `session-edit.ts`,
 `direct-push.ts`).
 
-- **Parity with the phone** (root `CLAUDE.md` rule 11): every write mirrors
+- **Parity with the phone** (root `AGENTS.md` rule 11): every write mirrors
   a named phone function (`app/src/db/queries/`) and is tested against it on
   the phone's schema (`app/src/db/queries/web-*.test.ts`). The phone decides
   any open question; a gap is stated in the spec, never left silent.

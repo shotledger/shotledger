@@ -176,6 +176,8 @@ function statusText(t: TFunction, state: SaveState): string | null {
     case 'saved':
       if (status.firearmRejected) return t('web.entry.savedFirearmRejected');
       return status.refreshed ? t('web.entry.saved') : t('web.entry.savedReload');
+    case 'refused':
+      return t('web.entry.refused', { count: status.count });
     case 'failed':
       if (status.photo === 'photoRateLimited') return t('web.entry.failedPhotoRateLimited');
       if (status.photo === 'photoQuota') return t('web.entry.failedPhotoQuota');
@@ -819,7 +821,15 @@ export function Entry({
               {blocked === 'offline' && <p className="danger">{t('web.entry.offline')}</p>}
               {startedAt === null && <p className="danger">{t('web.entry.errorDateTime')}</p>}
               {message && (
-                <p className={state.status.kind === 'failed' ? 'danger' : 'muted'}>{message}</p>
+                <p
+                  className={
+                    state.status.kind === 'failed' || state.status.kind === 'refused'
+                      ? 'danger'
+                      : 'muted'
+                  }
+                >
+                  {message}
+                </p>
               )}
               {formErrors.map((text) => (
                 <p key={text} className="danger">

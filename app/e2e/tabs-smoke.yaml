@@ -1,0 +1,50 @@
+# M2 smoke flow (§4 "Done when"): walks all five tabs on seeded data,
+# screenshotting each. Loads demo data via the dev-only /dev route first
+# (native only — see docs/implementation-plan.md M1 report on web's
+# expo-sqlite gap).
+appId: app.shotledger
+---
+- launchApp
+- extendedWaitUntil:
+    visible: 'Home'
+    timeout: 20000
+# openLink right after launchApp can race the JS bundle's linking listener
+# and silently no-op (run-app skill, Maestro notes); it failed this flow on
+# CI on 2026-10-19. Settle first, then retry once, as stats.yaml does.
+- extendedWaitUntil:
+    visible:
+      id: 'settle-before-open-link'
+    timeout: 4000
+    optional: true
+- openLink: 'shotledger://dev'
+- extendedWaitUntil:
+    visible: 'Dev'
+    timeout: 8000
+    optional: true
+- runFlow:
+    when:
+      notVisible: 'Dev'
+    commands:
+      - openLink: 'shotledger://dev'
+- extendedWaitUntil:
+    visible: 'Dev'
+    timeout: 15000
+- tapOn:
+    id: 'load-demo-data'
+- openLink: 'shotledger://'
+- extendedWaitUntil:
+    visible: 'Home'
+    timeout: 15000
+- takeScreenshot: tabs-smoke-home
+- tapOn: 'Statistics'
+- assertVisible: 'Statistics'
+- takeScreenshot: tabs-smoke-stats
+- tapOn: 'Firearms'
+- assertVisible: 'Firearms'
+- takeScreenshot: tabs-smoke-firearms
+- tapOn: 'Tools'
+- assertVisible: 'Tools'
+- takeScreenshot: tabs-smoke-tools
+- tapOn: 'Settings'
+- assertVisible: 'Settings'
+- takeScreenshot: tabs-smoke-settings

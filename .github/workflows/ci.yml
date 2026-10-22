@@ -55,7 +55,13 @@ jobs:
       - name: Backend tests
         run: pnpm --filter @shotledger/backend test
 
-      # Requirement↔test traceability (ADR 0015). `pnpm check` has already run
+      # The photo-scoring CV on synthetic photos with known holes (#864): about
+      # a minute, so outside `pnpm check`. Real photos stay with the local
+      # tools/cv/eval runs.
+      - name: CV regression (synthetic photos)
+        run: pnpm cv:regression
+
+      # Requirement↔test traceability (docs/reqstool/README.md). `pnpm check` has already run
       # both test suites, so the JUnit results reqstool matches against are on
       # disk by now. Kept out of `pnpm check` itself because the client is
       # Python, same as the docs gates.
@@ -72,6 +78,13 @@ jobs:
       # so without this the step fails with "No matching distribution found".
       - name: Install the reqstool client
         run: pipx install --python "$pythonLocation/bin/python" reqstool==0.12.2
+
+      # Licence and copyright for every file (REUSE 3.3, REUSE.toml), #100.
+      - name: Install the REUSE tool
+        run: pipx install --python "$pythonLocation/bin/python" reuse==6.2.0
+
+      - name: Check every file's licence and copyright (REUSE)
+        run: reuse lint
 
       - name: Collect requirement annotations
         run: pnpm reqstool:tags

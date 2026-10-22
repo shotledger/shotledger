@@ -5,6 +5,7 @@ import { betterAuthAuthenticator, type Authenticator } from '../auth';
 import { createAuth } from '../auth/better-auth';
 import {
   account as authAccount,
+  passkey as authPasskey,
   session as authSession,
   user as authUser,
 } from '../db/auth-schema';
@@ -95,6 +96,7 @@ export function createAccountRoutes(
       db.delete(rateLimitWindows).where(eq(rateLimitWindows.userId, userId)),
       db.delete(authSession).where(eq(authSession.userId, userId)),
       db.delete(authAccount).where(eq(authAccount.userId, userId)),
+      db.delete(authPasskey).where(eq(authPasskey.userId, userId)),
       db.delete(authUser).where(eq(authUser.id, userId)),
     ]);
 

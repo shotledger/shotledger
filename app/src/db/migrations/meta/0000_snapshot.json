@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "fe93e089-3f50-4758-994f-a444ed1e52e2",
+  "id": "b9647d59-91ea-49e7-9c39-63fd394cc263",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "ammo_lots": {
@@ -920,14 +920,6 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
-        },
-        "is_shoot_off": {
-          "name": "is_shoot_off",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
         }
       },
       "indexes": {},
@@ -1172,20 +1164,6 @@
         "notes": {
           "name": "notes",
           "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "ten_count": {
-          "name": "ten_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "inner_ten_count": {
-          "name": "inner_ten_count",
-          "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false

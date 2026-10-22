@@ -36,9 +36,6 @@ export interface CreateSessionInput {
   startedAt: string;
   location?: string | null;
   notes?: string | null;
-  /** Session-level ten / inner-ten counts. Only for sessions with no shot rows to count — see schema.ts. */
-  tenCount?: number | null;
-  innerTenCount?: number | null;
   decimalScoring?: boolean;
   /** Overrides the discipline's default series length (#348). */
   seriesLength?: number | null;
@@ -76,8 +73,6 @@ export function createSession(db: Database, input: CreateSessionInput) {
     startedAt: input.startedAt,
     location: input.location ?? null,
     notes: input.notes ?? null,
-    tenCount: input.tenCount ?? null,
-    innerTenCount: input.innerTenCount ?? null,
     decimalScoring: input.decimalScoring ? 1 : 0,
     seriesLength: input.seriesLength ?? null,
     faltResultMode: input.faltResultMode ?? null,

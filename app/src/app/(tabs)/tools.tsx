@@ -1,7 +1,7 @@
 // Tools tab — the utilities that are not app settings: timers, photos and
 // the external sites the shooter has enabled.
 //
-// External sites are one row each, and only when enabled (ADR 0010).
+// External sites are one row each, and only when enabled (ARCHITECTURE.md § External sites).
 // Connecting to them is back in Settings: the login form had turned a
 // third of this screen into a sign-in page for a site most sessions never
 // touch.

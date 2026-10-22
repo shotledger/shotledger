@@ -143,7 +143,7 @@ export default function NewSessionScreen() {
   const [regulationId, setRegulationId] = useState<string>(
     () => lastUsed?.regulationId ?? regulations[0]?.id ?? '',
   );
-  // Generic disciplines survive every filter (ADR 0011), so free training is
+  // Generic disciplines survive every filter (REGULATIONS.md § Regelverk), so free training is
   // reachable whichever regelverk is selected — and with none enabled, the
   // unknown id filters to exactly those.
   const availableDisciplines = disciplinesForRegulations([regulationId]);

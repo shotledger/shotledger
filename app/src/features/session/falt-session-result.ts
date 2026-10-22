@@ -1,5 +1,5 @@
 // A session's fält result from its stations, free of the database so the web
-// app (ADR 0013) reads the same numbers from pulled rows.
+// app (ARCHITECTURE.md § Web app) reads the same numbers from pulled rows.
 import {
   faltResult,
   poangfaltPoints,

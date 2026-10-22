@@ -1,0 +1,122 @@
+# M3 flow (§4 M3 "Done when"), updated for spec Amendment A2: create a
+# C-precision competition session and enter five series by tapping the
+# keypad, then assert the computed total, the per-series average and the X
+# (centrumtia) count.
+#
+# Each series is 9, 9, 9, 10, X = 47 points — so it exercises both new ten
+# keys: `10` (ordinary ten, no flag) and `X` (inner ten, is_inner_ten=1).
+# Five series therefore total 235, average 47.0 per series, and 5 X.
+appId: app.shotledger
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: 'Home'
+    timeout: 30000
+- takeScreenshot: log-session-01-home
+# A first session: Home's empty state offers it (#822 removed the FAB).
+- tapOn: 'Log Your First Session'
+
+# New-session form: precision is the default discipline; pick vapengrupp C
+# and klass 2 (displayed together as "C 2", SHB F.2.6).
+- extendedWaitUntil:
+    visible: 'Discipline'
+    timeout: 15000
+# Vapengrupp and klass are asked only for a competition; a training session
+# takes the group from the gun.
+- tapOn: 'Competition'
+- tapOn:
+    id: 'discipline-spsf-precision'
+- scrollUntilVisible:
+    element:
+      id: 'group-spsf:C'
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: 'group-spsf:C'
+- scrollUntilVisible:
+    element:
+      id: 'class-2'
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: 'class-2'
+- takeScreenshot: log-session-02-new-session
+- scrollUntilVisible:
+    element:
+      id: 'create-session'
+    direction: DOWN
+    timeout: 20000
+- takeScreenshot: log-session-02b-extra-rounds-field
+- tapOn:
+    id: 'create-session'
+
+- extendedWaitUntil:
+    visible: 'Add series'
+    timeout: 15000
+- takeScreenshot: log-session-03-session-empty
+
+# Five scored series of 9, 9, 9, 10, X.
+- repeat:
+    times: 5
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: 'add-series'
+          direction: DOWN
+          timeout: 20000
+      - tapOn:
+          id: 'add-series'
+      # Add Series asks keypad or photo first.
+      - extendedWaitUntil:
+          visible:
+            id: 'series-entry-manual'
+          timeout: 15000
+      - tapOn:
+          id: 'series-entry-manual'
+      - extendedWaitUntil:
+          visible: 'Save series'
+          timeout: 15000
+      - repeat:
+          times: 3
+          commands:
+            - tapOn:
+                id: 'key-9'
+      - tapOn:
+          id: 'key-10'
+      - tapOn:
+          id: 'key-X'
+      - scrollUntilVisible:
+          element:
+            id: 'save-series'
+          direction: DOWN
+          timeout: 20000
+      - tapOn:
+          id: 'save-series'
+      # Back on the detail screen. Scroll UP to the results card rather than
+      # waiting for it: with the extra-rounds card in the header the total sits
+      # above the fold once a few series exist, and extendedWaitUntil does not
+      # scroll (CLAUDE.md, M5 note).
+      - scrollUntilVisible:
+          element:
+            id: 'session-total'
+          direction: UP
+          timeout: 20000
+
+- scrollUntilVisible:
+    element:
+      id: 'session-total'
+    direction: UP
+    timeout: 20000
+- takeScreenshot: log-session-04-session-five-series
+- assertVisible:
+    id: 'session-total'
+    text: '235'
+# Header stats (spec Amendment A1 §A1.2): mean of the scored series' totals,
+# and the centrumtia count — 5, one per series, from the X key only.
+- assertVisible:
+    id: 'session-series-average'
+    text: '47.0'
+- assertVisible:
+    id: 'session-inner-ten-count'
+    text: '5'

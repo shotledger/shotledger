@@ -1,6 +1,6 @@
 // Whole-row payloads for the rows the web creates
 // (docs/specs/web-series-entry-spec.md §3.2). A push replaces the whole row
-// (ADR 0019), so every column of the app's table is present, with the values
+// (ARCHITECTURE.md § Web app), so every column of the app's table is present, with the values
 // the app's own createSession / addSeries / addShot write. Keys are the
 // app's column names; app/src/db/queries/web-rows.test.ts holds them to
 // shared/src/sync/schema.ts.
@@ -58,8 +58,6 @@ export function newSessionRow(id: string, now: string, fields: SessionFields): P
     started_at: fields.startedAt,
     location: fields.location,
     notes: null,
-    ten_count: null,
-    inner_ten_count: null,
     decimal_scoring: fields.decimalScoring ? 1 : 0,
     series_length: fields.seriesLength,
     falt_result_mode: null,
@@ -92,7 +90,6 @@ export function newSeriesRow(id: string, now: string, fields: SeriesFields): Pay
     is_total_override: 0,
     total_override_tenths: null,
     total_override_shot_count: null,
-    is_shoot_off: 0,
   };
 }
 

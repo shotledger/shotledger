@@ -3,14 +3,18 @@
 TypeScript tools for the app's photo-scoring CV: they run the app's own locks
 and hole proposals on real photos, render the grids holes are marked on, fit
 the hole models, and write the lock-step fixtures. They began as the Python
-spike in `spike/cv/`, which [ADR 0018](../../docs/adr/0018-cv-tools-in-typescript.md)
-retired.
+spike in `spike/cv/`, retired on 2026-10-03
+([ARCHITECTURE.md § Photo
+scoring](../../ARCHITECTURE.md#photo-scoring-computer-vision)). Why their
+numbers differ from the Python's is under [Where the app differs from the
+Python](#where-the-app-differs-from-the-python).
 
 Everything runs from the repo root on Node. OpenCV calls go through OpenCV.js
 4.12 (`@techstark/opencv-js`, a root devDependency pinned to the device's
 OpenCV), so a measurement runs the code and the library the phone runs.
 ImageMagick (`magick`) decodes the photos. None of this is in `pnpm check`:
-apart from the fixtures, the tools read photos that are not in the repo.
+apart from the fixtures and the regression check, the tools read photos that
+are not in the repo.
 
 ## The stages they measure
 
@@ -128,6 +132,27 @@ CV_TIMING_IN=<canvas-dir> CV_TIMING_OUT=timing.jsonl [CV_TIMING_HALVE=1] \
 node tools/cv/eval/hole-size-timing.mts timing.jsonl
 ```
 
+## `eval/regression.check.ts`: the check CI runs
+
+```bash
+pnpm cv:regression
+```
+
+runs the whole pipeline (the lock, its canvas, the hole proposals, the scorer)
+on four synthetic photos drawn with known holes: a whole target square on, one
+turned and tilted, a close-up, and a milsnabb face. A scene fails when its lock
+does not hold, it proposes a hole too many or too few, a hole's radius is off
+by more than the scene's tolerance, or a score changes. Holes are compared by
+radius because a ring lock does not fix the rotation. CI runs it on every PR,
+in about a minute. `CV_REGRESSION_OUT=<file.jsonl>` also writes each scene's
+radii and errors.
+
+A failure after a deliberate change to the CV code is a measurement to look
+at, not a number to loosen: check the change with an `eval/` run on real
+photos, and widen a tolerance only with that evidence. The scenes are drawn,
+not photographed, so they cannot stand in for the corpus; a consented subset of
+real photos can join them later (#864).
+
 ## `fit/`: hand marks and the two hole models
 
 Ground truth is **hole centres, not candidate labels**: labelling the
@@ -204,8 +229,8 @@ node tools/cv/fit/fit-hole-filter.mts --stage tight a.csv --test b.csv
 
 The stages run large-kernel morphology, which OpenCV.js does single-threaded:
 about 17 s a photo. On the 2026-09-16 marks the hole filter's fit
-reproduces the shipped table only on the spike's own canvases; ADR 0018
-says why.
+reproduces the shipped table only on the spike's own canvases; see
+[Where the app differs from the Python](#where-the-app-differs-from-the-python).
 
 **3. The hole proposals** (`HOLE_PROPOSAL_WEIGHTS` in
 `app/src/features/photo-scoring/hole-proposals.ts`). The candidates come from
@@ -232,9 +257,37 @@ pnpm cv:fixtures
 rewrites `hole-features.fixtures.json`, `hole-proposals.fixtures.json` and
 `closeup-lock.fixtures.json` from the TypeScript, on synthetic crops and
 canvases only. They are **snapshots**: they pin the TypeScript to its own past
-output, not to an independent implementation (ADR 0018). Regenerate after a
-deliberate change to the CV code, and review the diff together with an `eval/`
-run on real photos before and after.
+output, not to an independent implementation, so a wrong change regenerated
+into a fixture passes. Regenerate after a deliberate change to the CV code, and
+review the diff together with an `eval/` run on real photos before and after.
+
+## Where the app differs from the Python
+
+The corpus numbers in the older specs were taken with the Python, and two of
+them do not reproduce from the TypeScript:
+
+- **The app's disc lock is not the Python's.** On 32 real photos (#502) the
+  median radius gap is 0.68 mm, 7 agree within 0.05 mm, and gate verdicts
+  differ on 2. The causes are port differences, not noise: `fitEllipse`
+  instead of `fitEllipseDirect` (react-native-fast-opencv has no
+  `fitEllipseDirect`), no 7 px pre-blur, no in-frame point filter, and a
+  radial profile sampled with `warpPolar` and a box high-pass, whose profile
+  score reads 30–950 lower. They show on cropped photos and close-ups, up to
+  23 mm at the 90th percentile. Making the app's lock a faithful port is a
+  separate decision.
+- **The hole filter's fit reproduces only on the Python's canvases.** Fed
+  those canvases, the TypeScript stages give the same candidates, labels and
+  misses on all 31 marked photos, and the refitted tight-stage constants move
+  by 0.3% or less (float64 against OpenCV's float32). From the photos they do
+  not: the 2026-09-16 hand marks were read off the Python's canvas; on 3
+  photos with a clipped black zone the app's lock fits another ellipse, so 8
+  marked holes meet no tight-stage candidate; and OpenCV.js 4.12 warps with
+  cubic interpolation up to 4 gray levels off the 5.0 the Python ran, on
+  about 5% of pixels. On the other 28 photos the tight stage finds 194
+  candidates (87 on holes) against the Python's 199 (88), too few for a
+  stable refit: some constants move by a factor of three. The shipped
+  constants are unchanged; refitting them means re-marking on the
+  TypeScript's grids.
 
 ## What the Python had that this does not
 

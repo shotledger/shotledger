@@ -3,7 +3,7 @@
 // i18n/date formatting, same split as shared/src/export/session-report.ts) — these
 // functions only shape the data: drop sighters from the series list, and
 // turn a blank opt-in note into `null` so the renderer can skip the line.
-// Never derive shooter identity or location here (CLAUDE.md rule 7).
+// Never derive shooter identity or location here (AGENTS.md rule 7).
 
 export interface ShareCardSeriesEntry {
   position: number;

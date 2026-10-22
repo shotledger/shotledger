@@ -1005,7 +1005,7 @@ describe('per-group sighters and faces (§6.3, #476)', () => {
 
 /**
  * Top-level, so reqstool can match this testcase back to its annotation — see
- * the convention in ADR 0015.
+ * the convention in docs/reqstool/README.md.
  *
  * @SVCs SVC_DISC_003
  */
@@ -1061,7 +1061,7 @@ describe('Nationell helmatch and figurskjutning (SHB Del I)', () => {
 
 /**
  * Top-level, so reqstool can match this testcase back to its annotation — see
- * the convention in ADR 0015.
+ * the convention in docs/reqstool/README.md.
  *
  * @SVCs SVC_DISC_004
  */

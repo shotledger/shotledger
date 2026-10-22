@@ -27,7 +27,7 @@ module.exports = {
     global: { lines: 39, functions: 28, branches: 33, statements: 40 },
   },
   // JUnit alongside the default reporter so `reqstool status` can see which
-  // @SVCs-tagged test actually ran (ADR 0015).
+  // @SVCs-tagged test actually ran (docs/reqstool/README.md).
   reporters: [
     'default',
     [

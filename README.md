@@ -47,10 +47,7 @@ English and Swedish throughout.
 
 ## Status
 
-Not released yet. ShotLedger is not in Google Play; testers get 30-day
-evaluation builds from the maintainer, which stop working after 30 days but
-keep your data and still let you export it. The repository is private for
-now.
+Not released yet. ShotLedger is not in Google Play.
 
 ## Privacy
 
@@ -64,6 +61,10 @@ lists each one. The app is free; donations unlock nothing.
 The app is free software under the AGPL-3.0-or-later with additional
 permissions; the sync server is under the Elastic License 2.0. See
 [`LICENSE`](LICENSE).
+
+The copyright holder also offers ShotLedger under separate commercial
+licenses, for use without the public licenses' obligations. To ask about
+one, open an issue or contact the maintainer.
 
 ## Contributing
 

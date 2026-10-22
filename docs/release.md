@@ -46,20 +46,19 @@ Sync is opt-in and the app is fully functional without it, so these steps
 are only needed before a build that should offer accounts. `wrangler
 deploy` is forbidden to agents; every command below is the maintainer's.
 
-One Worker serves both the sync API and the read-only web app (ADR 0013):
-`wrangler deploy` uploads `web/dist` as its static assets. There are two
-deployed environments in `backend/wrangler.jsonc`, `staging` and
-`production`, each with its own D1 database and R2 bucket. The top level of
-that file is local development and the test suite only, and Wrangler does
-not inherit its `vars` or bindings into a named environment. No secret is
-committed anywhere. Locally the Worker uses a built-in dev placeholder and
-then answers only `localhost`, `127.0.0.1` and `[::1]`, so the top level
-deployed by mistake serves nothing. A deployed env refuses to start (every
-auth request answers `500`, logged as `AuthConfigError`) when
-`BETTER_AUTH_SECRET` is missing, shorter than 32 characters or the dev
-placeholder, or when `BETTER_AUTH_URL` is not an `https://` origin or is
-still the `REPLACE_ME.invalid` placeholder. Try every step on `staging`
-first; for production, repeat it with `production`.
+One Worker serves both the sync API and the read-only web app (ARCHITECTURE.md §
+Web app): `wrangler deploy` uploads `web/dist` as its static assets. There are
+two deployed environments in `backend/wrangler.jsonc`, `staging` and
+`production`, each with its own D1 database and R2 bucket. The top level of that
+file is local development and the test suite only, and Wrangler does not inherit
+its `vars` or bindings into a named environment. No secret is committed
+anywhere. Locally the Worker uses a built-in dev placeholder and then answers
+only `localhost`, `127.0.0.1` and `[::1]`, so the top level deployed by mistake
+serves nothing. A deployed env refuses to start (every auth request answers
+`500`, logged as `AuthConfigError`) when `BETTER_AUTH_SECRET` is missing,
+shorter than 32 characters or the dev placeholder, or when `BETTER_AUTH_URL` is
+not an `https://` origin or is still the `REPLACE_ME.invalid` placeholder. Try
+every step on `staging` first; for production, repeat it with `production`.
 
 What the deployed config already does:
 
@@ -85,6 +84,18 @@ What the deployed config already does:
 
 - [ ] **Decide the hostname(s).** That decision is the maintainer's and is
       not recorded anywhere yet; nothing in the repo assumes one.
+- [ ] **Decide whether the data stays in the EU.** D1 and R2 take a
+      jurisdiction only when they are created; it cannot be added later.
+- [ ] Run `pnpm cloudflare:setup staging <hostname>` from the repo root
+      (add `--eu` for EU jurisdiction, `--dry-run` to see the changes
+      first; needs `npx wrangler login`). `scripts/cloudflare-setup.mjs`
+      does the next two steps: it creates the D1 database and R2 bucket,
+      fills in the env's block of `backend/wrangler.jsonc` (and, for
+      `production`, `apiBaseUrl` in `app/app.json`), generates
+      `BETTER_AUTH_SECRET` into `~/cloud/agents/secrets/shotledger/` and
+      uploads it. Running it again reuses what exists. Commit the config
+      change on a branch; the ids are not secrets. To do it by hand
+      instead:
 - [ ] Create the env's D1 database and R2 bucket, then in its
       `env.<name>` block of `backend/wrangler.jsonc` replace the
       `REPLACE_ME` `database_id`, check the `bucket_name`, set
@@ -111,8 +122,8 @@ What the deployed config already does:
       60 seconds from one address is refused with `429`.
 - [ ] Point the app at production: set `expo.extra.apiBaseUrl` in
       `app/app.json` (or `EXPO_PUBLIC_API_BASE_URL` for a one-off build) to
-      the production origin. The default is the `https://api.shotledger.app`
-      placeholder, which does not resolve.
+      the production origin. The default is already
+      `https://web.shotledger.app` (#887); check it resolves.
 - [ ] Play Console **Data safety** form now has real answers to give: with
       sync enabled the app collects an email address and the logbook rows
       and photos the user chooses to sync, all deletable in-app via
@@ -124,7 +135,13 @@ What the deployed config already does:
       collected — one foreground fix, taken only on that tap, sent to
       `overpass-api.de` to look up nearby ranges and then discarded; no
       background access, nothing stored, and only the range name the user
-      picks is saved.
+      picks is saved. **ML Kit** (licence-card OCR) counts as an SDK that
+      collects data: the image and text stay on the phone, but Google's ML
+      Kit terms say it sends Google metrics on the API's performance and use,
+      and make the app responsible for disclosing that. Answer the form from
+      Google's ML Kit data-disclosure guidance for the version shipped, and
+      keep it consistent with the privacy policy
+      (`docs/manual/reference/privacy-policy.md`).
 
 ## (b) Repeatable steps, every release
 
@@ -140,14 +157,9 @@ checksum-verified), `.github/actions/check-version`, and `.github/cliff.toml`.
 
 One-time, before the first release:
 
-- [ ] The approval gate is **advisory for now**. The `release` environment
-      exists, but a private repo on GitHub Free cannot give it a required
-      reviewer (the API answers 422, "ensure the billing plan supports the
-      required reviewers protection rule"). Until the repo is public or on
-      Pro ([#100](https://github.com/shotledger/shotledger/issues/100)), what
-      stands between a dispatch and a release is the `dry-run` default and
-      that only the maintainer can run the workflow. Then add the maintainer
-      as required reviewer under Settings → Environments → `release`.
+- [x] The approval gate: the `release` environment requires the maintainer
+      as reviewer, declared in shotledger/.github
+      (`safe-settings/suborgs/product.yml`), not set by hand.
 - [ ] The `EXPO_TOKEN` repository secret (see the iOS section).
 - [ ] Run one production build interactively,
       `cd app && eas build --platform android --profile production`, so EAS
@@ -198,37 +210,51 @@ Every release:
 
 ## Over-the-air JS updates (EAS Update)
 
-ADR 0020. A JS-only fix can reach installed EAS builds without a new
-build. Anything that touches native code (a new or bumped native
-dependency, `app.json` plugins or permissions) still needs a release.
+Why it is set up this way: [ARCHITECTURE.md § Over-the-air
+updates](../ARCHITECTURE.md#over-the-air-updates). A JS-only fix can reach
+installed EAS builds without a new build. Anything that touches native code (a
+new or bumped native dependency, `app.json` plugins or permissions) still needs
+a release.
 
 One-time, before the first update:
 
-- [ ] `cd app && eas init`, if `app/app.json` has no
-      `extra.eas.projectId` yet (the same step as in (a)).
-- [ ] `cd app && eas update:configure`. It adds `updates.url` to
-      `app/app.json`. `runtimeVersion` and the channels in `app/eas.json`
-      are already set, so commit only the URL and project id it writes.
-- [ ] Ship one release **after** that commit. Builds made before it have
-      no update URL and never check for updates.
+- [ ] `cd app && eas project:info` prints the project id in
+      `app/app.json` (`extra.eas.projectId`). `updates.url` is
+      `https://u.expo.dev/<that id>`, already committed. If the id is not
+      your project's, run `eas init` and fix both values together.
+- [ ] `cd app && eas update:configure` should change nothing. If it
+      writes to `app/app.json` or `app/eas.json`, review and commit that.
+- [ ] Add `EXPO_TOKEN` to the `release` environment if the release
+      workflow does not already have it there.
+- [ ] Ship one release **after** `updates.url` landed. Builds made before
+      it have no update URL and never check for updates.
 
 Every update:
 
 0. An update that carries a migration of a synced table waits for the
    sync server, and a phone that has not taken the update has its changes
    to that table refused, as step 0 of a release says.
-1. Check out the release's tag (or its `hotfix/*` branch with the fix on
-   top). The runtime version is the app version, so the update has to be
-   published with that release's version.
-2. Stamp it the way the release workflow does:
-   `cd app && npm pkg set version=<release version>`. Don't commit it.
-3. `cd app && eas update --channel production --message "<what changed>"`.
-   Use `--channel preview` to try it on a preview APK first.
-4. Phones pick it up on the next launch after the download finishes, so
+1. Run the **EAS Update** workflow (`.github/workflows/eas-update.yml`,
+   Actions → EAS Update → Run workflow). Dispatch it on a `hotfix/*` or
+   `release/*` branch that contains the release's tag, with the release
+   version as input. The runtime version is the app version, so the update
+   has to be built from that release with that version stamped; the
+   workflow refuses `main`, where the version is the `0.0.0` placeholder.
+   It cannot run on the tag itself: the `release` environment deploys from
+   protected branches only. To publish the tagged code as it is, push
+   `release/<version>` at the tag first. Pick
+   `preview` first to try it on a preview APK, then run it again with
+   `production`. It runs the same checks as a release, then waits on the
+   `release` environment.
+2. Phones pick it up on the next launch after the download finishes, so
    expect it on the second launch.
 
-Locally built APKs (evaluation builds, the `run-app` standalone APK) have no
-channel and never receive updates.
+By hand, the same thing is: check out the release or hotfix branch,
+`cd app && npm pkg set version=<release version>` (don't commit it), then
+`eas update --channel <preview|production> --platform android --message "<what changed>"`.
+
+Locally built APKs (the `run-app` standalone APK) have no channel and never
+receive updates.
 
 ## Preview builds (internal testing, not Play Console)
 
@@ -240,65 +266,11 @@ Produces an installable `.apk` for ad-hoc sharing (e.g. sideloading to a
 test device) without going through Play Console at all. Useful for
 milestone demos before a store submission is warranted.
 
-## Evaluation builds (outside testers)
-
-An evaluation build is a sideloaded APK that stops working on a set date,
-**30 days after it is built** by default. From the repo root:
-
-```bash
-pnpm build:eval                # expires in 30 days
-EVAL_DAYS=14 pnpm build:eval   # another window
-```
-
-`scripts/build-eval.mjs` runs the standalone release build from the `run-app`
-skill (`.claude/skills/run-app/references/emulator.md`) with the expiry set,
-copies the APK to `shotledger-eval-expires-<date>.apk` at the repo root
-(gitignored) and prints the hand-out message. It refuses to run with
-`EXPO_PUBLIC_ENABLE_DEV_TOOLS` set.
-
-- **The date** is midnight UTC, `EVAL_DAYS` days after today's UTC date.
-  The script passes it to the app as `EXPO_PUBLIC_EVAL_EXPIRES_AT`
-  (`YYYY-MM-DD`, or a full ISO 8601 date-time with `Z` or an offset, if you
-  ever build by hand) and overrides any value already in the shell. From that instant on, launching the app, or
-  returning to it, shows a blocking "Evaluation Build Expired" screen that
-  tells the tester to ask for a new build and still offers the sessions
-  export. The tester's data stays on the phone; a new build signed with the
-  same key installs over it. Settings → About shows the expiry date while the
-  build is active.
-- **License terms:** an evaluation build is handed out under an
-  evaluation-only grant, not the AGPL, while the repository is private and
-  the maintainer is its sole copyright holder (ADR 0017). About says so;
-  repeat it in the hand-out message:
-
-  > ShotLedger evaluation build, for your personal testing only. No other
-  > license is granted; please don't pass the APK on. It stops working on
-  > <date>; ask me for a new build after that.
-
-  Once the repository is public, builds are AGPL like every other and this
-  grant no longer applies.
-
-- **A malformed value fails open:** the build runs with no expiry at all.
-  The script always writes a valid date; this matters only for a hand-set
-  value.
-- **Clock rollback:** the app keeps the latest time it has seen in
-  SecureStore (localStorage on web) and compares against that, so setting
-  the clock back neither reopens an expired build nor rewinds the window.
-  This defeats only the casual case. Clearing the app's data and setting the
-  clock back before the next launch beats it, and so does patching the
-  bundle; it is an honest-user gate, not enforcement.
-- **There is no EAS profile for it.** The date changes with every build, so
-  it does not belong in `eas.json`.
-- **Never for a Play build.** No profile in `app/eas.json` sets
-  `EXPO_PUBLIC_EVAL_EXPIRES_AT`, so the `production` build has no expiry;
-  keep it that way, and never export the variable in a shell that runs
-  `eas build`.
-
 ## CI and build budget
 
-**GitHub Actions**, private repo: macOS minutes are limited (2,000 min/mo
-at a 10× multiplier ≈ 200 real minutes on the free plan) — the
-unlimited-free-macOS perk only applies once the repo is public. EAS's
-free tier (30 builds/mo, 15 iOS) covers app builds in the meantime.
+**GitHub Actions** standard runners, macOS included, are free for a public
+repo. App builds run on EAS, whose free tier allows 30 builds a month, 15
+of them iOS.
 
 **iOS without a Mac.** EAS Build + EAS Submit run from Linux; TestFlight
 handles beta distribution (builds expire after 90 days). A real iPhone is
@@ -327,6 +299,12 @@ The same statement, in user words, is in `docs/store-listing.md`.
   Releases. Google's developer verification requirement (enforcing
   2026-09-30 in BR/ID/SG/TH, global 2027) is satisfied by having a Play
   account — register the package name and signing key once.
+- **F-Droid:** not for now (maintainer, 2026-10-20; #876). F-Droid refuses
+  bundled proprietary libraries, and the build has three: ML Kit (licence-card
+  OCR), Firebase Messaging (pulled in by `expo-notifications`) and Play
+  Services Location (`expo-location`); EAS Update's OTA download breaks its
+  policy too. Listing would need a free-only build flavour; #876 has the
+  analysis. The GitHub Releases APK serves users without Play meanwhile.
 - **Donations:** a "Support development" row in Settings opens the
   configured funding link in the external browser; unlocks nothing, no
   purchase language. Also linked from the store listing and README. The
@@ -378,7 +356,7 @@ Known risks:
 
 ## Repo configuration
 
-`github.com/shotledger/shotledger`, private. Modeled on the skillsgateway
+`github.com/shotledger/shotledger`, public since 2026-10-19. Modeled on the skillsgateway
 org, applied via API (2026-09-01): squash-merge only with `PR_TITLE`
 title + `COMMIT_MESSAGES` body (keeps DCO trailers on `main` through
 squashes), delete-branch-on-merge, allow-update-branch, web commit
@@ -389,12 +367,57 @@ config (`renovate.json5`) extends the shared
 `renovate-version-*`, `security`, `dependencies`) are already created.
 The Renovate GitHub App is installed.
 
-**Blocked until the repo is public or on a paid plan:** branch
-protection, rulesets and auto-merge are all unavailable on a free-plan
-private repo (confirmed 2026-09-10: the rulesets API answers 403
-"Upgrade to GitHub Pro or make this repository public") — merge
-discipline stays workflow-based until then. Once the repo goes public,
-add a `protect-main` ruleset with required checks, enable auto-merge,
-revisit safe-settings, and **audit the full history before flipping
-visibility** — the secrets rule in `~/.claude/CLAUDE.md` applies to
-anything that was ever pushed, not just what is on `main` today.
+The repo moved from `jimisola/shotledger` to the `shotledger` organization
+on 2026-10-14 (Free plan). Organization settings are declared in the
+`shotledger/.github` repository and applied by the
+`shotledger-safe-settings` app.
+
+**In force since the repo went public** (declared in
+`shotledger/.github`, `safe-settings/suborgs/product.yml`; checked against
+`GET /repos/shotledger/shotledger/rules/branches/main` after the sync):
+
+- `protect-main` on the default branch, `release/*` and `hotfix/*`:
+  required checks `check` (GitHub Actions, 15368), `DCO` (DCO App, 1861) and `license/cla` (CLA Assistant,
+  a commit status); "require branch up to date" off; one approval, given
+  to Renovate's minor, patch and pin PRs by the `renovate-approve` App;
+  stale approvals dismissed on push; every review thread resolved; no
+  deletion or force-push. Organization admins may bypass; Renovate may
+  not, because a bypass skips the checks too.
+- `protect-tags`: tags cannot be deleted or moved.
+- The `release` environment needs the maintainer's approval and deploys
+  from protected branches only, so never from a tag.
+- `allow_auto_merge` on, so Renovate merges through GitHub auto-merge
+  once the ruleset is satisfied.
+- A new job that runs on every PR is ungated until it is added to the
+  required checks: change the workflow and `product.yml` in the same go.
+
+**Going public** was issue #100, in this order:
+
+1. **History audit.** Making the repo public publishes every commit
+   reachable from a branch, a tag or a pull request (`refs/pull/*/head`),
+   not only `main`. Done 2026-10-19 over all 2,217 such commits: no
+   tokens, keys or private-key blocks; the only secret-like values are
+   test fixtures; commit authors are the maintainer, Claude
+   (`noreply@anthropic.com`) and Renovate; the only image outside
+   `app/assets/` and `branding/` is the synthetic license card fixture;
+   license numbers are synthetic (`A000.000/…`, `A123.456/…`). Re-run it
+   right before the switch, for anything pushed since:
+   `node scripts/history-audit.mjs` (fails on a finding; never prints a
+   matched value).
+2. **Licensing checks.** `reuse lint` runs in CI (`REUSE.toml`).
+3. **CLA mechanism** live before the first outside pull request
+   (`CONTRIBUTING.md`, "Signing the CLA"): the hosted CLA Assistant
+   (<https://cla-assistant.io>), chosen 2026-10-19. Sign in there as the
+   maintainer, put the text of `CLA.md` in a GitHub Gist (it lives at
+   <https://gist.github.com/jimisola/9f7c846a410339a77b3a4346ea80b600>),
+   and link the gist to the `shotledger` organization (done 2026-10-19 for
+   every repo in the org). Allowlist bots (`renovate[bot]`, `*[bot]`).
+   CLA Assistant checks each commit's author, so agent commits are
+   authored and signed off as the maintainer, who has signed (decided
+   2026-10-19; `CONTRIBUTING.md`, "AI-assisted commits"). When `CLA.md`
+   changes, update the gist so contributors re-sign the new version.
+4. **Make the repo public** (maintainer only).
+5. **Then, in safe-settings:** the rules above (shotledger/.github#1,
+   2026-10-19), and a required reviewer (the maintainer, self-review
+   allowed) on the `release` environment (shotledger/.github#2,
+   2026-10-20).

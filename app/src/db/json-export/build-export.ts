@@ -1,6 +1,6 @@
 // Glue layer (routine app work, not old-coder scope — see
 // docs/specs/json-export-spec.md): reads the DB and hands the rows to the
-// shared builders, which the web app (ADR 0013) feeds from `/sync/pull`.
+// shared builders, which the web app (ARCHITECTURE.md § Web app) feeds from `/sync/pull`.
 import { isNull } from 'drizzle-orm';
 import {
   exportSessionsToJson,

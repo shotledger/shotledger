@@ -236,13 +236,41 @@ describe('saving an entry', () => {
       firearmRejected: true,
     });
     expect(rejected.refresh).toHaveBeenCalledTimes(1);
+  });
 
-    // Only a firearm rejection is the firearm message; any one of several is.
-    const row = (tableName: 'firearms' | 'sessions') => ({ tableName, rowId: 'r', reason: 'x' });
+  it('U4b a refused session row is not reported as saved (#863)', async () => {
+    const row = (tableName: 'firearms' | 'sessions' | 'shots') => ({
+      tableName,
+      rowId: 'r',
+      reason: 'invalid_payload',
+    });
     const other = deps({ kind: 'partlyRejected', rejected: [row('sessions')] });
-    expect((await save(other, null)).status).toMatchObject({ firearmRejected: false });
-    const mixed = deps({ kind: 'partlyRejected', rejected: [row('sessions'), row('firearms')] });
-    expect((await save(mixed, null)).status).toMatchObject({ firearmRejected: true });
+    expect(await save(other, null)).toEqual({
+      status: { kind: 'refused', count: 1, refreshed: true },
+      held: null,
+    });
+    expect(other.refresh).toHaveBeenCalledTimes(1);
+
+    // A firearm refused beside the session counts too: neither was saved.
+    const mixed = deps({
+      kind: 'partlyRejected',
+      rejected: [row('shots'), row('sessions'), row('firearms')],
+    });
+    expect((await save(mixed, null)).status).toEqual({
+      kind: 'refused',
+      count: 3,
+      refreshed: true,
+    });
+
+    const stale = deps(
+      { kind: 'partlyRejected', rejected: [row('shots')] },
+      { refresh: vi.fn(() => Promise.resolve(false)) },
+    );
+    expect((await save(stale, null)).status).toEqual({
+      kind: 'refused',
+      count: 1,
+      refreshed: false,
+    });
   });
 });
 

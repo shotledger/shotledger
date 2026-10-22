@@ -1,7 +1,7 @@
 // Share cards: turns DB rows + i18n labels into the pure
 // card-model input, mirroring the session/local split in
 // app/src/features/export/session-report.ts. Never reads session.location or
-// any shooter-identity field (CLAUDE.md rule 7) — only discipline, weapon
+// any shooter-identity field (AGENTS.md rule 7) — only discipline, weapon
 // group/class, firearm and scores.
 import type { TFunction } from 'i18next';
 import { formatGroupAndClass, tenthsToScore } from '@shotledger/shared';

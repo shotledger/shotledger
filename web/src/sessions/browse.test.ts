@@ -34,7 +34,6 @@ const session = (id: string, overrides: Record<string, unknown>) => ({
   series_length: null,
   extra_rounds: null,
   falt_result_mode: null,
-  inner_ten_count: null,
   deleted_at: null,
   ...overrides,
 });
@@ -90,7 +89,6 @@ function tables(): PulledTables {
         discipline_id: 'spsf-helmatch',
         program_id: 'spsf-helmatch',
         started_at: '2026-10-02T10:00:00.000Z',
-        inner_ten_count: 3,
       }),
       session('falt', { discipline_id: 'spsf-falt', started_at: '2026-10-03T10:00:00.000Z' }),
       session('gone', { started_at: '2026-10-04T10:00:00.000Z', deleted_at: '2026-10-05' }),
@@ -190,7 +188,7 @@ describe('browseSessions', () => {
     expect(ring.falt).toBeNull();
   });
 
-  it("gives a program's stage subtotals and prefers a stored inner-ten count", () => {
+  it("gives a program's stage subtotals and counts inner tens from the shots", () => {
     const helm = byId('helm');
     expect(helm.series.map((s) => s.stage)).toEqual(['A', 'A']);
     expect(helm.stageSubtotals).toEqual([
@@ -198,7 +196,7 @@ describe('browseSessions', () => {
       { stage: 'B', totalTenths: 0 },
       { stage: 'C', totalTenths: 0 },
     ]);
-    expect(helm.innerTenCount).toBe(3);
+    expect(helm.innerTenCount).toBe(0);
   });
 
   it('gives a fält session its result over the stations that score', () => {
@@ -273,7 +271,6 @@ describe('seriesSections', () => {
     photo: null,
     isSighter: false,
     isFinal,
-    isShootOff: false,
     shots: [],
     totalTenths: 0,
     stage: null,

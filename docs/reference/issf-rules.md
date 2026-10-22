@@ -82,7 +82,7 @@ Three things this settles that were previously unread or guessed:
   the reason `EntryCategory` is a pair rather than a flat enum.
 - **25m Standard Pistol and 50m Pistol are still fully recognized**, in all
   four categories. Neither is Olympic; both are WCH. So SvSF needs no
-  definition of its own for either — see ADR 0011.
+  definition of its own for either — see REGULATIONS.md § Regelverk.
 - **25m Centre Fire Pistol has no junior categories at all** (`M only`, `W`).
   Encoded as `issf-centre-fire-pistol` since 2026-09-16 (#228) — SvSF's
   _Grovpistol_, see [SvSF](svsf-rules.md#grovpistol--issf-25-m-centre-fire-pistol).

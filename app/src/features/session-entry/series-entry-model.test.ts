@@ -9,7 +9,6 @@ function row(position: number, values: number[], extra: Partial<SeriesRow> = {})
     position,
     isSighter: false,
     isFinal: false,
-    isShootOff: false,
     photoUri: null,
     shots,
     totalTenths: values.reduce((a, b) => a + b, 0),
@@ -34,7 +33,7 @@ describe('liveSessionTotals', () => {
       isSighter: false,
       shots: [{ valueTenths: 50, isInnerTen: false }],
     };
-    expect(liveSessionTotals(rows, current, null)).toEqual({ totalTenths: 240, innerTens: 1 });
+    expect(liveSessionTotals(rows, current)).toEqual({ totalTenths: 240, innerTens: 1 });
   });
 
   it('adds a new series and leaves sighters out', () => {
@@ -45,18 +44,13 @@ describe('liveSessionTotals', () => {
       isSighter: false,
       shots: [{ valueTenths: 100, isInnerTen: true }],
     };
-    expect(liveSessionTotals(rows, current, null)).toEqual({ totalTenths: 490, innerTens: 4 });
-  });
-
-  it('keeps a stored inner-ten figure, as session detail does', () => {
-    const current = { rowId: null, position: 4, isFinal: false, isSighter: false, shots: [] };
-    expect(liveSessionTotals(rows, current, 7).innerTens).toBe(7);
+    expect(liveSessionTotals(rows, current)).toEqual({ totalTenths: 490, innerTens: 4 });
   });
 
   it('counts a total-only series by its stored total', () => {
     const override = row(5, [], { isTotalOverride: true, totalTenths: 450 });
     const current = { rowId: null, position: 6, isFinal: false, isSighter: false, shots: [] };
-    expect(liveSessionTotals([override], current, null).totalTenths).toBe(450);
+    expect(liveSessionTotals([override], current).totalTenths).toBe(450);
   });
 });
 

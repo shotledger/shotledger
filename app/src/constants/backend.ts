@@ -5,7 +5,7 @@
 // SecureStore (docs/specs/sync-app-spec.md §0).
 import Constants from 'expo-constants';
 
-export const DEFAULT_API_BASE_URL = 'https://api.shotledger.app';
+export const DEFAULT_API_BASE_URL = 'https://web.shotledger.app';
 
 function fromExtra(): string | undefined {
   const extra = Constants.expoConfig?.extra as { apiBaseUrl?: unknown } | undefined;

@@ -1,5 +1,5 @@
 // The Statistics report, composed from the built inputs (rows.ts) and the
-// filter form's state. Shared so the phone and the web app (ADR 0013) render
+// filter form's state. Shared so the phone and the web app (ARCHITECTURE.md § Web app) render
 // the same numbers; the screens keep only loading and presentation.
 import { localDayEndIso, localDayStartIso } from '../dates';
 import { getDiscipline } from '../disciplines';

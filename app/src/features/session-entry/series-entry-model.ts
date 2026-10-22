@@ -32,13 +32,11 @@ function forResults(row: SeriesRow) {
  * The session's total and inner tens with the series on the keypad counted
  * as it stands, not as it was last saved — the figures move with each key,
  * as session detail will show them after Save (the same sessionResults and
- * inner-ten count, `loadSessionDetail`). A stored inner-ten figure (a
- * ShotLog import, which has no shot flags) wins, as it does there.
+ * inner-ten count, `loadSessionDetail`).
  */
 export function liveSessionTotals(
   rows: readonly SeriesRow[],
   current: CurrentSeries,
-  storedInnerTenCount: number | null,
 ): { totalTenths: number; innerTens: number } {
   const list = [
     ...rows.filter((row) => row.id !== current.rowId).map(forResults),
@@ -51,7 +49,7 @@ export function liveSessionTotals(
   ];
   return {
     totalTenths: sessionResults(list).totalTenths,
-    innerTens: storedInnerTenCount ?? sessionInnerTenCount(list),
+    innerTens: sessionInnerTenCount(list),
   };
 }
 

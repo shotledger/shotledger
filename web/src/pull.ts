@@ -1,6 +1,6 @@
 // Reads the account through /sync/pull from cursor 0 and keeps the live rows
-// in memory; nothing is stored after the tab closes (ADR 0013). Writes go
-// through entry/ (ADR 0019).
+// in memory; nothing is stored after the tab closes (ARCHITECTURE.md § Web app). Writes go
+// through entry/ (ARCHITECTURE.md § Web app).
 import type {
   PullRequest,
   PullResponse,

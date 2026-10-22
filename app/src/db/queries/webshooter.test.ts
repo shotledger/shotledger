@@ -249,7 +249,7 @@ describe('importResultRow — fresh import', () => {
     expect(unsyncableRows(db)).toEqual([]);
   });
 
-  it('maps results_finals to isFinal series and results_distinguish to a särskjutning note (§A.6)', () => {
+  it('maps results_finals to isFinal series and skips results_distinguish (§A.6, #727)', () => {
     const row = resultRow({
       results_finals: [station({ stations_id: 1, finals: 1, points: 50 })],
       results_distinguish: [station({ stations_id: 1, distinguish: 1, points: 10 })],
@@ -259,9 +259,8 @@ describe('importResultRow — fresh import', () => {
     });
     const seriesRows = listSeriesForSession(db, sessionId);
     const finalSeries = seriesRows.find((s) => s.isFinal === 1);
-    const distinguishSeries = seriesRows.find((s) => s.isShootOff === 1);
     expect(finalSeries?.totalOverrideTenths).toBe(500);
-    expect(distinguishSeries?.totalOverrideTenths).toBe(100);
+    expect(seriesRows.map((s) => s.totalOverrideTenths)).not.toContain(100);
     // Every row the import wrote is one the sync server accepts (#697).
     expect(unsyncableRows(db)).toEqual([]);
   });

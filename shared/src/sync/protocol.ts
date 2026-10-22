@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /**
- * Sync wire protocol (ADR 0003). See
+ * Sync wire protocol (ARCHITECTURE.md § Sync). See
  * docs/specs/sync-protocol-spec.md §2 for the full design rationale.
  */
 
@@ -59,7 +59,7 @@ export const SYNC_TABLE_NAMES = [
 export const SyncTableNameSchema = z.enum(SYNC_TABLE_NAMES);
 
 /**
- * The account settings that follow the user (ADR 0019); a settings row's id
+ * The account settings that follow the user (ARCHITECTURE.md § Sync); a settings row's id
  * is its key. Every other key is device-local and never syncs. Kept in
  * lock-step with the WHEN clause of the app's settings outbox triggers. The
  * `show*` keys are the feature switches (#801, FEATURE_SETTING_KEYS in
@@ -229,7 +229,7 @@ export type VersionCheckResult = { ok: true } | { ok: false; error: VersionError
 
 /**
  * Version handshake: a client older than MIN_SUPPORTED_PROTOCOL_VERSION
- * must upgrade before syncing (ADR 0003 guardrail).
+ * must upgrade before syncing (ARCHITECTURE.md § Sync guardrail).
  */
 export function checkProtocolVersion(clientVersion: number): VersionCheckResult {
   if (clientVersion < MIN_SUPPORTED_PROTOCOL_VERSION) {

@@ -38,7 +38,7 @@ export default defineConfig({
     // restores it in afterEach; CI would catch a leak only by luck.
     isolate: false,
     // JUnit alongside the default reporter so `reqstool status` can see which
-    // @SVCs-tagged test actually ran (ADR 0015). `classnameTemplate` is what
+    // @SVCs-tagged test actually ran (docs/reqstool/README.md). `classnameTemplate` is what
     // makes a testcase match its annotation.
     reporters: [
       'default',

@@ -1,7 +1,7 @@
 # ShotLedger — Implementation Plan (v1)
 
-> Execution spec for implementing agents. [`plan.md`](../plan.md) says
-> _what and why_; this document says _exactly how_. It is written so that
+> Execution spec for implementing agents. [`app/PRODUCT.md`](../app/PRODUCT.md)
+> says _what and why_; this document says _exactly how_. It is written so that
 > an implementing agent can complete each task without product-level
 > judgment. If a task is ambiguous or contradicts reality, STOP and ask —
 > do not improvise product decisions.
@@ -16,7 +16,8 @@
 check` (typecheck + lint + unit tests) green, the relevant checkbox in
    this file ticked in the same branch, and — for UI tasks — a screenshot
    produced via the agentic loop (§8) attached to the task summary.
-3. **Never**: add dependencies not listed here without asking; change the
+3. **Never**: add a dependency that is not already in a `package.json`
+   without asking (AGENTS.md hard rule 2); change the
    DB schema without a Drizzle migration; commit secrets (they live under
    `~/cloud/agents/secrets/shotledger/`, outside the tree); remove or weaken a test to
    make it pass; implement features from later milestones early.
@@ -55,7 +56,7 @@ check` (typecheck + lint + unit tests) green, the relevant checkbox in
 │       ├── disciplines/  discipline definitions + JSON schema (§6.2)
 │       ├── compliance/   FAP 551-3 license-activity logic (§6.6)
 │       └── csv/          export/import (§6.8)
-├── docs/             this file, ADRs (docs/adr/NNN-title.md)
+├── docs/             this file, specs, rule-book references, the manual
 └── .github/workflows/ci.yml
 ```
 
@@ -67,21 +68,21 @@ check` (typecheck + lint + unit tests) green, the relevant checkbox in
 
 ## 2. Key library decisions (fixed — do not substitute)
 
-| Purpose       | Library                                               | Note                                                                                               |
-| ------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Navigation    | expo-router                                           | file-based; predictable for agents                                                                 |
-| Local DB      | **expo-sqlite** + Drizzle ORM                         | expo-sqlite has web/WASM support — required by the agentic web loop. (op-sqlite rejected: no web.) |
-| Migrations    | drizzle-kit                                           | SQL files in `app/src/db/migrations/`, bundled, run at app start via Drizzle's migrator            |
-| IDs           | UUIDv7 (`uuidv7` pkg)                                 | sortable, sync-friendly                                                                            |
-| State         | zustand (UI state only) + Drizzle live queries (data) | no Redux                                                                                           |
-| Charts        | **react-native-svg** (hand-drawn)                     | victory-native/Skia was planned but never adopted — see plan.md 2026-09-03; do not add one         |
-| Dates         | date-fns + date-fns-tz                                | store UTC ISO-8601 in DB; display local                                                            |
-| Forms         | react-hook-form + zod                                 | zod schemas live next to features                                                                  |
-| i18n          | i18next + react-i18next + expo-localization           |                                                                                                    |
-| Notifications | expo-notifications (local only in v1)                 | license/maintenance reminders                                                                      |
-| PDF           | expo-print (HTML → PDF)                               | Session Report                                                                                     |
-| E2E           | Maestro                                               | flows in `app/e2e/`                                                                                |
-| OTA updates   | expo-updates (EAS Update)                             | JS-only updates per release; ADR 0020                                                              |
+| Purpose       | Library                                               | Note                                                                                                          |
+| ------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Navigation    | expo-router                                           | file-based; predictable for agents                                                                            |
+| Local DB      | **expo-sqlite** + Drizzle ORM                         | expo-sqlite has web/WASM support — required by the agentic web loop. (op-sqlite rejected: no web.)            |
+| Migrations    | drizzle-kit                                           | SQL files in `app/src/db/migrations/`, bundled, run at app start via Drizzle's migrator                       |
+| IDs           | UUIDv7 (`uuidv7` pkg)                                 | sortable, sync-friendly                                                                                       |
+| State         | zustand (UI state only) + Drizzle live queries (data) | no Redux                                                                                                      |
+| Charts        | **react-native-svg** (hand-drawn)                     | victory-native/Skia was planned but never adopted — see the decisions-log archive, 2026-09-03; do not add one |
+| Dates         | date-fns + date-fns-tz                                | store UTC ISO-8601 in DB; display local                                                                       |
+| Forms         | react-hook-form + zod                                 | zod schemas live next to features                                                                             |
+| i18n          | i18next + react-i18next + expo-localization           |                                                                                                               |
+| Notifications | expo-notifications (local only in v1)                 | license/maintenance reminders                                                                                 |
+| PDF           | expo-print (HTML → PDF)                               | Session Report                                                                                                |
+| E2E           | Maestro                                               | flows in `app/e2e/`, named by user journey (#864); the milestone reports below cite their old `mN-*` names    |
+| OTA updates   | expo-updates (EAS Update)                             | JS-only updates per release; ARCHITECTURE.md § Over-the-air updates                                           |
 
 ## 3. Database schema (v1 — write exactly this, as Drizzle tables)
 
@@ -242,9 +243,9 @@ sight_settings  firearm_id FK NOT NULL,
 
 tags            name TEXT NOT NULL      -- not unique: readers resolve a
                                         -- name to its earliest live tag
-                                        -- (ADR 0019)
+                                        -- (ARCHITECTURE.md § Sync)
 session_tags    session_id FK, tag_id FK  -- one synced row per link; the
-                                        -- pair is not unique (ADR 0019)
+                                        -- pair is not unique (ARCHITECTURE.md § Sync)
 
 settings        value TEXT NOT NULL     -- JSON values; id = the key. Only
                                         -- SYNCED_SETTING_KEYS sync
@@ -299,11 +300,11 @@ expo-router/entry`); running `expo prebuild` itself is deferred
   (`Worker chunk not found for: .../expo-sqlite/web/worker.ts`); shipped
   native-first with a `client.web.ts`/`migration-gate.web.tsx` fallback (`db`
   is `null` on web) so `expo start --web` keeps booting — see M1 report for
-  detail. Revisited in ADR 0012 (`web.output: "single"`, OPFS-backed
-  connection on web). The `/dev` route itself isn't reachable in the web preview yet: the
-  M0 root layout renders only `NativeTabs` (index/explore triggers), which
-  has no host for non-tab routes — pre-existing scaffold gap, not new to M1;
-  tracked for M2 (navigation shell).
+  detail. Revisited in ARCHITECTURE.md § Web preview (`web.output: "single"`,
+  OPFS-backed connection on web). The `/dev` route itself isn't reachable in the
+  web preview yet: the M0 root layout renders only `NativeTabs` (index/explore
+  triggers), which has no host for non-tab routes — pre-existing scaffold gap,
+  not new to M1; tracked for M2 (navigation shell).
 
 ### M2 — navigation shell + design system (branch `feat/m2-shell`)
 
@@ -366,7 +367,7 @@ appears after at least one scored series — series added after it get
 three results: Before final · Final · Total (§6.3). Each section allows
 at most one sighter. (Amended in `fix/session-detail-ui`, 2026-09-03: the
 sighter choice moved off the add-series area and onto the series entry
-screen itself, next to Save — see the plan.md decisions log entry for
+screen itself, next to Save — see the decisions-log archive entry for
 that date. It still enforces one sighter per section, and a series that
 already is the sighter can un-set itself.)
 
@@ -416,7 +417,7 @@ already is the sighter can un-set itself.)
       or the birth year is unknown — new `birthYear` setting on /settings).
       The Stats toggle itself is left to M5, which fills it.
       Amended in `fix/session-detail-ui` (2026-09-03, maintainer-requested
-      polish batch — see plan.md decisions log): the results card
+      polish batch — see the decisions-log archive): the results card
       (Total/Before final/Final, avg/series, X count) is now a single
       compact row roughly a button's height, the session-level
       "Guld vid N p" line is dropped (the per-series hint on the series
@@ -833,12 +834,12 @@ shoots three faces, so program groups carry their own face (§6.3).
 disciplines via PR once public.
 
 - [x] **`scoring: 'hits'` and the fältskjutning definition** (#315,
-      ADR 0016). `targetFace` is rings-only — a fält round is shot
-      against Del D's figure catalogue, not one face — and `spsf-falt`
-      carries SHB's vapengrupper A, A optisk, B, C, R. The result model
-      is `shared/src/scoring/falt.ts` (spec:
-      `docs/specs/falt-scoring-spec.md`). The discipline is registered
-      and, since the station entry UI landed, offered — the
+      REGULATIONS.md § Scoring models). `targetFace` is rings-only — a fält
+      round is shot against Del D's figure catalogue, not one face — and
+      `spsf-falt` carries SHB's vapengrupper A, A optisk, B, C, R. The result
+      model is `shared/src/scoring/falt.ts` (spec:
+      `docs/specs/falt-scoring-spec.md`). The discipline is registered and,
+      since the station entry UI landed, offered — the
       `ringScoringDisciplines()` filter on the pickers is gone.
 
 - [x] **Fält station persistence and entry** (#315 PR 1, spec:
@@ -971,8 +972,14 @@ Competition Name field. Superseded the `<level> <program> <weapon_group>`
 competition form on 2026-09-09 at the maintainer's request.
 
 **Särskjutning** (tie-break; F.6.11.3 p. 181: extra series until medals
-decided, **no provskott**) is out of v1 scope — log such series as
-ordinary extra scored series, flagged `is_shoot_off` (#727; was a note).
+decided, **no provskott**) is not supported for precision (maintainer,
+2026-10-14): a Webshooter `results_distinguish` is not imported, and
+`series.is_shoot_off` is gone. Särskjutning exists in fält only, as
+särskjutning stations (`docs/specs/shoot-off-and-ten-counts-727-spec.md`).
+
+- [x] #727 PR C: no precision särskjutning (`series.is_shoot_off` dropped);
+      session `ten_count` / `inner_ten_count` dropped, tens and inner tens
+      counted from the shots.
 
 **Decimal scoring — who actually uses it:** per ISSF rules, 10m air
 rifle scores decimal in qualification _and_ finals; 10m air pistol and
@@ -1197,22 +1204,22 @@ restates §0 rules 1–6 verbatim.
 > Backup. No new runtime dependency — `.shotledger` is a small hand-rolled
 > uncompressed container (`shared/src/backup/`) rather than a zip, since no
 > zip library exists in the lockfile and adding one needs the maintainer's
-> OK first (not yet asked). See the 2026-09-02 plan.md decisions-log entry
+> OK first (not yet asked). See the 2026-09-02 decisions-log archive entry
 > for the restore-requires-app-restart caveat; since #780 the app reloads
 > itself via `expo`'s own `reloadAppAsync`, with no `expo-updates` dependency.
 
 > **Save to a user-chosen folder has since shipped** on `feat/save-to-folder`
-> (plan.md "Export destinations", second of share sheet → chosen folder →
-> scheduled → Drive API): Settings → Backup gained "Save database/database +
-> photos to folder" next to the existing share-based export, using
-> `expo-file-system`'s legacy `StorageAccessFramework` on Android
+> (decisions-log archive, "Export destinations", second of share sheet → chosen
+> folder → scheduled → Drive API): Settings → Backup gained "Save
+> database/database + photos to folder" next to the existing share-based export,
+> using `expo-file-system`'s legacy `StorageAccessFramework` on Android
 > (`app/src/platform/save-to-folder.ts`) — no new dependency. iOS has no
 > folder-pick-and-write API short of the document picker's export mode (not
-> implemented, no Mac to verify), so `save-to-folder.ios.ts` falls back to
-> the existing share sheet and the UI says so. The chosen SAF folder URI is
-> remembered via the same settings table as `lastBackupAt`, so repeated
-> backups go to the same folder with one tap; "Change folder"/"Forget
-> folder" rows appear once a folder is remembered.
+> implemented, no Mac to verify), so `save-to-folder.ios.ts` falls back to the
+> existing share sheet and the UI says so. The chosen SAF folder URI is
+> remembered via the same settings table as `lastBackupAt`, so repeated backups
+> go to the same folder with one tap; "Change folder"/"Forget folder" rows
+> appear once a folder is remembered.
 
 > **Export scope and the vault opt-in have since shipped** on
 > `feat/export-scope-vault-optin`, implementing the maintainer's requirement
@@ -1246,14 +1253,15 @@ restates §0 rules 1–6 verbatim.
 > `docs/specs/backend-auth-photos-*`, `docs/specs/sync-app-*`. No new
 > dependency was added on the app side. The `VERIFY:` in
 > `sync-protocol-spec.md` §1 about `settings` and `session_tags` was resolved
-> on 2026-10-06 (ADR 0019): both sync, `settings` for an allowlist only.
+> on 2026-10-06 (ARCHITECTURE.md § Sync): both sync, `settings` for an allowlist
+> only.
 >
 > **The server now refuses a row a device could not apply** (#697, spec and
 > evidence: `docs/specs/sync-payload-validation-*`). `/sync/push` checks each
 > live change against its table's schema, derived from the Drizzle tables
-> with `drizzle-zod` (the tables moved to `shared/src/sync/schema.ts`, ADR
-> 0021), and answers `rejected` / `invalid_payload`; Account & Sync counts
-> the refusals, and `sync_rows.payload` gains a JSON check.
+> with `drizzle-zod` (the tables moved to `shared/src/sync/schema.ts`,
+> ARCHITECTURE.md § Sync), and answers `rejected` / `invalid_payload`; Account &
+> Sync counts the refusals, and `sync_rows.payload` gains a JSON check.
 >
 > **A refused row now takes its family with it** (#856, spec and evidence:
 > `docs/specs/sync-family-refusal-*`). Within one push the server refuses
@@ -1284,29 +1292,30 @@ restates §0 rules 1–6 verbatim.
 > preparatory commands at negative seconds), it has a range-officer mode
 > where LADDA and ALLA KLARA are button presses and a solo mode that is
 > automatic from LADDA, each command is numbered and marked on the
-> timeline, and MARKERA was dropped — see plan.md's Timers block. Only that
-> branch added dependencies — `expo-speech` and `expo-haptics`, both
-> maintainer-approved 2026-09-02, behind `app/src/platform/speech.ts` and
-> `app/src/platform/haptics.ts`; speech also gave the IPSC prompts a voice,
-> with the tone as the fallback, and haptics now backs the parti/ELD pulses
-> on all three timers via `platform/timer-cues.ts`. Device screenshots (idle
-> / during ELD / finished) are attached to the `feat/falttimer` PR.
-> See plan.md's Timers block for each timer's documented limits (fälttimer:
-> no silent-mode gate, no whistle sample, no scrubbing; IPSC: 80 ms
-> debounce, thresholds not calibrated on a real firing line).
+> timeline, and MARKERA was dropped — see the decisions-log archive's timer
+> entries. Only that branch added dependencies — `expo-speech` and
+> `expo-haptics`, both maintainer-approved 2026-09-02, behind
+> `app/src/platform/speech.ts` and `app/src/platform/haptics.ts`; speech also
+> gave the IPSC prompts a voice, with the tone as the fallback, and haptics now
+> backs the parti/ELD pulses on all three timers via `platform/timer-cues.ts`.
+> Device screenshots (idle / during ELD / finished) are attached to the
+> `feat/falttimer` PR. See the decisions-log archive's timer entries for each
+> timer's documented limits (fälttimer: no silent-mode gate, no whistle sample,
+> no scrubbing; IPSC: 80 ms debounce, thresholds not calibrated on a real firing
+> line).
 
 > **Share cards have since shipped** on `feat/share-cards`: a session card
 > and a per-series card, drawn with `react-native-svg` (already a direct
 > dependency) and rasterized to PNG via its `Svg.toDataURL()`, shared through
-> `expo-sharing`. No new dependency — see the 2026-09-02 plan.md
-> decisions-log entry.
+> `expo-sharing`. No new dependency — see the 2026-09-02
+> decisions-log archive entry.
 
 > **Scan a physical license card has since shipped** on
 > `feat/license-card-ocr`: the firearm detail screen's license form gained
 > "Scan card" actions that photograph (or pick) a Polisen vapenlicens card
 > and pre-fill it via on-device ML Kit text recognition, the one new
 > dependency (`@react-native-ml-kit/text-recognition`, see the 2026-09-02
-> plan.md decisions-log entry). See `docs/specs/license-card-ocr-spec.md`/
+> decisions-log archive entry). See `docs/specs/license-card-ocr-spec.md`/
 > `-evidence.md` for the parser rules, the privacy boundary and the
 > synthetic-card device verification (screenshot `ocr-01-scan-prefill.png`).
 
@@ -1322,7 +1331,7 @@ restates §0 rules 1–6 verbatim.
 > new `shared/src/export/json-log.ts`) or CSV (the M7 exporter over the
 > same filtered `SessionExport[]`) — the vault in none of them. Charts are
 > hand-drawn `react-native-svg`; §2's chart row has been corrected to say
-> so. See the 2026-09-03 plan.md decisions-log entries.
+> so. See the 2026-09-03 decisions-log archive entries.
 > **The scanned original is now kept by default** (`feat/license-card-image`,
 > maintainer report: "we want the original picture as well — shooting stores
 > need to see that"). The vault-store switch defaults to `true`; the license
@@ -1371,5 +1380,6 @@ restates §0 rules 1–6 verbatim.
 
 Photo target scoring; Webshooter import; iOS release.
 
-Design notes for these live in plan.md and need maintainer + Fable-level
+Design notes for these lived in the retired `plan.md` (git history and
+`docs/decisions-log-archive.md`) and need maintainer + Fable-level
 sessions before implementation.

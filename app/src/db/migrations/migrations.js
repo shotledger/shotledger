@@ -1,6 +1,6 @@
 // This file is required for Expo/React Native SQLite migrations - https://orm.drizzle.team/quick-sqlite/expo
 
-// baseline sha256: ad528aba67ef768b8e9f32955db1363c29057e10195b3add79712a7f3f03c562
+// baseline sha256: 3017ff1fd7bacc2274ea47cb1c4c1222a663a9843794c922210b066800f691b3
 // Metro caches the inlined SQL by this file's content, so a baseline edit must
 // change this line too (migrations.test.ts checks it).
 

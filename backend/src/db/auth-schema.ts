@@ -4,10 +4,12 @@
  * docs/specs/backend-auth-photos-spec.md §1). Not hand-written: the
  * @better-auth/drizzle-adapter's expected field names/indexes/onDelete
  * behavior come from the library, not a guess. Keep in lock-step with
- * `backend/migrations/0001_auth_init.sql`.
+ * `backend/migrations/0001_auth_init.sql`. `passkey` is the exception: it is
+ * written from `@better-auth/passkey`'s own `schema` (fields and indexes),
+ * with the credential id made unique.
  */
 import { relations, sql } from 'drizzle-orm';
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 export const user = sqliteTable('user', {
   id: text('id').primaryKey(),
@@ -102,9 +104,37 @@ export const rateLimit = sqliteTable('rate_limit', {
   lastRequest: integer('last_request').notNull(),
 });
 
+// `@better-auth/passkey`'s `passkey` model (src/auth/better-auth.ts). One row
+// per credential: its public key and id, never a private key. The credential
+// id is unique, not just indexed: a credential registered to one account must
+// not register to another (WebAuthn §7.1 step 26).
+export const passkey = sqliteTable(
+  'passkey',
+  {
+    id: text('id').primaryKey(),
+    name: text('name'),
+    publicKey: text('public_key').notNull(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    credentialID: text('credential_id').notNull(),
+    counter: integer('counter').notNull(),
+    deviceType: text('device_type').notNull(),
+    backedUp: integer('backed_up', { mode: 'boolean' }).notNull(),
+    transports: text('transports'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }),
+    aaguid: text('aaguid'),
+  },
+  (table) => [
+    index('passkey_userId_idx').on(table.userId),
+    uniqueIndex('passkey_credentialID_idx').on(table.credentialID),
+  ],
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
+  passkeys: many(passkey),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -117,6 +147,13 @@ export const sessionRelations = relations(session, ({ one }) => ({
 export const accountRelations = relations(account, ({ one }) => ({
   user: one(user, {
     fields: [account.userId],
+    references: [user.id],
+  }),
+}));
+
+export const passkeyRelations = relations(passkey, ({ one }) => ({
+  user: one(user, {
+    fields: [passkey.userId],
     references: [user.id],
   }),
 }));
