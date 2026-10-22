@@ -1215,7 +1215,9 @@ describe('GONE a push judged before the account is deleted cannot land after it 
     const gate = gateD1(env.DB, { kind: 'pause', at: 4 });
     const pending = pushThrough(gate.d1, [T('t1', 'r1', true), T('t2', 'r1')]);
     await gate.paused;
-    // The account deletion's cascade (routes/account.ts) commits in between.
+    // Only the user's sync_* rows are deleted in between; the user row stays.
+    // The real deletion (routes/account.ts) removes both in one batch. This
+    // pins the guard's sequence-row clause on its own (round 8, V8-3).
     for (const table of ['sync_rows', 'sync_sequence', 'sync_idempotency', 'sync_refusals']) {
       await env.DB.prepare(`DELETE FROM ${table} WHERE user_id = ?`).bind(USER).run();
     }
@@ -1280,9 +1282,9 @@ describe('GONE a push judged before the account is deleted cannot land after it 
     expect(await userRows()).toBe(0);
   });
 
-  // Round 7, F1: the guard must check the pushing user's account. A check
+  // Round 7's F1 finding: the guard must check the pushing user's account. A check
   // for any account passed while every test database held only this user.
-  it('F1 the guard checks the pushing user’s account, not whether any account exists', async () => {
+  it('GONE the guard checks the pushing user’s account, not whether any account exists', async () => {
     await ensureAccount('acct-a');
     await ensureAccount('acct-b');
     await env.DB.prepare('DELETE FROM "user" WHERE id = ?').bind('acct-a').run();
