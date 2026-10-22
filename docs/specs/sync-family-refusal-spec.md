@@ -1150,12 +1150,12 @@ rewrites only the blockers that change.
 **Against D1's production limits**, as `sync-push-atomicity-spec.md` §9 and
 its Revisions cite them:
 
-| Limit                                                       | This design                                                                                                                                                                                                                                                                                                 |
-| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Queries per Worker invocation: 50 on the Free plan          | The maintainer decided that a batch is one call to D1, and that the design must hold on the Free plan. Each attempt is at most 5 reads plus 1 batch, so four attempts make 24 calls                                                                                                                         |
-| 100 bound parameters per statement                          | about 15 at most; lists are one JSON parameter                                                                                                                                                                                                                                                              |
-| 30 s for "the entire batch call"                            | today's 2,000-statement batch took 200–299 ms locally. The build records BUDGET: a 500-change push that also releases 2,000 waiting rows                                                                                                                                                                    |
-| Row, string or bound-value size (2 MB, to confirm at build) | a payload is at most `MAX_PAYLOAD_BYTES` (16 KiB). The longest bound string is the walk's seed list, which every push binds: about 34 characters per record of the user, so about 59,000 records, past which every push fails, a fix included (Revision 4, item 14). A session family is a few hundred rows |
+| Limit                                                       | This design                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Queries per Worker invocation: 50 on the Free plan          | The maintainer decided that a batch is one call to D1, and that the design must hold on the Free plan. Each attempt is at most 5 reads plus 1 batch, so four attempts make 24 calls                                                                                                                                                                                                                                                                                        |
+| 100 bound parameters per statement                          | about 15 at most; lists are one JSON parameter                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 30 s for "the entire batch call"                            | today's 2,000-statement batch took 200–299 ms locally. The build records BUDGET: a 500-change push that also releases 2,000 waiting rows                                                                                                                                                                                                                                                                                                                                   |
+| Row, string or bound-value size (2 MB, to confirm at build) | a payload is at most `MAX_PAYLOAD_BYTES` (16 KiB). The longest bound string is the walk's seed list, which every push binds: each refusal record of the user and its parent, listed separately. With the phone's UUIDv7 ids that is about 99 characters for a shot or series record and 52 for a session record, so the limit is about 20,000 to 38,000 records, past which every push fails, a fix included (Revision 4, item 14). A session family is a few hundred rows |
 
 The build re-reads Cloudflare's D1 limits page, and records each figure in
 the evidence with the date it was read. The page could not be fetched while
@@ -1788,8 +1788,12 @@ QUERY PLAN` in the evidence). The judge lists a blocker only when it
       (round 6, E6-1).** §11.8's limits table named the release key list.
       The longest string a push binds is the walk's seed list, every
       record of the user and its parent, which every push binds, a fix
-      included. At about 34 characters a record, D1's 2 MB string limit is
-      about 59,000 records; past it every push of the account would fail.
+      included. With the phone's UUIDv7 ids (36 characters) a shot or
+      series record and its parent take about 99 characters and a session
+      record 52, so D1's 2 MB string limit is about 20,000 to 38,000
+      refusal records; past it every push of the account would fail. BUDGET's
+      short test ids give about 34 characters a record, which round 6 first
+      took for the ceiling (round 7, F2).
 
 - **Revision 2 (2026-10-16), during implementation.** Items 1–5 approved by
   the maintainer, 2026-10-16: "Approve, file issue", answering "Approve the
