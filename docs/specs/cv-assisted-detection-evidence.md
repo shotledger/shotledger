@@ -1,6 +1,6 @@
 # Hole/patch filter — evidence report
 
-> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) ([ARCHITECTURE.md § Photo scoring](../../ARCHITECTURE.md#photo-scoring-computer-vision)). The record below is as written.
+> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) (ADR 0018). The record below is as written.
 
 Companion to [`cv-assisted-detection-spec.md`](cv-assisted-detection-spec.md).
 Every number below comes from one fresh run after the last code edit, on

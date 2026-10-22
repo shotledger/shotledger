@@ -59,7 +59,7 @@ export const SYNC_TABLE_NAMES = [
 export const SyncTableNameSchema = z.enum(SYNC_TABLE_NAMES);
 
 /**
- * The account settings that follow the user (ARCHITECTURE.md § Web app); a settings row's id
+ * The account settings that follow the user (ARCHITECTURE.md § Sync); a settings row's id
  * is its key. Every other key is device-local and never syncs. Kept in
  * lock-step with the WHEN clause of the app's settings outbox triggers. The
  * `show*` keys are the feature switches (#801, FEATURE_SETTING_KEYS in

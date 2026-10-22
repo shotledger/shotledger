@@ -1,6 +1,6 @@
 # Sync protocol — executable specification
 
-> Old-coder SPEC artifact for the ShotLedger v2 sync backend (ARCHITECTURE.md § Sync).
+> Old-coder SPEC artifact for the ShotLedger v2 sync backend (ADR 0003).
 > Absolute path: `/home/jimisola/cloud/dev/clones/jimisola/github/mobile-app/docs/specs/sync-protocol-spec.md`
 > Evidence report: `docs/specs/sync-protocol-evidence.md`.
 >
@@ -81,7 +81,7 @@ concrete definitions:
 convention synced; `settings` and `session_tags` were excluded pending the
 maintainer.
 
-**Resolved 2026-10-06 by the maintainer's ruling** (ARCHITECTURE.md § Web app,
+**Resolved 2026-10-06 by the maintainer's ruling** (ADR 0019,
 `docs/specs/sync-tags-settings-spec.md`): `session_tags` syncs, with its own
 UUIDv7 id per link and the common columns; `settings` syncs per user, only
 for the allowlist `SYNCED_SETTING_KEYS`, one row per key with the key as its
@@ -137,7 +137,7 @@ true }` or `{ ok: false, error: { code:
 
 ### 2a. Deviation: cursor key is `seq`, not `(updated_at, id)`
 
-The sync guardrail list in ARCHITECTURE.md § Sync (drawn from surveyed failure reports)
+ADR 0003's general guardrail list (drawn from surveyed failure reports)
 says "catch-up/initial sync paginates by cursor on `(updated_at, id)`".
 This task's own instructions are more specific and supersede that generic
 line for our concrete design: "server-assigned ordering (server sequence

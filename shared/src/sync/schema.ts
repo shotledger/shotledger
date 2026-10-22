@@ -382,7 +382,7 @@ export const sightSettings = sqliteTable('sight_settings', {
 
 // Not unique by name: two devices can create the same name offline, and a
 // unique index would fail the second one's pull. Readers resolve a name to
-// its earliest live tag (shared/src/tags/canonical.ts, ARCHITECTURE.md § Web app).
+// its earliest live tag (shared/src/tags/canonical.ts, ARCHITECTURE.md § Sync).
 export const tags = sqliteTable(
   'tags',
   {

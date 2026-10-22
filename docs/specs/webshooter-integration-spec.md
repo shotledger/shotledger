@@ -132,7 +132,7 @@ persisted.
 **The Webshooter access token is never a DB row.** It is entered by the
 user and stored in `expo-secure-store` (device keychain), keyed
 per-device. It is explicitly excluded from any future cloud-sync payload
-(ARCHITECTURE.md § Local-first local-first sync) — this is a hard rule, not a default to
+(ADR 0001 local-first sync) — this is a hard rule, not a default to
 revisit: the `settings` table (`key`/`value` JSON) is a sync boundary
 candidate, the token store is not.
 

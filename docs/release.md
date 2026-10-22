@@ -46,20 +46,19 @@ Sync is opt-in and the app is fully functional without it, so these steps
 are only needed before a build that should offer accounts. `wrangler
 deploy` is forbidden to agents; every command below is the maintainer's.
 
-One Worker serves both the sync API and the read-only web app (ARCHITECTURE.md § Web app):
-`wrangler deploy` uploads `web/dist` as its static assets. There are two
-deployed environments in `backend/wrangler.jsonc`, `staging` and
-`production`, each with its own D1 database and R2 bucket. The top level of
-that file is local development and the test suite only, and Wrangler does
-not inherit its `vars` or bindings into a named environment. No secret is
-committed anywhere. Locally the Worker uses a built-in dev placeholder and
-then answers only `localhost`, `127.0.0.1` and `[::1]`, so the top level
-deployed by mistake serves nothing. A deployed env refuses to start (every
-auth request answers `500`, logged as `AuthConfigError`) when
-`BETTER_AUTH_SECRET` is missing, shorter than 32 characters or the dev
-placeholder, or when `BETTER_AUTH_URL` is not an `https://` origin or is
-still the `REPLACE_ME.invalid` placeholder. Try every step on `staging`
-first; for production, repeat it with `production`.
+One Worker serves both the sync API and the read-only web app (ARCHITECTURE.md §
+Web app): `wrangler deploy` uploads `web/dist` as its static assets. There are
+two deployed environments in `backend/wrangler.jsonc`, `staging` and
+`production`, each with its own D1 database and R2 bucket. The top level of that
+file is local development and the test suite only, and Wrangler does not inherit
+its `vars` or bindings into a named environment. No secret is committed
+anywhere. Locally the Worker uses a built-in dev placeholder and then answers
+only `localhost`, `127.0.0.1` and `[::1]`, so the top level deployed by mistake
+serves nothing. A deployed env refuses to start (every auth request answers
+`500`, logged as `AuthConfigError`) when `BETTER_AUTH_SECRET` is missing,
+shorter than 32 characters or the dev placeholder, or when `BETTER_AUTH_URL` is
+not an `https://` origin or is still the `REPLACE_ME.invalid` placeholder. Try
+every step on `staging` first; for production, repeat it with `production`.
 
 What the deployed config already does:
 
@@ -211,9 +210,11 @@ Every release:
 
 ## Over-the-air JS updates (EAS Update)
 
-ARCHITECTURE.md § Over-the-air updates. A JS-only fix can reach installed EAS builds without a new
-build. Anything that touches native code (a new or bumped native
-dependency, `app.json` plugins or permissions) still needs a release.
+Why it is set up this way: [ARCHITECTURE.md § Over-the-air
+updates](../ARCHITECTURE.md#over-the-air-updates). A JS-only fix can reach
+installed EAS builds without a new build. Anything that touches native code (a
+new or bumped native dependency, `app.json` plugins or permissions) still needs
+a release.
 
 One-time, before the first update:
 

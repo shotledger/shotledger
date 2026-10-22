@@ -125,7 +125,7 @@ here; #669's evidence report has the same limit.
 ## Known limits
 
 - A phone that edited the same session or firearm offline can overwrite the
-  web's edit, or the reverse (ARCHITECTURE.md § Web app, races; B4 narrows the window,
+  web's edit, or the reverse (ADR 0019 consequences; B4 narrows the window,
   which with a Retry runs from the first pull to the Retry, R10).
 - Merging duplicate ammo lots is not in this layer (spec §6).
 - A firearm deleted on another device between the fresh pull and the push is

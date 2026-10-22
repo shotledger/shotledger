@@ -10,7 +10,7 @@
 > merged when this was written) and reads the bulk edit spec of #674
 > (`docs/specs/web-bulk-edit-spec.md` on `feat/web-bulk-edit`) for its counter
 > and refusal rulings. Evidence report, once written:
-> `docs/specs/web-session-edit-evidence.md`. Decision record: ARCHITECTURE.md § Web app (web
+> `docs/specs/web-session-edit-evidence.md`. Decision record: ADR 0019 (web
 > writes push whole rows through `/sync/push`).
 >
 > **Approval status: approved.** The maintainer approved key choices E1–E12
@@ -42,7 +42,7 @@
 
 ## 1. Settled inputs (not re-asked)
 
-1. ARCHITECTURE.md § Web app: the web pushes whole rows through `/sync/push`, online only; no
+1. ADR 0019: the web pushes whole rows through `/sync/push`, online only; no
    browser database, no outbox; per-row last-write-wins by server order, as a
    second phone. "A `rejected` ack (`tombstoned`) means the row was deleted on
    another device; the web re-pulls rather than retrying."

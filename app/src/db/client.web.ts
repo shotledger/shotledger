@@ -1,6 +1,7 @@
 // Web DB connection: expo-sqlite's WASM build in a worker, persisted in the
 // browser's origin-private file system (OPFS). Needs `web.output` other
-// than `static` plus the COOP/COEP headers set in metro.config.js — ARCHITECTURE.md § Web preview.
+// than `static` plus the COOP/COEP headers set in metro.config.js —
+// ARCHITECTURE.md § Web preview.
 //
 // Unlike client.ts this cannot open synchronously at import time: a cold
 // worker takes longer to fetch its chunk and compile the WASM than the sync

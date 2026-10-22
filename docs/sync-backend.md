@@ -1,9 +1,9 @@
 # Sync backend overview
 
 Cloudflare Worker (Hono) implementing the server side of the DIY
-changelog sync protocol (ARCHITECTURE.md § Sync), plus the account (better-auth) and photo (R2)
-layers on top of it. Full design rationale and the evidence-first gauntlet
-results live in `docs/specs/sync-protocol-spec.md` +
+changelog sync protocol (ARCHITECTURE.md § Sync), plus the account (better-auth)
+and photo (R2) layers on top of it. Full design rationale and the evidence-first
+gauntlet results live in `docs/specs/sync-protocol-spec.md` +
 `docs/specs/sync-protocol-evidence.md` (sync) and
 `docs/specs/backend-auth-photos-spec.md` +
 `docs/specs/backend-auth-photos-evidence.md` (auth/photos) — this file is a
@@ -34,8 +34,8 @@ backend/migrations/0000_sync_init.sql   canonical DDL for `wrangler d1
 
 backend/src/
   auth/better-auth.ts   createAuth(env) — betterAuth() + drizzleAdapter +
-                         bearer() plugin (email+password; social sign-in
-                         is TODO, needs maintainer-provisioned OAuth apps)
+                         bearer() and passkey() plugins (email+password
+                         and passkeys; no social provider)
   db/auth-schema.ts      drizzle schema for better-auth's user/session/
                           account/verification tables (CLI-generated, one
                           hand-patched field — see file header)
@@ -43,7 +43,7 @@ backend/src/
   db/photo-queries.ts      upload/delete quota-transactional D1 batch queries
   config.ts               MAX_PHOTO_BYTES / DEFAULT_QUOTA_BYTES /
                            RATE_LIMIT_MAX_UPLOADS / RATE_LIMIT_WINDOW_MS
-                           (VERIFY: ARCHITECTURE.md § Sync "Photo policy" initial values)
+                           (VERIFY: initial values, ARCHITECTURE.md § Sync)
   lib/quota.ts             pure quota math (old-coder scope)
   lib/rate-limit.ts        pure rate-limit math + RateLimiter interface
                             (old-coder scope)
@@ -67,9 +67,7 @@ backend/migrations/0002_photos_init.sql  photos/quota/rate-limit tables DDL
   JSON payload. See spec §5 for the full justification.
 - **Server-assigned sequence number (`seq`)**, not client timestamps, is
   the sole ordering signal — both for merge conflict resolution
-  (tombstone-wins + LWW) and for pull cursor pagination. See spec §2a for
-  why this reads as a deviation from one ARCHITECTURE.md § Sync bullet and why it is the
-  position taken.
+  (tombstone-wins + LWW) and for pull cursor pagination (spec §2a).
 - **`/sync` runs behind real better-auth.** `backend/src/index.ts` mounts
   it with `betterAuthAuthenticator`, like `/photos`, `/account` and
   `/api/auth/*` (cut over in `feat/sync-app`, `docs/specs/sync-app-spec.md`
@@ -78,12 +76,10 @@ backend/migrations/0002_photos_init.sql  photos/quota/rate-limit tables DDL
   what `backend/test/sync.spec.ts` mounts for its bare-token fixtures —
   nothing reachable from the deployed Worker trusts a bearer string as a
   user id.
-- **`settings` and `session_tags`** sync too, though they were first left
-  out for lacking the `id`/`updated_at`/`deleted_at` convention.
-  `SYNC_TABLE_NAMES` and `SYNCED_SETTING_KEYS` in `shared/src/sync/protocol.ts`
-  are the list; only the settings keys named there leave the device.
+- **What syncs** is ARCHITECTURE.md § Sync; `SYNC_TABLE_NAMES` and
+  `SYNCED_SETTING_KEYS` in `shared/src/sync/protocol.ts` are the lists.
 - **Auth: better-auth on Workers + D1** via `@better-auth/drizzle-adapter`,
-  email+password only. The `bearer()` plugin lets a mobile client send
+  email+password and passkeys. The `bearer()` plugin lets a mobile client send
   `Authorization: Bearer <sessionToken>` (from the `set-auth-token`
   response header on sign-up/sign-in) instead of relying on cookies. No
   client uses cookies: the Worker drops every `Set-Cookie` from `/api/auth`

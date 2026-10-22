@@ -44,8 +44,8 @@ export default function ExternalSiteScreen() {
           it is rather than relying on the nav bar alone. */}
       <ScreenTitle>{provider.displayName}</ScreenTitle>
 
-      {/* The one screen where two halves of ARCHITECTURE.md § External sites have to meet: the site is
-          enabled here, but signing in happens in Settings. Saying "not
+      {/* The one screen where the two halves of ARCHITECTURE.md § External
+          sites have to meet: the site is enabled here, but signing in happens in Settings. Saying "not
           connected" without a way there left the user to know, unaided, that
           the fix lives in another tab. */}
       {!connection.connected && (

@@ -8,7 +8,7 @@
 > Old-coder SPEC for the "bulk editing" item of #301 (web write paths), on top
 > of the web write client of #669 (`docs/specs/web-series-entry-spec.md`).
 > Evidence report: `docs/specs/web-bulk-edit-evidence.md`. Decision record:
-> ARCHITECTURE.md § Web app (web writes push whole rows through `/sync/push`).
+> ADR 0019 (web writes push whole rows through `/sync/push`).
 >
 > **Approval status: approved first-hand by the maintainer on 2026-10-08**,
 > after an independent review: B1–B6 and B8–B10, B7 as amended in R27,
@@ -33,14 +33,14 @@
 
 ## 1. Settled inputs (not re-asked)
 
-1. ARCHITECTURE.md § Web app: the web pushes whole rows through `/sync/push`, online only; no
+1. ADR 0019: the web pushes whole rows through `/sync/push`, online only; no
    browser database, no outbox; the same per-row last-write-wins as a second
    phone. Its table "How a web edit becomes pushed rows" fixes the rows for
    each bulk edit.
 2. #669 C2: one user action is one push; Retry resends the identical request
    and the server's idempotency table makes it safe.
 3. `session_tags` syncs, unlink is a tombstone, relink is a new row, and tag
-   names are not unique on disk (ARCHITECTURE.md § Web app, #647).
+   names are not unique on disk (ADR 0019, #647).
 
 ## 2. Key choices (for approval)
 
@@ -93,7 +93,7 @@ The firearm rows are absolute counters, so this matters most for them: a
 phone that adds rounds to a firearm (saving a series) between the web's pull
 and its push loses those rounds when the web's firearm row lands, and the
 web loses its move when the phone's row lands later. Same per-row
-last-write-wins as two phones (ARCHITECTURE.md § Web app, consequences); no layer here
+last-write-wins as two phones (ADR 0019, consequences); no layer here
 prevents it.
 
 **B5. A session deleted elsewhere drops out.** A selected session that is no
@@ -273,7 +273,7 @@ nothing twice; the Swedish UI.
 
 ## 6. Not in this layer: merging duplicate ammo lots
 
-ARCHITECTURE.md § Web app sketches it as "repoint every session, then tombstone the
+ADR 0019 sketches it as "repoint every session, then tombstone the
 duplicate". It is left for its own layer because it is the one bulk edit that
 deletes a row other devices reference, and that needs decisions this layer
 does not: what happens to a session on a phone that has not pulled the

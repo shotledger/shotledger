@@ -214,7 +214,7 @@ The phone's apply path is exercised on better-sqlite3, not expo-sqlite (A2).
 
 ## Known limits
 
-- Two devices editing the same key: the later push wins (ARCHITECTURE.md § Web app). The web
+- Two devices editing the same key: the later push wins (ADR 0019). The web
   does not re-pull before Save (C2), so a phone's edit of the same key made
   while the page was open is overwritten without a warning.
 - A stored value the web does not recognise reads as unset and is

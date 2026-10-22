@@ -13,8 +13,8 @@ import type { LocalStore, OutboxEntry, SyncTransport } from './ports';
 
 /**
  * One strict pull -> apply -> push -> ack cycle (docs/specs/sync-app-spec.md
- * §5). The sync guardrail "no concurrent independent loops" (ARCHITECTURE.md § Sync) is the caller's job to
- * uphold; this function makes it easy by doing exactly one cycle per call.
+ * §5). The sync guardrail "no concurrent independent loops" (ARCHITECTURE.md
+ * § Sync) is the caller's job to uphold; this function makes it easy by doing exactly one cycle per call.
  */
 
 /**

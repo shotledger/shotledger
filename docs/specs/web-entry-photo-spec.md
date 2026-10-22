@@ -3,7 +3,7 @@
 > Old-coder SPEC for #691, a follow-up to the web series entry (#669, spec
 > `docs/specs/web-series-entry-spec.md`, choice C4 "no photos"). Evidence
 > report, once written: `docs/specs/web-entry-photo-evidence.md`. Decision
-> record: ARCHITECTURE.md § Web app (web writes by pushing rows through `/sync/push`).
+> record: ADR 0019 (web writes by pushing rows through `/sync/push`).
 >
 > **Approval status: NOT approved — written and built in one autonomous run;
 > the key choices are listed in the PR for the maintainer.** The maintainer
@@ -47,7 +47,7 @@ Read from the code, not restated from docs:
    (`fitsPhotoSizeCap`; `photo_too_large`, permanent).
 3. The re-encode writes no metadata: on Android `Bitmap.compress`, on iOS a
    `UIImage` re-encode. So the phone never uploads EXIF, GPS included. The
-   original stays on the phone (ARCHITECTURE.md § Sync: "originals never leave the device").
+   original stays on the phone (ADR 0003: "originals never leave the device").
 4. Upload is `POST /photos/upload/<photoId>` with `content-type: image/jpeg`
    and `content-length` (`createPhotoApi().upload`). The Worker accepts
    `image/jpeg`, `image/png`, `image/webp` (415 otherwise), refuses over 1.5 MB
@@ -126,7 +126,7 @@ re-encode produces (§1.3). The privacy page's statement "a session you enter
 there is stored as sync stores one from the phone" stays true, and the manual
 says the photo is resized and its location data removed.
 _Alternative:_ parse and strip EXIF segments from the original bytes. More
-code, keeps the original resolution, and is exactly what ARCHITECTURE.md § Sync says not to
+code, keeps the original resolution, and is exactly what ADR 0003 says not to
 send.
 
 **C6. Which rows can carry a photo.** Every series row on the form, sighters

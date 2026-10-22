@@ -2,11 +2,11 @@
 
 `shared/src/scoring`, `shared/src/compliance` and `shared/src/disciplines`
 implement rules from public rule books, and the maintainer does not read that
-code line by line. Coverage and mutation testing prove every line is
-exercised; they cannot say "SHB F.2.8's rule is implemented here, and this
-test verifies it". reqstool does: requirements and verification cases as data,
-tags in the source, JUnit results from the real run, and a status command with
-an exit code. (The maintainer authors reqstool; using it here is dogfooding.)
+code line by line. Coverage and mutation testing prove every line is exercised;
+they cannot say "SHB F.2.8's rule is implemented here, and this test verifies
+it". reqstool does: requirements and verification cases as data, tags in the
+source, JUnit results from the real run, and a status command with an exit code.
+(The maintainer authors reqstool; using it here is dogfooding.)
 
 ## How it runs
 
@@ -31,9 +31,10 @@ an exit code. (The maintainer authors reqstool; using it here is dogfooding.)
   leaf. It fails loudly (`automated test missing`).
 - Several ids on one tag are **comma**-separated; space-separated becomes one
   malformed id.
-- A tagged test's title must not begin with a digit; the client skips it.
-- A stem is relative to its scan root, so the same relative path under two
-  roots would collide. Nothing collides today.
+- A tagged test's title must not begin with a digit: the client skips the test,
+  so status reports the requirement's test as missing.
+- A stem is relative to its scan root, so the same relative path under two roots
+  would collide. Nothing collides today.
 - A mapping problem is fixed in the runner configuration, not in the tests.
 
 ## What goes where
@@ -48,8 +49,8 @@ an exit code. (The maintainer authors reqstool; using it here is dogfooding.)
 | `docs/manual/`                      | what the user is told                    |
 
 - A requirement earns its place when getting it wrong would mislead a shooter
-  about a score, a licence renewal or their own data. Not one per function,
-  and not one per spec behaviour.
+  about a score, a license renewal or their own data. Not one per function, and
+  not one per spec behavior.
 - A requirement cites `docs/reference/`; it does not restate the source.
 - A requirement is added in the same branch as the change that implements it.
 

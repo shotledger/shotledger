@@ -37,7 +37,7 @@ the change again under a fresh seq (issue failure 3).
 The issue proposes `WHERE excluded.updated_at > sync_rows.updated_at`,
 "tie-break as `mergeChange` does". **`mergeChange` has no timestamp
 comparison and no tie-break.** R3 is last writer wins _by server order_.
-The first sync guardrail (ARCHITECTURE.md § Sync) is "never trusted client clocks", and
+ADR 0003's first guardrail is "never trusted client clocks", and
 `merge.ts` says "no client timestamp is ever compared".
 
 This spec keeps server order. Allocating the seq and writing the row in one
@@ -189,7 +189,7 @@ interleaving tests are not a lab artefact, not a RED gate.
   pass **unmodified**.
 - N4 No D1 schema or migration change. The design uses existing columns and
   primary keys.
-- N5 No client clock is compared (ARCHITECTURE.md § Sync), unless Q1 rules otherwise.
+- N5 No client clock is compared (ADR 0003), unless Q1 rules otherwise.
 - N6 No new dependency.
 
 **Wire behaviour that does change (pre-1.0, no version bump):**
@@ -297,7 +297,7 @@ interleaving tests are not a lab artefact, not a RED gate.
 
 ## 10. Open questions
 
-- **Q1** Keep LWW by server order as ARCHITECTURE.md § Sync and R3 state, which is this
+- **Q1** Keep LWW by server order as ADR 0003 and R3 state, which is this
   spec's recommendation? Or switch to `updatedAt` as the issue words it,
   which needs a new ADR and a client change?
 - **Q2** Is the deployed Worker on the Workers Free plan? At 50 queries per
@@ -321,7 +321,7 @@ interleaving tests are not a lab artefact, not a RED gate.
 5. §5: a committed push whose response is lost retries as `duplicate`
    acks.
 
-Decisions: Q1 keep server-order LWW (ARCHITECTURE.md § Sync); Q2 nothing is deployed, so
+Decisions: Q1 keep server-order LWW (ADR 0003); Q2 nothing is deployed, so
 the design must hold on the Free plan (revision 4), and a batch is one call
 to D1; Q3 no istanbul, keep the mutation-script substitute. Both wire
 changes are accepted.

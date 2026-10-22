@@ -1,6 +1,6 @@
 # Photo scoring phase 1 — evidence report
 
-> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) ([ARCHITECTURE.md § Photo scoring](../../ARCHITECTURE.md#photo-scoring-computer-vision)). The record below is as written.
+> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) (ADR 0018). The record below is as written.
 
 > Evidence for [`docs/specs/photo-scoring-phase1-spec.md`](photo-scoring-phase1-spec.md).
 > Absolute path: `/home/jimisola/cloud/dev/clones/jimisola/github/mobile-app/docs/specs/photo-scoring-phase1-evidence.md`
@@ -115,7 +115,7 @@ at `~/tmp/shotledger-cv-spike/targets/` and are **not** in the repo.
 python validity_gate.py --in ~/tmp/shotledger-cv-spike/targets --out gate_2048.csv
 ```
 
-The harness is retired (ARCHITECTURE.md § Photo scoring); the same metrics and verdict from the app's lock: `tools/cv/eval/prep.sh <pgm-dir> <photos>...`, then `CV_EVAL_IN=<pgm-dir> CV_DISC_OUT=gate.jsonl pnpm exec vitest run -c tools/cv/vitest.config.ts disc.eval`.
+The harness is retired (ADR 0018); the same metrics and verdict from the app's lock: `tools/cv/eval/prep.sh <pgm-dir> <photos>...`, then `CV_EVAL_IN=<pgm-dir> CV_DISC_OUT=gate.jsonl pnpm exec vitest run -c tools/cv/vitest.config.ts disc.eval`.
 
 ### 4.1 The corpus separates cleanly
 

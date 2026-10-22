@@ -1,7 +1,7 @@
 # Fältskjutning scoring model — evidence report
 
 Spec: [`docs/specs/falt-scoring-spec.md`](falt-scoring-spec.md) ·
-ADR: [REGULATIONS.md § Scoring models](../../REGULATIONS.md#scoring-models) ·
+ADR: ADR 0016 ·
 Issue: #315 · Tier 3.
 
 **Spec approval: not obtained (autonomous run).** Nobody outside this task
@@ -59,7 +59,7 @@ Every scenario in the spec, and the test that holds it up. All in
 
 **Traceability**: the SHB särskiljning order is also recorded as requirement
 `SCORE_004` with `SVC_SCORE_004`, annotated on `compareFaltResults` and on a
-top-level test (docs/reqstool/README.md). `pnpm reqstool:status`: **11/11 complete, 0
+top-level test (ADR 0015). `pnpm reqstool:status`: **11/11 complete, 0
 incomplete, PASS**.
 
 ## RED evidence

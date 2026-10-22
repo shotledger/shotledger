@@ -3,7 +3,7 @@
 > Old-coder SPEC for #688, a follow-up to the web series entry (#669,
 > `docs/specs/web-series-entry-spec.md`, deferral C4) under #301. Evidence
 > report, once written: `docs/specs/web-falt-entry-evidence.md`. Decision
-> record: ARCHITECTURE.md § Web app (web writes by pushing rows through `/sync/push`).
+> record: ADR 0019 (web writes by pushing rows through `/sync/push`).
 >
 > **Approval status: NOT approved — written and built in one autonomous run;
 > the key choices are listed in the PR for the maintainer.** C3 was decided

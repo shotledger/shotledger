@@ -10,6 +10,6 @@ export const MAX_PHOTO_BYTES = 1_500_000;
 /** Photo policy: a per-user quota (initially 1 GB). */
 export const DEFAULT_QUOTA_BYTES = 1_073_741_824;
 
-/** Photo policy: an upload rate limit (initially 60/hour, Workers rate-limiting binding). */
+/** Photo policy: an upload rate limit (initially 60/hour, a D1 fixed-window counter). */
 export const RATE_LIMIT_MAX_UPLOADS = 60;
 export const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;

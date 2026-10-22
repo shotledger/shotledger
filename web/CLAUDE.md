@@ -1,9 +1,7 @@
 # web/ — the web app
 
-ARCHITECTURE.md § Web app: a separate complement over `/sync/pull`, served same-origin by the
-Worker, keeping nothing after the tab closes (the session token is in
-`sessionStorage`, the rows in memory). ARCHITECTURE.md § Web app: it writes only by pushing
-whole rows through `/sync/push`, online, with no outbox. The writers are
+What the web app is and how it writes, with what was rejected, is
+[ARCHITECTURE.md § Web app](../ARCHITECTURE.md#web-app). The writers are
 `src/entry/` (series and fält), `src/settings/` (the synced settings),
 `src/bulk/` (bulk edit) and `src/edit/` (one session's edit and delete); all
 go through `shared/src/sync-client/` (`session-entry.ts`, `falt-entry.ts`,

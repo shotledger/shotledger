@@ -5,7 +5,7 @@
 >
 > **Approval status: obtained.** C1 (drizzle-zod) is the maintainer's
 > decision of 2026-10-13 ("I prefer libraries over handmade duplication").
-> C2–C14, Q5 (ARCHITECTURE.md § Sync), Q6 and Q7 were approved as implemented on
+> C2–C14, Q5 (ADR 0021), Q6 and Q7 were approved as implemented on
 > 2026-10-14, after the fact: the spec was revised and implemented in an
 > overnight run on the recommendations below. Q7's larger change is #856.
 > The first draft was PR #711 (hand-written schemas); Revision 1 at the end
@@ -48,8 +48,8 @@
   `PRAGMA foreign_keys = ON`, so `defer_foreign_keys` in `applyChangesSync`
   is a no-op and an orphan row is stored, not refused.
 - The Drizzle tables lived in `app/src/db/schema.ts`, AGPL. The ELv2 Worker
-  may compile only `shared/src/sync/` (Apache-2.0, CONTRIBUTING.md, "Why the license map looks like this"), so they move,
-  unchanged, to `shared/src/sync/schema.ts` (ARCHITECTURE.md § Sync, proposed).
+  may compile only `shared/src/sync/` (Apache-2.0, ADR 0017), so they move,
+  unchanged, to `shared/src/sync/schema.ts` (ADR 0021, proposed).
   `app/src/db/schema.ts` re-exports them.
 - The backend has never been deployed (#671's account steps are still the
   maintainer's), so no D1 has run `0000_sync_init`.
@@ -212,7 +212,7 @@ Each choice has a recommendation and the alternative it rules out.
 - **C1 Schemas derived by drizzle-zod from the Drizzle tables in `shared/`.**
   _Maintainer's decision, 2026-10-13._ No second copy of the columns to keep
   in step, which #727 showed is a real cost. The price: the tables move to
-  the Apache-2.0 `shared/src/sync/` (ARCHITECTURE.md § Sync), and `shared/` depends on `drizzle-orm` (the version
+  the Apache-2.0 `shared/src/sync/` (ADR 0021), and `shared/` depends on `drizzle-orm` (the version
   `app/` and `backend/` already use) and `drizzle-zod@0.8.3` (Apache-2.0, no
   runtime dependencies). The alternative was hand-written zod schemas plus a
   drift test.
@@ -467,7 +467,7 @@ only columns every writer fills with `toISOString()`.
 - **Git:** Conventional Commits, `git commit -s`, explicit paths only.
 - **Files:**
   - `shared/src/sync/schema.ts` (the tables) and `shared/src/sync/tables.ts`
-    (the map, moved from `sync-store.ts`); `eslint.config.mjs`, ARCHITECTURE.md § Sync
+    (the map, moved from `sync-store.ts`); `eslint.config.mjs`, ADR 0021
   - `shared/src/sync/payload-schemas.ts`, `payload-schemas.test.ts`,
     `merge.ts` (`REJECTED_INVALID_PAYLOAD`)
   - `backend/src/routes/sync.ts`, `backend/src/db/queries.ts`,
@@ -524,8 +524,8 @@ only columns every writer fills with `toISOString()`.
 - **Q3** _Not run_ (§8).
 - **Q4** Should foreign-key integrity get its own issue, or stay a known
   limit until the phone enforces foreign keys itself?
-- **Q5** _Approved: move them (2026-10-14); ARCHITECTURE.md § Sync accepted._ Move the Drizzle tables into the Apache-2.0 `shared/src/sync/` (ARCHITECTURE.md §
-  Sync), or keep them AGPL and validate against a generated zod-only column
+- **Q5** _Approved: move them (2026-10-14); ADR 0021 accepted._ Move the Drizzle tables into the Apache-2.0 `shared/src/sync/` (ADR
+  0021), or keep them AGPL and validate against a generated zod-only column
   list instead? Asked on the #697 thread; the branch implements the first.
 - **Q6** _Approved: accept it pre-1.0 (2026-10-14)._ Strict keys (C5) refuse a not-yet-updated phone's rows after the
   server gains a column, whatever the deploy order, and refuse web edits of
@@ -555,9 +555,9 @@ only columns every writer fills with `toISOString()`.
   N9 added. The real-data audit (§8) did not run.
 - **Revision 2 (2026-10-14), during implementation.** Lint found that the
   Worker may compile only the Apache-2.0 `shared/src/sync/` and that it may
-  import only zod (CONTRIBUTING.md, license map), so the tables move there instead of
-  `shared/src/db/` and `drizzle-orm`/`drizzle-zod` are allowed in it (ARCHITECTURE.md §
-  Sync, **awaiting the maintainer**: Q5). Writer conformance (§2.5) found one
+  import only zod (ADR 0017), so the tables move there instead of
+  `shared/src/db/` and `drizzle-orm`/`drizzle-zod` are allowed in it (ADR
+  0021, **awaiting the maintainer**: Q5). Writer conformance (§2.5) found one
   writer outside C7: a JSON-export import stored the file's `startedAt`
   verbatim, and `z.iso.datetime()` accepts whole seconds; the import now
   stores `toISOString()`. The engine counts a replayed refusal (a
@@ -588,6 +588,6 @@ only columns every writer fills with `toISOString()`.
   screens. §10 records that a refusal splits a family of rows, and Q7 asks
   the maintainer about it.
 - **Revision 6 (2026-10-14), approval.** The maintainer approved C2–C14,
-  Q5, Q6 and Q7 as implemented; ARCHITECTURE.md § Sync is accepted, and refusing a row's
+  Q5, Q6 and Q7 as implemented; ADR 0021 is accepted, and refusing a row's
   whole family is #856. `main` brought #853, which bounds series length on
   the phone and the web, so §2.5 and §10 no longer list it.

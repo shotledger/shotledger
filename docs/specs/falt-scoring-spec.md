@@ -94,7 +94,7 @@ inferred, and no regulatory value is invented.
   - `shared/src/disciplines/definitions/spsf-falt.json`
   - `docs/specs/falt-scoring-spec.md` (this file),
     `docs/specs/falt-scoring-evidence.md`
-  - `REGULATIONS.md`
+  - `docs/adr/0016-hits-scoring-model-for-falt.md`
 - **Files changed:** `shared/src/disciplines/schema.ts`,
   `shared/src/disciplines/index.ts`, `shared/src/disciplines/index.test.ts`,
   `shared/src/shotlog/tags.ts`, `app/src/app/session/new.tsx`,
@@ -184,7 +184,7 @@ figuresHit: 5, ringedFigurePoints: null }`.
   because inventing an English one would misname the event.
 - **D6** `spsf-falt` ships **no program**: a program's `shotsPerSeries` /
   `structure` describe a ring course, and the station count is the
-  competition's, not the discipline's (§6.3 freeform rule, ARCHITECTURE.md § Sessions and series).
+  competition's, not the discipline's (§6.3 freeform rule, ADR 0002).
 - **D7** `ringScoringDisciplines(list)` returns the `rings` members of `list`
   in order, defaulting to the full registry.
 

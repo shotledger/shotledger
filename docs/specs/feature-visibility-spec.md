@@ -1,7 +1,7 @@
 # Hide the features you don't use — executable specification
 
 > Old-coder SPEC for #801. Evidence report: `docs/specs/feature-visibility-evidence.md`.
-> Decision records: ARCHITECTURE.md § Web app (settings sync per user, for an allowlist).
+> Decision records: ADR 0019 (settings sync per user, for an allowlist).
 >
 > **Approval status: approved by the maintainer on 2026-10-14**, after the
 > fact: it was written and implemented overnight on 2026-10-13 at his request
@@ -20,7 +20,7 @@
   entry points in §3, `web/src/settings/`, `web/src/entry/`, `web/src/edit/`,
   `web/src/sessions/`, `app/src/i18n/{en,sv}.json`, `docs/manual/` EN + SV.
 - **Not in scope:** tags, the share card, location lookup (already
-  opt-in), external sites (each already has its own switch, ARCHITECTURE.md § External sites), the
+  opt-in), external sites (each already has its own switch, ADR 0010), the
   Optional Fields switches (they stay device-local), Records and statistics.
 
 ## 1. Settled inputs (from the issue, not re-asked)
@@ -49,7 +49,7 @@
 
 - One boolean key per area, not one list: two devices hiding two different
   areas offline then both keep their change, since each key is its own row
-  (last write wins per row, ARCHITECTURE.md § Sync). It also keeps the web writer's
+  (last write wins per row, ADR 0003). It also keeps the web writer's
   per-key comparison as it is.
 - **Unset reads as shown.** Only the stored JSON `false` hides an area;
   `true`, `null`, a non-boolean or a malformed value read as shown. A fresh

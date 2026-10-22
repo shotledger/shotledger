@@ -81,7 +81,10 @@ export interface ShooterClassDefinition {
 export interface EventDefinition {
   /** Stable id, `<disciplineId>:<gender>:<age>`. */
   id: string;
-  /** The regelverk that defines it (REGULATIONS.md § Regelverk) — a registry id, so a second one can add its own. */
+  /**
+   * The regelverk that defines it (REGULATIONS.md § Regelverk) — a registry
+   * id, so a second one can add its own.
+   */
   regulationId: string;
   disciplineId: string;
   category: EntryCategory;

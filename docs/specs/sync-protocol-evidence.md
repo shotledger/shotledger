@@ -1,6 +1,6 @@
 # Sync protocol — evidence report
 
-> Old-coder EVIDENCE artifact for the ShotLedger v2 sync backend (ARCHITECTURE.md § Sync).
+> Old-coder EVIDENCE artifact for the ShotLedger v2 sync backend (ADR 0003).
 > Absolute path: `/home/jimisola/cloud/dev/clones/jimisola/github/mobile-app/docs/specs/sync-protocol-evidence.md`
 > Spec: `/home/jimisola/cloud/dev/clones/jimisola/github/mobile-app/docs/specs/sync-protocol-spec.md`
 

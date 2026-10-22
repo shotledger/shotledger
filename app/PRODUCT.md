@@ -116,7 +116,8 @@ scores against official results.
   button labels are Title Case; English body copy, help text and placeholders
   are sentence case; **Swedish is sentence case throughout**.
 - Donation-funded; donations unlock nothing (store payment rules depend on
-  it). Licensing: CONTRIBUTING.md, "Why the license map looks like this". Funding rail: issue #353.
+  it). Licensing: CONTRIBUTING.md, "Why the license map looks like this".
+  Funding rail: issue #353.
 
 ## Evidence on Hand
 

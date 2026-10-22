@@ -42,7 +42,7 @@ function crop(size: number, fill: (x: number, y: number) => number): GrayCrop {
 }
 
 /**
- * Set when the fixture came from the Python spike (until ARCHITECTURE.md § Photo scoring), whose
+ * Set when the fixture came from the Python spike (retired 2026-10-03), whose
  * OpenCV and numpy ran this pipeline in float32, the TypeScript in float64, so
  * the two agree to about 1e-7 relative and no closer. See the spec's revision
  * note on behavior 7: this bound is still orders of magnitude tighter than

@@ -3,7 +3,7 @@
 Spec: `docs/specs/sync-payload-validation-spec.md` (issue #697, PR #813).
 
 **Spec approval: obtained.** C1 (drizzle-zod) is the maintainer's decision
-of 2026-10-13. C2–C14, Q5 (ARCHITECTURE.md § Sync, moving the Drizzle tables into the
+of 2026-10-13. C2–C14, Q5 (ADR 0021, moving the Drizzle tables into the
 Apache-2.0 `shared/src/sync/`), Q6 and Q7 were approved as implemented on
 2026-10-14, after the fact: the spec was revised and implemented overnight
 while the maintainer was away. Q7's larger change is #856.
@@ -156,7 +156,7 @@ those mutants, not Stryker, are the evidence for them.
     later batch failed the cycle → reported per refusal (`onRefused`, a
     `refused` status event), tests added.
   - Mapping: the Account & Sync line had no test → render test added.
-  - Description: §2.1's "finite number" for reals, the claim (ARCHITECTURE.md § Sync) that
+  - Description: §2.1's "finite number" for reals, ADR 0021's claim that
     `schema.ts` is under coverage and Stryker, and §2.5's claim about the
     `shared/` builders' tests → corrected (spec Revision 3).
   - Noted, not changed: `applyPush`'s `invalid` defaults to an empty set
@@ -223,7 +223,7 @@ those mutants, not Stryker, are the evidence for them.
 **Independent verification: passed at `5b2ef06`.** Four rounds were
 performed, the third and fourth with the maintainer's approval. Changed
 after it, description only and therefore not re-verified: the spec (§2.5,
-§10, Q7, Revisions 5 and 6), CONTRIBUTING.md, "Why the license map looks like this" and ARCHITECTURE.md § Sync, this report and
+§10, Q7, Revisions 5 and 6), ADRs 0017 and 0021, this report and
 `docs/implementation-plan.md`; and the final merge of `main` above, which
 brings no change to this change's code beyond the render test's mock.
 
