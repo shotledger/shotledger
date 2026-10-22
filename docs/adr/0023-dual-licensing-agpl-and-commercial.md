@@ -3,7 +3,7 @@
 Status: accepted (2026-10-19). Amends ADR 0017. Closes the license choice
 between #820 (go proprietary) and #821 (stay AGPL).
 
-Not legal advice. A lawyer's review is still owed (#100).
+Not legal advice.
 
 ## Context
 
@@ -53,11 +53,11 @@ contributed, and no build has been distributed to anyone.
 - Every AGPL release stays AGPL for good (AGPL §2). A commercial license can
   add rights for its licensee; it cannot take any away from AGPL users.
 - The CLA must be in place (signed) before any outside contribution merges,
-  or that contribution could only ship under its inbound license. The
-  signing mechanism is still on #100.
+  or that contribution could only ship under its inbound license. CLA
+  Assistant enforces it as the required `license/cla` check.
 - ADR 0017's caveat stands and matters more for a commercial license: what a
-  licensee pays for is partly thin copyright, so the trademark and the
-  hosted service remain the real moat.
+  licensee pays for is partly thin copyright, so the hosted service
+  remains the real moat.
 - Open: whether commercial licenses are sold by Jimisola Laursen personally
   or by a company (assigning copyright to a company would need a written
   assignment, and CLA §6.3 binds the assignee to the CLA).
