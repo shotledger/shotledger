@@ -1,5 +1,5 @@
 // The colour tokens live in `shared/src/design-tokens/` (no React Native
-// import), so the app and the web (ADR 0013) read one palette. This file
+// import), so the app and the web (ARCHITECTURE.md § Web app) read one palette. This file
 // keeps the app's existing `@/theme/colors` imports working.
 export {
   Colors,

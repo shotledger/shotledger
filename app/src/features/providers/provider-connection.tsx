@@ -1,4 +1,4 @@
-// Connecting to an external site. Lives in Settings (ADR 0010): connecting
+// Connecting to an external site. Lives in Settings (ARCHITECTURE.md § External sites): connecting
 // is a preference-shaped, once-in-a-while act, and leaving it in Tools made
 // Tools a login screen.
 //
@@ -26,7 +26,7 @@ export interface ProviderConnectionProps {
 export function ProviderConnection({ provider }: ProviderConnectionProps) {
   const { t } = useTranslation();
   // One provider today. When the second lands this becomes a lookup, not a
-  // longer branch — the hook shape is the seam (ADR 0010).
+  // longer branch — the hook shape is the seam (ARCHITECTURE.md § External sites).
   const connection = useWebshooterConnection();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');

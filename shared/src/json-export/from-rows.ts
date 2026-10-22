@@ -1,5 +1,5 @@
 // The export envelope's contents built from plain table rows, so the phone
-// (SQLite) and the web app (`/sync/pull`, ADR 0013) write the same file.
+// (SQLite) and the web app (`/sync/pull`, ARCHITECTURE.md § Web app) write the same file.
 // Rows are camelCase as Drizzle returns them, SQLite booleans as 0/1.
 // Callers pass live rows only. A column a source may not carry is optional
 // here and exports as its default.

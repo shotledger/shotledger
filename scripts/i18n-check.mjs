@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
 const i18nDir = path.join(repoRoot, 'app/src/i18n');
-// The web app (ADR 0013) reads the same files, so its source counts too.
+// The web app (ARCHITECTURE.md § Web app) reads the same files, so its source counts too.
 const sourceDirs = [path.join(repoRoot, 'app/src'), path.join(repoRoot, 'web/src')];
 
 function loadJson(filePath) {

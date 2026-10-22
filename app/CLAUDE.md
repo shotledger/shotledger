@@ -81,7 +81,8 @@ named …`. `migrations.test.ts` fails until the hash matches. An install that
 - Deep link `shotledger://dev` (the scheme is `shotledger`, distinctive so no
   other app can claim the redirects it will receive; #671).
 - On web the DB needs the page cross-origin isolated; Metro cannot send the
-  COOP/COEP headers, so put a header-adding proxy in front (ADR 0012).
+  COOP/COEP headers, so put a header-adding proxy in front (ARCHITECTURE.md §
+  Web preview).
 - `EXPO_PUBLIC_ENABLE_DEV_TOOLS=1` at build time opens `/dev` in a release
   build. **Never set it for a Play build — it ships a wipe button.**
 

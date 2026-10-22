@@ -1,5 +1,5 @@
 // Tag names are not unique on disk: two devices can create the same name
-// offline, and a deleted tag can be created again (ADR 0019). Readers resolve
+// offline, and a deleted tag can be created again (ARCHITECTURE.md § Sync). Readers resolve
 // a name to its canonical tag — the live one with the smallest id, which for
 // a UUIDv7 is the earliest created (docs/specs/sync-tags-settings-spec.md §2.8).
 

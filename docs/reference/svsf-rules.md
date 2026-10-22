@@ -4,11 +4,11 @@ Verified extraction with section citations. One of three federation reference
 files — see also [SPSF](spsf-shb-2026.md) and [ISSF](issf-rules.md).
 
 SvSF is the Swedish member federation of the ISSF, and the one the app means
-by the `SvSF` regelverk (ADR 0011). It is **not** a synonym for ISSF: it
-publishes Swedish translations of the ISSF chapters, which govern national
-competitions, and adds a national layer ISSF has no concept of — a national
-event list, national championship categories, one pistol discipline of its
-own (snabbluftpistol), a hit-or-miss air pistol event (falling target), a
+by the `SvSF` regelverk (REGULATIONS.md § Regelverk). It is **not** a synonym
+for ISSF: it publishes Swedish translations of the ISSF chapters, which govern
+national competitions, and adds a national layer ISSF has no concept of — a
+national event list, national championship categories, one pistol discipline of
+its own (snabbluftpistol), a hit-or-miss air pistol event (falling target), a
 class system and a badge programme.
 
 ## Where to get the rule books
@@ -347,8 +347,8 @@ therefore have nothing to attach to yet.
 ## Klassindelning (Tävlings-PM 14) — not encoded
 
 Transcribed for the record; none of it is in the app, and none of it will be:
-ADR 0011 decided against a klass layer for SvSF sessions (SPSF's klasser
-remain the only ones modelled).
+REGULATIONS.md § Regelverk rules out a klass layer for SvSF sessions (SPSF's
+klasser remain the only ones modeled).
 
 **14 Klassindelning för hederspriser** — minimum scores to reach a class:
 
@@ -485,7 +485,7 @@ seniorklass."_ The app records nothing about record eligibility.
 - **Finals** in any gren, snabbluftpistol's §9 included.
 - **Klassindelning** (Tävlings-PM 14, 14.1–14.5, 16): hederspris classes
   1/2/3, junior äldre/yngre, the Lp 11/13/16 youth classes, veteran classes,
-  LP Stöd and stödhandsklasser. Deliberately so — ADR 0011.
+  LP Stöd and stödhandsklasser. Deliberately so — REGULATIONS.md § Regelverk.
 - **Team formats**: mixade lag (25 m standard, 50 m, luftpistol), lag-SM 10 m,
   and every Herrlag/Damlag/Juniorlag row in 15.1.
 - **Skyttemärken SvSF**.

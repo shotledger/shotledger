@@ -9,7 +9,7 @@ config.resolver.sourceExts.push('sql');
 
 // expo-sqlite on web: the wa-sqlite WASM binary is an asset, and the sync
 // API needs SharedArrayBuffer, which browsers only expose to cross-origin
-// isolated pages (ADR 0012).
+// isolated pages (ARCHITECTURE.md § Web preview).
 config.resolver.assetExts.push('wasm');
 config.server.enhanceMiddleware = (middleware) => (req, res, next) => {
   res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');

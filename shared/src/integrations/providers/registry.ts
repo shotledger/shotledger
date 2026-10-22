@@ -1,4 +1,4 @@
-// External sites, as providers (ADR 0010). Webshooter is provider #1;
+// External sites, as providers (ARCHITECTURE.md § External sites). Webshooter is provider #1;
 // pistol.nu and anything after it register here rather than growing a
 // parallel stack or a pile of site checks in the screens.
 //

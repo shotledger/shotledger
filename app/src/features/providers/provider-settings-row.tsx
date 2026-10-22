@@ -3,7 +3,7 @@
 //
 // The connection form only appears when the site is enabled. Showing a
 // login for a site nobody has asked for is how Tools ended up looking like
-// a sign-in screen (ADR 0010).
+// a sign-in screen (ARCHITECTURE.md § External sites).
 import type { ProviderDescriptor } from '@shotledger/shared/src/integrations/providers/registry';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';

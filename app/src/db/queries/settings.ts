@@ -83,7 +83,7 @@ export function getSetting<T>(db: Database, key: SettingKey | string, fallback: 
 }
 
 // Never tombstones: a synced setting's id is its key, so a tombstone would
-// stop it ever being set again on the account (ADR 0019). Null is a value.
+// stop it ever being set again on the account (ARCHITECTURE.md § Sync). Null is a value.
 export function setSetting<T>(db: Database, key: SettingKey | string, value: T): void {
   const encoded = JSON.stringify(value);
   const now = nowIso();

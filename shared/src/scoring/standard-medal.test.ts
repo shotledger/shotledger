@@ -460,7 +460,7 @@ describe('standardMedalPoints — magnumprecision (SHB C.5.1.2.4 p. 71)', () => 
 
 /**
  * Top-level, so reqstool can match this testcase back to its annotation — see
- * the convention in ADR 0015.
+ * the convention in docs/reqstool/README.md.
  *
  * @SVCs SVC_SCORE_002
  */
@@ -512,7 +512,7 @@ describe('Nationell helmatch: placement only (SHB C.5.1.1.7, C.5.1.2)', () => {
 
 /**
  * Top-level, so reqstool can match this testcase back to its annotation — see
- * the convention in ADR 0015.
+ * the convention in docs/reqstool/README.md.
  *
  * @SVCs SVC_SCORE_009
  */

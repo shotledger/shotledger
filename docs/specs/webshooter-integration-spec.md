@@ -3,8 +3,8 @@
 > Execution spec for implementing agents, in the style of
 > [`docs/implementation-plan.md`](../implementation-plan.md): says _exactly
 > how_, not just what and why. If a task here is ambiguous or contradicts
-> `docs/reference/spsf-shb-2026.md`, `docs/implementation-plan.md`, or an
-> accepted ADR, **STOP and ask** — do not improvise product decisions. Rules
+> `docs/reference/spsf-shb-2026.md`, `docs/implementation-plan.md`, or
+> `ARCHITECTURE.md`, **STOP and ask** — do not improvise product decisions. Rules
 > 0.1–0.6 of `docs/implementation-plan.md` (branch-per-task, DCO-signed
 > Conventional Commits, `pnpm check` green, no undeclared dependencies, no
 > schema change without a Drizzle migration, `VERIFY:` items confirmed

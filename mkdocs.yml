@@ -25,7 +25,7 @@ edit_uri: edit/main/docs/manual/
 copyright: Free and open source. Donations unlock nothing.
 
 # docs/ already holds the material the app's contributors and agents work from —
-# ADRs, specs, the implementation plan. The user manual is a different audience
+# specs, references, the implementation plan. The user manual is a different audience
 # and gets its own clean directory rather than taking over docs/ wholesale.
 docs_dir: docs/manual
 

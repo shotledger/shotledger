@@ -1,6 +1,6 @@
 # Close-up lock — measurement, 2026-09
 
-> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) ([ADR 0018](../adr/0018-cv-tools-in-typescript.md)). The record below is as written.
+> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) (ADR 0018). The record below is as written.
 
 Issue #347. Reference implementation: `spike/cv/closeup_lock.py`; evaluation:
 `spike/cv/eval_closeup.py`.

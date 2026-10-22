@@ -1,4 +1,4 @@
-// Puts COOP/COEP on Metro's web output so the OPFS database works (ADR 0012).
+// Puts COOP/COEP on Metro's web output so the OPFS database works (ARCHITECTURE.md § Web preview).
 //   node coi-proxy.mjs <listen-port> <metro-port>
 import http from 'node:http';
 import process from 'node:process';

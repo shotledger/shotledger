@@ -3,7 +3,7 @@
 //
 // Both test runners have to produce the same string the tag scanner does, or a
 // JUnit testcase never matches the `@SVCs` annotation recorded for that same
-// test and the requirement reads as unverified (ADR 0015). The scan roots are
+// test and the requirement reads as unverified (docs/reqstool/README.md). The scan roots are
 // `shared/src`, `backend/src` and `app/src` — see `reqstool:tags` in
 // package.json. vitest reports a path from the repo root and jest one from
 // `app/`, so each strips its own prefix and `reqstoolStem` does the rest.

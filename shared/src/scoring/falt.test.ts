@@ -229,7 +229,7 @@ describe('sorting and algebra (spec F16-F17)', () => {
 
 /**
  * Top-level, so reqstool can match this testcase back to its annotation — see
- * the convention in ADR 0015.
+ * the convention in docs/reqstool/README.md.
  *
  * @SVCs SVC_SCORE_004
  */
@@ -372,7 +372,7 @@ describe('scoringStations (spec S1-S7)', () => {
 
 /**
  * Top-level, so reqstool can match this testcase back to its annotation — see
- * the convention in ADR 0015.
+ * the convention in docs/reqstool/README.md.
  *
  * @SVCs SVC_SCORE_005
  */

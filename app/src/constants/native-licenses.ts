@@ -10,8 +10,8 @@
 // FastOpenCV-iOS 1.0.4's opencv2 core/version.hpp. That pod quotes OpenCV's
 // pre-4.5 BSD text, but OpenCV is Apache-2.0 from 4.5.
 //
-// expo-updates (OTA delivery, ADR 0020) ships native code only; nothing in the
-// JS bundle imports it, so the generator cannot see it either. Its Android
+// expo-updates (OTA delivery, ARCHITECTURE.md § Over-the-air updates) ships
+// native code only; nothing in the JS bundle imports it, so the generator cannot see it either. Its Android
 // artifacts are from its build.gradle. Its iOS pods (ReachabilitySwift and the
 // vendored BSD-2-Clause bspatch) still need adding from the first iOS build
 // with it installed.
