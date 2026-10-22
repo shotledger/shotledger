@@ -1540,6 +1540,9 @@ Feature: The server keeps refused families and their waiting rows (Revision 3)
     And a push whose first read follows the deletion is answered the same way
     And a push of an account whose user row alone is gone, while another
       account exists, is refused and stores nothing (round 7, F1)
+    And a user's first push, with the whole deletion committed after its
+      reads and before its batch, is answered 401 and recreates nothing
+      (round 8, V8-1)
 
   Scenario: TENANT one account's push leaves another's records alone (round 6, V6-2)
     Given accounts U1 and U2 that both hold S1 (a JSON import keeps a session's id)

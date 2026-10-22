@@ -1303,6 +1303,27 @@ describe('GONE a push judged before the account is deleted cannot land after it 
     expect(stored).toBe(0);
   });
 
+  // Round 8, V8-1: on a first push only the batch's own account check can
+  // see a deletion that commits after the reads; a check made with the reads
+  // would let the batch create the sequence row for a deleted account.
+  it('GONE a first push whose batch follows the deletion is refused and recreates nothing', async () => {
+    await ensureAccount(OTHER);
+    expect(await userRows()).toBe(0);
+    // Calls 0–3 are the snapshot reads; call 4 is the batch.
+    const gate = gateD1(env.DB, { kind: 'pause', at: 4 });
+    const pending = pushThrough(gate.d1, [S(), R('r1')]);
+    await gate.paused;
+    await deleteAccount();
+    gate.release();
+
+    const response = await pending;
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ error: 'unauthenticated' });
+    expect(await userRows()).toBe(0);
+    expect(await accountExists()).toBe(false);
+  });
+
   it('a first push still creates the sequence row', async () => {
     expect(await userRows()).toBe(0);
     const [ack] = await push([S()]);

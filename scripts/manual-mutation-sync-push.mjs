@@ -152,6 +152,30 @@ const MUTANTS = [
     replace: 'CASE WHEN true\n        AND (',
   },
   {
+    // Round 8, V8-1 (M8b): the account is checked with the snapshot's
+    // state_rev read, in the same query (SNAP's hook still matches it), and
+    // not in the batch. A deletion between the reads and the batch goes
+    // unseen on a first push.
+    name: 'the account is checked with the snapshot reads, not in the batch',
+    find: `  const [row] = await db
+    .select({ stateRev: syncSequence.stateRev })
+    .from(syncSequence)
+    .where(eq(syncSequence.userId, userId));
+  return row?.stateRev ?? 0;`,
+    replace: `  const [row] = await db.all<{ state_rev: number | null; account: number }>(
+    sql\`select (select "state_rev" from "sync_sequence" where "user_id" = \${userId}) AS state_rev,
+      EXISTS (SELECT 1 FROM "user" WHERE id = \${userId}) AS account\`,
+  );
+  if (!row?.account) throw new PushAccountGoneError();
+  return row.state_rev ?? 0;`,
+    also: [
+      {
+        find: 'CASE WHEN EXISTS (SELECT 1 FROM "user" WHERE id = ${userId})\n        AND (',
+        replace: 'CASE WHEN true\n        AND (',
+      },
+    ],
+  },
+  {
     name: 'the guard checks whether any account exists, not the pushing user’s',
     find: 'EXISTS (SELECT 1 FROM "user" WHERE id = ${userId})',
     replace: 'EXISTS (SELECT 1 FROM "user")',
@@ -475,16 +499,22 @@ const survivors = [];
 for (const mutant of MUTANTS) {
   const file = mutant.file ?? FILE;
   const original = pristine.get(file);
-  const occurrences = original.split(mutant.find).length - 1;
-  if (occurrences !== 1) {
-    console.error(
-      `FAIL: mutant "${mutant.name}" matched ${occurrences} times (expected exactly 1). ` +
-        'The source moved; fix the mutant rather than trusting this run.',
-    );
-    process.exit(1);
+  // A mutant may need more than one edit (`also`); each must match once.
+  const edits = [{ find: mutant.find, replace: mutant.replace }, ...(mutant.also ?? [])];
+  let mutated = original;
+  for (const edit of edits) {
+    const occurrences = original.split(edit.find).length - 1;
+    if (occurrences !== 1) {
+      console.error(
+        `FAIL: mutant "${mutant.name}" matched ${occurrences} times (expected exactly 1). ` +
+          'The source moved; fix the mutant rather than trusting this run.',
+      );
+      process.exit(1);
+    }
+    mutated = mutated.replace(edit.find, edit.replace);
   }
 
-  writeFileSync(file, original.replace(mutant.find, mutant.replace));
+  writeFileSync(file, mutated);
   let result;
   try {
     result = runSuite(SUITES[file]);
