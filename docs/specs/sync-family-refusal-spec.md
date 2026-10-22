@@ -1760,7 +1760,16 @@ QUERY PLAN` in the evidence). The judge lists a blocker only when it
       insert's `last_seq` is now null unless `?2` is 0 or the row exists;
       the route answers that failure with 401 and no retry (GONE).
 
-  12. **A push whose account is gone cannot recreate it, on any attempt
+  12. **An ack's delete spares a later mark (round 5, V5-8).** §11.6 said
+      `applied` and `tombstoned` delete the row's mark. The build deletes
+      it only up to the ack's arrival, and keeps a mark that arrived after
+      the acked change. The text now says what the build does. That is
+      the safer reading: deleting the later mark would let a pull overwrite
+      a version the server still holds back, until the next pull's list
+      rebuilt it, while keeping it costs at most one stale count, which
+      that same list removes.
+
+  13. **A push whose account is gone cannot recreate it, on any attempt
       (round 6, V6-1).** Item 11 kept a push judged from an existing row
       from recreating the account, and said the route does not judge
       again since a fresh read would find no row. The retry loop did judge
@@ -1775,21 +1784,12 @@ QUERY PLAN` in the evidence). The judge lists a blocker only when it
       user id create that user's row (`backend/test/dev-account.ts`), as
       better-auth's session lookup needs it in the Worker.
 
-  13. **The 2 MB string ceiling is the walk's seed list, on every push
+  14. **The 2 MB string ceiling is the walk's seed list, on every push
       (round 6, E6-1).** §11.8's limits table named the release key list.
       The longest string a push binds is the walk's seed list, every
       record of the user and its parent, which every push binds, a fix
       included. At about 34 characters a record, D1's 2 MB string limit is
       about 59,000 records; past it every push of the account would fail.
-
-  14. **An ack's delete spares a later mark (round 5, V5-8).** §11.6 said
-      `applied` and `tombstoned` delete the row's mark. The build deletes
-      it only up to the ack's arrival, and keeps a mark that arrived after
-      the acked change. The text now says what the build does. That is
-      the safer reading: deleting the later mark would let a pull overwrite
-      a version the server still holds back, until the next pull's list
-      rebuilt it, while keeping it costs at most one stale count, which
-      that same list removes.
 
 - **Revision 2 (2026-10-16), during implementation.** Items 1–5 approved by
   the maintainer, 2026-10-16: "Approve, file issue", answering "Approve the
