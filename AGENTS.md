@@ -1,6 +1,6 @@
 # ShotLedger — agent instructions
 
-Open-source (private for now) target-shooting logbook app.
+Open-source target-shooting logbook app.
 React Native + Expo + TypeScript; local-first SQLite; optional Cloudflare
 sync. Android first — **all code must stay iOS-compatible**.
 
@@ -169,7 +169,7 @@ agents, read the one for the folder you work in:
 - `shared/CLAUDE.md` — the evidence-first layers for scoring and friends
 - `backend/CLAUDE.md` — Workers tests, sync end-to-end, no deploys
 - `docs/CLAUDE.md` — manual structure and the three docs gates
-- `web/CLAUDE.md` — the read-only web app: shared strings, running it
+- `web/CLAUDE.md` — the web app: shared strings, running it
 
 Running, driving or building the app (web, emulator, Maestro, a phone
 APK): the `run-app` skill.
