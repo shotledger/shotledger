@@ -517,14 +517,18 @@ const survivors = [];
 for (const mutant of MUTANTS) {
   const file = mutant.file ?? FILE;
   const original = pristine.get(file);
-  // A mutant may need more than one edit (`also`); each must match once.
+  // A mutant may need more than one edit (`also`), applied in order; each
+  // must match exactly once in the text it is applied to, after the edits
+  // before it (round 9, F9-2).
   const edits = [{ find: mutant.find, replace: mutant.replace }, ...(mutant.also ?? [])];
   let mutated = original;
-  for (const edit of edits) {
-    const occurrences = original.split(edit.find).length - 1;
+  for (const [index, edit] of edits.entries()) {
+    const occurrences = mutated.split(edit.find).length - 1;
     if (occurrences !== 1) {
+      const which = index === 0 ? 'its find' : `its also[${index - 1}]`;
       console.error(
-        `FAIL: mutant "${mutant.name}" matched ${occurrences} times (expected exactly 1). ` +
+        `FAIL: mutant "${mutant.name}", ${which} (${JSON.stringify(edit.find.slice(0, 60))}), ` +
+          `matched ${occurrences} times (expected exactly 1). ` +
           'The source moved; fix the mutant rather than trusting this run.',
       );
       process.exit(1);
