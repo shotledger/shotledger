@@ -32,7 +32,7 @@ only in its figures.
 - **Independent verification: failed, round 8, at `4ecae8a`.** Round 8's
   findings are fixed in the commits listed under Independent verification,
   which no verifier has seen. A ninth round is pending; the maintainer's
-  answer approves merging without it.
+  answer requires it before merge.
 - **Toolchain:** Node 24.21.0, pnpm 12.11.2, vitest 5.0.3,
   `@cloudflare/vitest-plugin` 1.4.0 (backend), Stryker 10.0.0 with the vitest
   runner, fast-check 4.10.2, jest-expo (app), expo-sqlite 57.0.3. No
@@ -379,7 +379,7 @@ before the final `pnpm check`.
 
 ## Known limits
 
-- **Round 8's fixes are unverified**: a ninth round is pending; the maintainer's answer approves merging without it.
+- **Round 8's fixes are unverified**: a ninth round is pending; the maintainer's answer requires it before merge.
 - **I3 is not a generated property.** §11.10 asks for generated two-device
   sequences converging; SC I3 is one fixed interleaving (round 5, E-2).
   FP generates single-writer push sequences against D1 and checks I1 and
@@ -423,8 +423,8 @@ before the final `pnpm check`.
 ## Independent verification
 
 **Failed: round 8, at `4ecae8a`.** No verifier has seen the round-8 fixes.
-The maintainer's answer (2026-10-22) approves merging without a ninth
-round.
+The maintainer's answer (2026-10-22), "Fix, check again", requires a
+ninth round before merge.
 
 ### Round 8, at `4ecae8a`
 
@@ -459,8 +459,8 @@ round.
     loop or per attempt is killed only by call-count tests.
 - **Fixed after the last verified state, therefore unverified:**
   `03a53b0`, `4419289` (with `a8f6843`, `fe3d21c` and this report, docs
-  only); a ninth round is pending, and the maintainer's answer approves
-  merging without it.
+  only); a ninth round is pending, and the maintainer's answer requires
+  it before merge.
 
 ### Round 7, at `dfa4fad`
 

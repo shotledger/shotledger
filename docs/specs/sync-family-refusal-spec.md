@@ -1675,7 +1675,8 @@ Pre-1.0 (rule 8), with no compatibility path:
   sign-out wording; and the Revision 4 item references. It changes items
   13 and 14 only in wording and figures. The round-8 fixes approved by the
   maintainer, 2026-10-22: "Fix, check again", answering "Fix the round-8
-  findings in #856, then merge without a ninth check?". The proposal it
+  findings in #856, then merge without a ninth check?" (which declines
+  merging without one, so a ninth round runs first). The proposal it
   approves covers: a test of a first push whose batch follows the account
   deletion, with a mutant that moves the account check out of the batch;
   the bound-string ceiling restated per table; a test comment; and the
