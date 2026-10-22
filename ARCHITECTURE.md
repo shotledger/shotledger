@@ -112,7 +112,7 @@ not apply by checking it against a schema derived from the table with
 imports `shared/src/sync/` only, plus `payload-schemas`, which stays out of
 the sync barrel and so out of the app and web bundles. ESLint enforces both
 import rules (`eslint.config.mjs`); the licensing reason is in
-[`CONTRIBUTING.md`](CONTRIBUTING.md), "Contribution terms".
+[`CONTRIBUTING.md`](CONTRIBUTING.md#why-the-license-map-looks-like-this).
 
 **What syncs.** Every user-data table, including `session_tags` (each link
 its own id; unlink is a tombstone; no unique constraint over the pair, so

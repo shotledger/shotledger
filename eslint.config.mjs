@@ -57,9 +57,9 @@ export default tseslint.config(
   },
   {
     // The Worker bundle is ELv2 and may only compile in the Apache-2.0
-    // protocol package, never the AGPL rest of shared/ (ADR 0017). The
+    // protocol package, never the AGPL rest of shared/ (CONTRIBUTING.md, license map). The
     // payload schemas are a subpath of it, kept out of the package barrel so
-    // drizzle-zod stays out of the app and web bundles (ADR 0021).
+    // drizzle-zod stays out of the app and web bundles (ARCHITECTURE.md § Sync).
     files: ['backend/src/**/*.ts'],
     rules: {
       'no-restricted-imports': [
@@ -68,13 +68,15 @@ export default tseslint.config(
           paths: [
             {
               name: '@shotledger/shared',
-              message: 'backend/src may only import @shotledger/shared/src/sync (ADR 0017).',
+              message:
+                'backend/src may only import @shotledger/shared/src/sync (CONTRIBUTING.md, license map).',
             },
           ],
           patterns: [
             {
               regex: '^@shotledger/shared/(?!src/sync(/payload-schemas)?$)',
-              message: 'backend/src may only import @shotledger/shared/src/sync (ADR 0017).',
+              message:
+                'backend/src may only import @shotledger/shared/src/sync (CONTRIBUTING.md, license map).',
             },
           ],
         },
@@ -84,7 +86,7 @@ export default tseslint.config(
   {
     // shared/src/sync is Apache-2.0 and must stay self-contained: zod, the
     // Apache-2.0 drizzle-orm and drizzle-zod (the table definitions and their
-    // payload schemas, ADR 0021), and its own files, so the backend never
+    // payload schemas, ARCHITECTURE.md § Sync), and its own files, so the backend never
     // pulls AGPL code through it.
     files: ['shared/src/sync/**/*.ts'],
     ignores: ['shared/src/sync/**/*.test.ts'],
@@ -96,7 +98,7 @@ export default tseslint.config(
             {
               regex: '^(?!zod$|drizzle-orm$|drizzle-orm/sqlite-core$|drizzle-zod$)(?!\\./)',
               message:
-                'shared/src/sync may import only zod, drizzle-orm, drizzle-zod and files in its own directory (ADR 0017, ADR 0021).',
+                'shared/src/sync may import only zod, drizzle-orm, drizzle-zod and files in its own directory (CONTRIBUTING.md, license map).',
             },
           ],
         },
@@ -114,7 +116,7 @@ export default tseslint.config(
               regex:
                 '^(?!zod$|drizzle-orm$|drizzle-orm/sqlite-core$|drizzle-zod$|vitest$|fast-check$)(?!\\./)',
               message:
-                'shared/src/sync tests may import only zod, drizzle-orm, drizzle-zod, vitest, fast-check and files in this directory (ADR 0017, ADR 0021).',
+                'shared/src/sync tests may import only zod, drizzle-orm, drizzle-zod, vitest, fast-check and files in this directory (CONTRIBUTING.md, license map).',
             },
           ],
         },

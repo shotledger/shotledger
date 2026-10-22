@@ -188,6 +188,34 @@ same app-store and platform-library permissions as the rest of the code, so
 the project can keep shipping through the stores and keep linking Google ML
 Kit without asking every contributor again.
 
+### Why the license map looks like this
+
+- **`backend/` is Elastic License 2.0** so anyone may read, run and
+  self-host the sync backend, but may not offer it to others as a hosted
+  service.
+- **`shared/src/sync/` is Apache-2.0** so the Worker never compiles AGPL
+  code. It holds what the backend needs: the protocol schemas, the merge
+  rule and the Drizzle tables, whose columns are the wire format. Two ESLint
+  `no-restricted-imports` rules in `eslint.config.mjs` hold the line:
+  `backend/src` imports only `@shotledger/shared/src/sync` (plus its
+  `payload-schemas`), and `shared/src/sync/**` imports only `zod`,
+  `drizzle-orm`, `drizzle-zod` and its own files. When the backend's imports
+  change, also bundle `backend/src/index.ts` with an esbuild metafile and
+  check that its only `shared/` inputs are under `shared/src/sync/`.
+  `backend/test/` may import the AGPL sync client; tests are not part of the
+  bundle.
+- **Everything else is AGPL-3.0-or-later with two section 7 permissions**:
+  conveying through app stores whose terms conflict with the AGPL, provided
+  the source stays available under the AGPL elsewhere; and combining with
+  vendor platform libraries (Google ML Kit, Google Play services, Apple
+  system frameworks) that the Corresponding Source need not include.
+- **The web app is network use under AGPL section 13**, so it links its
+  users to the source it runs (`web/src/shell/source-link.tsx`).
+- **The copyright holder also licenses commercially** (dual licensing). The
+  CLA's outbound clause allows that for contributions, provided each is also
+  offered under the license in force when it was submitted. Every AGPL
+  release stays AGPL for good.
+
 Third-party code keeps its own license and is listed in
 `app/src/constants/licenses.json` (bundled JavaScript) or
 `app/src/constants/native-licenses.ts` (native artifacts). Adding a dependency
@@ -228,7 +256,7 @@ with outbound Option Five, which means:
   — for example under a future version of the additional permissions for a
   new store, or under a commercial license (ShotLedger is dual-licensed: the
   public licenses above, plus commercial licenses from the copyright holder;
-  ADR 0023) — and must always also offer it under the license the project
+  see "Why the license map looks like this") — and must always also offer it under the license the project
   used the day you submitted it.
 - **Governing law is Sweden.**
 

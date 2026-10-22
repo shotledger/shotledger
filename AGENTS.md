@@ -16,8 +16,8 @@ sync. Android first — **all code must stay iOS-compatible**.
   scoring models, requirement traceability.
 - `LICENSE`, `CONTRIBUTING.md`, `CLA.md` — the license map (`app/` and
   `shared/` AGPL-3.0-or-later with the §7 permissions, `backend/` ELv2)
-  and the terms contributions arrive under. ADR 0017 records why; ADR 0023
-  adds commercial licenses from the copyright holder (dual licensing).
+  and the terms contributions arrive under, including why the map looks
+  the way it does and the commercial licenses from the copyright holder.
 - `docs/implementation-plan.md` — the execution spec: milestones,
   schema, screen inventory, per-task acceptance criteria. Follow it;
   do not improvise product decisions.

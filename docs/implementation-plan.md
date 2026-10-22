@@ -1257,8 +1257,8 @@ restates §0 rules 1–6 verbatim.
 > **The server now refuses a row a device could not apply** (#697, spec and
 > evidence: `docs/specs/sync-payload-validation-*`). `/sync/push` checks each
 > live change against its table's schema, derived from the Drizzle tables
-> with `drizzle-zod` (the tables moved to `shared/src/sync/schema.ts`, ADR
-> 0021), and answers `rejected` / `invalid_payload`; Account & Sync counts
+> with `drizzle-zod` (the tables moved to `shared/src/sync/schema.ts`,
+> ARCHITECTURE.md § Sync), and answers `rejected` / `invalid_payload`; Account & Sync counts
 > the refusals, and `sync_rows.payload` gains a JSON check.
 
 > **All three timers have since shipped.** The time-limit/interval timer
