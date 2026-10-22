@@ -19,14 +19,16 @@ run a sixth independent check?". Both are recorded in the spec (`cdc4571`,
 then items 10–12 as they were built). Items 13 and 14, round 6's fixes,
 with the maintainer's "Fix, check again" on 2026-10-21, answering "Fix the
 round-6 findings in #856, then run a seventh independent check?", recorded
-in `1c78d79`.
+in `1c78d79`. Round 7's fixes, with the maintainer's "Fix, check again" on
+2026-10-22, recorded in `db877f6`; they change items 13 and 14 only in
+wording and figures.
 
 - **Source state:** the head of `feature/856-sync-family-refusal` that this
-  report is committed in. Source and tests last changed at `6b9227e`; the
-  commits after it are docs only.
-- **Independent verification: failed, round 6, at `969d0c4`.** Round 6's
+  report is committed in. Source last changed at `18ec411`; tests and the
+  manual-mutation script at `fbe304d`; the commits after it are docs only.
+- **Independent verification: failed, round 7, at `dfa4fad`.** Round 7's
   findings are fixed in the commits listed under Independent verification,
-  which no verifier has seen. Round 7 is approved and pending.
+  which no verifier has seen. Round 8 is approved and pending.
 - **Toolchain:** Node 24.21.0, pnpm 12.11.2, vitest 5.0.3,
   `@cloudflare/vitest-plugin` 1.4.0 (backend), Stryker 10.0.0 with the vitest
   runner, fast-check 4.10.2, jest-expo (app), expo-sqlite 57.0.3. No
@@ -157,14 +159,18 @@ primed scenarios above:
 
 ## Gauntlet
 
-All figures are from one fresh run after the last code change (`6b9227e`).
+All figures are from one fresh run after the last test change (`fbe304d`).
+Stryker was not run again: no file it mutates has changed since round 6's
+run, which this table keeps. `pnpm check` ran with
+`NODE_OPTIONS=--max-old-space-size=4096`, as CI sets it: without it, eslint
+ran out of heap in this container at `dfa4fad` as well.
 
 | Layer                                     | Command                                                                                                                                             | Result                                                                                                                                                                                                                     |
 | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Full suite, types, lint, format, coverage | `pnpm check`                                                                                                                                        | exit 0: types (root, backend tests, app, web), export schema, i18n (1,541 keys each, 0 issues), licenses (98 packages), lint, format; vitest 253 files, 4,584 tests, coverage thresholds met; jest 112 suites, 1,071 tests |
-| Backend, shuffled                         | `cd backend && npx vitest run --sequence.shuffle --testTimeout=60000`                                                                               | in order and shuffled: 31 files, 350 tests each; seed `1792619457895`                                                                                                                                                      |
+| Backend, shuffled                         | `cd backend && npx vitest run --sequence.shuffle --testTimeout=60000`                                                                               | in order and shuffled: 31 files, 351 tests each; seed `1792668955607`                                                                                                                                                      |
 | Mutation, shared (tool)                   | `npx stryker run --mutate '…'` (entry point above)                                                                                                  | 96.57% (break 95): 616 killed, 4 timeouts, 16 survived, 6 no coverage; 98.10% without `schema.ts`. judge 95.75%, family 95.83%, protocol, merge and every `sync-client` file 100%                                          |
-| Mutation, workerd and the store (manual)  | `node scripts/manual-mutation-sync-push.mjs`                                                                                                        | 64/64 killed, exit 0; both baselines pass                                                                                                                                                                                  |
+| Mutation, workerd and the store (manual)  | `node scripts/manual-mutation-sync-push.mjs`                                                                                                        | 65/65 killed, exit 0; both baselines pass                                                                                                                                                                                  |
 | Properties                                | JP: I1, I2, the stored blocker and the release property, 300 runs each; FP, seed 856, 100 runs through the Worker and D1; `family.property.test.ts` | JP and `family.property` in `pnpm check`; FP in the backend run                                                                                                                                                            |
 | Query plans                               | `EXPLAIN QUERY PLAN` of every statement a push prepares, in workerd's D1 (below)                                                                    | every list is scanned once; every record is reached by primary key                                                                                                                                                         |
 | Docs                                      | `mkdocs build --strict`, `node scripts/docs-translation-check.mjs`, `node scripts/docs-anchor-check.mjs`, `prettier --check docs`                   | all four exit 0: mkdocs strict build clean; 29 translated pages current; no dangling anchors; prettier clean                                                                                                               |
@@ -210,7 +216,7 @@ lines, and the set is the one round 5 classified:
   a string or number payload gives `undefined`, so the owner is still null
   (the same survivor as in rounds 1–3).
 
-**The manual mutants.** 64 mutants over `backend/src/db/queries.ts`,
+**The manual mutants.** 65 mutants over `backend/src/db/queries.ts`,
 `backend/src/routes/sync.ts` and `app/src/db/queries/sync-store.ts`: the
 seq and row writes, the verdict reaching the batch, the guard and its
 retries, the records following each push, the release (order, skips,
@@ -263,6 +269,11 @@ How it got there, in order:
    join killed only by BUDGET's time bound; each is now killed by a TENANT
    test, seen by hand before the run. The sequence-row mutant's pattern
    follows the guard's new parenthesis.
+6. Round 7 (one more): the guard checking whether any account exists, not
+   the pushing user's (F1, `fbe304d`). It passed the whole suite and the
+   script, since each test database held only the pushing user; the new
+   F1 test and both V6-1 race tests, now run with a second account, each
+   fail against it, seen by hand before the run.
 
 **Stryker, in order.** The first run scored `judge.ts` 94.42% (235 killed and 2 timed out of 251).
 Three survivors were real: the code-unit tie order (`binary`'s `<=` and its
@@ -355,7 +366,7 @@ before the final `pnpm check`.
 
 ## Known limits
 
-- **Round 6's fixes are unverified**: round 7 is approved and pending.
+- **Round 7's fixes are unverified**: round 8 is approved and pending.
 - **I3 is not a generated property.** §11.10 asks for generated two-device
   sequences converging; SC I3 is one fixed interleaving (round 5, E-2).
   FP generates single-writer push sequences against D1 and checks I1 and
@@ -396,8 +407,46 @@ before the final `pnpm check`.
 
 ## Independent verification
 
-**Failed: round 6, at `969d0c4`.** No verifier has seen the round-6 fixes.
-Round 7 is approved by the maintainer (2026-10-21) and pending.
+**Failed: round 7, at `dfa4fad`.** No verifier has seen the round-7 fixes.
+Round 8 is approved by the maintainer (2026-10-22) and pending.
+
+### Round 7, at `dfa4fad`
+
+- **Verifier:** a fresh-context Claude agent, blind first; it read this
+  report only after its blind record.
+- **Attacked:** the run and the gates (all green, numbers as this report);
+  the guard's account check against better-auth's session lookup, the
+  empty push, every other write path of a deleted user; the test helper's
+  effect on the specs; the manual against the phone's sign-out and restore
+  code; the ceiling's figure; the approval bookkeeping; its own mutants of
+  the guard, the retry loop's order, the TENANT filters and nine other user
+  filters; the manual-mutation script's coverage of the guard.
+- **Findings and resolutions:**
+  - **F1 (a gate that could not fail):** the guard's check narrowed to "any
+    account exists" passed the suite and the script, and diverges: with
+    acct-b present and acct-a's user row deleted, a push of acct-a stored
+    a row. The code was right. A GONE test with a second account, both
+    V6-1 race tests run with one, and the mutant in the script
+    (`fbe304d`). No code change.
+  - **F2 (description):** the 59,000-record ceiling came from BUDGET's
+    short ids. Measured with 36-character ids: 99.0 characters per shot
+    record and its parent, 52.0 per session record, so about 20,000 to
+    38,000 refusal records (`251b24c`; spec §11.8 and item 14).
+  - **F3 (description):** the manual said a signed-out phone shows the
+    stored versions; it pulls nothing until it syncs again, and the Swedish
+    "Efter båda" read as "after both". English, Swedish and Known limits
+    (`eead7da`).
+  - **F4 (description):** Revision 4's list numbered V6-1 12, E6-1 13 and
+    V5-8 14, while every reference, here and in the spec, says 13, 14 and 12. The list is back in that order (`77aa9b8`), so no reference
+    changes; `18ec411`'s message, which says item 13 for V6-1, is right
+    again.
+  - Not findings: the retry loop testing the guard's failure before the
+    account's is equivalent (one NOT NULL error, `last_seq`'s first); the
+    walk's joins, `readRecorded` and the seq bases without the user filter
+    showed no divergence.
+- **Fixed after the last verified state, therefore unverified:**
+  `fbe304d` (with `db877f6`, `77aa9b8`, `251b24c`, `eead7da` and this
+  report, docs only); round 8 pending.
 
 ### Round 6, at `969d0c4`
 
