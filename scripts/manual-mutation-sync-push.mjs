@@ -176,6 +176,24 @@ const MUTANTS = [
     ],
   },
   {
+    // Round 9, F9-1 (A1): the account is checked by its own read per
+    // attempt, after the snapshot and the plan, just before the batch, and
+    // not in the batch. A deletion between that read and the batch goes
+    // unseen on a first push.
+    name: 'the account is checked by a read just before the batch, not in it',
+    find: '  const plan = await planPush(db, userId, changes, invalid, snapshot, options.revalidate);\n',
+    replace: `  const plan = await planPush(db, userId, changes, invalid, snapshot, options.revalidate);
+  const account = await db.all(sql\`SELECT 1 AS ok FROM "user" WHERE id = \${userId}\`);
+  if (account.length === 0) throw new PushAccountGoneError();
+`,
+    also: [
+      {
+        find: 'CASE WHEN EXISTS (SELECT 1 FROM "user" WHERE id = ${userId})\n        AND (',
+        replace: 'CASE WHEN true\n        AND (',
+      },
+    ],
+  },
+  {
     name: 'the guard checks whether any account exists, not the pushing user’s',
     find: 'EXISTS (SELECT 1 FROM "user" WHERE id = ${userId})',
     replace: 'EXISTS (SELECT 1 FROM "user")',

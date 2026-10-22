@@ -1309,10 +1309,13 @@ describe('GONE a push judged before the account is deleted cannot land after it 
   it('GONE a first push whose batch follows the deletion is refused and recreates nothing', async () => {
     await ensureAccount(OTHER);
     expect(await userRows()).toBe(0);
-    // Calls 0–3 are the snapshot reads; call 4 is the batch.
-    const gate = gateD1(env.DB, { kind: 'pause', at: 4 });
+    // The pause is on the batch call itself, not on a call index, so a
+    // check made by a read of its own just before the batch runs before the
+    // deletion (round 9, F9-1).
+    const gate = gateD1(env.DB, { kind: 'pause-batch' });
     const pending = pushThrough(gate.d1, [S(), R('r1')]);
     await gate.paused;
+    expect(gate.calls()).toBeGreaterThan(1);
     await deleteAccount();
     gate.release();
 
