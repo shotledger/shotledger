@@ -36,6 +36,16 @@ fix both, then merge with no tenth round. Recorded in `3151b8d`.
   `457e5fd` returned passed, and the two description-grade fixes made
   since are disclosed under Independent verification as unverified. No
   tenth round, by the maintainer's choice ("Pass, fix, merge").
+- **main merged at `3138ac3`, after the last verified state:** conflicts
+  resolved in `web/src/pull.ts`, `web/src/account/account.tsx`,
+  `docs/implementation-plan.md` and the app migration (baseline, snapshot,
+  journal, `migrations.js`, regenerated with `drizzle-kit generate`), plus
+  `web/src/account/account.test.ts`'s `../api` mock for main's passkey
+  calls. That merge is unverified. Rerun after it: `pnpm check` (256 /
+  4,632 and 112 / 1,079), the backend in order and shuffled (34 / 417,
+  seed `1792706781854`), Stryker (96.57%, the same survivors; `schema.ts`'s
+  lines move by 13), the manual mutants (67/67, exit 0), the docs gates and
+  `reuse lint`.
 - **Toolchain:** Node 24.21.0, pnpm 12.11.2, vitest 5.0.3,
   `@cloudflare/vitest-plugin` 1.4.0 (backend), Stryker 10.0.0 with the vitest
   runner, fast-check 4.10.2, jest-expo (app), expo-sqlite 57.0.3. No
