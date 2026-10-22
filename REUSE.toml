@@ -41,3 +41,11 @@ path = "docs/decisions-log-archive.md"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 Jimisola Laursen"
 SPDX-License-Identifier = "AGPL-3.0-or-later WITH LicenseRef-ShotLedger-AGPL-Permissions"
+
+# An adaptation of the Harmony Individual CLA, offered under the license of
+# the original (the note at the end of CLA.md).
+[[annotations]]
+path = "CLA.md"
+precedence = "override"
+SPDX-FileCopyrightText = ["2011 Harmony Agreements", "2026 Jimisola Laursen"]
+SPDX-License-Identifier = "CC-BY-3.0"

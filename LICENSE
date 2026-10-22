@@ -25,6 +25,10 @@ summary:
   the app are listed in app/src/constants/licenses.json and
   app/src/constants/native-licenses.ts.
 
+- CLA.md adapts the Harmony Individual Contributor License Agreement and is
+  under the Creative Commons Attribution 3.0 Unported License, like the
+  original. Text: LICENSES/CC-BY-3.0.txt.
+
 In SPDX terms: backend/ is "Elastic-2.0"; shared/src/sync/ is "Apache-2.0";
 the rest is "AGPL-3.0-or-later WITH LicenseRef-ShotLedger-AGPL-Permissions".
 
