@@ -35,7 +35,7 @@ jobs:
 
       - uses: expo/expo-github-action@9.0.0
         with:
-          eas-version: 24.12.1
+          eas-version: 25.1.1
           token: ${{ secrets.EXPO_TOKEN }}
 
       # --no-wait: the job hands the build to EAS and ends, so a long queue on
