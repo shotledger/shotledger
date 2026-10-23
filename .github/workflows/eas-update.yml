@@ -141,7 +141,7 @@ jobs:
 
       - uses: expo/expo-github-action@9.0.0
         with:
-          eas-version: 24.12.1
+          eas-version: 25.1.1
           token: ${{ secrets.EXPO_TOKEN }}
 
       # Android only, like the release workflow; add ios once iOS builds ship.
