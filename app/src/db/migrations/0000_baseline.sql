@@ -247,6 +247,17 @@ CREATE TABLE `sync_outbox` (
 	PRIMARY KEY(`table_name`, `row_id`)
 );
 --> statement-breakpoint
+CREATE TABLE `sync_refusal_marks` (
+	`table_name` text NOT NULL,
+	`row_id` text NOT NULL,
+	`kind` text NOT NULL,
+	`arrival` integer NOT NULL,
+	`blocker_table` text,
+	`blocker_row_id` text,
+	`own` integer NOT NULL,
+	PRIMARY KEY(`table_name`, `row_id`)
+);
+--> statement-breakpoint
 CREATE TABLE `sync_state` (
 	`table_name` text PRIMARY KEY NOT NULL,
 	`cursor` integer DEFAULT 0 NOT NULL

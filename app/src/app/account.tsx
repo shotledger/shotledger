@@ -106,6 +106,11 @@ export default function AccountScreen() {
                 {t('account.refusedChanges', { count: status.refusedCount })}
               </ThemedText>
             )}
+            {status.heldCount > 0 && (
+              <ThemedText type="small" themeColor="textSecondary" testID="sync-held">
+                {t('account.heldChanges', { count: status.heldCount })}
+              </ThemedText>
+            )}
             {status.errorKey && (
               <ThemedText type="small" themeColor="textSecondary" testID="sync-error">
                 {t(`account.syncError.${status.errorKey}`)}

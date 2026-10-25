@@ -63,16 +63,45 @@ och skickar ingenting från filen av sig själv.
   ihop de två. Telefonen hämtar det inloggade kontots data och skickar
   ingenting från filen.
 
-### När servern avvisar en ändring
+### När servern nekar en ändring
 
-Om **Konto & synk** säger att ändringar avvisades av servern, hittade servern
+Om **Konto & synk** säger att ändringar nekades av servern, hittade servern
 något i dem som den inte kan lagra. Det är ett fel i appen, inte något du har
-gjort. Ändringarna finns kvar på telefonen tills vidare, men de finns inte på
-dina andra enheter eller i webbappen. Om du ändrar samma sak på en annan enhet
-eller i webbappen ersätter den ändringen den avvisade på telefonen. Om du ändrar
-samma sak igen på telefonen skickas den igen. Om raden fortsätter att komma
-tillbaka, rapportera det, och gör en säkerhetskopia innan du loggar ut eller
-återställer.
+gjort. Servern lägger den nekade ändringen åt sidan: den finns inte på dina
+andra enheter eller i webbappen förrän den kommer fram rättad. Om du ändrar
+samma post igen, på telefonen, en annan enhet eller i webbappen, skickas en ny
+version; om den kan lagras upphör nekandet. Om raden fortsätter att komma
+tillbaka, rapportera det.
+
+En nekad ändring håller också tillbaka de ändringar som hör ihop med den, så
+att dina andra enheter aldrig ser ett halvt pass. Medan den gör det visar
+**Konto & synk** "n ändring(ar) väntar på en nekad ändring". För ett pass
+gäller det varje serie, skott och station i det, och själva passet; för ett
+vapen dess licenser, grupper, kalibrar, underhåll och siktinställningar, men
+inte de pass som skjutits med det. Raderingar hålls aldrig tillbaka.
+
+- Servern behåller de tillbakahållna ändringarna tills den nekade ändringen
+  kommer fram rättad, eller tills den eller dess pass raderas, från vilken
+  enhet som helst. Då lagrar den alla på en gång.
+- Ändringar av passet från dina andra enheter och från webbappen väntar också
+  på servern. De går inte förlorade om du loggar ut, återställer en
+  säkerhetskopia eller installerar om appen.
+- Båda raderna räknar hela kontot: alla enheter och webbappen visar samma
+  siffror.
+- När två enheter ändrar samma post vinner den ändring som kom fram till
+  servern sist. En tillbakahållen ändring räknas från när den kom fram till
+  servern, inte från när den lagras. En radering vinner alltid.
+
+Andra enheter och webbappen visar passet som servern har lagrat det: som det
+var före den nekade ändringen, tills servern lagrar de tillbakahållna
+ändringarna. Det gör även den här telefonen efter att du installerat om appen.
+När du loggar ut behåller telefonen din loggbok, och en återställning behåller
+det som säkerhetskopian innehåller. Medan du är utloggad hämtar telefonen
+ingenting och visar sina egna versioner. När den synkar igen, efter en
+återställning eller när du loggar in på samma konto igen, visar den det servern
+har lagrat av allt som servern redan hade, men en ny post som servern bara
+håller tillbaka, till exempel en ny serie i passet, ligger kvar på telefonen
+som den är.
 
 ## Hur ofta
 

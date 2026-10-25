@@ -7,13 +7,39 @@ import {
   PROTOCOL_VERSION,
   PullRequestSchema,
   PushRequestSchema,
+  REJECTED_FAMILY,
   type PullResponse,
   type PushResponse,
 } from '@shotledger/shared/src/sync';
 import { validatePayload } from '@shotledger/shared/src/sync/payload-schemas';
 
 import type { Authenticator } from '../auth';
-import { applyPush, createDb, pullTablePage } from '../db/queries';
+import {
+  applyPush,
+  createDb,
+  pullTablePage,
+  PushAccountGoneError,
+  PushBusyError,
+  readRefusals,
+  toChangeRow,
+  type WaitingRow,
+} from '../db/queries';
+
+/**
+ * #697's validator, run again on a waiting row before the server applies it,
+ * since it may have tightened since the row arrived
+ * (docs/specs/sync-family-refusal-spec.md §11.5). The log names the table and
+ * the columns, never a value or an id (N6).
+ */
+function stillValid(row: WaitingRow): boolean {
+  const verdict = validatePayload({ ...row, deletedAt: null });
+  if (verdict.ok) return true;
+  const columns = verdict.issues.map((issue) => `${issue.path || '(row)'}:${issue.code}`);
+  console.warn(
+    `sync push: a waiting ${row.tableName} row no longer validates (${columns.join(', ')})`,
+  );
+  return false;
+}
 
 export interface SyncEnv {
   Bindings: Env;
@@ -49,25 +75,24 @@ export function createSyncRoutes(authenticatorFor: (env: Env) => Authenticator) 
     const db = createDb(c.env.DB);
     const userId = c.get('userId');
 
+    // Read before the pages, so a record the pages then release is listed
+    // and its release pulled, never the reverse (§11.7).
+    const refusals = await readRefusals(db, userId);
     const changes: PullResponse['changes'] = [];
     const nextCursors: PullResponse['nextCursors'] = [];
 
     for (const { tableName, cursor } of parsed.data.tables) {
       const page = await pullTablePage(db, userId, tableName, cursor);
-      for (const row of page.rows) {
-        changes.push({
-          tableName: row.tableName,
-          rowId: row.rowId,
-          seq: row.seq,
-          payload: row.payload,
-          deletedAt: row.deletedAt,
-          updatedAt: row.updatedAt,
-        });
-      }
+      for (const row of page.rows) changes.push(toChangeRow(row));
       nextCursors.push({ tableName, cursor: page.cursor, hasMore: page.hasMore });
     }
 
-    const response: PullResponse = { protocolVersion: PROTOCOL_VERSION, changes, nextCursors };
+    const response: PullResponse = {
+      protocolVersion: PROTOCOL_VERSION,
+      changes,
+      refusals,
+      nextCursors,
+    };
     return c.json(response);
   });
 
@@ -128,7 +153,32 @@ export function createSyncRoutes(authenticatorFor: (env: Env) => Authenticator) 
     const db = createDb(c.env.DB);
     const userId = c.get('userId');
 
-    const acks = await applyPush(db, userId, parsed.data.changes, invalid);
+    // The server judges every change against the account's refused families
+    // and applies the waiting rows when a family is released
+    // (sync-family-refusal-spec.md §11.4, §11.5).
+    let acks: PushResponse['acks'];
+    try {
+      acks = await applyPush(db, userId, parsed.data.changes, { invalid, revalidate: stillValid });
+    } catch (error) {
+      if (error instanceof PushBusyError) return c.json({ error: 'busy' }, 503);
+      // The account was deleted while the push was judged (V5-6).
+      if (error instanceof PushAccountGoneError) {
+        return c.json({ error: 'unauthenticated' }, 401);
+      }
+      throw error;
+    }
+
+    // One line per push: the count and the tables of the changes refused
+    // with their family, never an id or a value (N6).
+    const family = acks.flatMap((ack, index) =>
+      ack.status === 'rejected' && ack.reason === REJECTED_FAMILY
+        ? [parsed.data.changes[index]!.tableName]
+        : [],
+    );
+    if (family.length > 0) {
+      const tables = [...new Set(family)].sort();
+      console.warn(`sync push: refused ${family.length} with their family (${tables.join(', ')})`);
+    }
 
     const response: PushResponse = { protocolVersion: PROTOCOL_VERSION, acks };
     return c.json(response);

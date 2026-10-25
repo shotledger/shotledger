@@ -18,6 +18,7 @@ const CHANGES = [change(1, 'firearms'), change(2, 'sessions'), change(3)];
 const ack = (c: ClientChange, status: PushAck['status'], reason?: string): PushAck => ({
   clientChangeId: c.clientChangeId,
   status,
+  arrival: 1,
   ...(status === 'applied' ? { seq: 1 } : {}),
   ...(reason === undefined ? {} : { reason }),
 });

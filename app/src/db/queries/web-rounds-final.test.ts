@@ -50,6 +50,7 @@ function apply(db: Database, result: EntryResult): ClientChange[] {
     tableName: change.tableName,
     rowId: change.rowId,
     seq: index + 1,
+    arrival: 1,
     payload: change.tableName === 'firearms' ? asBound(change.payload) : change.payload,
     deletedAt: change.deletedAt,
     updatedAt: change.updatedAt,

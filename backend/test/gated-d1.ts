@@ -8,6 +8,8 @@
 
 export type GateMode =
   | { kind: 'pause'; at: number }
+  /** Pauses on the first `batch` call, whatever its index (round 9, F9-1). */
+  | { kind: 'pause-batch' }
   | { kind: 'fail-before'; at: number }
   | { kind: 'fail-after'; at: number };
 
@@ -15,7 +17,7 @@ export interface Gate {
   d1: D1Database;
   /** Calls made so far. */
   calls(): number;
-  /** Resolves when the push reaches call `at` (pause mode only). */
+  /** Resolves when the push reaches call `at`, or its first batch (pause modes only). */
   paused: Promise<void>;
   release(): void;
 }
@@ -36,10 +38,13 @@ export function gateD1(real: D1Database, mode: GateMode): Gate {
   const paused = new Promise<void>((resolve) => (markPaused = resolve));
   const unwrap = new WeakMap<object, D1PreparedStatement>();
 
-  async function call<T>(execute: () => Promise<T>): Promise<T> {
+  let batchSeen = false;
+  async function call<T>(execute: () => Promise<T>, isBatch = false): Promise<T> {
     const n = calls++;
-    if (n === mode.at) {
-      if (mode.kind === 'pause') {
+    const firstBatch = isBatch && !batchSeen;
+    if (isBatch) batchSeen = true;
+    if (mode.kind === 'pause-batch' ? firstBatch : n === mode.at) {
+      if (mode.kind === 'pause' || mode.kind === 'pause-batch') {
         markPaused();
         await released;
       } else if (mode.kind === 'fail-before') {
@@ -83,14 +88,16 @@ export function gateD1(real: D1Database, mode: GateMode): Gate {
       }
       if (prop === 'batch') {
         return (statements: D1PreparedStatement[]) =>
-          call(() =>
-            target.batch(
-              statements.map((statement) => {
-                const inner = unwrap.get(statement);
-                if (!inner) throw new Error('gateD1: batch got a statement it did not prepare');
-                return inner;
-              }),
-            ),
+          call(
+            () =>
+              target.batch(
+                statements.map((statement) => {
+                  const inner = unwrap.get(statement);
+                  if (!inner) throw new Error('gateD1: batch got a statement it did not prepare');
+                  return inner;
+                }),
+              ),
+            true,
           );
       }
       if (prop === 'exec' || prop === 'dump' || prop === 'withSession') {

@@ -71,6 +71,7 @@ describe('a web-built series with a photo on the phone schema', () => {
       tableName: change.tableName,
       rowId: change.rowId,
       seq: index + 1,
+      arrival: 1,
       payload: change.payload,
       deletedAt: change.deletedAt,
       updatedAt: change.updatedAt,

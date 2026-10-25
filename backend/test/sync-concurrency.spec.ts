@@ -15,10 +15,10 @@ import {
   type StoredRow,
 } from '@shotledger/shared/src/sync';
 
-import { devBearerAuthenticator } from '../src/auth';
-import { SYNC_MIGRATIONS } from '../src/db/migrations';
+import { ALL_MIGRATIONS } from '../src/db/migrations';
 import { applyPush, createDb, pullTablePage, type PullPage } from '../src/db/queries';
 import { createSyncRoutes } from '../src/routes/sync';
+import { devBearerWithAccount, ensureAccount } from './dev-account';
 
 import { gateD1, SimulatedCrash } from './gated-d1';
 import { wholeRow } from './rows';
@@ -63,26 +63,44 @@ async function wipe() {
   await env.DB.exec('DELETE FROM sync_rows');
   await env.DB.exec('DELETE FROM sync_sequence');
   await env.DB.exec('DELETE FROM sync_idempotency');
+  await env.DB.exec('DELETE FROM sync_refusals');
 }
 
-/** Every sync table, as one comparable string. */
+/**
+ * Every sync table, as one comparable string. Not `state_rev`: every push
+ * batch bumps it, a replay that changes nothing else included
+ * (sync-family-refusal-spec.md §11.3); `stateRev()` reads it.
+ */
 async function snapshot(): Promise<string> {
   const rows = await env.DB.prepare(
     'SELECT * FROM sync_rows ORDER BY user_id, table_name, row_id',
   ).all();
-  const sequence = await env.DB.prepare('SELECT * FROM sync_sequence ORDER BY user_id').all();
+  const sequence = await env.DB.prepare(
+    'SELECT user_id, last_seq FROM sync_sequence ORDER BY user_id',
+  ).all();
   const records = await env.DB.prepare(
     'SELECT * FROM sync_idempotency ORDER BY user_id, client_change_id',
   ).all();
   return JSON.stringify([rows.results, sequence.results, records.results]);
 }
 
+async function stateRev(): Promise<number> {
+  const found = await env.DB.prepare('SELECT state_rev FROM sync_sequence WHERE user_id = ?')
+    .bind(USER)
+    .first<{ state_rev: number }>();
+  return found!.state_rev;
+}
+
 async function pullAll(cursor = 0): Promise<PullPage> {
   return pullTablePage(db(), USER, 'firearms', cursor);
 }
 
+/** The stored row as mergeChange models it: without its arrival (§11.3). */
 async function storedRow(rowId: string): Promise<StoredRow | undefined> {
-  return (await pullAll()).rows.find((row) => row.rowId === rowId);
+  const found = (await pullAll()).rows.find((row) => row.rowId === rowId);
+  if (found === undefined) return undefined;
+  const { arrival: _arrival, ...row } = found;
+  return row;
 }
 
 /**
@@ -127,7 +145,9 @@ function isCrash(error: unknown): boolean {
 }
 
 beforeAll(async () => {
-  await applyD1Migrations(env.DB, SYNC_MIGRATIONS);
+  await applyD1Migrations(env.DB, ALL_MIGRATIONS);
+  // applyPush is called directly here; the guard needs the account (V6-1).
+  await ensureAccount(USER);
 });
 
 beforeEach(wipe);
@@ -172,7 +192,8 @@ describe('C2 the stored row is the applied change with the highest seq', () => {
       expect(stored?.payload, label).toEqual({ make: winner.make });
 
       const lastSeen = [...mid!.rows, ...after.rows].filter((row) => row.rowId === 'r1').at(-1);
-      expect(lastSeen, label).toEqual(stored);
+      expect(lastSeen, label).toEqual((await pullAll()).rows.find((row) => row.rowId === 'r1'));
+      expect(lastSeen, label).toMatchObject(stored!);
       return reached;
     });
   });
@@ -202,6 +223,7 @@ describe('C3 a delete is never undone by a racing live edit', () => {
           clientChangeId: cid(1),
           status: 'rejected',
           reason: 'tombstoned',
+          arrival: 3,
         });
       }
       return reached;
@@ -235,11 +257,20 @@ describe('C4 a crash leaves the push either fully applied or not applied', () =>
 
         const [retry] = await applyPush(db(), USER, [change]);
         expect(await snapshot(), label).toBe(post);
+        const stored = (await pullAll()).rows[0]!;
         expect(retry, label).toStrictEqual(
           afterCrash === post
-            ? { clientChangeId: cid(1), status: 'duplicate', seq: 1 }
-            : { clientChangeId: cid(1), status: 'applied', seq: 1 },
+            ? {
+                clientChangeId: cid(1),
+                status: 'duplicate',
+                seq: 1,
+                arrival: 1,
+                current: { ...stored, arrival: 1 },
+              }
+            : { clientChangeId: cid(1), status: 'applied', seq: 1, arrival: 1 },
         );
+        // A replay is a push too: it bumps the arrival clock and nothing else.
+        expect(await stateRev(), label).toBe(afterCrash === post ? 2 : 1);
         return true;
       });
     });
@@ -276,14 +307,21 @@ describe('C5 the SQL merge agrees with mergeChange', () => {
 
       const [ack] = await applyPush(db(), USER, [change]);
       const stored = await storedRow('r1');
+      const arrival = existing ? 2 : 1;
       if (outcome.status === 'applied') {
-        expect(ack).toStrictEqual({ clientChangeId: cid(2), status: 'applied', seq: expectedSeq });
+        expect(ack).toStrictEqual({
+          clientChangeId: cid(2),
+          status: 'applied',
+          seq: expectedSeq,
+          arrival,
+        });
         expect(stored).toEqual(outcome.row);
       } else {
         expect(ack).toStrictEqual({
           clientChangeId: cid(2),
           status: 'rejected',
           reason: outcome.reason,
+          arrival,
         });
         expect(stored).toEqual(existing);
       }
@@ -301,13 +339,14 @@ describe('C6 one push holds several changes to one row', () => {
       live(4, 'r1', 'v4'),
       tombstone(5, 'r1', '2026-08-03T00:00:00.000Z'),
     ]);
+    const final = (await pullAll()).rows[0]!;
     expect(acks).toStrictEqual([
-      { clientChangeId: cid(1), status: 'applied', seq: 1 },
-      { clientChangeId: cid(2), status: 'applied', seq: 2 },
-      { clientChangeId: cid(1), status: 'duplicate', seq: 1 },
-      { clientChangeId: cid(3), status: 'applied', seq: 3 },
-      { clientChangeId: cid(4), status: 'rejected', reason: 'tombstoned' },
-      { clientChangeId: cid(5), status: 'applied', seq: 4 },
+      { clientChangeId: cid(1), status: 'applied', seq: 1, arrival: 1 },
+      { clientChangeId: cid(2), status: 'applied', seq: 2, arrival: 1 },
+      { clientChangeId: cid(1), status: 'duplicate', seq: 1, arrival: 1, current: final },
+      { clientChangeId: cid(3), status: 'applied', seq: 3, arrival: 1 },
+      { clientChangeId: cid(4), status: 'rejected', reason: 'tombstoned', arrival: 1 },
+      { clientChangeId: cid(5), status: 'applied', seq: 4, arrival: 1 },
     ]);
     const counter = await env.DB.prepare('SELECT last_seq FROM sync_sequence WHERE user_id = ?')
       .bind(USER)
@@ -316,7 +355,13 @@ describe('C6 one push holds several changes to one row', () => {
 
     const replay = await applyPush(db(), USER, [live(4, 'r1', 'v4')]);
     expect(replay).toStrictEqual([
-      { clientChangeId: cid(4), status: 'duplicate', reason: 'tombstoned' },
+      {
+        clientChangeId: cid(4),
+        status: 'duplicate',
+        reason: 'tombstoned',
+        arrival: 1,
+        current: final,
+      },
     ]);
   });
 });
@@ -330,7 +375,7 @@ describe('C7 a rejected change consumes no seq', () => {
     const [rejected] = await applyPush(db(), USER, [live(3, 'r1', 'Y')]);
     expect(rejected?.status).toBe('rejected');
     const [next] = await applyPush(db(), USER, [live(4, 'r2', 'B')]);
-    expect(next).toStrictEqual({ clientChangeId: cid(4), status: 'applied', seq: 3 });
+    expect(next).toStrictEqual({ clientChangeId: cid(4), status: 'applied', seq: 3, arrival: 3 });
   });
 });
 
@@ -341,7 +386,15 @@ describe('C9 a stale retry never overwrites a newer edit', () => {
     const before = await snapshot();
 
     const [retry] = await applyPush(db(), USER, [live(1, 'r1', 'A')]);
-    expect(retry).toStrictEqual({ clientChangeId: cid(1), status: 'duplicate', seq: 1 });
+    const stored = (await pullAll()).rows[0]!;
+    expect(stored.payload).toEqual({ make: 'B' });
+    expect(retry).toStrictEqual({
+      clientChangeId: cid(1),
+      status: 'duplicate',
+      seq: 1,
+      arrival: 1,
+      current: stored,
+    });
     expect(await snapshot()).toBe(before);
   });
 });
@@ -350,7 +403,7 @@ describe('C8 concurrent HTTP pushes converge (stress, supplementary)', () => {
   const app = new Hono<{ Bindings: Env }>();
   app.route(
     '/sync',
-    createSyncRoutes(() => devBearerAuthenticator),
+    createSyncRoutes(() => devBearerWithAccount),
   );
 
   async function call(path: string, body: unknown): Promise<unknown> {
@@ -424,6 +477,7 @@ describe('ADV1 a full push is one batch', () => {
     const acks = await applyPush(createDb(gate.d1), USER, changes);
     expect(acks.map((ack) => ack.seq)).toEqual(changes.map((_, i) => i + 1));
     expect(acks.every((ack) => ack.status === 'applied')).toBe(true);
-    expect(gate.calls()).toBe(1);
+    // The four snapshot reads, then the one batch (sync-family-refusal-spec.md §11.8).
+    expect(gate.calls()).toBe(5);
   });
 });

@@ -85,6 +85,45 @@ async function pushSyncRow(token: string, rowId: string) {
   });
 }
 
+/** Pushes an invalid firearm and a license of it: one bad and one waiting record. */
+async function pushRefusedFamily(token: string) {
+  const updatedAt = new Date().toISOString();
+  const change = (
+    tableName: 'firearms' | 'licenses',
+    rowId: string,
+    extra: Record<string, unknown>,
+  ) => ({
+    clientChangeId: crypto.randomUUID(),
+    tableName,
+    rowId,
+    payload: row(tableName, rowId, updatedAt, extra),
+    deletedAt: null,
+    updatedAt,
+  });
+  return fetchApp('/sync/push', {
+    method: 'POST',
+    headers: { ...authHeaders(token), 'content-type': 'application/json' },
+    body: JSON.stringify({
+      protocolVersion: 1,
+      changes: [
+        change('firearms', 'firearm-acct', { make: null }),
+        change('licenses', 'license-acct', { firearm_id: 'firearm-acct' }),
+      ],
+    }),
+  });
+}
+
+async function syncRowCounts(userId: string): Promise<Record<string, number>> {
+  const counts: Record<string, number> = {};
+  for (const table of ['sync_rows', 'sync_sequence', 'sync_idempotency', 'sync_refusals']) {
+    const result = await env.DB.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE user_id = ?`)
+      .bind(userId)
+      .first<{ n: number }>();
+    counts[table] = result?.n ?? -1;
+  }
+  return counts;
+}
+
 beforeAll(async () => {
   await applyD1Migrations(env.DB, ALL_MIGRATIONS);
 });
@@ -99,6 +138,7 @@ beforeEach(async () => {
   await env.DB.exec('DELETE FROM sync_rows');
   await env.DB.exec('DELETE FROM sync_sequence');
   await env.DB.exec('DELETE FROM sync_idempotency');
+  await env.DB.exec('DELETE FROM sync_refusals');
 });
 
 describe('account deletion', () => {
@@ -169,6 +209,39 @@ describe('account deletion', () => {
     expect(bStillWorks.status).toBe(200);
     const bUsage = await fetchApp('/photos/usage', { headers: authHeaders(tokenB) });
     expect(await bUsage.json()).toMatchObject({ usedBytes: 10 });
+  });
+
+  it('ACCT deletion removes the refusals, and the dry run counts them', async () => {
+    const token = await signUp('acct@example.com');
+    const userId = await userIdOf(token);
+    expect((await pushSyncRow(token, 'firearm-ok')).status).toBe(200);
+    expect((await pushRefusedFamily(token)).status).toBe(200);
+    expect(await syncRowCounts(userId)).toEqual({
+      sync_rows: 1,
+      sync_sequence: 1,
+      sync_idempotency: 3,
+      sync_refusals: 2,
+    });
+
+    const dryRun = await fetchApp('/account/delete', {
+      method: 'POST',
+      headers: { ...authHeaders(token), 'content-type': 'application/json' },
+      body: JSON.stringify({ dryRun: true }),
+    });
+    const body = await dryRun.json<{ deleted: Record<string, number> }>();
+    expect(body.deleted.syncRefusals).toBe(2);
+
+    await fetchApp('/account/delete', {
+      method: 'POST',
+      headers: { ...authHeaders(token), 'content-type': 'application/json' },
+      body: JSON.stringify({ dryRun: false }),
+    });
+    expect(await syncRowCounts(userId)).toEqual({
+      sync_rows: 0,
+      sync_sequence: 0,
+      sync_idempotency: 0,
+      sync_refusals: 0,
+    });
   });
 });
 

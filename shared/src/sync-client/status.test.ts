@@ -27,7 +27,7 @@ describe('reduceSyncStatus', () => {
       type: 'succeeded',
       at: '2026-09-02T10:00:00.000Z',
       result: ok,
-      pendingCount: 0,
+      counts: { pendingCount: 0, refusedCount: 1, heldCount: 2 },
     });
     expect(done).toEqual({
       state: 'idle',
@@ -35,7 +35,8 @@ describe('reduceSyncStatus', () => {
       pendingCount: 0,
       errorKey: null,
       attempt: 0,
-      refusedCount: 0,
+      refusedCount: 1,
+      heldCount: 2,
     });
   });
 
@@ -52,44 +53,45 @@ describe('reduceSyncStatus', () => {
       type: 'succeeded',
       at: '2026-09-02T10:00:00.000Z',
       result: ok,
-      pendingCount: 0,
+      counts: { pendingCount: 0, refusedCount: 0, heldCount: 0 },
     });
     const errored = reduceSyncStatus(done, { type: 'failed', errorKey: 'network' });
     expect(errored.lastSyncedAt).toBe('2026-09-02T10:00:00.000Z');
   });
 
-  it('updates the pending count on its own', () => {
+  it('updates the counts on their own', () => {
     const updated = reduceSyncStatus(initialSyncStatus, {
-      type: 'pendingChanged',
-      pendingCount: 4,
+      type: 'countsChanged',
+      counts: { pendingCount: 4, refusedCount: 1, heldCount: 3 },
     });
-    expect(updated.pendingCount).toBe(4);
+    expect(updated).toMatchObject({ pendingCount: 4, refusedCount: 1, heldCount: 3 });
     expect(updated.state).toBe('idle');
   });
 
-  // docs/specs/sync-payload-validation-spec.md P12.
-  it('adds up the refusals as they arrive; no cycle outcome changes the sum', () => {
+  // docs/specs/sync-family-refusal-spec.md §11.6 (H11'): the refused and
+  // waiting counts are read from durable marks, so they replace, never add
+  // up; this supersedes the app-session sum of sync-payload-validation-spec
+  // P12.
+  it('takes the refused and waiting counts as read, and keeps them through a failure', () => {
     const at = '2026-09-02T10:00:00.000Z';
-    let status = reduceSyncStatus(initialSyncStatus, { type: 'refused' });
-    status = reduceSyncStatus(status, { type: 'refused' });
-    expect(status.refusedCount).toBe(2);
-    expect(status.state).toBe('idle');
-    // The result's own count is reported already, refusal by refusal.
-    status = reduceSyncStatus(status, {
+    let status = reduceSyncStatus(initialSyncStatus, {
       type: 'succeeded',
       at,
       result: { ...ok, invalid: 2 },
-      pendingCount: 0,
+      counts: { pendingCount: 0, refusedCount: 2, heldCount: 3 },
     });
-    expect(status.refusedCount).toBe(2);
-    status = reduceSyncStatus(status, { type: 'refused' });
+    expect(status).toMatchObject({ refusedCount: 2, heldCount: 3 });
     status = reduceSyncStatus(status, { type: 'failed', errorKey: 'network' });
     status = reduceSyncStatus(status, { type: 'started' });
-    status = reduceSyncStatus(status, { type: 'pendingChanged', pendingCount: 2 });
-    expect(status.refusedCount).toBe(3);
+    expect(status).toMatchObject({ refusedCount: 2, heldCount: 3 });
+    status = reduceSyncStatus(status, {
+      type: 'countsChanged',
+      counts: { pendingCount: 2, refusedCount: 1, heldCount: 0 },
+    });
+    expect(status).toMatchObject({ pendingCount: 2, refusedCount: 1, heldCount: 0 });
   });
 
-  it('starts with nothing refused', () => {
-    expect(initialSyncStatus.refusedCount).toBe(0);
+  it('starts with nothing refused or waiting', () => {
+    expect(initialSyncStatus).toMatchObject({ refusedCount: 0, heldCount: 0 });
   });
 });

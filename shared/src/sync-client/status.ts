@@ -18,11 +18,16 @@ export interface SyncStatus {
   /** Consecutive failures; drives nextBackoffMs, resets on any success. */
   attempt: number;
   /**
-   * Changes the server refused as malformed since the app started
-   * (docs/specs/sync-payload-validation-spec.md C3). Not persisted.
+   * The account's rows the server refused as malformed: its `invalid` marks
+   * (docs/specs/sync-family-refusal-spec.md §11.6). Durable.
    */
   refusedCount: number;
+  /** The account's rows the server holds back behind a refused one: `waiting` marks. */
+  heldCount: number;
 }
+
+/** What Account & Sync counts, read from the outbox and the marks. */
+export type SyncCounts = Pick<SyncStatus, 'pendingCount' | 'refusedCount' | 'heldCount'>;
 
 export const initialSyncStatus: SyncStatus = {
   state: 'idle',
@@ -31,15 +36,14 @@ export const initialSyncStatus: SyncStatus = {
   errorKey: null,
   attempt: 0,
   refusedCount: 0,
+  heldCount: 0,
 };
 
 export type SyncEvent =
   | { type: 'started' }
-  | { type: 'succeeded'; at: string; result: SyncCycleResult; pendingCount: number }
+  | { type: 'succeeded'; at: string; result: SyncCycleResult; counts: SyncCounts }
   | { type: 'failed'; errorKey: SyncErrorKey }
-  /** One `invalid_payload` refusal, reported as its entry clears (C3). */
-  | { type: 'refused' }
-  | { type: 'pendingChanged'; pendingCount: number };
+  | { type: 'countsChanged'; counts: SyncCounts };
 
 export function reduceSyncStatus(status: SyncStatus, event: SyncEvent): SyncStatus {
   switch (event.type) {
@@ -53,18 +57,13 @@ export function reduceSyncStatus(status: SyncStatus, event: SyncEvent): SyncStat
         // A `partial` cycle still moved data and still counts as synced —
         // more pages simply remain, and the controller re-runs immediately.
         lastSyncedAt: event.at,
-        pendingCount: event.pendingCount,
+        ...event.counts,
         errorKey: null,
         attempt: 0,
-        // Counted refusal by refusal ('refused'), so a cycle that fails
-        // after one still shows it; the result's `invalid` is not added again.
-        refusedCount: status.refusedCount,
       };
     case 'failed':
       return { ...status, state: 'error', errorKey: event.errorKey, attempt: status.attempt + 1 };
-    case 'pendingChanged':
-      return { ...status, pendingCount: event.pendingCount };
-    case 'refused':
-      return { ...status, refusedCount: status.refusedCount + 1 };
+    case 'countsChanged':
+      return { ...status, ...event.counts };
   }
 }

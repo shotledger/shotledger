@@ -89,6 +89,7 @@ describe('a tagged web entry applied with applyChangesSync', () => {
       tableName: change.tableName,
       rowId: change.rowId,
       seq: index + 1,
+      arrival: 1,
       payload: change.payload,
       deletedAt: change.deletedAt,
       updatedAt: change.updatedAt,

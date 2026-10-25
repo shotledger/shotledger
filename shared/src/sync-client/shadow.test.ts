@@ -2,10 +2,19 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
 import { ChangeRowSchema, SYNC_TABLE_NAMES, type ChangeRow } from '../sync/protocol';
-import { filterShadowedChanges, rowKey, tombstoneFromRejection } from './shadow';
+import type { RefusalMark } from './ports';
+import {
+  applyMarkUpdate,
+  filterShadowedChanges,
+  countMarks,
+  marksFromRefusals,
+  rowKey,
+  shadowPull,
+  tombstoneFromRejection,
+} from './shadow';
 
 function change(rowId: string, tableName: ChangeRow['tableName'] = 'sessions'): ChangeRow {
-  return { tableName, rowId, seq: 1, payload: {}, deletedAt: null, updatedAt: 'u' };
+  return { tableName, rowId, seq: 1, payload: {}, deletedAt: null, updatedAt: 'u', arrival: 1 };
 }
 
 describe('rowKey', () => {
@@ -65,6 +74,7 @@ describe('tombstoneFromRejection', () => {
       payload: null,
       deletedAt: '2026-09-02T12:00:00.000Z',
       updatedAt: '2026-09-02T12:00:00.000Z',
+      arrival: 1,
     });
     expect(ChangeRowSchema.safeParse(row).success).toBe(true);
   });
@@ -84,5 +94,213 @@ describe('tombstoneFromRejection', () => {
         },
       ),
     );
+  });
+});
+
+// docs/specs/sync-family-refusal-spec.md §11.6, the shadowing table.
+describe('shadowPull', () => {
+  // This device's own marks unless said otherwise: only those shadow (V5-1).
+  const mark = (
+    rowId: string,
+    arrival: number,
+    kind: RefusalMark['kind'] = 'waiting',
+    own = true,
+  ): RefusalMark => ({
+    tableName: 'sessions' as const,
+    rowId,
+    kind,
+    arrival,
+    blocker: kind === 'waiting' ? { tableName: 'shots' as const, rowId: 't2' } : null,
+    own,
+  });
+  const at = (rowId: string, arrival: number): ChangeRow => ({ ...change(rowId), arrival });
+  const tombstone = (rowId: string, arrival: number): ChangeRow => ({
+    ...at(rowId, arrival),
+    payload: null,
+    deletedAt: 'd',
+  });
+
+  it('a queued entry shadows anything, mark or not, and keeps the mark', () => {
+    const marks = [mark('a', 5)];
+    const out = shadowPull(
+      [at('a', 9), tombstone('b', 9)],
+      new Set([rowKey('sessions', 'a'), rowKey('sessions', 'b')]),
+      marks,
+    );
+    expect(out).toEqual({ applicable: [], marks, shadowed: 2 });
+  });
+
+  it('a mark and a pulled tombstone: applied, and the mark dropped (R2)', () => {
+    const out = shadowPull([tombstone('a', 1)], new Set(), [mark('a', 5), mark('b', 5)]);
+    expect(out.applicable.map((c) => c.rowId)).toEqual(['a']);
+    expect(out.marks).toEqual([mark('b', 5)]);
+    expect(out.shadowed).toBe(0);
+  });
+
+  it('a mark and a live change at the mark’s arrival or later: applied, and the mark dropped', () => {
+    const equal = shadowPull([at('a', 5)], new Set(), [mark('a', 5)]);
+    expect(equal).toEqual({ applicable: [at('a', 5)], marks: [], shadowed: 0 });
+    const later = shadowPull([at('a', 6)], new Set(), [mark('a', 5, 'invalid')]);
+    expect(later).toEqual({ applicable: [at('a', 6)], marks: [], shadowed: 0 });
+  });
+
+  it('a mark and a live change below the mark’s arrival: shadowed, and the mark kept (ECHO)', () => {
+    const marks = [mark('a', 5)];
+    expect(shadowPull([at('a', 4)], new Set(), marks)).toEqual({
+      applicable: [],
+      marks,
+      shadowed: 1,
+    });
+  });
+
+  it('neither: applied, as today; a mark of another table does not match', () => {
+    const other = { ...mark('a', 9), tableName: 'series' as const };
+    const out = shadowPull([at('a', 1), at('b', 1)], new Set(), [other]);
+    expect(out).toEqual({ applicable: [at('a', 1), at('b', 1)], marks: [other], shadowed: 0 });
+  });
+
+  it('V5-1 a mark of another device’s version shadows nothing: an older change applies and the mark stays', () => {
+    const counted = [mark('a', 5, 'waiting', false)];
+    expect(shadowPull([at('a', 4)], new Set(), counted)).toEqual({
+      applicable: [at('a', 4)],
+      marks: counted,
+      shadowed: 0,
+    });
+  });
+
+  it('V5-1 a mark of another device’s version still goes with a change at its arrival or a tombstone', () => {
+    const counted = (rowId: string) => mark(rowId, 5, 'invalid', false);
+    const out = shadowPull([at('a', 5), tombstone('b', 1)], new Set(), [
+      counted('a'),
+      counted('b'),
+    ]);
+    expect(out).toEqual({ applicable: [at('a', 5), tombstone('b', 1)], marks: [], shadowed: 0 });
+  });
+
+  it('a page with two changes of one marked row judges each against the mark it meets', () => {
+    // The first applies and drops the mark, so the second applies too.
+    const out = shadowPull([at('a', 6), at('a', 3)], new Set(), [mark('a', 5)]);
+    expect(out.applicable).toEqual([at('a', 6), at('a', 3)]);
+    expect(out.marks).toEqual([]);
+  });
+});
+
+describe('marksFromRefusals', () => {
+  const entries = [
+    {
+      tableName: 'shots' as const,
+      rowId: 't2',
+      reason: 'invalid_payload' as const,
+      arrival: 3,
+      blocker: null,
+    },
+    {
+      tableName: 'series' as const,
+      rowId: 'r1',
+      reason: 'family_refused' as const,
+      arrival: 4,
+      blocker: { tableName: 'shots' as const, rowId: 't2' },
+    },
+  ];
+  const local = (tableName: 'shots' | 'series', rowId: string, arrival: number, own: boolean) => ({
+    tableName,
+    rowId,
+    kind: 'waiting' as const,
+    arrival,
+    blocker: null,
+    own,
+  });
+
+  it('turns a bad row into an invalid mark and a waiting row into a waiting mark, neither its own', () => {
+    expect(marksFromRefusals(entries, [])).toEqual([
+      { tableName: 'shots', rowId: 't2', kind: 'invalid', arrival: 3, blocker: null, own: false },
+      {
+        tableName: 'series',
+        rowId: 'r1',
+        kind: 'waiting',
+        arrival: 4,
+        blocker: { tableName: 'shots', rowId: 't2' },
+        own: false,
+      },
+    ]);
+  });
+
+  it('V5-1 keeps a mark this device’s own only when its own mark of that row is at the listed arrival', () => {
+    const own = (marks: ReturnType<typeof local>[]) =>
+      marksFromRefusals(entries, marks).map((m) => `${m.rowId}:${m.own}`);
+    expect(own([local('shots', 't2', 3, true), local('series', 'r1', 4, true)])).toEqual([
+      't2:true',
+      'r1:true',
+    ]);
+    // Another version of the row is listed, or the local mark is not its own,
+    // or it is another table's row of that id.
+    expect(own([local('shots', 't2', 2, true), local('series', 'r1', 4, false)])).toEqual([
+      't2:false',
+      'r1:false',
+    ]);
+    expect(own([local('series', 't2', 3, true)])).toEqual(['t2:false', 'r1:false']);
+  });
+});
+
+describe('applyMarkUpdate', () => {
+  const at = (
+    rowId: string,
+    arrival: number,
+    kind: RefusalMark['kind'] = 'waiting',
+  ): RefusalMark => ({
+    tableName: 'series',
+    rowId,
+    kind,
+    arrival,
+    blocker: null,
+    own: true,
+  });
+  const ref = { tableName: 'series' as const, rowId: 'a' };
+
+  it('a set adds a mark, or replaces one that arrived no later, keeping the others', () => {
+    expect(applyMarkUpdate([at('b', 1)], { set: at('a', 3) })).toEqual([at('b', 1), at('a', 3)]);
+    expect(applyMarkUpdate([at('a', 3)], { set: at('a', 3, 'invalid') })).toEqual([
+      at('a', 3, 'invalid'),
+    ]);
+    expect(applyMarkUpdate([at('a', 2)], { set: at('a', 3, 'invalid') })).toEqual([
+      at('a', 3, 'invalid'),
+    ]);
+  });
+
+  it('a set keeps a mark that arrived later', () => {
+    expect(applyMarkUpdate([at('a', 9)], { set: at('a', 3, 'invalid') })).toEqual([at('a', 9)]);
+  });
+
+  it('a drop deletes a mark up to its arrival and spares a later one', () => {
+    expect(applyMarkUpdate([at('a', 3), at('b', 1)], { drop: ref, upTo: 3 })).toEqual([at('b', 1)]);
+    expect(applyMarkUpdate([at('a', 4)], { drop: ref, upTo: 3 })).toEqual([at('a', 4)]);
+    expect(applyMarkUpdate([], { drop: ref, upTo: 3 })).toEqual([]);
+  });
+
+  it('matches table and row, not the row id alone', () => {
+    const other = { ...at('a', 1), tableName: 'shots' as const };
+    expect(applyMarkUpdate([other], { drop: ref, upTo: 5 })).toEqual([other]);
+  });
+});
+
+describe('countMarks', () => {
+  const mark = (kind: RefusalMark['kind'], rowId: string): RefusalMark => ({
+    tableName: 'shots',
+    rowId,
+    kind,
+    arrival: 1,
+    blocker: null,
+    own: false,
+  });
+
+  it('counts the invalid and the waiting marks apart (the Account & Sync lines)', () => {
+    expect(countMarks([mark('invalid', 'a'), mark('waiting', 'b'), mark('waiting', 'c')])).toEqual({
+      invalid: 1,
+      waiting: 2,
+    });
+  });
+
+  it('is zero for no marks', () => {
+    expect(countMarks([])).toEqual({ invalid: 0, waiting: 0 });
   });
 });
