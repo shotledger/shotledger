@@ -146,7 +146,7 @@ export default tseslint.config(
     },
   },
   {
-    // web: the read-only browser app (ARCHITECTURE.md § Web app), React DOM.
+    // web: the browser app (ARCHITECTURE.md § Web app), React DOM.
     files: ['web/**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks },
     languageOptions: { globals: globals.browser },
