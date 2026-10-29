@@ -19,6 +19,9 @@ concurrency:
 jobs:
   build:
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    # For EXPO_TOKEN: like every job that holds it, this one runs in `release`,
+    # so it needs approval and a protected branch.
+    environment: release
     steps:
       - uses: actions/checkout@v7.0.1
 

@@ -160,7 +160,8 @@ One-time, before the first release:
 - [x] The approval gate: the `release` environment requires the maintainer
       as reviewer, declared in shotledger/.github
       (`safe-settings/suborgs/product.yml`), not set by hand.
-- [ ] The `EXPO_TOKEN` repository secret (see the iOS section).
+- [ ] The `EXPO_TOKEN` secret in the `release` environment (see the iOS
+      section).
 - [ ] Run one production build interactively,
       `cd app && eas build --platform android --profile production`, so EAS
       creates the upload keystore; the workflow's non-interactive build
@@ -224,8 +225,6 @@ One-time, before the first update:
       your project's, run `eas init` and fix both values together.
 - [ ] `cd app && eas update:configure` should change nothing. If it
       writes to `app/app.json` or `app/eas.json`, review and commit that.
-- [ ] Add `EXPO_TOKEN` to the `release` environment if the release
-      workflow does not already have it there.
 - [ ] Ship one release **after** `updates.url` landed. Builds made before
       it have no update URL and never check for updates.
 
@@ -323,8 +322,9 @@ One-time setup (maintainer only):
 
 - [ ] `cd app && eas init` to put the EAS project id in `app/app.json`
       (`extra.eas.projectId`), if the Android steps above have not already.
-- [ ] Create an Expo access token and add it as the `EXPO_TOKEN` repository
-      secret.
+- [ ] Create an Expo access token and add it as the `EXPO_TOKEN` secret of
+      the `release` environment, not as a repository secret. Every job that
+      uses it runs in that environment.
 - [ ] For anything beyond the simulator (a device, TestFlight, the App
       Store): an Apple Developer Program membership, $99 a year. An
       individual account publishes under the holder's legal name.
@@ -335,7 +335,9 @@ Builds:
   (Actions → iOS build → Run workflow), or
   `cd app && eas build --platform ios --profile simulator`. The EAS free
   tier allows 15 iOS builds a month on a low-priority queue, which is why
-  the workflow is manual only.
+  the workflow is manual only. It runs in the `release` environment, so it
+  waits for the maintainer's approval and runs only from a protected branch
+  (`main`, `release/*`, `hotfix/*`).
 - **Device and TestFlight** need the Apple account and an iOS section in
   the `preview` and `production` profiles of `app/eas.json`, added once the
   account exists.
