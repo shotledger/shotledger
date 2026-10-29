@@ -56,10 +56,12 @@ committing the regenerated `src/constants/licenses.json`.
   terser.
 - `pnpm licenses:check` (in `pnpm check`) validates the committed file:
   well-formed, sorted, no duplicates or build tooling, and every
-  `name@version` still a direct `app` dependency in `pnpm-lock.yaml`. A
-  Renovate PR that moves a bundled version therefore goes red until someone
-  regenerates on that branch. It cannot see a package newly entering the
-  bundle without a listed version moving — that case is still on you.
+  `name@version` still a direct `app` dependency in `pnpm-lock.yaml`. On a
+  Renovate branch that moves a bundled version, the
+  `renovate-derived-files.yml` workflow regenerates the file and pushes it as
+  a bot Renovate ignores, so the PR can still auto-merge. It cannot see a
+  package newly entering the bundle without a listed version moving — that
+  case is still on you.
 - A **native** dependency (a Gradle artifact, a vendored C/C++ library) is
   invisible to the script — hand-edit `src/constants/native-licenses.ts`.
 

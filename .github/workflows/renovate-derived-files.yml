@@ -1,0 +1,86 @@
+name: Renovate derived files
+
+# A Renovate branch that moves a bundled app dependency leaves
+# app/src/constants/licenses.json naming the old version, and
+# `pnpm licenses:check` fails the PR (app/CLAUDE.md, "Licenses"). Renovate's
+# hosted app cannot run the generator itself, so this workflow does: it
+# regenerates the file on the branch and pushes the result as a commit.
+#
+# The push goes through a GitHub App token, not GITHUB_TOKEN, because a
+# GITHUB_TOKEN push starts no workflows and the new head would never get its
+# required checks. The App's bot email is in renovate.json5's
+# `gitIgnoredAuthors`, so Renovate keeps maintaining (and rebasing) the branch;
+# a rebase drops the commit and this workflow makes it again.
+#
+# Until the App is configured (repository variable
+# RENOVATE_DERIVED_FILES_CLIENT_ID and secret
+# RENOVATE_DERIVED_FILES_PRIVATE_KEY), the job is skipped.
+
+on:
+  push:
+    branches: ['renovate/**']
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  licenses:
+    # Only Renovate's own pushes: the commit this job pushes must not start it
+    # again.
+    if: ${{ github.actor == 'renovate[bot]' && vars.RENOVATE_DERIVED_FILES_CLIENT_ID != '' }}
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    steps:
+      - uses: actions/create-github-app-token@v3.3.0
+        id: app-token
+        with:
+          client-id: ${{ vars.RENOVATE_DERIVED_FILES_CLIENT_ID }}
+          private-key: ${{ secrets.RENOVATE_DERIVED_FILES_PRIVATE_KEY }}
+          permission-contents: write
+
+      - uses: actions/checkout@v7.0.1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - uses: pnpm/action-setup@v6.1.0
+        with:
+          version: 12.15.0
+
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The check is cheap; only a stale file pays for the bundle the
+      # generator builds.
+      - name: Regenerate licenses.json if stale
+        id: licenses
+        run: |
+          if pnpm licenses:check; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            pnpm licenses:generate
+            pnpm licenses:check
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Authored by the App's bot user, so CLA Assistant's `*[bot]` allowlist
+      # covers it and the email matches renovate.json5's gitIgnoredAuthors.
+      - name: Commit and push
+        if: steps.licenses.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: |
+          bot="${APP_SLUG}[bot]"
+          id="$(gh api "users/${bot}" --jq .id)"
+          git config user.name "$bot"
+          git config user.email "${id}+${bot}@users.noreply.github.com"
+          git add app/src/constants/licenses.json
+          git commit -s -m "chore(deps): regenerate the app license list"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
