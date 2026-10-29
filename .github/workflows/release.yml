@@ -240,7 +240,7 @@ jobs:
 
       - uses: pnpm/action-setup@v6.1.0
         with:
-          version: 12.11.2
+          version: 12.15.0
 
       - uses: actions/setup-node@v7.1.0
         with:
@@ -259,7 +259,7 @@ jobs:
 
       - uses: expo/expo-github-action@9.0.0
         with:
-          eas-version: 25.2.0
+          eas-version: 25.3.0
           token: ${{ secrets.EXPO_TOKEN }}
 
       # --wait: the job holds the runner until EAS finishes, because everything
