@@ -52,11 +52,6 @@ minimumReleaseAgeExclude:
   - expo-sharing@57.0.17
   - expo-secure-store@57.0.3
 patchedDependencies:
-  # Vitest 5 matches testNamePattern against the suite chain joined with ' > ',
-  # but the runner still builds test ids and the filter regex with a single
-  # space, so every mutant run selects zero tests and survives. Upstream:
-  # stryker-mutator/stryker-js#6210. Drop this when a release carries the fix.
-  '@stryker-mutator/vitest-runner@10.0.0': patches/@stryker-mutator__vitest-runner@10.0.0.patch
   eslint-plugin-react-native@5.0.0: patches/eslint-plugin-react-native@5.0.0.patch
   # The web sync channel writes its result length through Uint8Array#set,
   # keeping only `length % 256`, so any sync result over 255 bytes is
@@ -67,7 +62,7 @@ patchedDependencies:
   # fraction on a device and the locks sample other pixels than in Node.
   react-native-fast-opencv@1.0.1: patches/react-native-fast-opencv@1.0.1.patch
 overrides:
-  qs: 6.16.0
-  decode-uri-component: 0.5.0
-  uuid: 14.0.2
+  qs: 6.16.1
+  decode-uri-component: 0.5.1
+  uuid: 14.0.3
   esbuild: 0.28.2

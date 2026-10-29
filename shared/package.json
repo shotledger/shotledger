@@ -10,11 +10,11 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "vitest": "5.0.3"
+    "vitest": "5.0.5"
   },
   "dependencies": {
     "drizzle-orm": "0.45.4",
     "drizzle-zod": "0.8.3",
-    "zod": "4.6.6"
+    "zod": "4.6.7"
   }
 }
