@@ -7,6 +7,7 @@ import {
   compareWithUsualForm,
   meanTenths,
   sampleStandardDeviationTenths,
+  scoredSeriesTotalsTenths,
   scoredShots,
   seriesInnerTenAverage,
   seriesMeanTenths,
@@ -37,6 +38,7 @@ export interface SessionStats {
    * `seriesMeanTenths`, so the two read as one row.
    */
   seriesInnerTenAverage: number | null;
+  /** The series the mean is over: a pre-created series with no shots yet is not one. */
   seriesCount: number;
   meanTenths: number | null;
   sdTenths: number | null;
@@ -107,7 +109,7 @@ export function loadSessionStats(sessionId: string): SessionStats {
     seriesMeanTenths: seriesMeanTenths(sessionSeries),
     seriesSdTenths: seriesSdTenths(sessionSeries),
     seriesInnerTenAverage: seriesInnerTenAverage(sessionSeries),
-    seriesCount: scoredNonFinal.length + scoredFinal.length,
+    seriesCount: scoredSeriesTotalsTenths(sessionSeries).length,
     meanTenths: meanTenths(shots),
     sdTenths: sampleStandardDeviationTenths(shots),
     xCount: xCount(shots),
