@@ -42,7 +42,7 @@ import { loadLastTime } from '@/features/session-entry/last-time';
 import {
   liveSessionTotals,
   nextSeriesTarget,
-  seriesCountOf,
+  seriesHeading,
 } from '@/features/session-entry/series-entry-model';
 import {
   celebratesDiscipline,
@@ -52,6 +52,7 @@ import {
 } from '@/features/session/celebration';
 import { disciplineLabel } from '@/features/session/labels';
 import { pickSeriesPhoto } from '@/features/session/pick-photo';
+import { seriesLabel } from '@/features/session/series-label';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
 import { keepSeriesPhoto } from '@/platform/series-photos';
 import { resolveSeriesPhotoUri, seriesPhotoGone } from '@/platform/sync-photos';
@@ -156,7 +157,12 @@ function SeriesEntryScreen({ position }: { position: number }) {
   );
   const lastTime = isSighter ? null : lastTimeScored;
   const next = nextSeriesTarget(detail.seriesRows, { position, isFinal }, detail.isFixedFormat);
-  const seriesCount = seriesCountOf(detail.seriesRows, isFinal, detail.isFixedFormat);
+  const heading = seriesHeading(
+    detail.seriesRows,
+    { rowId: row?.id ?? null, position, isFinal, isSighter },
+    detail.session?.programId ?? null,
+    detail.isFixedFormat,
+  );
   const isBlank = shots.length === 0 && photoUri === null && !isSighter;
   const earlier = detail.seriesRows
     .filter((other) => other.id !== row?.id && other.isFinal === isFinal)
@@ -364,9 +370,9 @@ function SeriesEntryScreen({ position }: { position: number }) {
     <Screen footer={footer}>
       <Header
         title={
-          seriesCount !== null
-            ? t('entryA.seriesOfTitle', { position, count: seriesCount })
-            : t('session.seriesTitle', { position })
+          heading.number !== null && heading.count !== null
+            ? t('entryA.seriesOfTitle', { position: heading.number, count: heading.count })
+            : seriesLabel(t, heading.number)
         }
         subtitle={subtitle}
       />
@@ -383,7 +389,7 @@ function SeriesEntryScreen({ position }: { position: number }) {
           {earlier.map((other) => (
             <ThemedText key={other.id} type="small" themeColor="textSecondary" style={TabularNums}>
               {t(other.isSighter ? 'entryA.seriesShortSighter' : 'entryA.seriesShort', {
-                position: other.position,
+                position: other.number,
                 total: formatScore(other.totalTenths),
               })}
             </ThemedText>

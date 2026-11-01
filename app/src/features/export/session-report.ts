@@ -23,6 +23,7 @@ import { deviceRegion } from '@/i18n';
 import { disciplineLabel } from '@/features/session/labels';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
 import { loadSessionStats } from '@/features/session/use-session-stats';
+import { seriesLabel } from '@/features/session/series-label';
 
 /** The report HTML for a session, or `null` with no such session. */
 export function buildSessionReportHtmlFor(
@@ -82,11 +83,8 @@ export function buildSessionReportHtmlFor(
       pooled.set(faceId, entry);
     }
     return {
-      title: t('session.seriesTitle', { position: row.position }),
-      tags: [
-        ...(row.isSighter ? [t('session.sighter')] : []),
-        ...(row.isFinal ? [t('session.final')] : []),
-      ],
+      title: seriesLabel(t, row.number),
+      tags: [...(row.isFinal ? [t('session.final')] : [])],
       total: String(tenthsToScore(row.totalTenths)),
       values: row.shots.map((shot) => formatShotValue(shot, detail.scoringMode)),
       marks,

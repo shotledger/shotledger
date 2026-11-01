@@ -385,6 +385,8 @@ function SeriesList({
 }) {
   const { t } = useTranslation();
   const mode = session.decimalScoring ? 'decimal' : 'integer';
+  const seriesLabel = (row: BrowseSeries) =>
+    row.number === null ? t('session.sighter') : t('session.seriesTitle', { position: row.number });
   return (
     <section className="card">
       {title && <h3>{title}</h3>}
@@ -395,8 +397,7 @@ function SeriesList({
             <li key={row.position} className="series-row">
               <div>
                 <div className="series-head">
-                  <strong>{t('session.seriesTitle', { position: row.position })}</strong>
-                  {row.isSighter && <span className="badge">{t('session.sighter')}</span>}
+                  <strong>{seriesLabel(row)}</strong>
                   <span className="series-total">
                     {row.isSighter ? t('session.sighterScore', { score: total }) : total}
                   </span>
@@ -409,10 +410,7 @@ function SeriesList({
                   </ul>
                 )}
               </div>
-              <RowPhoto
-                photo={row.photo}
-                alt={t('session.seriesTitle', { position: row.position })}
-              />
+              <RowPhoto photo={row.photo} alt={seriesLabel(row)} />
             </li>
           );
         })}

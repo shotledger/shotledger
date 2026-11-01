@@ -779,6 +779,7 @@
     "sighterOnThisSeries": "Mark as Sighter",
     "deleteSeries": "Delete Series",
     "deleteSeriesConfirmTitle": "Delete Series {{position}}?",
+    "deleteSighterConfirmTitle": "Delete Sighter?",
     "deleteSeriesConfirmBody": "Its shots will be removed too. This can't be undone.",
     "newSeriesHint": "This series is saved when you tap Save Series or Next Series.",
     "stopwatch": {
@@ -1427,7 +1428,7 @@
     "emptyBody": "Photos you attach to a series, or take when scoring from a photo, collect here.",
     "notDownloaded": "Not downloaded",
     "missing": "Missing",
-    "openLabel": "Open the photo from {{session}}, series {{position}}",
+    "openLabel": "Open the photo from {{session}}, {{series}}",
     "allOf": "All"
   },
   "providers": {
@@ -1718,7 +1719,7 @@
     "photo": "Photo",
     "seriesOfTitle": "Series {{position}} of {{count}}",
     "seriesShort": "S{{position}} {{total}}",
-    "seriesShortSighter": "S{{position}} {{total}} sighter",
+    "seriesShortSighter": "Sighter {{total}}",
     "details": "Details",
     "detailsSummary": "Logging, name, location, ammo, tags and more",
     "detailsSummaryNoAmmo": "Logging, name, location, tags and more",

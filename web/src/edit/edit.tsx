@@ -7,6 +7,7 @@ import {
   findEvent,
   formatShooterClass,
   getDiscipline,
+  seriesSlots,
   shooterClassesForDiscipline,
   weaponGroupsForDiscipline,
 } from '@shotledger/shared/src/disciplines';
@@ -43,6 +44,7 @@ import {
   stationPositions,
   toDraft,
   type EditForm,
+  type EditRow,
   type OpenedForm,
 } from './model';
 import { saveDeps, type EditIo } from './request';
@@ -192,10 +194,23 @@ export function SessionEdit({
       : undefined;
   const events = storedEvent ? [...offered, storedEvent] : offered;
 
-  const rowLabel = (row: number) =>
-    form.rows[row - 1]?.isSighter
-      ? t('session.sighter')
-      : t('session.seriesTitle', { position: row });
+  // Live rows are numbered by order (#922); a deleted one keeps the number it had.
+  const numberOf = (rows: readonly EditRow[]) =>
+    seriesSlots(
+      null,
+      rows.map((row, index) => ({ position: index + 1, isSighter: row.isSighter, isFinal: false })),
+    ).map((slot) => slot.number);
+  const liveRows = form.rows.filter((row) => !row.deleted);
+  const liveNumbers = new Map(liveRows.map((row, i) => [row.key, numberOf(liveRows)[i]!]));
+  const allNumbers = numberOf(form.rows);
+  const rowLabel = (row: number) => {
+    const formRow = form.rows[row - 1];
+    if (formRow === undefined) return t('session.seriesTitle', { position: row });
+    const number = liveNumbers.has(formRow.key)
+      ? liveNumbers.get(formRow.key)!
+      : allNumbers[row - 1]!;
+    return number === null ? t('session.sighter') : t('session.seriesTitle', { position: number });
+  };
   const positions = form.falt === null ? [] : stationPositions(form.falt.stations);
   const stationLabel = (row: number) => t('station.title', { position: positions[row - 1] ?? row });
   const text = (message: Message) => messageText(t, i18n.language, message, rowLabel, stationLabel);
@@ -478,7 +493,7 @@ export function SessionEdit({
                       {t(
                         row.kind === 'final' ? 'web.edit.finalSeries' : 'web.edit.totalOnlySeries',
                         {
-                          position: row.position,
+                          position: row.number ?? t('session.sighter'),
                         },
                       )}
                     </span>
@@ -498,7 +513,7 @@ export function SessionEdit({
                               row.kind === 'final'
                                 ? 'web.edit.finalSeries'
                                 : 'web.edit.totalOnlySeries',
-                              { position: row.position },
+                              { position: row.number ?? t('session.sighter') },
                             )}
                           />
                         )}

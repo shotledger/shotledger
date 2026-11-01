@@ -779,6 +779,7 @@
     "sighterOnThisSeries": "Sätt som provserie",
     "deleteSeries": "Ta bort serie",
     "deleteSeriesConfirmTitle": "Ta bort serie {{position}}?",
+    "deleteSighterConfirmTitle": "Ta bort provserien?",
     "deleteSeriesConfirmBody": "Dess skott tas också bort. Det går inte att ångra.",
     "newSeriesHint": "Serien sparas när du trycker på Spara serie eller Nästa serie.",
     "stopwatch": {
@@ -1427,7 +1428,7 @@
     "emptyBody": "Foton du lägger till på en serie, eller tar när du poängsätter från foto, samlas här.",
     "notDownloaded": "Inte hämtat",
     "missing": "Saknas",
-    "openLabel": "Öppna fotot från {{session}}, serie {{position}}",
+    "openLabel": "Öppna fotot från {{session}}, {{series}}",
     "allOf": "Alla"
   },
   "providers": {
@@ -1718,7 +1719,7 @@
     "photo": "Foto",
     "seriesOfTitle": "Serie {{position}} av {{count}}",
     "seriesShort": "S{{position}} {{total}}",
-    "seriesShortSighter": "S{{position}} {{total}} provserie",
+    "seriesShortSighter": "Provserie {{total}}",
     "details": "Detaljer",
     "detailsSummary": "Loggning, namn, plats, ammunition, taggar med mera",
     "detailsSummaryNoAmmo": "Loggning, namn, plats, taggar med mera",

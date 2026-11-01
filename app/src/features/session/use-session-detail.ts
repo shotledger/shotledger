@@ -4,7 +4,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
-  buildProgramSkeleton,
+  seriesSlots,
   disciplineSeriesLength,
   getDiscipline,
   getProgram,
@@ -37,6 +37,8 @@ import { stageStats, type StageStats } from './stage-stats';
 export interface SeriesRow {
   id: string;
   position: number;
+  /** "Series n" by order, not position; null for a sighter (#922). */
+  number: number | null;
   isSighter: boolean;
   isFinal: boolean;
   photoUri: string | null;
@@ -129,7 +131,6 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
   );
   const birthYear = getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null);
   const year = new Date(session.startedAt).getFullYear();
-  const skeleton = program ? buildProgramSkeleton(program) : [];
   const guldThreshold = goldSeriesThreshold({
     weaponGroup: session.weaponGroup,
     disciplineId: session.disciplineId,
@@ -138,7 +139,17 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
     year,
   });
 
-  const seriesRows: SeriesRow[] = listSeriesForSession(db, session.id).map((row) => {
+  const liveSeries = listSeriesForSession(db, session.id);
+  const slots = seriesSlots(
+    session.programId,
+    liveSeries.map((row) => ({
+      position: row.position,
+      isSighter: row.isSighter === 1,
+      isFinal: row.isFinal === 1,
+    })),
+  );
+  const seriesRows: SeriesRow[] = liveSeries.map((row, index) => {
+    const slot = slots[index]!;
     const shots: EntryShot[] = listShotsForSeries(db, row.id).map((shot) => ({
       valueTenths: shot.valueTenths,
       isInnerTen: shot.isInnerTen === 1,
@@ -154,6 +165,7 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
     return {
       id: row.id,
       position: row.position,
+      number: slot.number,
       isSighter,
       isFinal: row.isFinal === 1,
       photoUri: row.photoUri,
@@ -168,8 +180,8 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
         guldThreshold !== null &&
         !isSighter &&
         tenthsToScore(totalTenths) >= guldThreshold,
-      timeLimitSeconds: skeleton[row.position - 1]?.timeLimitSeconds ?? null,
-      stage: skeleton[row.position - 1]?.stage ?? null,
+      timeLimitSeconds: slot.entry?.timeLimitSeconds ?? null,
+      stage: slot.entry?.stage ?? null,
       isTotalOverride,
       totalOverrideShotCount: isTotalOverride ? row.totalOverrideShotCount : null,
     };

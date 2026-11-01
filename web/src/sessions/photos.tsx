@@ -231,7 +231,10 @@ function ownerLabel(t: ReturnType<typeof useTranslation>['t'], owner: PhotoOwner
   if ('series' in owner) {
     const total = tenthsToScore(owner.series.totalTenths);
     return {
-      title: t('session.seriesTitle', { position: owner.series.position }),
+      title:
+        owner.series.number === null
+          ? t('session.sighter')
+          : t('session.seriesTitle', { position: owner.series.number }),
       result: owner.series.isSighter ? t('session.sighterScore', { score: total }) : String(total),
     };
   }

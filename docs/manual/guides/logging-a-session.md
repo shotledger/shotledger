@@ -104,6 +104,11 @@ shot is still worth seeing.
 With **Full Match**, the sighter series the program lays out starts marked.
 If you did not shoot one, open it and turn **Sighter** off, or delete it.
 
+A sighter is listed as **Sighter**, without a number, and the scoring series
+are numbered from 1 in order. Delete a series, or turn **Sighter** off on one,
+and the numbers close up. Each series keeps its time limit and stage, since
+those belong to its place in the match.
+
 That is the rule inside a session. Across sessions it changes — see
 [How sighters count](../explanation/how-sighters-count.md).
 
