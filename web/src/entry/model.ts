@@ -277,9 +277,8 @@ export function onRowEnter(
   return { form: addRow(form), focus: index + 1 };
 }
 
-/** One sighter per section in free format (§6.3); a skeleton decides its own. */
+/** One sighter per section (§6.3), as the phone's series screen offers it. */
 export function canMarkSighter(form: EntryForm, index: number): boolean {
-  if (isFixed(form)) return false;
   const final = form.rows[index]!.isFinal === true;
   return form.rows.every(
     (row, i) => i === index || !row.isSighter || (row.isFinal === true) !== final,

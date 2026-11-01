@@ -536,7 +536,7 @@ describe('edit builder', () => {
   });
 
   it('K5 a series with no live shots gets its new shots and no tombstone', () => {
-    const changes = changesOf(edit(draft('sH', {}, [asDrafted('h1', '9 X')])));
+    const changes = changesOf(edit(draft('sH', {}, [asDrafted('h1', '9 X', true)])));
     expect(changes.map((c) => [c.tableName, c.payload === null])).toEqual([
       ['shots', false],
       ['shots', false],
@@ -806,17 +806,9 @@ describe('edit builder', () => {
     });
   });
 
-  it('K7 a fixed-format skeleton: sighter flags are not offered, so the draft cannot change them', () => {
-    // h1 is the skeleton's sighter; the draft says otherwise and adds a sighter row.
-    expect(
-      edit(
-        draft('sH', {}, [
-          asDrafted('h1', '', false),
-          asDrafted('h2', '9', true),
-          { id: null, text: '9', isSighter: true, deleted: false },
-        ]),
-      ),
-    ).toMatchObject({ ok: true });
+  it('K7 a fixed-format skeleton: the draft unmarks the laid-out sighter and marks another (#919)', () => {
+    // h1 is the skeleton's sighter. Two sighters are no error in a fixed
+    // format, which may lay out more than one; a row added to it never is one.
     const changes = changesOf(
       edit(
         draft('sH', {}, [
@@ -827,8 +819,18 @@ describe('edit builder', () => {
       ),
     );
     expect(
-      changes.filter((c) => c.tableName === 'series').map((c) => c.payload!.is_sighter),
-    ).toEqual([0]);
+      changes
+        .filter((c) => c.tableName === 'series')
+        .map((c) => [c.rowId === null ? 'new' : c.rowId, c.payload!.is_sighter]),
+    ).toEqual(
+      expect.arrayContaining([
+        ['h1', 0],
+        ['h2', 1],
+      ]),
+    );
+    expect(
+      changes.filter((c) => c.tableName === 'series' && c.payload!.is_sighter === 1),
+    ).toHaveLength(1);
   });
 
   it('K8 a deleted series: tombstones for it and its live shots, none for other series', () => {

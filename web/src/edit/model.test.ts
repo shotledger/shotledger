@@ -359,14 +359,13 @@ describe('the edit form', () => {
     expect(initial.rows[0]!.text).toBe('X 9');
   });
 
-  it('canMarkSighter: one sighter in free format, a deleted row holds none, never in a fixed format', () => {
+  it('canMarkSighter: one sighter per section, a deleted row holds none', () => {
     const { initial } = opened('s1');
     const [r1, r2] = initial.rows;
-    expect(canMarkSighter(initial, r1!.key, false)).toBe(false);
-    expect(canMarkSighter(initial, r2!.key, false)).toBe(true);
+    expect(canMarkSighter(initial, r1!.key)).toBe(false);
+    expect(canMarkSighter(initial, r2!.key)).toBe(true);
     const deleted = setRow(initial, r2!.key, { deleted: true });
-    expect(canMarkSighter(deleted, r1!.key, false)).toBe(true);
-    expect(canMarkSighter(initial, r2!.key, true)).toBe(false);
+    expect(canMarkSighter(deleted, r1!.key)).toBe(true);
   });
 
   it('toggleOpen opens a closed photo and closes an open one, leaving the others', () => {

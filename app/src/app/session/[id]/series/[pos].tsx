@@ -115,13 +115,12 @@ function SeriesEntryScreen({ position }: { position: number }) {
   // detail.mainHasSighter/finalHasSighter as-is would count this series'
   // own (possibly stale, possibly just-toggled-off) flag and hide the
   // control out from under whoever is using it, breaking "a series that IS
-  // the current sighter must still be able to turn itself off". Fixed-format
-  // programs pre-create their series to match the skeleton, so the choice
-  // isn't offered there at all.
+  // the current sighter must still be able to turn itself off". A fixed
+  // format lays out its sighter, but the shooter can still unmark it (#919).
   const otherSeriesHasSighter = detail.seriesRows.some(
     (other) => other.id !== row?.id && other.isFinal === isFinal && other.isSighter,
   );
-  const showSighterOption = !detail.isFixedFormat && !otherSeriesHasSighter;
+  const showSighterOption = !otherSeriesHasSighter;
 
   const guldThreshold = row ? row.guldThreshold : detail.guldThreshold;
 

@@ -28,7 +28,7 @@ import {
 
 export interface SeriesDraft {
   text: string;
-  /** Read in free format only; a fixed format's skeleton decides. */
+  /** A fixed format's laid-out rows start from its skeleton; rows past it are never sighters. */
   isSighter: boolean;
   /** A final series (docs/specs/web-rounds-final-spec.md C3); absent is the main round. */
   isFinal?: boolean;
@@ -223,7 +223,8 @@ export function buildSessionEntry(
     // Past the typed rows only the skeleton remains, so `entry` is set there.
     const row = draft.series[index];
     const entry = skeleton[index];
-    const isSighter = entry ? entry.isSighter : !fixed && row!.isSighter;
+    // A laid-out row starts as its skeleton's sighter and may be unmarked (#919).
+    const isSighter = entry ? (row ? row.isSighter : entry.isSighter) : !fixed && row!.isSighter;
     const parsed = parseSeriesText(row?.text ?? '', mode);
     if (!parsed.ok) {
       errors.push({ kind: 'series', row: index + 1, error: parsed.error });

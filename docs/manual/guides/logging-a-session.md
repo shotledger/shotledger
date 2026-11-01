@@ -101,6 +101,9 @@ beside the Sighter label and in quieter text, as **45 · not counted** — becau
 a sighter is deliberately unscored rather than missing a score, and what you
 shot is still worth seeing.
 
+With **Full Match**, the sighter series the program lays out starts marked.
+If you did not shoot one, open it and turn **Sighter** off, or delete it.
+
 That is the rule inside a session. Across sessions it changes — see
 [How sighters count](../explanation/how-sighters-count.md).
 

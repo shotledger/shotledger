@@ -48,6 +48,7 @@ import {
   eventsFor,
   initialForm,
   isFixed,
+  skeletonOf,
   modeOf,
   onRowEnter,
   rowShots,
@@ -262,6 +263,8 @@ export function Entry({
   const events = eventsFor(form);
   const mode = modeOf(form);
   const fixed = isFixed(form);
+  // A fixed format's laid-out rows carry the sighter choice; rows past it never do.
+  const laidOut = skeletonOf(form).length;
   const isCompetition = form.type === 'competition';
   const isSeries = form.kind === 'series';
   // Fält as stations; a rounds-only fält session stays rounds (#718).
@@ -762,7 +765,7 @@ export function Entry({
                         })
                       : ''}
                   </span>
-                  {!fixed && (
+                  {(!fixed || index < laidOut) && (
                     <label className="check">
                       <input
                         type="checkbox"

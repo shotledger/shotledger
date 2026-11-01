@@ -125,14 +125,19 @@ describe('the Enter Series form', () => {
     expect(withProgram(form, null).rows).toEqual([{ key: 5, text: ' ', isSighter: false }]);
   });
 
-  it('allows one sighter row in free format, none to tick in a fixed one', () => {
+  it('allows one sighter row per section, in a fixed format too (#919)', () => {
     const form = addRow(initialForm(NOW, NO_PROFILE));
     expect(canMarkSighter(form, 0)).toBe(true);
     const marked = { ...form, rows: form.rows.map((r, i) => ({ ...r, isSighter: i === 0 })) };
     expect(canMarkSighter(marked, 0)).toBe(true);
     expect(canMarkSighter(marked, 1)).toBe(false);
     const fixed = withDiscipline(withType(form, 'competition'), 'issf-standard-pistol', 'issf');
-    expect(canMarkSighter(fixed, 0)).toBe(false);
+    // The laid-out sighter can turn itself off; nothing else is offered until it does.
+    expect(fixed.rows[0]!.isSighter).toBe(true);
+    expect(canMarkSighter(fixed, 0)).toBe(true);
+    expect(canMarkSighter(fixed, 1)).toBe(false);
+    const unmarked = { ...fixed, rows: fixed.rows.map((r) => ({ ...r, isSighter: false })) };
+    expect(canMarkSighter(unmarked, 1)).toBe(true);
   });
 
   it('turns the local date and time into UTC ISO, or null when incomplete', () => {

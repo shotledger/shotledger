@@ -595,13 +595,14 @@ function SeriesRows({
                   })
                 : ''}
             </span>
-            {!fixed ? (
+            {/* A row added to a fixed format is never a sighter (the phone cannot add one). */}
+            {!fixed || row.id !== null ? (
               <label className="check">
                 <input
                   type="checkbox"
                   tabIndex={-1}
                   checked={row.isSighter}
-                  disabled={row.deleted || !canMarkSighter(form, row.key, fixed)}
+                  disabled={row.deleted || !canMarkSighter(form, row.key)}
                   onChange={(e) => edit(setRow(form, row.key, { isSighter: e.target.checked }))}
                 />
                 {t('session.sighter')}
