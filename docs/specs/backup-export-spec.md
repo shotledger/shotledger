@@ -196,16 +196,16 @@ normalization rather than throwing.
 
 ### Restore rules (binding)
 
-| Bundle                          | This device          | Result                                                                                      |
-| ------------------------------- | -------------------- | ------------------------------------------------------------------------------------------- |
-| No vault section                | vault present or not | Database (+ photos) restored; **this device's vault is untouched**                          |
-| Vault section                   | any                  | Passphrase prompted before anything is written                                              |
-| Vault section, right passphrase | empty vault          | Documents added, re-sealed under this device's key                                          |
-| Vault section, right passphrase | vault has documents  | **Merged, never replaced** — see below                                                      |
-| Vault section, wrong passphrase | any                  | Fails cleanly with nothing written; the user retries or chooses "Restore Without the Vault" |
-| Vault section, user skips       | any                  | Database (+ photos) restored; vault untouched; status says the vault was skipped            |
-| Other schema baseline           | any                  | Refused before anything is written (`compat.ts`, tag and `when` must match)                 |
-| Truncated / not a bundle        | any                  | Refused with a distinct message (unchanged, `InvalidContainerError`)                        |
+| Bundle                           | This device          | Result                                                                                                                                         |
+| -------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| No vault section                 | vault present or not | Database (+ photos) restored; **this device's vault is untouched**                                                                             |
+| Vault section                    | any                  | Passphrase prompted before anything is written                                                                                                 |
+| Vault section, right passphrase  | empty vault          | Documents added, re-sealed under this device's key                                                                                             |
+| Vault section, right passphrase  | vault has documents  | **Merged, never replaced** — see below                                                                                                         |
+| Vault section, wrong passphrase  | any                  | Fails cleanly with nothing written; the user retries or chooses "Restore Without the Vault"                                                    |
+| Vault section, user skips        | any                  | Database (+ photos) restored; vault untouched; status says the vault was skipped                                                               |
+| Schema not in this build's chain | any                  | Refused before anything is written (`compat.ts`, tag and `when` must match a journal entry); an earlier entry restores and is migrated forward |
+| Truncated / not a bundle         | any                  | Refused with a distinct message (unchanged, `InvalidContainerError`)                                                                           |
 
 **Merge, not replace, and only for the vault.** The database restore stays a
 full replace. The vault is the exception because a document that exists only on
@@ -291,7 +291,7 @@ counterpart in a library call.)
 | B3  | Opt-in export, wrong passphrase                                | vault fails; database entry and counts still readable          |
 | B4  | Bundle without the counts added later                          | inspects, schema check says `ok`                               |
 | B5  | Truncated at four offsets                                      | `InvalidContainerError` at each — never a silent half-read     |
-| B6  | Bundle from a different schema baseline                        | `mismatch`, refused before anything is written                 |
+| B6  | Bundle from a schema this build does not know                  | `mismatch`, refused before anything is written                 |
 | B7  | Corrupted vault section                                        | database still readable; vault rejects                         |
 | B8  | Vault section and whole bundle searched for document plaintext | not present                                                    |
 | B10 | Manifest without `schemaMigrationWhen`                         | invalid, refused                                               |

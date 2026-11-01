@@ -1,9 +1,11 @@
 // Glue layer for restore (mirrors export-bundle.ts). Restore is a full
 // replace, never a merge: validate the bundle, write an automatic
 // pre-restore backup, close the live connection, overwrite the DB file, reset
-// its sync bookkeeping, then restore any bundled photos and rewrite their paths. A bundle from any other
-// schema baseline than this build's is refused (`checkSchemaCompatibility`).
+// its sync bookkeeping, then restore any bundled photos and rewrite their paths. A bundle from an
+// earlier migration is migrated forward first; one from a schema this build
+// does not know is refused (`checkSchemaCompatibility`).
 import { drizzle } from 'drizzle-orm/expo-sqlite';
+import { migrate } from 'drizzle-orm/expo-sqlite/migrator';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import {
   type BackupManifest,
@@ -11,7 +13,6 @@ import {
   DATABASE_ENTRY_NAME,
   isPhotoEntryName,
   isSyncPhotoEntryName,
-  latestMigration,
   photoEntryFilename,
   readBundle,
   type SchemaCompatibility,
@@ -30,6 +31,7 @@ import {
 
 import { DATABASE_FILENAME } from '../client';
 import journalMeta from '../migrations/meta/_journal.json';
+import migrations from '../migrations/migrations';
 import { resetSyncBookkeeping } from '../queries/sync-store';
 import * as schema from '../schema';
 import { buildBackupBundle } from './export-bundle';
@@ -44,7 +46,7 @@ export interface RestorePreview {
 export function inspectBundle(bytes: Uint8Array): RestorePreview | null {
   const bundle = readBundle(bytes);
   if (!bundle) return null;
-  const compatibility = checkSchemaCompatibility(bundle.manifest, latestMigration(journalMeta));
+  const compatibility = checkSchemaCompatibility(bundle.manifest, journalMeta);
   return { manifest: bundle.manifest, compatibility };
 }
 
@@ -63,7 +65,7 @@ export async function restoreBundle(liveDb: SQLiteDatabase, bytes: Uint8Array): 
   // caller inspected.
   const bundle = readBundle(bytes);
   if (!bundle) return false;
-  if (checkSchemaCompatibility(bundle.manifest, latestMigration(journalMeta)) !== 'ok') {
+  if (checkSchemaCompatibility(bundle.manifest, journalMeta) !== 'ok') {
     return false;
   }
   const { entries } = bundle;
@@ -88,7 +90,9 @@ export async function restoreBundle(liveDb: SQLiteDatabase, bytes: Uint8Array): 
   // re-pulls from cursor 0 and replays nothing.
   const restored = openDatabaseFile(liveDb, DATABASE_FILENAME);
   try {
-    resetSyncBookkeeping(drizzle(restored, { schema }));
+    const restoredDb = drizzle(restored, { schema });
+    await migrate(restoredDb, migrations);
+    resetSyncBookkeeping(restoredDb);
   } finally {
     restored.closeSync();
   }

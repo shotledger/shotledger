@@ -15,9 +15,8 @@ Work down the list; each step is more drastic than the one before.
    repackaging, and `adb install -r` of the same APK does not help. Force
    it: `./gradlew assembleDebug --rerun-tasks -PreactNativeDevServerPort=<port>`,
    then `adb install -r` the APK yourself.
-4. **The schema is old** (`table … has no column named …`) after a baseline
-   regeneration: restart Metro with `--clear` and `pm clear` — see
-   `app/CLAUDE.md`.
+4. **The schema is old** (`table … has no column named …`) after editing an
+   unmerged migration: restart Metro with `--clear` — see `app/CLAUDE.md`.
 5. **Metro cannot resolve a file that exists** after a dependency bump
    (e.g. `Unable to resolve module ./schemas.js` inside zod). A long-running
    Metro poisons its resolution cache; `--clear` on the old process is not

@@ -45,6 +45,15 @@ or year. Never take a day by slicing an ISO string, which gives the UTC day. Use
 `shared/src/dates/`, which the app reaches through
 `app/src/features/dates/local-day.ts`.
 
+**Schema changes.** The migration chain in `app/src/db/migrations/` is
+append-only: every schema change adds the next migration and a shipped one is
+never edited, so updating the app keeps the data on the device
+(`migrations.test.ts` pins each shipped migration's hash and upgrades a database
+from every earlier point). This holds through the beta, while the schema still
+changes. Rejected: regenerating a single baseline per schema change, which made
+every update over an existing install fail and left clearing the app's data as
+the only way out (#913).
+
 Rejected: Firebase-style cloud-first backends (they invert all three reasons).
 
 ## Sessions and series
@@ -162,7 +171,8 @@ with its own `BACKUP_CONTAINER_FORMAT_VERSION`. The behavior is in
   (`reloadAppAsync`, behind `app/src/platform/app-reload.ts`), since the app
   cannot reopen its own closed database singleton in place.
 - The manifest records the last Drizzle journal entry's tag and `when`; restore
-  refuses a bundle unless both match the running build
+  accepts a bundle whose pair is in the running build's journal and migrates it
+  forward before anything else touches it, and refuses any other
   (`shared/src/backup/compat.ts`).
 - Restore refuses a bundle before writing anything unless every `photos/` and
   `sync-photos/` entry is a plain `<id>.<ext>`; the container rejects empty or

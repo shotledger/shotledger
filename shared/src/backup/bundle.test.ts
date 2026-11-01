@@ -121,7 +121,7 @@ describe('backup bundle round trip', () => {
     const read = readBundle(legacy);
     expect(read).not.toBeNull();
     expect(read?.manifest.counts.syncPhotos).toBeUndefined();
-    expect(checkSchemaCompatibility(read!.manifest, BASELINE)).toBe('ok');
+    expect(checkSchemaCompatibility(read!.manifest, { entries: [BASELINE] })).toBe('ok');
   });
 
   it('B5: a truncated bundle is rejected as a container error, not silently half-read', () => {
@@ -133,14 +133,16 @@ describe('backup bundle round trip', () => {
     }
   });
 
-  it('B6: a bundle from a different schema baseline is refused before anything is written', () => {
+  it('B6: a bundle from a schema this build does not know is refused before anything is written', () => {
     const { bytes } = buildBundle({ withPhotos: false });
     const read = readBundle(bytes);
-    // The baseline was reset since: same tag, same index, different `when`.
-    expect(checkSchemaCompatibility(read!.manifest, { ...BASELINE, when: BASELINE.when + 1 })).toBe(
-      'mismatch',
-    );
-    expect(checkSchemaCompatibility(read!.manifest, BASELINE)).toBe('ok');
+    // Same tag, different `when`: not this build's migration.
+    expect(
+      checkSchemaCompatibility(read!.manifest, {
+        entries: [{ ...BASELINE, when: BASELINE.when + 1 }],
+      }),
+    ).toBe('mismatch');
+    expect(checkSchemaCompatibility(read!.manifest, { entries: [BASELINE] })).toBe('ok');
   });
 
   it('B9: a bundle carrying the removed Vault section still restores, section ignored', () => {

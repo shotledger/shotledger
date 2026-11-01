@@ -4,6 +4,8 @@ import { checkSchemaCompatibility, latestMigration } from './compat';
 
 // The shape of app/src/db/migrations/meta/_journal.json, synthetic values.
 const BASELINE = { tag: '0000_baseline', when: 1790148364655 };
+const ADDED = { tag: '0001_added_column', when: 1790148364655 + 1000 };
+const JOURNAL = { entries: [BASELINE, ADDED] };
 
 function bundleOn(identity: { tag: string; when: number }) {
   return { schemaMigrationTag: identity.tag, schemaMigrationWhen: identity.when };
@@ -27,24 +29,27 @@ describe('latestMigration', () => {
 });
 
 describe('checkSchemaCompatibility', () => {
-  it('is ok when the bundle was exported on the same baseline', () => {
-    expect(checkSchemaCompatibility(bundleOn(BASELINE), BASELINE)).toBe('ok');
+  it('is ok when the bundle was exported on the same schema', () => {
+    expect(checkSchemaCompatibility(bundleOn(ADDED), JOURNAL)).toBe('ok');
   });
 
-  it('is a mismatch when the baseline was reset since (same tag, different when)', () => {
-    // The case the old index check could never see: every reset baseline is
-    // `0000_baseline` at index 0.
+  it('is ok for a bundle from an earlier migration, which the restore migrates forward', () => {
+    expect(checkSchemaCompatibility(bundleOn(BASELINE), JOURNAL)).toBe('ok');
+  });
+
+  it('is a mismatch for a bundle from a newer build', () => {
+    const newer = { tag: '0002_newer', when: ADDED.when + 1000 };
+    expect(checkSchemaCompatibility(bundleOn(newer), JOURNAL)).toBe('mismatch');
+  });
+
+  it('is a mismatch for a baseline that was regenerated (same tag, different when)', () => {
+    // Every baseline before the chain was frozen is `0000_baseline` at index 0.
     const older = { ...BASELINE, when: BASELINE.when - 1 };
-    expect(checkSchemaCompatibility(bundleOn(older), BASELINE)).toBe('mismatch');
-  });
-
-  it('is a mismatch for a bundle from a newer baseline', () => {
-    const newer = { ...BASELINE, when: BASELINE.when + 1 };
-    expect(checkSchemaCompatibility(bundleOn(newer), BASELINE)).toBe('mismatch');
+    expect(checkSchemaCompatibility(bundleOn(older), JOURNAL)).toBe('mismatch');
   });
 
   it('is a mismatch when only the tag differs', () => {
-    const otherTag = { ...BASELINE, tag: '0001_added_column' };
-    expect(checkSchemaCompatibility(bundleOn(otherTag), BASELINE)).toBe('mismatch');
+    const otherTag = { ...ADDED, tag: '0001_other' };
+    expect(checkSchemaCompatibility(bundleOn(otherTag), JOURNAL)).toBe('mismatch');
   });
 });

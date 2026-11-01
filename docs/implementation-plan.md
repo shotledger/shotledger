@@ -850,8 +850,7 @@ disciplines via PR once public.
       hits, figures hit, an optional poängmål with its max, and the two
       flags that take it out of the result — scratched (maintainer:
       annulled for breaking SHB or SäkB) and särskjutning (placement
-      only). Both still count six rounds towards volume. The migration
-      chain is one regenerated baseline from here on, never appended to.
+      only). Both still count six rounds towards volume.
       Still open on #315 — WebShooter fält import (#352), statistics and
       personal bests for hits sessions, CSV/JSON export and the PDF log
       (PR 2), and the SHB questions that remain unanswered (poängmål ring
