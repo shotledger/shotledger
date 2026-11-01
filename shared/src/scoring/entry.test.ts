@@ -180,19 +180,81 @@ describe('editing and backspace (spec §3.6)', () => {
     expect(selected.shots).toEqual(state.shots);
   });
 
-  it('E2: entering over a selected chip overwrites it and returns to the first empty chip', () => {
+  it('E2: entering over a selected chip overwrites it and moves to the next chip', () => {
     const state = press(integerState(), '9', '8', '7');
     const edited = pressKey(selectShot(state, 1), '5');
     expect(edited.shots.map((s) => s?.valueTenths ?? null)).toEqual([90, 50, 70, null, null]);
-    expect(edited.cursor).toBe(3);
+    expect(edited.cursor).toBe(2);
   });
 
-  it('E3: editing a full series leaves the cursor past the end', () => {
+  it('E2b: entering at the first chip moves to the second, not to a later empty chip (#921)', () => {
+    const seeded = createKeypadState({
+      mode: 'integer',
+      seriesLength: 5,
+      shots: [null, shot(90), shot(90), shot(90), null],
+    });
+    const edited = pressKey(selectShot(seeded, 0), '8');
+    expect(edited.shots[0]).toEqual(shot(80));
+    expect(edited.cursor).toBe(1);
+  });
+
+  it('E2c: the next key overwrites the filled chip the cursor moved to', () => {
+    const seeded = createKeypadState({
+      mode: 'integer',
+      seriesLength: 5,
+      shots: [null, shot(90), shot(90), shot(90), null],
+    });
+    const edited = press(selectShot(seeded, 0), '8', '7');
+    expect(edited.shots.map((s) => s?.valueTenths ?? null)).toEqual([80, 70, 90, 90, null]);
+    expect(edited.cursor).toBe(2);
+  });
+
+  it('E2d: entering at the second-to-last chip moves to the last one, even with an earlier gap', () => {
+    const seeded = createKeypadState({
+      mode: 'integer',
+      seriesLength: 5,
+      shots: [null, shot(90), shot(90), null, shot(90)],
+    });
+    const edited = pressKey(selectShot(seeded, 3), '8');
+    expect(edited.shots[3]).toEqual(shot(80));
+    expect(edited.cursor).toBe(4);
+  });
+
+  it('E3: editing the first chip of a full series moves to the second', () => {
     const full = press(integerState(), '9', '8', '7', '6', '5');
     const edited = pressKey(selectShot(full, 0), '8');
     expect(edited.shots[0]).toEqual(shot(80));
-    expect(edited.cursor).toBe(5);
+    expect(edited.cursor).toBe(1);
     expect(isSeriesComplete(edited)).toBe(true);
+  });
+
+  it('E3a: editing the last chip of a full series leaves the cursor past the end', () => {
+    const full = press(integerState(), '9', '8', '7', '6', '5');
+    const edited = pressKey(selectShot(full, 4), '8');
+    expect(edited.shots[4]).toEqual(shot(80));
+    expect(edited.cursor).toBe(5);
+  });
+
+  it('E3b: past the last chip the cursor goes to the first empty chip', () => {
+    const seeded = createKeypadState({
+      mode: 'integer',
+      seriesLength: 5,
+      shots: [null, shot(90), shot(90), shot(90), shot(90)],
+    });
+    const edited = pressKey(selectShot(seeded, 4), '8');
+    expect(edited.shots[4]).toEqual(shot(80));
+    expect(edited.cursor).toBe(0);
+  });
+
+  it('E3c: a decimal entry at the first chip moves to the second', () => {
+    const seeded = createKeypadState({
+      mode: 'decimal',
+      seriesLength: 5,
+      shots: [null, shot(90), null, null, null],
+    });
+    const edited = press(selectShot(seeded, 0), '8', '5');
+    expect(edited.shots[0]).toEqual(shot(85));
+    expect(edited.cursor).toBe(1);
   });
 
   it('E4: backspace on an empty cursor clears and selects the previous chip', () => {
@@ -221,12 +283,12 @@ describe('editing and backspace (spec §3.6)', () => {
     expect(() => selectShot(state, 1.5)).toThrow(RangeError);
   });
 
-  it('E8: after refilling a gap the cursor lands past the last shot', () => {
+  it('E8: after refilling a gap the cursor moves to the next chip', () => {
     const state = press(integerState(), '9', '8', '7', '6', '5');
     const gapped = pressKey(selectShot(state, 2), 'backspace');
     expect(gapped.cursor).toBe(2);
     const refilled = pressKey(gapped, '4');
-    expect(refilled.cursor).toBe(5);
+    expect(refilled.cursor).toBe(3);
     expect(refilled.shots.map((s) => s?.valueTenths)).toEqual([90, 80, 40, 60, 50]);
   });
 });
@@ -350,6 +412,30 @@ describe('properties (spec §3.8)', () => {
           expect(enteredShots(state).length).toBeLessThanOrEqual(len);
         }
       }),
+    );
+  });
+
+  it('P3b: with chip selection in the mix, the cursor is past the end only when the series is full', () => {
+    const anyStep = fc.oneof(
+      anyKey.map((key) => ({ key }) as const),
+      fc.nat().map((n) => ({ select: n }) as const),
+    );
+    fc.assert(
+      fc.property(
+        anyMode,
+        fc.integer({ min: 1, max: 8 }),
+        fc.array(anyStep),
+        (mode, len, steps) => {
+          let state = createKeypadState({ mode, seriesLength: len });
+          for (const step of steps) {
+            state =
+              'key' in step ? pressKey(state, step.key) : selectShot(state, step.select % len);
+            expect(state.cursor).toBeGreaterThanOrEqual(0);
+            expect(state.cursor).toBeLessThanOrEqual(len);
+            if (state.cursor === len) expect(isSeriesComplete(state)).toBe(true);
+          }
+        },
+      ),
     );
   });
 

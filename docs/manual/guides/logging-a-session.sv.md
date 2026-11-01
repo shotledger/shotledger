@@ -54,9 +54,11 @@ decimaler beroende på program.
 Tryck på en serie för att fylla i den. Allt du trycker på ligger längst ner på
 skärmen, inom räckhåll för tummen: skottrutorna, en rad med **Foto**,
 **Provserie** och **Radera**, knapparna och **Nästa serie**. Knappsatsen går
-till nästa ruta efter varje skott men stannar vid den sista, så att ett fel
-skott fortfarande går att rätta: tryck på rutan och skriv rätt värde. Ingenting
-går vidare förrän du säger till.
+till nästa ruta efter varje skott, även om den redan har ett värde; det du
+skriver ersätter det. Efter den sista rutan går den till den första tomma
+rutan, eller stannar när serien är full. Ett fel skott rättar du genom att
+trycka på rutan och skriva rätt värde. Ingenting går vidare förrän du säger
+till.
 
 **Nästa serie** sparar serien och öppnar nästa. **Spara serie** sparar den och
 tar dig tillbaka till passet; på sista serien i hela matchen är det den enda

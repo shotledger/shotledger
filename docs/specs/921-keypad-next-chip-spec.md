@@ -17,18 +17,19 @@ series, so it is unaffected).
 
 ## Scenarios (5-shot series, integer mode unless stated)
 
-| #   | Given                                         | When                       | Then                                                    |
-| --- | --------------------------------------------- | -------------------------- | ------------------------------------------------------- |
-| E2  | shots `[9,9,9,_,_]`, `selectShot(1)`          | press `5`                  | shots[1] = 50; cursor **2** (was 3)                     |
-| E2b | shots `[_,9,9,9,_]`, `selectShot(0)`          | press `8`                  | shots[0] = 80; cursor **1** (was 4)                     |
-| E2c | after E2b                                     | press `7`                  | shots[1] overwritten with 70; cursor 2                  |
-| E3  | full series, `selectShot(0)`, press `8`       | —                          | shots[0] = 80; cursor **1** (was `seriesLength`)        |
-| E3a | full series, `selectShot(4)`, press `8`       | —                          | shots[4] = 80; cursor `seriesLength`                    |
-| E3b | shots `[_,9,9,9,9]`, `selectShot(4)`          | press `8`                  | shots[4] = 80; cursor 0 (first empty)                   |
-| E3c | decimal, shots `[_,9.0,_,…]`, `selectShot(0)` | `8` then `5`               | shots[0] = 8.5; cursor 1                                |
+| #   | Given                                         | When         | Then                                                   |
+| --- | --------------------------------------------- | ------------ | ------------------------------------------------------ |
+| E2  | shots `[9,9,9,_,_]`, `selectShot(1)`          | press `5`    | shots[1] = 50; cursor **2** (was 3)                    |
+| E2b | shots `[_,9,9,9,_]`, `selectShot(0)`          | press `8`    | shots[0] = 80; cursor **1** (was 4)                    |
+| E2c | after E2b                                     | press `7`    | shots[1] overwritten with 70; cursor 2                 |
+| E2d | shots `[_,9,9,_,9]`, `selectShot(3)`          | press `8`    | shots[3] = 80; cursor 4 (the last chip, though filled) |
+| E3  | full series, `selectShot(0)`, press `8`       | —            | shots[0] = 80; cursor **1** (was `seriesLength`)       |
+| E3a | full series, `selectShot(4)`, press `8`       | —            | shots[4] = 80; cursor `seriesLength`                   |
+| E3b | shots `[_,9,9,9,9]`, `selectShot(4)`          | press `8`    | shots[4] = 80; cursor 0 (first empty)                  |
+| E3c | decimal, shots `[_,9.0,_,…]`, `selectShot(0)` | `8` then `5` | shots[0] = 8.5; cursor 1                               |
 
-E8 (invariant) is replaced: after a committed value at index *i*, cursor is
-*i + 1* when *i + 1 < seriesLength*; otherwise the first empty chip, or
+E8 (invariant) is replaced: after a committed value at index _i_, cursor is
+_i + 1_ when _i + 1 < seriesLength_; otherwise the first empty chip, or
 `seriesLength` when none. `cursor === seriesLength` implies the series is full.
 
 P3 is replaced likewise: for any key sequence from an empty series without
