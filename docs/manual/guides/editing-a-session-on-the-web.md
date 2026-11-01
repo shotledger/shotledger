@@ -21,7 +21,8 @@ as on [Enter Series](entering-series-on-the-web.md#type-the-series). Change a
 row to retype that series; its old shots are replaced, as when you enter a
 series again on the phone. **Delete Series** removes a row when you save
 (**Undo** takes it back), and **Add Series** adds one after the last series.
-In free format, tick **Sighter** on the one row that is a sighter series.
+Tick **Sighter** on the one row that is a sighter series; with **Full Match**,
+the sighter the program lays out can be unticked.
 
 A fält session shows its stations instead, each with the phone's station
 fields as on [Enter Series](entering-series-on-the-web.md): **Hits**,

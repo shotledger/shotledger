@@ -333,7 +333,7 @@ Feature: edit builder (shared/src/sync-client/session-edit.test.ts)
     Falsified by: comparing shots by text instead of (value, inner ten, count); reusing a shot id
   Scenario: K6 a new series: one series row (main section, next position) then its shots; a blank new series writes nothing
   Scenario: K7 sighter: set or cleared on the series row; a second sighter in a free-format section → secondSighter;
-            a fixed-format skeleton's flags are not offered
+            in a fixed format the laid-out flags may be cleared or set, with no one-per-section limit (#919)
   Scenario: K8 a deleted series: tombstones for it and its live shots, none for other series
   Scenario: K9 a final or total-only series in the draft → readOnlySeries, nothing built
   Scenario: K10 property: for random counters c, n ≥ 0 and volumes, one floored move per firearm equals the phone's

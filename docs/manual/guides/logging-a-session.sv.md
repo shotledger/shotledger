@@ -100,6 +100,10 @@ bredvid etiketten Provserie och i dämpad text, som **45 · räknas ej** —
 eftersom en provserie medvetet inte räknas men det du sköt fortfarande är värt
 att se.
 
+Med **Hela matchen** är provserien som programmet lägger ut markerad från
+början. Om du inte sköt någon, öppna den och slå av **Provserie**, eller radera
+den.
+
 Så är regeln inuti ett pass. Mellan pass gäller något annat — se
 [Hur provserier räknas](../explanation/how-sighters-count.md).
 

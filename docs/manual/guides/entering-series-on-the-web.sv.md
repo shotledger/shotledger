@@ -71,7 +71,7 @@ skickar ingenting.
 - **Ctrl+Enter** (**Cmd+Enter** på Mac) gör det knappen under raderna gör.
 
 Med **Hela matchen** vald läggs raderna ut som programmets serier, provserier
-inräknade, som i telefonen. I fritt format kryssar du **Provserie** på den rad
+inräknade och ikryssade, som i telefonen; kryssa ur en du inte sköt. I fritt format kryssar du **Provserie** på den rad
 som är provserie. **Lägg till serie** lägger till en rad.
 
 ### En final

@@ -44,7 +44,7 @@ export interface SeriesEditDraft {
   /** A series the form opened; null for one added on the form. */
   id: string | null;
   text: string;
-  /** Read in free format only; a fixed format's skeleton decides. */
+  /** Ignored on a row added to a fixed format, which the phone cannot add. */
   isSighter: boolean;
   deleted: boolean;
 }
@@ -360,7 +360,7 @@ function planSeries(
     const shots = parse(series.text, row);
     if (shots === null) return;
     const wasSighter = was.row.is_sighter === 1;
-    const isSighter = fixed ? wasSighter : series.isSighter;
+    const isSighter = series.isSighter;
     const shotsChanged = !sameShots(shots, was.shots);
     const sighterChanged = isSighter !== wasSighter;
     plans.push({
@@ -376,8 +376,9 @@ function planSeries(
     });
   });
 
-  // In a fixed format nothing marks a sighter, so this passes there.
-  checkSighters(plans, seriesOfSession(context, opened.session.id as string), errors);
+  // A fixed format may lay out more than one (Nationell helmatch), so the
+  // one-sighter rule is free format's, as in the phone's setSeriesSighter.
+  if (!fixed) checkSighters(plans, seriesOfSession(context, opened.session.id as string), errors);
   return plans;
 }
 

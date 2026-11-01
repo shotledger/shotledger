@@ -71,8 +71,8 @@ sends nothing.
 - **Ctrl+Enter** (**Cmd+Enter** on a Mac) does what the button below the rows does.
 
 With **Full Match** chosen, the rows are laid out as the program's series,
-sighters included, as on the phone. In free format, tick **Sighter** on the
-one row that is a sighter series. **Add Series** adds a row.
+sighters included and ticked, as on the phone; untick one you did not shoot.
+In free format, tick **Sighter** on the one row that is a sighter series. **Add Series** adds a row.
 
 ### A final
 

@@ -21,8 +21,8 @@ Under fälten är varje serie i grundomgången en rad skott, skrivna som i
 för att skriva om serien; dess gamla skott ersätts, som när du matar in en
 serie igen i telefonen. **Ta bort serie** tar bort raden när du sparar
 (**Ångra** tar tillbaka den), och **Lägg till serie** lägger till en efter den
-sista serien. I fritt format kryssar du i **Provserie** på den rad som är en
-provserie.
+sista serien. Kryssa i **Provserie** på den rad som är en provserie; med **Hela matchen**
+kan provserien som programmet lägger ut kryssas ur.
 
 Ett fältskjutningspass visar i stället sina stationer, var och en med
 telefonens stationsfält som i [Mata in serier](entering-series-on-the-web.md):

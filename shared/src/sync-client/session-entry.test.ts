@@ -197,8 +197,10 @@ describe('buildSessionEntry', () => {
 
   it('E3 a fixed-format program creates every skeleton series with its sighter flags, blank ones included', () => {
     expect(skeleton.length).toBe(13);
-    // The draft's own sighter flags are ignored inside the skeleton.
-    const typed = skeleton.map((_, i) => ({ text: i === 1 ? '10 9' : '', isSighter: i === 2 }));
+    const typed = skeleton.map((entry, i) => ({
+      text: i === 1 ? '10 9' : '',
+      isSighter: entry.isSighter,
+    }));
     const changes = changesOf(build(fixed(typed)));
     const series = payloads(changes, 'series');
     expect(series.map((r) => [r.position, r.is_sighter])).toEqual(
@@ -211,6 +213,13 @@ describe('buildSessionEntry', () => {
     expect(session(changes)).toMatchObject({ program_id: standard.id, series_length: null });
   });
 
+  it('E3 a laid-out sighter the draft unmarks is saved as an ordinary series (#919)', () => {
+    expect(skeleton[0]!.isSighter).toBe(true);
+    const typed = skeleton.map((_, i) => ({ text: i === 0 ? '10' : '', isSighter: false }));
+    const series = payloads(changesOf(build(fixed(typed))), 'series');
+    expect(series.filter((r) => r.is_sighter === 1)).toEqual([]);
+  });
+
   it('E3 a skeleton longer than the typed rows is still laid out in full', () => {
     const changes = changesOf(build(fixed([{ text: '10', isSighter: false }])));
     expect(payloads(changes, 'series')).toHaveLength(13);
@@ -219,7 +228,15 @@ describe('buildSessionEntry', () => {
   it('E3 two skeleton sighters are not a second sighter', () => {
     const centre = getProgram('issf-centre-fire-pistol')!;
     const result = build(
-      draft({ type: 'competition', disciplineId: centre.disciplineId, programId: centre.id }),
+      draft({
+        type: 'competition',
+        disciplineId: centre.disciplineId,
+        programId: centre.id,
+        series: buildProgramSkeleton(centre).map((entry, i) => ({
+          text: i === 1 ? '10' : '',
+          isSighter: entry.isSighter,
+        })),
+      }),
     );
     expect(payloads(changesOf(result), 'series').filter((r) => r.is_sighter === 1)).toHaveLength(2);
   });

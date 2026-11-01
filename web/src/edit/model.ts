@@ -97,7 +97,7 @@ export interface OpenedForm {
   readOnly: ReadOnlySeries[];
   /** Whether the session's series are edited here: a scored series session (E11). */
   editsSeries: boolean;
-  /** A fixed format: its skeleton decides the sighters (K7). */
+  /** A fixed format: the one-sighter rule is free format's only. */
   fixed: boolean;
   mode: ScoringMode;
   /** Shots per series, for the row hint. */
@@ -319,9 +319,8 @@ export function setRow(form: EditForm, key: number, patch: Partial<EditRow>): Ed
   return { ...form, rows: form.rows.map((row) => (row.key === key ? { ...row, ...patch } : row)) };
 }
 
-/** One sighter in the main section, free format only; a deleted row holds none. */
-export function canMarkSighter(form: EditForm, key: number, fixed: boolean): boolean {
-  if (fixed) return false;
+/** One sighter in the main section, as the phone's series screen offers it; a deleted row holds none. */
+export function canMarkSighter(form: EditForm, key: number): boolean {
   return form.rows.every((row) => row.key === key || row.deleted || !row.isSighter);
 }
 
