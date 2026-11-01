@@ -32,10 +32,9 @@ last year's file.
 
 Some files are refused before anything on the device changes:
 
-- **One made by a version with a different database layout.** Until
-  ShotLedger reaches 1.0, a new version may change the layout without
-  converting older backups. If the file came from a newer version, update the
-  app and try again.
+- **One made by a newer version of the app.** Update the app and try again.
+  A file from an older version restores and is brought up to date, except
+  one made by a version from before 23 October 2026, which the app cannot convert.
 - **One that is damaged, or does not look exactly like a file the app
   writes.** It is reported as not a ShotLedger backup.
 

@@ -67,13 +67,17 @@ committing the regenerated `src/constants/licenses.json`.
 
 ## Database
 
-- Schema changes go through a Drizzle migration (hard rule 2).
-- **A baseline edit updates the `baseline sha256` line in `migrations.js`.**
-  Babel's `inline-import` pastes the SQL into `migrations.js`, and Metro caches
-  that transform by `migrations.js`'s own content, so without the line a build
-  ships the old schema and the first write fails with `table … has no column
-named …`. `migrations.test.ts` fails until the hash matches. An install that
-  already ran the old baseline still needs `adb shell pm clear app.shotledger`.
+- Schema changes go through a Drizzle migration (hard rule 2): edit
+  `shared/src/sync/schema.ts`, run `pnpm exec drizzle-kit generate` in `app/`,
+  and add the new migration's hash to `SHIPPED_MIGRATIONS` in
+  `migrations.test.ts`. **Never edit or regenerate a migration that is on
+  `main`**; an installed app has already run it and would never see the edit.
+- drizzle-kit models neither triggers nor seed rows. A migration that adds a
+  synced table adds its two `sync_outbox` triggers by hand, and one that
+  recreates a table (SQLite's way to change a column) recreates that table's
+  triggers too.
+- Metro caches the inlined SQL by `migrations.js`'s content. After editing your
+  own unmerged migration, restart Metro with `--clear`.
 
 ## Demo data and dev tools
 

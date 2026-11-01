@@ -90,7 +90,9 @@ sync. Android first — **all code must stay iOS-compatible**.
    `shotledger.sessions` stays `formatVersion: 1`, the sync protocol stays
    at its version, and a migration may rewrite existing rows. Do not add a
    v2, a shim or a "read both shapes" path for data only this machine has
-   produced. This governs **new** compatibility work; it is not a license
+   produced. **The DB schema is the exception:** it changes through an
+   appended migration, never by editing a shipped one, so an update keeps
+   the data on the device (ARCHITECTURE.md § Local-first). This governs **new** compatibility work; it is not a license
    to rip out tolerance that already ships. The rule ends at the first
    released build with other users.
 9. **English (US)** for identifiers, filenames, i18n keys and English

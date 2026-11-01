@@ -1,7 +1,7 @@
-// Schema-compatibility check for restore. Before 1.0 the database baseline is
-// reset rather than migrated (hard rule 8), so a bundle restores only onto
-// the exact baseline it was exported from: an older one has tables the new
-// baseline would be run over, a newer one columns this build lacks.
+// Schema-compatibility check for restore. A bundle from this build's schema or
+// an earlier point in its migration chain restores (the restore migrates it
+// forward); one this build's journal does not contain is from a newer build,
+// or from before the chain was frozen, and is refused.
 import type { BackupManifest } from './types';
 
 export type SchemaCompatibility = 'ok' | 'mismatch';
@@ -24,9 +24,12 @@ export function latestMigration(journal: {
 
 export function checkSchemaCompatibility(
   manifest: Pick<BackupManifest, 'schemaMigrationTag' | 'schemaMigrationWhen'>,
-  app: MigrationIdentity,
+  journal: { entries: readonly MigrationIdentity[] },
 ): SchemaCompatibility {
-  return manifest.schemaMigrationTag === app.tag && manifest.schemaMigrationWhen === app.when
+  return journal.entries.some(
+    (entry) =>
+      entry.tag === manifest.schemaMigrationTag && entry.when === manifest.schemaMigrationWhen,
+  )
     ? 'ok'
     : 'mismatch';
 }

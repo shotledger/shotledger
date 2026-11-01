@@ -1,17 +1,19 @@
-// There is ONE migration, and there always will be: the baseline is
-// regenerated in place on every schema change rather than appended to
-// (maintainer's call, 2026-09-22 — hard rule 8; pre-release, and a migration
-// chain is a compatibility branch for databases only this machine produced).
-// What these assert is that applying it leaves a database matching schema.ts.
-// The baseline is not generated in full — `drizzle-kit generate` derives it
-// from schema.ts, which models neither triggers nor seed rows, so both are
-// carried over by hand on every regeneration. The firearm_calibers triggers
-// were lost exactly that way once (2026-09-22) and caught here.
+// The migration chain is append-only (#913): a shipped migration is never
+// edited, and every schema change adds the next one, so an installed app
+// upgrades with its data. What these assert is that the chain leaves a
+// database matching schema.ts and that an earlier database upgrades to it.
+// drizzle-kit generates a migration from schema.ts, which models neither
+// triggers nor seed rows, so a migration that adds a synced table carries its
+// triggers by hand. The firearm_calibers triggers were lost exactly that way
+// once (2026-09-22) and caught here.
 import Database from 'better-sqlite3';
 import { getTableColumns, getTableName, is } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { SQLiteTable } from 'drizzle-orm/sqlite-core';
 import { createHash } from 'node:crypto';
 import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -61,22 +63,126 @@ function freshDatabase(): Database.Database {
   return sqlite;
 }
 
-describe('the migration chain is the whole schema', () => {
-  it("names the baseline's hash in migrations.js, so Metro cannot serve a stale one (#610)", () => {
-    const sql = fs.readFileSync(path.join(migrationsDir, '0000_baseline.sql'));
-    const hash = createHash('sha256').update(sql).digest('hex');
-    const barrel = fs.readFileSync(path.join(migrationsDir, 'migrations.js'), 'utf-8');
-    expect(barrel).toContain(`// baseline sha256: ${hash}`);
+/**
+ * Every migration that has reached main, with its SQL's sha256. An install
+ * records each migration it ran, so editing one here never reaches a device
+ * that already has it; the change must go in a new migration instead. Add a
+ * line per new migration; never change one.
+ */
+const SHIPPED_MIGRATIONS: Record<string, string> = {
+  '0000_baseline': '3017ff1fd7bacc2274ea47cb1c4c1222a663a9843794c922210b066800f691b3',
+};
+
+function sha256(tag: string): string {
+  return createHash('sha256')
+    .update(fs.readFileSync(path.join(migrationsDir, `${tag}.sql`)))
+    .digest('hex');
+}
+
+/** A copy of the migrations folder whose journal stops after `count` entries:
+ * what an install of an older build has on disk. */
+function migrationsFolderUpTo(count: number): string {
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'shotledger-migrations-'));
+  fs.mkdirSync(path.join(folder, 'meta'));
+  const journal = JSON.parse(
+    fs.readFileSync(path.join(migrationsDir, 'meta', '_journal.json'), 'utf-8'),
+  ) as { entries: { tag: string }[] };
+  const entries = journal.entries.slice(0, count);
+  fs.writeFileSync(
+    path.join(folder, 'meta', '_journal.json'),
+    JSON.stringify({ ...journal, entries }),
+  );
+  for (const { tag } of entries) {
+    fs.copyFileSync(path.join(migrationsDir, `${tag}.sql`), path.join(folder, `${tag}.sql`));
+  }
+  return folder;
+}
+
+/** Tables, columns, indexes and triggers, by name: what a migration leaves behind. */
+function shape(sqlite: Database.Database) {
+  const objects = sqlite
+    .prepare(
+      `SELECT type, name, tbl_name FROM sqlite_master
+       WHERE name NOT LIKE 'sqlite_%' AND name != '__drizzle_migrations'
+       ORDER BY type, name`,
+    )
+    .all() as { type: string; name: string; tbl_name: string }[];
+  return objects.map((object) =>
+    object.type === 'table'
+      ? {
+          ...object,
+          columns: (
+            sqlite
+              .prepare(`SELECT name, type, "notnull", dflt_value FROM pragma_table_info(?)`)
+              .all(object.name) as object[]
+          ).map((column) => JSON.stringify(column)),
+        }
+      : object,
+  );
+}
+
+describe('the migration chain', () => {
+  it('never edits a shipped migration', () => {
+    const tags = journalTags();
+    const shipped = Object.fromEntries(
+      tags.filter((tag) => tag in SHIPPED_MIGRATIONS).map((tag) => [tag, sha256(tag)]),
+    );
+    expect(shipped).toEqual(SHIPPED_MIGRATIONS);
   });
 
-  it('is exactly one baseline, never a chain', () => {
-    // A second migration here means someone appended instead of regenerating.
-    // That is the defect: this repo has no installed base to migrate, and a
-    // chain that exists gets maintained forever.
-    expect(journalTags()).toEqual(['0000_baseline']);
-    expect(fs.readdirSync(migrationsDir).filter((f) => f.endsWith('.sql'))).toEqual([
-      '0000_baseline.sql',
-    ]);
+  it('records every migration in SHIPPED_MIGRATIONS, in journal order', () => {
+    expect(Object.keys(SHIPPED_MIGRATIONS)).toEqual(journalTags());
+  });
+
+  it('has a journal entry for every SQL file, and only those', () => {
+    expect(
+      fs
+        .readdirSync(migrationsDir)
+        .filter((f) => f.endsWith('.sql'))
+        .sort(),
+    ).toEqual(journalTags().map((tag) => `${tag}.sql`));
+  });
+
+  it("imports every migration in migrations.js, the bundle's copy of the chain", () => {
+    const barrel = fs.readFileSync(path.join(migrationsDir, 'migrations.js'), 'utf-8');
+    for (const tag of journalTags()) expect(barrel).toContain(`'./${tag}.sql'`);
+  });
+
+  it("upgrades a database from every earlier migration with Drizzle's migrator, keeping its rows", () => {
+    const fresh = new Database(':memory:');
+    migrate(drizzle(fresh), { migrationsFolder: migrationsDir });
+
+    // count = journal length is the reinstall of the same build: a no-op.
+    for (let count = 1; count <= journalTags().length; count++) {
+      const sqlite = new Database(':memory:');
+      const db = drizzle(sqlite);
+      migrate(db, { migrationsFolder: migrationsFolderUpTo(count) });
+      // Written against 0000_baseline; a later migration that recreates one
+      // of these tables must carry the rows across.
+      sqlite.exec(`
+        INSERT INTO firearms (id, created_at, updated_at, make, model)
+          VALUES ('f1', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z', 'Pardini', 'SP');
+        INSERT INTO sessions (id, created_at, updated_at, name, type, discipline_id, started_at, firearm_id)
+          VALUES ('s1', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z', 'Training',
+                  'training', 'spsf-precision', '2026-01-01T00:00:00.000Z', 'f1');
+        INSERT INTO series (id, created_at, updated_at, session_id, position)
+          VALUES ('r1', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z', 's1', 0);
+        INSERT INTO shots (id, created_at, updated_at, series_id, position, value_tenths)
+          VALUES ('h1', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z', 'r1', 0, 100);
+      `);
+
+      migrate(db, { migrationsFolder: migrationsDir });
+
+      expect({ from: count, shape: shape(sqlite) }).toEqual({ from: count, shape: shape(fresh) });
+      expect(
+        sqlite
+          .prepare(
+            `SELECT (SELECT COUNT(*) FROM firearms) AS firearms, (SELECT COUNT(*) FROM sessions) AS sessions,
+                    (SELECT COUNT(*) FROM series) AS series, (SELECT COUNT(*) FROM shots) AS shots`,
+          )
+          .get(),
+      ).toEqual({ firearms: 1, sessions: 1, series: 1, shots: 1 });
+    }
   });
 
   // N3 stood here and applied 0002_firearm_is_own over the baseline to prove
