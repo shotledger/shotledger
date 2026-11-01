@@ -186,10 +186,11 @@ describe('the edit form', () => {
     });
   });
 
-  it('U1 final and total-only series are listed read-only, by position', () => {
+  it('U1 final and total-only series are listed read-only, numbered by order (#922)', () => {
+    // rT follows r1 and the sighter r2, so it is Series 2; the final is numbered on its own.
     expect(opened('s1').readOnly).toEqual([
-      { id: 'rF', position: 3, kind: 'final', text: '10', photo: null },
-      { id: 'rT', position: 4, kind: 'totalOnly', text: '', photo: null },
+      { id: 'rF', position: 3, number: 1, kind: 'final', text: '10', photo: null },
+      { id: 'rT', position: 4, number: 2, kind: 'totalOnly', text: '', photo: null },
     ]);
   });
 

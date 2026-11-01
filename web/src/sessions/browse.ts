@@ -6,6 +6,7 @@ import {
   getDiscipline,
   getProgram,
   programStages,
+  seriesSlots,
   seriesStage,
 } from '@shotledger/shared/src/disciplines';
 import {
@@ -61,6 +62,8 @@ export interface BrowseSeries {
   shots: EntryShot[];
   /** The shots' sum, or the stored total of an imported series with no shots. */
   totalTenths: number;
+  /** "Series n" by order; null for a sighter (`seriesSlots`). */
+  number: number | null;
   /** The program stage (helmatch delmoment) the series belongs to, else null. */
   stage: string | null;
 }
@@ -91,7 +94,8 @@ function browseSession(
 ): BrowseSession {
   const photoAt = (uris: PhotoUris, position: number) =>
     photoRefOf(uris.get(`${session.id}#${position}`));
-  const series: BrowseSeries[] = session.series.map((row) => ({
+  const slots = seriesSlots(session.programId, session.series);
+  const series: BrowseSeries[] = session.series.map((row, index) => ({
     position: row.position,
     photo: photoAt(seriesPhotos, row.position),
     isSighter: row.isSighter,
@@ -100,6 +104,7 @@ function browseSession(
     totalTenths: row.totalOverride
       ? row.totalOverride.tenths
       : row.shots.reduce((sum, shot) => sum + shot.valueTenths, 0),
+    number: slots[index]!.number,
     stage: seriesStage(session.programId, row.position),
   }));
 

@@ -31,6 +31,7 @@ import { listMarksForSeries } from '@/db/queries/shot-marks';
 import type { Mark } from '@/features/photo-scoring/marks';
 import { deserializeTransform } from '@/features/photo-scoring/transform';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
+import { seriesLabel } from '@/features/session/series-label';
 import { resolveSeriesPhotoUri, seriesPhotoGone } from '@/platform/sync-photos';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
@@ -132,7 +133,7 @@ function SeriesPhotoScreen({ position }: { position: number }) {
     <Screen scroll={false}>
       <View style={styles.titleRow}>
         <ThemedText type="small" themeColor="textSecondary">
-          {t('session.seriesTitle', { position })}
+          {row ? seriesLabel(t, row.number) : t('session.seriesTitle', { position })}
         </ThemedText>
         {/* Re-scoring is the series view's business. From the gallery this is
             a picture you are looking at, so the action is offered only where

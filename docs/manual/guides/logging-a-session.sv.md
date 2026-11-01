@@ -104,6 +104,11 @@ Med **Hela matchen** är provserien som programmet lägger ut markerad från
 början. Om du inte sköt någon, öppna den och slå av **Provserie**, eller radera
 den.
 
+En provserie står som **Provserie**, utan nummer, och de räknade serierna
+numreras från 1 i ordning. Tar du bort en serie, eller stänger av **Provserie**
+på en, sluter numren upp sig. Varje serie behåller sin tidsgräns och sitt
+delmoment, eftersom de hör till platsen i matchen.
+
 Så är regeln inuti ett pass. Mellan pass gäller något annat — se
 [Hur provserier räknas](../explanation/how-sighters-count.md).
 

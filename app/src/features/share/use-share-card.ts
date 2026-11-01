@@ -19,6 +19,7 @@ import { formatDate } from '@/features/dates/format';
 import { formatTotalScore } from '@/features/stats/format-total-score';
 import { disciplineLabel } from '@/features/session/labels';
 import { type SessionDetail, type SeriesRow } from '@/features/session/use-session-detail';
+import { seriesLabel } from '@/features/session/series-label';
 
 const APP_NAME = 'ShotLedger';
 
@@ -72,7 +73,7 @@ export function buildSeriesShareCardModel(
     appName: APP_NAME,
     dateLabel: formatDate(detail.session.startedAt, locale),
     disciplineLabel: disciplineLabel(t, detail.session.disciplineId),
-    seriesLabel: t('session.seriesTitle', { position: row.position }),
+    seriesLabel: seriesLabel(t, row.number),
     totalLabel: formatTotalScore(row.totalTenths, { mode: detail.scoringMode }),
     xCount: row.isTotalOverride ? 0 : xCountOf(row.shots),
     shots: row.shots.map((shot) => ({

@@ -2,7 +2,12 @@
 // direction A, "Entering a series"). Pure over the session detail's rows,
 // so the rules are tested without a screen; the web's Enter Series runs the
 // same running totals over its typed rows (web/src/entry/running-totals.ts).
-import { sessionInnerTenCount, sessionResults, type EntryShot } from '@shotledger/shared';
+import {
+  seriesSlots,
+  sessionInnerTenCount,
+  sessionResults,
+  type EntryShot,
+} from '@shotledger/shared';
 
 import type { SeriesRow } from '@/features/session/use-session-detail';
 
@@ -83,12 +88,23 @@ export function nextSeriesTarget(
   return { position: last + 1, isFinal: current.isFinal, isNew: true };
 }
 
-/** "Series 4 of 10" for a fixed format, whose count is known; null otherwise. */
-export function seriesCountOf(
-  rows: readonly Pick<SeriesRow, 'isFinal'>[],
-  isFinal: boolean,
+/**
+ * The heading's "Series 4 of 10", with the series on the keypad as it stands:
+ * its number by order (null for a sighter), and for a fixed format the count
+ * of the section's non-sighter series (#922).
+ */
+export function seriesHeading(
+  rows: readonly Pick<SeriesRow, 'id' | 'position' | 'isFinal' | 'isSighter'>[],
+  current: Pick<CurrentSeries, 'rowId' | 'position' | 'isFinal' | 'isSighter'>,
+  programId: string | null,
   isFixedFormat: boolean,
-): number | null {
-  if (!isFixedFormat) return null;
-  return rows.filter((row) => row.isFinal === isFinal).length;
+): { number: number | null; count: number | null } {
+  const list = [
+    ...rows.filter((row) => row.id !== current.rowId),
+    { position: current.position, isFinal: current.isFinal, isSighter: current.isSighter },
+  ];
+  const number = seriesSlots(programId, list).at(-1)!.number;
+  if (!isFixedFormat) return { number, count: null };
+  const count = list.filter((row) => row.isFinal === current.isFinal && !row.isSighter).length;
+  return { number, count };
 }

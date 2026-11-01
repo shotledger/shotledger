@@ -53,6 +53,7 @@ import {
 } from '@/features/sessions/session-row-format';
 import { db } from '@/db/client';
 import { deleteSeriesAndShots, setSessionExtraRounds } from '@/db/queries/round-count';
+import { seriesLabel } from '@/features/session/series-label';
 import {
   MAX_ROUNDS_FIRED,
   parseRoundsFired,
@@ -111,6 +112,11 @@ export default function SessionDetailScreen() {
   const [rowHeights, setRowHeights] = useState<Record<string, number>>({});
 
   const { session, seriesRows, results, tags, firearmName, ammoLotName } = detail;
+  const entryTargetRow = entryTarget
+    ? seriesRows.find(
+        (row) => row.position === entryTarget.position && row.isFinal === entryTarget.isFinal,
+      )
+    : undefined;
   // Falls back to the series list when the chosen view has nothing left to
   // show: the last series deleted, or the last photo marks removed.
   const shownView: DetailView =
@@ -203,7 +209,9 @@ export default function SessionDetailScreen() {
 
   function onDeleteSeries(row: SeriesRow) {
     Alert.alert(
-      t('session.deleteSeriesConfirmTitle', { position: row.position }),
+      row.number === null
+        ? t('session.deleteSighterConfirmTitle')
+        : t('session.deleteSeriesConfirmTitle', { position: row.number }),
       t('session.deleteSeriesConfirmBody'),
       [
         { text: t('common.cancel'), style: 'cancel' },
@@ -389,11 +397,8 @@ export default function SessionDetailScreen() {
         ]}
       >
         <View style={styles.seriesHeader}>
-          <ThemedText type="smallBold">
-            {t('session.seriesTitle', { position: row.position })}
-          </ThemedText>
+          <ThemedText type="smallBold">{seriesLabel(t, row.number)}</ThemedText>
           <View style={styles.badges}>
-            {row.isSighter && <Chip label={t('session.sighter')} />}
             {row.timeLimitSeconds !== null && (
               <Chip label={t('session.timeLimit', { seconds: row.timeLimitSeconds })} />
             )}
@@ -924,7 +929,7 @@ export default function SessionDetailScreen() {
         onClose={() => setEntryChoiceOpen(false)}
         title={
           entryTarget && !entryTarget.isNew
-            ? t('session.seriesTitle', { position: entryTarget.position })
+            ? seriesLabel(t, entryTargetRow?.number ?? null)
             : undefined
         }
         onChoose={onChooseEntry}

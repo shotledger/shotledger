@@ -298,6 +298,49 @@ export function buildProgramSkeleton(program: Program): readonly SeriesSkeletonE
   return entries;
 }
 
+/** A session's series as `seriesSlots` reads it. */
+export interface SeriesSlotInput {
+  position: number;
+  isSighter: boolean;
+  isFinal: boolean;
+}
+
+/** What a series is called and which layout slot it fills. */
+export interface SeriesSlot {
+  /** "Series n": its place among the section's non-sighter series; null for a sighter (#922). */
+  number: number | null;
+  /** Its slot in a fixed-format layout (time limit, stage, face), by stored position. */
+  entry: SeriesSkeletonEntry | undefined;
+}
+
+/**
+ * Numbers a session's series by order, so deleting or unmarking one never
+ * leaves a gap in the labels (#922). The layout slot stays tied to the stored
+ * position: a deleted series must not pull a later one into another stage.
+ * Finals are numbered on their own and have no slot. One slot per input row,
+ * in input order.
+ */
+export function seriesSlots(
+  programId: string | null,
+  rows: readonly SeriesSlotInput[],
+): SeriesSlot[] {
+  const program = programId ? getProgram(programId) : undefined;
+  const skeleton = program ? buildProgramSkeleton(program) : [];
+  const numbers = new Map<SeriesSlotInput, number | null>();
+  for (const isFinal of [false, true]) {
+    const section = rows.filter((row) => row.isFinal === isFinal);
+    let number = 0;
+    for (const row of section.sort((a, b) => a.position - b.position)) {
+      if (!row.isSighter) number += 1;
+      numbers.set(row, row.isSighter ? null : number);
+    }
+  }
+  return rows.map((row) => ({
+    number: numbers.get(row)!,
+    entry: row.isFinal ? undefined : skeleton[row.position - 1],
+  }));
+}
+
 /** Sighter series a fixed-format program lays out, across all its groups. */
 export function programSighterCount(program: Program): number {
   return (program.structure?.groups ?? []).reduce(

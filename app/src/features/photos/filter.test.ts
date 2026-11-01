@@ -11,6 +11,7 @@ const photo = (patch: Partial<GalleryPhoto>): GalleryPhoto => ({
   seriesId: 's',
   sessionId: 'x',
   position: 1,
+  number: 1,
   photoUri: 'file:///a.jpg',
   sessionName: 'Träning',
   startedAt: '2026-09-01T10:00:00.000Z',

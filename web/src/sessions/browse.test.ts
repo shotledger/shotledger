@@ -268,6 +268,7 @@ describe('photoOwners and sessionPhotoIds', () => {
 describe('seriesSections', () => {
   const row = (position: number, isFinal: boolean): BrowseSeries => ({
     position,
+    number: position,
     photo: null,
     isSighter: false,
     isFinal,

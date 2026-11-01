@@ -7,6 +7,8 @@ export interface GalleryPhoto {
   seriesId: string;
   sessionId: string;
   position: number;
+  /** "Series n" by order in its session; null for a sighter. */
+  number: number | null;
   photoUri: string;
   sessionName: string;
   /** ISO-8601. */

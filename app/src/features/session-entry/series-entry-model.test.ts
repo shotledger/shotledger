@@ -1,12 +1,13 @@
 import type { SeriesRow } from '@/features/session/use-session-detail';
 
-import { liveSessionTotals, nextSeriesTarget, seriesCountOf } from './series-entry-model';
+import { liveSessionTotals, nextSeriesTarget, seriesHeading } from './series-entry-model';
 
 function row(position: number, values: number[], extra: Partial<SeriesRow> = {}): SeriesRow {
   const shots = values.map((valueTenths) => ({ valueTenths, isInnerTen: valueTenths === 100 }));
   return {
     id: `s${position}`,
     position,
+    number: position,
     isSighter: false,
     isFinal: false,
     photoUri: null,
@@ -87,10 +88,34 @@ describe('nextSeriesTarget', () => {
   });
 });
 
-describe('seriesCountOf', () => {
-  it('knows the count of a fixed format only', () => {
-    const rows = [row(1, []), row(2, []), row(3, [], { isFinal: true })];
-    expect(seriesCountOf(rows, false, true)).toBe(2);
-    expect(seriesCountOf(rows, false, false)).toBeNull();
+describe('seriesHeading (#922)', () => {
+  const current = (position: number, isSighter = false, isFinal = false) => ({
+    rowId: `s${position}`,
+    position,
+    isFinal,
+    isSighter,
+  });
+
+  it("counts the section's non-sighter series of a fixed format only", () => {
+    const rows = [
+      row(1, [], { isSighter: true }),
+      row(2, []),
+      row(3, []),
+      row(4, [], { isFinal: true }),
+    ];
+    expect(seriesHeading(rows, current(3), 'spsf-milsnabb', true)).toEqual({ number: 2, count: 2 });
+    expect(seriesHeading(rows, current(3), null, false)).toEqual({ number: 2, count: null });
+  });
+
+  it("reads the keypad's sighter toggle, not the saved flag", () => {
+    const rows = [row(1, [], { isSighter: true }), row(2, []), row(3, [])];
+    expect(seriesHeading(rows, current(1, false), 'spsf-milsnabb', true)).toEqual({
+      number: 1,
+      count: 3,
+    });
+    expect(seriesHeading(rows, current(2, true), 'spsf-milsnabb', true)).toEqual({
+      number: null,
+      count: 1,
+    });
   });
 });

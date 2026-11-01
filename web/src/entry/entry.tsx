@@ -7,6 +7,7 @@ import {
   formatShooterClass,
   programsForDiscipline,
   requireDiscipline,
+  seriesSlots,
   weaponGroupsForDiscipline,
 } from '@shotledger/shared/src/disciplines';
 import { derivedWeaponGroup } from '@shotledger/shared/src/disciplines/session-defaults';
@@ -330,12 +331,21 @@ export function Entry({
 
   const blocked = saveBlocked(online, state);
   const errors = state.status.kind === 'invalid' ? state.status.errors : [];
-  const rowLabel = (row: number) =>
-    isFalt
-      ? t('station.title', { position: row })
-      : form.rows[row - 1]?.isSighter
-        ? t('session.sighter')
-        : t('session.seriesTitle', { position: row });
+  // Numbered by order, not row index (#922): a sighter row is not "Series 1".
+  const rowNumbers = seriesSlots(
+    null,
+    form.rows.map((row, index) => ({
+      position: index + 1,
+      isSighter: row.isSighter,
+      isFinal: row.isFinal === true,
+    })),
+  ).map((slot) => slot.number);
+  const rowLabel = (row: number) => {
+    if (isFalt) return t('station.title', { position: row });
+    const number = rowNumbers[row - 1];
+    if (number === undefined) return t('session.seriesTitle', { position: row });
+    return number === null ? t('session.sighter') : t('session.seriesTitle', { position: number });
+  };
   const rowErrors = new Map<number, string>();
   const formErrors: string[] = [];
   for (const error of errors) {

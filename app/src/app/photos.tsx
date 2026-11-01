@@ -31,6 +31,7 @@ import {
   type PhotoFacetSelection,
 } from '@/features/photos/filter';
 import { disciplineLabel } from '@/features/session/labels';
+import { seriesLabel } from '@/features/session/series-label';
 import { shareExistingFile } from '@/platform/share-file';
 import { resolveSeriesPhotoUri, seriesPhotoGone } from '@/platform/sync-photos';
 import { Radius, Spacing } from '@/theme/tokens';
@@ -153,7 +154,7 @@ export default function PhotosScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={t('photos.openLabel', {
                       session: photo.sessionName,
-                      position: photo.position,
+                      series: seriesLabel(t, photo.number),
                     })}
                     onPress={() =>
                       router.push(
@@ -178,7 +179,7 @@ export default function PhotosScreen() {
                       {photo.sessionName}
                     </ThemedText>
                     <ThemedText type="small" themeColor="textSecondary">
-                      {t('session.seriesTitle', { position: photo.position })}
+                      {seriesLabel(t, photo.number)}
                     </ThemedText>
                   </Pressable>
                 );

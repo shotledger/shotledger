@@ -8,6 +8,7 @@ import {
   getDiscipline,
   getProgram,
   scoringModeFor,
+  seriesSlots,
 } from '@shotledger/shared/src/disciplines';
 import type { ScoringMode } from '@shotledger/shared/src/scoring/entry';
 import type { FaltResultMode } from '@shotledger/shared/src/scoring/falt';
@@ -63,6 +64,8 @@ export interface EditRow {
 export interface ReadOnlySeries {
   id: string;
   position: number;
+  /** "Series n" by order in its section (#922); null for a sighter. */
+  number: number | null;
   kind: 'final' | 'totalOnly';
   text: string;
   photo: PhotoRef;
@@ -171,9 +174,17 @@ export function openForm(context: EditContext, sessionId: string): OpenedForm | 
   const series = [...opened.series.values()].sort(
     (a, b) => (a.row.position as number) - (b.row.position as number),
   );
+  const numbers = seriesSlots(
+    null,
+    series.map(({ row }) => ({
+      position: row.position as number,
+      isSighter: row.is_sighter === 1,
+      isFinal: row.is_final === 1,
+    })),
+  ).map((slot) => slot.number);
   const rows: EditRow[] = [];
   const readOnly: ReadOnlySeries[] = [];
-  for (const { row, shots } of series) {
+  for (const [index, { row, shots }] of series.entries()) {
     const id = row.id as string;
     const shown = formatSeriesText(shotsOf(shots), mode);
     const photo = photoRefOf(row.photo_uri as string | null | undefined);
@@ -181,6 +192,7 @@ export function openForm(context: EditContext, sessionId: string): OpenedForm | 
       readOnly.push({
         id,
         position: row.position as number,
+        number: numbers[index]!,
         kind: row.is_final === 1 ? 'final' : 'totalOnly',
         text: shown,
         photo,

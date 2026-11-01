@@ -29,6 +29,7 @@ import {
   ringScoringDisciplines,
   scoringModeFor,
   selectableWeaponGroups,
+  seriesSlots,
   seriesStage,
   seriesTargetFace,
   disciplinesForRegulations,
@@ -1138,5 +1139,68 @@ describe('disciplineSeriesLength', () => {
 
   it('is 5 for a discipline this build does not know', () => {
     expect(disciplineSeriesLength('no-such-discipline')).toBe(5);
+  });
+});
+
+describe('seriesSlots (#922)', () => {
+  const row = (position: number, isSighter = false, isFinal = false) => ({
+    position,
+    isSighter,
+    isFinal,
+  });
+  const numbers = (slots: ReturnType<typeof seriesSlots>) => slots.map((slot) => slot.number);
+  const times = (slots: ReturnType<typeof seriesSlots>) =>
+    slots.map((slot) => slot.entry?.timeLimitSeconds ?? null);
+
+  it('numbers a laid-out milsnabb match 1..12 under its sighter', () => {
+    const rows = [row(1, true), ...Array.from({ length: 12 }, (_, i) => row(i + 2))];
+    const slots = seriesSlots('spsf-milsnabb', rows);
+    expect(numbers(slots)).toEqual([null, ...Array.from({ length: 12 }, (_, i) => i + 1)]);
+    expect(times(slots)).toEqual([10, 10, 10, 10, 10, 8, 8, 8, 8, 6, 6, 6, 6]);
+  });
+
+  it('numbers from 1 with the sighter deleted, keeping each series in its slot', () => {
+    const rows = Array.from({ length: 12 }, (_, i) => row(i + 2));
+    const slots = seriesSlots('spsf-milsnabb', rows);
+    expect(numbers(slots)).toEqual(Array.from({ length: 12 }, (_, i) => i + 1));
+    expect(times(slots)).toEqual([10, 10, 10, 10, 8, 8, 8, 8, 6, 6, 6, 6]);
+  });
+
+  it('closes the gap a deleted match series leaves; the later ones keep their stage', () => {
+    const slots = seriesSlots('spsf-helmatch', [row(1, true), row(2), row(4), row(7)]);
+    expect(numbers(slots)).toEqual([null, 1, 2, 3]);
+    expect(slots.map((slot) => slot.entry?.stage)).toEqual(['A', 'A', 'A', 'B']);
+  });
+
+  it('counts an unmarked sighter as Series 1', () => {
+    const slots = seriesSlots('spsf-milsnabb', [row(1), row(2), row(3)]);
+    expect(numbers(slots)).toEqual([1, 2, 3]);
+  });
+
+  it('orders by position, whatever order the rows arrive in', () => {
+    expect(numbers(seriesSlots('spsf-milsnabb', [row(3), row(1, true), row(2)]))).toEqual([
+      2,
+      null,
+      1,
+    ]);
+  });
+
+  it('numbers finals on their own, without a slot', () => {
+    const slots = seriesSlots('spsf-precision', [
+      row(1),
+      row(2),
+      row(1, false, true),
+      row(2, false, true),
+    ]);
+    expect(numbers(slots)).toEqual([1, 2, 1, 2]);
+    expect(slots[2]!.entry).toBeUndefined();
+  });
+
+  it('numbers a free-format session by order with no slots', () => {
+    expect(seriesSlots(null, [row(1, true), row(3), row(7)])).toEqual([
+      { number: null, entry: undefined },
+      { number: 1, entry: undefined },
+      { number: 2, entry: undefined },
+    ]);
   });
 });
