@@ -54,9 +54,10 @@ decimals depending on the program.
 Tap a series to enter it. Everything you press sits at the bottom of the
 screen, within reach of your thumb: the shot boxes, a row with **Photo**,
 **Sighter** and **Delete**, the keys, and **Next Series**. The keypad moves to
-the next box after each shot but stops at the last one, so a wrong shot can
-still be put right: tap its box and type the right value. Nothing moves on
-until you say so.
+the next box after each shot, even one that already has a value; typing
+replaces it. After the last box it goes to the first empty box, or stops when
+the series is full. To put a wrong shot right, tap its box and type the right
+value. Nothing moves on until you say so.
 
 **Next Series** saves the series and opens the next one. **Save Series** saves
 it and takes you back to the session; on the last series of a full match it is

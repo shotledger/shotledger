@@ -105,9 +105,12 @@ function withShot(state: KeypadState, index: number, shot: EntryShot | null): Ke
   return { ...state, shots, pending: null, cursor: firstEmptyIndex(shots) };
 }
 
-/** Writes a completed shot at the cursor and moves to the first empty chip. */
+/** Writes a completed shot at the cursor and moves to the next chip, filled or
+ * not; past the last chip, to the first empty one (#921). */
 function commitShot(state: KeypadState, shot: EntryShot): KeypadState {
-  return withShot(state, state.cursor, shot);
+  const written = withShot(state, state.cursor, shot);
+  const next = state.cursor + 1;
+  return next < state.seriesLength ? { ...written, cursor: next } : written;
 }
 
 function pressInteger(state: KeypadState, key: KeypadKey): KeypadState {

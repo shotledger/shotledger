@@ -166,13 +166,13 @@ ring × 10 + tenth`, so the range is 0–109 exactly as §3 of the plan requires
 | #   | Given                                   | When            | Then                                                                       |
 | --- | --------------------------------------- | --------------- | -------------------------------------------------------------------------- |
 | E1  | 3 of 5 filled                           | `selectShot(1)` | cursor 1; pending cleared; shots unchanged                                 |
-| E2  | after E1                                | press `5`       | shots[1] overwritten with 50; cursor jumps to the **first empty chip** (3) |
-| E3  | full series, `selectShot(0)`, press `8` | —               | shots[0] = 80; cursor === seriesLength (no empty chip remains)             |
+| E2  | after E1                                | press `5`       | shots[1] overwritten with 50; cursor moves to the **next chip** (2) (#921) |
+| E3  | full series, `selectShot(0)`, press `8` | —               | shots[0] = 80; cursor 1 (the next chip, though filled) (#921)              |
 | E4  | 3 of 5 filled, cursor 3 (empty)         | `backspace`     | shots[2] cleared; cursor 2                                                 |
 | E5  | cursor on a filled chip (after E1)      | `backspace`     | that chip is cleared; cursor stays on it                                   |
 | E6  | empty series, cursor 0                  | `backspace`     | state unchanged                                                            |
 | E7  | `selectShot(-1)` / `selectShot(len)`    | —               | throws `RangeError`                                                        |
-| E8  | any completed entry                     | —               | invariant: cursor === index of first empty chip, or `seriesLength` if full |
+| E8  | value committed at chip i               | —               | cursor i + 1; past the last chip, the first empty chip or `seriesLength`   |
 
 ### 3.7 Construction and errors
 
@@ -192,7 +192,9 @@ ring × 10 + tenth`, so the range is 0–109 exactly as §3 of the plan requires
 - **P2** `seriesTotalTenths(state) === sum(enteredShots(state).valueTenths)`
   after any key sequence.
 - **P3** `enteredShots(state).length <= seriesLength` always, and
-  `cursor === firstEmptyIndex ?? seriesLength` always (E8).
+  `cursor === firstEmptyIndex ?? seriesLength` for any key sequence without
+  `selectShot`; with it, `cursor === seriesLength` only when the series is
+  full (P3b, #921; full rows in `921-keypad-next-chip-spec.md`).
 - **P4** Integer mode round-trip: for any digit sequence, the state after
   applying it equals the state built by seeding those shots directly.
 - **P5** `pressKey` never mutates its input (structural equality of a deep
