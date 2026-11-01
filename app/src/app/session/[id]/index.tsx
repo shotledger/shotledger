@@ -440,17 +440,6 @@ export default function SessionDetailScreen() {
       </Pressable>
     );
 
-    // A fixed-format program pre-creates its series to match the match
-    // structure (§6.3) — removing one would leave that structure incomplete,
-    // so swipe-to-delete is offered only for freely-added series.
-    if (detail.isFixedFormat) {
-      return (
-        <View key={row.id} style={[styles.seriesWrapper, held && styles.liftedWrapper]}>
-          <GestureDetector gesture={Gesture.Simultaneous(lift, drag)}>{content}</GestureDetector>
-        </View>
-      );
-    }
-
     return (
       <Swipeable
         key={row.id}
