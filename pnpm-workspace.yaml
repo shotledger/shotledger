@@ -62,7 +62,7 @@ patchedDependencies:
   # fraction on a device and the locks sample other pixels than in Node.
   react-native-fast-opencv@1.0.1: patches/react-native-fast-opencv@1.0.1.patch
 overrides:
-  qs: 6.16.1
+  qs: 6.17.1
   decode-uri-component: 0.5.1
   uuid: 14.0.3
   esbuild: 0.28.2
