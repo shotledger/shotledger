@@ -1,7 +1,8 @@
 # Ditt konto på webben
 
 Om du använder synk kan du nå ditt konto och dina pass från vilken
-webbläsare som helst med ShotLedgers webbapp, även när telefonen är
+webbläsare som helst med ShotLedgers webbapp på
+<https://web.shotledger.app>, även när telefonen är
 borttappad eller trasig. Den läser det som synken redan har sparat och ändrar
 bara det som telefonen själv kan ändra: ett pass du
 [skriver in](entering-series-on-the-web.md),
@@ -129,8 +130,8 @@ Logga in med den genom att välja **Logga in med nyckel** på
 inloggningssidan. Där webbläsaren stöder det erbjuds nyckeln också när du
 klickar i e-postfältet.
 
-Nycklar fungerar bara på ShotLedgers riktiga webbadress, över en säker
-anslutning.
+Nycklar fungerar bara på ShotLedgers riktiga webbadress,
+`https://web.shotledger.app`, över en säker anslutning.
 
 Telefonappen använder samma nycklar. Öppna **Inställningar** > **Konto och
 synk** i telefonen. Utloggad loggar **Logga in med nyckel** under

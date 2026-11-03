@@ -1,7 +1,8 @@
 # Your account on the web
 
-If you use sync, the ShotLedger web app lets you reach your account and your
-sessions from any browser, including when your phone is lost or broken. It
+If you use sync, the ShotLedger web app at
+<https://web.shotledger.app> lets you reach your account and your sessions
+from any browser, including when your phone is lost or broken. It
 reads what sync has already stored, and changes only what the phone could
 change itself: a session you
 [type in](entering-series-on-the-web.md),
@@ -128,8 +129,8 @@ To sign in with it, choose **Sign In with a Passkey** on the sign-in page.
 Where the browser supports it, your passkey is also offered when you click
 the email field.
 
-Passkeys work only on the real ShotLedger web address, over a secure
-connection.
+Passkeys work only on the real ShotLedger web address,
+`https://web.shotledger.app`, over a secure connection.
 
 The phone app uses the same passkeys. On the phone, open **Settings** >
 **Account & Sync**. Signed out, **Sign In with a Passkey** under the password
