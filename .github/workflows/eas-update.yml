@@ -110,9 +110,9 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v6.1.0
+      - uses: pnpm/action-setup@v6.1.1
         with:
-          version: 12.16.1
+          version: 12.18.0
 
       - uses: actions/setup-node@v7.1.0
         with:
@@ -141,7 +141,7 @@ jobs:
 
       - uses: expo/expo-github-action@9.0.0
         with:
-          eas-version: 27.4.1
+          eas-version: 27.7.2
           token: ${{ secrets.EXPO_TOKEN }}
 
       # Android only, like the release workflow; add ios once iOS builds ship.
