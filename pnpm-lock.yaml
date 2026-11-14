@@ -343,8 +343,8 @@ importers:
         specifier: ~57.0.2
         version: 57.0.3(expo@57.0.26)(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.2.3)(supports-color@10.2.2))
       i18next:
-        specifier: 26.5.11
-        version: 26.5.11(@typescript/typescript6@6.0.2)
+        specifier: 27.0.0
+        version: 27.0.0(@typescript/typescript6@6.0.2)
       react:
         specifier: 19.2.3
         version: 19.2.3
@@ -353,7 +353,7 @@ importers:
         version: 19.2.3(react@19.2.3)
       react-i18next:
         specifier: 17.1.9
-        version: 17.1.9(@typescript/typescript6@6.0.2)(i18next@26.5.11(@typescript/typescript6@6.0.2))(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
+        version: 17.1.9(@typescript/typescript6@6.0.2)(i18next@27.0.0(@typescript/typescript6@6.0.2))(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
       react-native:
         specifier: 0.86.3
         version: 0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.2.3)(supports-color@10.2.2)
@@ -493,8 +493,8 @@ importers:
         specifier: 14.0.0
         version: 14.0.0
       i18next:
-        specifier: 26.5.11
-        version: 26.5.11(@typescript/typescript6@6.0.2)
+        specifier: 27.0.0
+        version: 27.0.0(@typescript/typescript6@6.0.2)
       react:
         specifier: 19.2.3
         version: 19.2.3
@@ -503,7 +503,7 @@ importers:
         version: 19.2.3(react@19.2.3)
       react-i18next:
         specifier: 17.1.9
-        version: 17.1.9(@typescript/typescript6@6.0.2)(i18next@26.5.11(@typescript/typescript6@6.0.2))(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.2.3)(supports-color@10.2.2))(@types/react@19.3.0)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
+        version: 17.1.9(@typescript/typescript6@6.0.2)(i18next@27.0.0(@typescript/typescript6@6.0.2))(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.2.3)(supports-color@10.2.2))(@types/react@19.3.0)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
       uuidv7:
         specifier: 1.2.1
         version: 1.2.1
@@ -4987,8 +4987,9 @@ packages:
   hyphenate-style-name@1.1.0:
     resolution: {integrity: sha512-WDC/ui2VVRrz3jOVi+XtjqkDjiVjTtFaAGiW37k6b+ohyQ5wYDOGkvCZa8+H0nx3gyvv0+BST9xuOgIyGQ00gw==}
 
-  i18next@26.5.11:
-    resolution: {integrity: sha512-Wc0klBPKxqZ2tL2qdAnF8xvvnWgr1IMGSY2ikTiAvaFVbz7xiFARtkoU4RidBDw1SyziGROp0qxu6qnJ7l2Wug==}
+  i18next@27.0.0:
+    resolution: {integrity: sha512-lCP39wHw2s0MZLyNXNvVEVhSRx3STHXB7XUbyS5qVabE3b+SSqFM/Ffb6HIygeKjYrMAwRV2qDShBQRba/DvAQ==}
+    engines: {node: '>=22'}
     peerDependencies:
       typescript: ^5 || ^6 || ^7
     peerDependenciesMeta:
@@ -12255,7 +12256,7 @@ snapshots:
 
   hyphenate-style-name@1.1.0: {}
 
-  i18next@26.5.11(@typescript/typescript6@6.0.2):
+  i18next@27.0.0(@typescript/typescript6@6.0.2):
     optionalDependencies:
       typescript: '@typescript/typescript6@6.0.2'
 
@@ -13994,11 +13995,11 @@ snapshots:
     dependencies:
       react: 19.2.3
 
-  react-i18next@17.1.9(@typescript/typescript6@6.0.2)(i18next@26.5.11(@typescript/typescript6@6.0.2))(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3):
+  react-i18next@17.1.9(@typescript/typescript6@6.0.2)(i18next@27.0.0(@typescript/typescript6@6.0.2))(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3):
     dependencies:
       '@babel/runtime': 7.29.7
       html-parse-stringify: 4.0.1
-      i18next: 26.5.11(@typescript/typescript6@6.0.2)
+      i18next: 27.0.0(@typescript/typescript6@6.0.2)
       react: 19.2.3
       use-sync-external-store: 1.7.0(react@19.2.3)
     optionalDependencies:
@@ -14006,11 +14007,11 @@ snapshots:
       react-native: 0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.2.3)(supports-color@10.2.2)
       typescript: '@typescript/typescript6@6.0.2'
 
-  react-i18next@17.1.9(@typescript/typescript6@6.0.2)(i18next@26.5.11(@typescript/typescript6@6.0.2))(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.2.3)(supports-color@10.2.2))(@types/react@19.3.0)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3):
+  react-i18next@17.1.9(@typescript/typescript6@6.0.2)(i18next@27.0.0(@typescript/typescript6@6.0.2))(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.2.3)(supports-color@10.2.2))(@types/react@19.3.0)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3):
     dependencies:
       '@babel/runtime': 7.29.7
       html-parse-stringify: 4.0.1
-      i18next: 26.5.11(@typescript/typescript6@6.0.2)
+      i18next: 27.0.0(@typescript/typescript6@6.0.2)
       react: 19.2.3
       use-sync-external-store: 1.7.0(react@19.2.3)
     optionalDependencies:

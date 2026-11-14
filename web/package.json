@@ -11,7 +11,7 @@
   "dependencies": {
     "@shotledger/shared": "workspace:*",
     "@simplewebauthn/browser": "14.0.0",
-    "i18next": "26.5.11",
+    "i18next": "27.0.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-i18next": "17.1.9",
