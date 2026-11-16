@@ -5,7 +5,7 @@
   },
   "build": {
     "base": {
-      "node": "26.13.0"
+      "node": "26.13.1"
     },
     "simulator": {
       "extends": "base",
