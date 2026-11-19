@@ -11,7 +11,7 @@ and Swedish license compliance (FAP 551-3). Works offline; no account
 required. Android first.
 
 **The manual** (English and Swedish) is at
-<https://shotledger.github.io/shotledger/>.
+<https://docs.shotledger.app/>.
 
 ## Features
 
@@ -53,7 +53,7 @@ Not released yet. ShotLedger is not in Google Play.
 
 Your logbook lives on your phone. No account is needed, and nothing leaves
 the phone unless you turn on a feature that sends it, such as sync. The
-manual's [Your data and privacy](https://shotledger.github.io/shotledger/reference/privacy/)
+manual's [Your data and privacy](https://docs.shotledger.app/reference/privacy/)
 lists each one. The app is free; donations unlock nothing.
 
 ## License
