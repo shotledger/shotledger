@@ -1,28 +1,14 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 #
-# CodeRabbit settings for this repository. The rules themselves live in
-# AGENTS.md, which CodeRabbit reads; the path instructions below only point
-# the review at the ones that matter for each path.
-# Docs: https://docs.coderabbit.ai/reference/configuration
+# Repository rules on top of the org defaults in shotledger/coderabbit.
+# `inheritance: true` keeps those defaults; without it this file replaces them.
+# The rules themselves live in AGENTS.md, which CodeRabbit reads; the path
+# instructions below only point the review at the ones that matter per path.
 
-language: en-US
-early_access: false
+inheritance: true
 
 reviews:
-  profile: chill
-  # Keep the summary in the walkthrough comment; never rewrite the PR body.
-  high_level_summary: true
-  high_level_summary_in_walkthrough: true
-  poem: false
-  auto_review:
-    enabled: true
-    drafts: false
-    # Dependency bots: CI and the required checks gate these, not a review.
-    ignore_usernames:
-      - renovate[bot]
-      - dependabot[bot]
   path_filters:
-    - '!pnpm-lock.yaml'
     # Generated: checked by `pnpm licenses:check` and `pnpm schema:check`.
     - '!app/src/constants/licenses.json'
     - '!docs/manual/reference/**/sessions-export.schema.json'
@@ -99,6 +85,3 @@ reviews:
       instructions: >-
         User manual: plain language for shooters, not developers. Check it
         matches the behavior the PR changes.
-
-chat:
-  auto_reply: true
