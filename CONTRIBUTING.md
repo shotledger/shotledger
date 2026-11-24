@@ -155,8 +155,7 @@ the first run after a switch starts with a cold cache.
 - CodeRabbit reviews every pull request once it is ready for review (not
   drafts; comment `@coderabbitai review` to ask for one). Its approval does
   not count toward the required review, and each of its comments must be
-  resolved before merge. Org defaults live in `shotledger/coderabbit`; this
-  repository's rules are in `.coderabbit.yaml`.
+  resolved before merge. Its settings are in `.coderabbit.yaml`.
 
 `AGENTS.md` (with the `CLAUDE.md` in `app/`, `shared/`, `backend/` and
 `docs/`) is the full set of rules; it applies to human contributors just as
