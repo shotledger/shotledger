@@ -152,9 +152,9 @@ the first run after a switch starts with a cold cache.
   read from the rule books cited in `docs/reference/` and never guessed.
 - A change that alters what a user sees updates `docs/manual/` in the same
   pull request.
-- CodeRabbit reviews every pull request once it is ready for review, except
-  drafts and Renovate or Dependabot pull requests, which CI and the required
-  checks gate. Comment `@coderabbitai review` to ask for one. Its approval
+- CodeRabbit reviews every pull request, drafts included, except Renovate
+  and Dependabot pull requests, which CI and the required checks gate.
+  Comment `@coderabbitai review` to ask for a fresh review. Its approval
   does not count toward the required review, and each of its comments must
   be resolved before merge. Org defaults live in `shotledger/coderabbit`;
   this repository's rules are in `.coderabbit.yaml`.
