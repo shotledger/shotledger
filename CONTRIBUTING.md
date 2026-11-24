@@ -152,6 +152,12 @@ the first run after a switch starts with a cold cache.
   read from the rule books cited in `docs/reference/` and never guessed.
 - A change that alters what a user sees updates `docs/manual/` in the same
   pull request.
+- CodeRabbit reviews every pull request once it is ready for review (not
+  drafts, and not Renovate or Dependabot pull requests, which CI and the
+  required checks gate; comment `@coderabbitai review` to ask for one). Its approval does
+  not count toward the required review, and each of its comments must be
+  resolved before merge. Org defaults live in `shotledger/coderabbit`; this
+  repository's rules are in `.coderabbit.yaml`.
 
 `AGENTS.md` (with the `CLAUDE.md` in `app/`, `shared/`, `backend/` and
 `docs/`) is the full set of rules; it applies to human contributors just as

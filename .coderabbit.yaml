@@ -1,0 +1,87 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# Repository rules on top of the org defaults in shotledger/coderabbit.
+# `inheritance: true` keeps those defaults; without it this file replaces them.
+# The rules themselves live in AGENTS.md, which CodeRabbit reads; the path
+# instructions below only point the review at the ones that matter per path.
+
+inheritance: true
+
+reviews:
+  path_filters:
+    # Generated: checked by `pnpm licenses:check` and `pnpm schema:check`.
+    - '!app/src/constants/licenses.json'
+    - '!docs/manual/reference/**/sessions-export.schema.json'
+    - '!app/src/db/migrations/meta/**'
+    # Vendored byte-for-byte from upstream; never edited here.
+    - '!.claude/skills/old-coder/**'
+  path_instructions:
+    - path: '**'
+      instructions: >-
+        Flag anything that looks like real personal data: names, license
+        numbers, shooter or card ids, real exports or photos. Fixtures must be
+        synthetic. Flag a new dependency in any package.json that the PR body
+        does not justify.
+    - path: 'shared/src/scoring/**'
+      instructions: >-
+        Evidence-first code. Every regulatory or scoring value must trace to a
+        cited section in docs/reference/ or REGULATIONS.md; flag any value
+        without a citation, and never suggest a value yourself. Flag a weakened
+        or deleted test. Check that a change of behavior updates the matching
+        spec or reference file in the same PR.
+    - path: 'shared/src/compliance/**'
+      instructions: >-
+        Evidence-first code. Every regulatory or scoring value must trace to a
+        cited section in docs/reference/ or REGULATIONS.md; flag any value
+        without a citation, and never suggest a value yourself. Flag a weakened
+        or deleted test. Check that a change of behavior updates the matching
+        spec or reference file in the same PR.
+    - path: 'shared/src/regulations/**'
+      instructions: >-
+        Evidence-first code. Every regulatory or scoring value must trace to a
+        cited section in docs/reference/ or REGULATIONS.md; flag any value
+        without a citation, and never suggest a value yourself. Flag a weakened
+        or deleted test. Check that a change of behavior updates the matching
+        spec or reference file in the same PR.
+    - path: 'shared/src/sync/**'
+      instructions: >-
+        Evidence-first code. Every regulatory or scoring value must trace to a
+        cited section in docs/reference/ or REGULATIONS.md; flag any value
+        without a citation, and never suggest a value yourself. Flag a weakened
+        or deleted test. Check that a change of behavior updates the matching
+        spec or reference file in the same PR.
+    - path: 'shared/src/sync-client/**'
+      instructions: >-
+        Evidence-first code. Every regulatory or scoring value must trace to a
+        cited section in docs/reference/ or REGULATIONS.md; flag any value
+        without a citation, and never suggest a value yourself. Flag a weakened
+        or deleted test. Check that a change of behavior updates the matching
+        spec or reference file in the same PR.
+    - path: 'app/src/**'
+      instructions: >-
+        All UI strings go through i18n (app/src/i18n/en.json and sv.json), never
+        hard-coded. No Android-only native modules; platform differences belong
+        behind wrappers in app/src/platform/. Code must stay iOS-compatible.
+    - path: 'app/src/i18n/*.json'
+      instructions: >-
+        en.json and sv.json must have the same keys. English titles, headers,
+        field, tab and button labels are Title Case; English body text, help
+        text and placeholders are sentence case. Swedish is sentence case
+        throughout.
+    - path: 'app/src/db/migrations/**'
+      instructions: >-
+        Migrations are append-only: flag any edit to a migration that already
+        exists on main. A schema change needs a new migration.
+    - path: 'backend/migrations/**'
+      instructions: >-
+        Migrations are append-only: flag any edit to a migration that already
+        exists on main. A schema change needs a new migration.
+    - path: 'web/**'
+      instructions: >-
+        The web app must do what the phone app does: same fields, rules and
+        limits, no web-only ability. Point out behavior that differs from the
+        phone code in app/src/.
+    - path: 'docs/manual/**'
+      instructions: >-
+        User manual: plain language for shooters, not developers. Check it
+        matches the behavior the PR changes.
