@@ -10,7 +10,8 @@ gate (`shared/CLAUDE.md`).
 **Revision 2.2 (2026-11-25), from review.** FK7 keeps an existing pending
 entry (a newer pulled version) rather than overwriting it with the older
 local row, and states that it runs with foreign keys off, so a parent with a
-kept child is still moved.
+kept child is still moved. AP6 also drops a row's pending entry when the push
+of its queued edit is acknowledged, so promotion cannot revert the edit.
 
 **Revision 2.1 (2026-11-25), after approval.** From review: FK7 must not
 move a row with a queued local change, or the push loses the edit. FK7, AP6
@@ -139,6 +140,11 @@ Client-only, like `sync_outbox`: no outbox trigger, not synced, emptied by
   it (the push reads the row from its table, so it is there to send). No
   other pending entry can have an outbox entry: a row that is only pending
   has no local copy to edit, and FK7 never moves a row with a queued change.
+  The same holds after the push: acknowledging the outbox entry deletes the
+  row's pending entry in the same transaction, whatever the outcome
+  (Revision 2.2, from review). The push sent the newer local version, so
+  promoting the older pulled one later would revert the edit; a refusal that
+  returns the server's current row applies it through AP1 to AP4 as before.
 - **AP7** `defer_foreign_keys` stays on in the apply transaction. A
   violation at commit (a case AP1 missed) rolls back the whole batch, as
   today; tests prove none of the scenarios reach it.

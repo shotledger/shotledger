@@ -55,10 +55,14 @@ every update over an existing install fail and left clearing the app's data as
 the only way out (#913).
 
 **Foreign keys are enforced.** SQLite foreign keys are on for every app
-connection: a row can never point at a parent that does not exist. A
-connection opens with them off so migrations can rebuild tables; the
-migration gate then moves any dangling row aside (`foreign_key_check`), turns
-them on and reads the setting back, and the app stops if it reads off. Sync
+connection: once they are on, no write can leave a row pointing at a parent
+that does not exist. A connection opens with them off so migrations can
+rebuild tables; the migration gate then moves dangling synced rows aside
+(`foreign_key_check`), turns them on and reads the setting back, and the app
+stops if it reads off. Two kinds of existing dangling row stay where they
+are: one with a queued local change (moved at a later open, once its push is
+acknowledged) and one in a table that does not sync (`shot_marks`,
+`training_samples`), which has no pending form. Sync
 can pull a child before its parent, or one whose parent never arrives (a
 refused parent deleted elsewhere, a discarded change); such a row waits in
 `sync_pending_rows` and moves into its table, in the same transaction, once
