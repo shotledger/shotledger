@@ -107,7 +107,8 @@ first, then the fix:
 - a refused session whose `started_at` isn't a date leaves the date out of
   its title instead of crashing the list (CTX-NODATE);
 - on the web, a discard whose reload failed says "Reload the page to see the
-  changes." instead of showing the old list as if nothing happened.
+  changes." and offers no further Discard from the stale page, instead of
+  showing the old list as if nothing happened.
 
 ## 5. Must NOT
 

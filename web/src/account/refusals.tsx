@@ -43,7 +43,8 @@ export function discardStep(
   const stay = { state, send: null };
   switch (event.type) {
     case 'ask':
-      return state.step === 'idle' || state.step === 'failed' || state.step === 'reload'
+      // After a discard whose reload failed the page is stale: reload first.
+      return state.step === 'idle' || state.step === 'failed'
         ? { state: { step: 'asking', key: event.key }, send: null }
         : stay;
     case 'cancel':
@@ -140,7 +141,12 @@ export function Refusals({
                   <button
                     type="button"
                     className="destructive small"
-                    disabled={!online || state.step === 'working' || state.step === 'asking'}
+                    disabled={
+                      !online ||
+                      state.step === 'working' ||
+                      state.step === 'asking' ||
+                      state.step === 'reload'
+                    }
                     onClick={() => onEvent({ type: 'ask', key })}
                   >
                     {t('account.refusal.discard')}

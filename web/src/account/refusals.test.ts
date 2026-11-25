@@ -107,6 +107,7 @@ describe('Refusals (web)', () => {
       }),
     );
     expect(html).toContain(i18next.t('web.bulk.reload'));
+    expect(html).not.toMatch(/<button(?![^>]*disabled="")[^>]*>Discard</);
     const idle = renderToStaticMarkup(
       createElement(Refusals, {
         tables: tables as unknown as PulledAccount,
@@ -173,7 +174,7 @@ describe('discardStep', () => {
     ).toEqual({ state: asking, send: null });
   });
 
-  it('a discard whose reload failed asks for a page reload; any row can be asked again', () => {
+  it('a discard whose reload failed asks for a page reload, and offers nothing more', () => {
     const working: DiscardState = { step: 'working', key: 'shots:t2' };
     const done = discardStep(working, {
       type: 'done',
@@ -181,9 +182,10 @@ describe('discardStep', () => {
       refreshed: false,
     });
     expect(done).toEqual({ state: { step: 'reload' }, send: null });
-    expect(discardStep(done.state, { type: 'ask', key: 'licenses:l1' }).state).toEqual({
-      step: 'asking',
-      key: 'licenses:l1',
+    // The page shows a stale pull: nothing more is discarded from it.
+    expect(discardStep(done.state, { type: 'ask', key: 'shots:t2' })).toEqual({
+      state: { step: 'reload' },
+      send: null,
     });
   });
 
