@@ -866,6 +866,25 @@ describe('applyDiscard', () => {
     expect(await store.readMarks()).toEqual([invalidMark(id, 9)]);
   });
 
+  it('COUNTER discarding a session moves no firearm round count', async () => {
+    const firearmId = createFirearm(db, { make: 'Pardini', model: 'SP' }).id;
+    db.update(firearms).set({ roundCount: 120 }).where(eq(firearms.id, firearmId)).run();
+    const sessionId = createSession(db, {
+      name: 'S',
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      startedAt: NOW,
+      firearmId,
+    }).id;
+    const before = db.select().from(firearms).where(eq(firearms.id, firearmId)).get()!.roundCount;
+    db.delete(syncOutbox).run();
+    await store.applyChanges([], [{ ...invalidMark(sessionId, 3), tableName: 'sessions' }]);
+    await store.applyDiscard({ tableName: 'sessions', rowId: sessionId }, NOW, 7);
+    const after = db.select().from(firearms).where(eq(firearms.id, firearmId)).get()!;
+    expect(after.roundCount).toBe(before);
+    expect(outboxRows()).toEqual([]);
+  });
+
   it('GONE a row this device never held: no row appears, the mark goes', async () => {
     await store.applyChanges([], [invalidMark('f-elsewhere', 3)]);
     await store.applyDiscard({ tableName: 'firearms', rowId: 'f-elsewhere' }, NOW, 3);
