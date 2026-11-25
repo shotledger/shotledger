@@ -1,98 +1,201 @@
-# SPEC — the phone pins SQLite foreign keys off and checks it
+# SPEC — the phone enforces SQLite foreign keys; sync holds orphans aside
 
 Source: the open item from the #856 sync review (Revision 4, item 6, in
 [`sync-family-refusal-evidence.md`](./sync-family-refusal-evidence.md)):
 "The production `PRAGMA foreign_keys` read in a dev build was not made."
 
-**Tier 3**: the sync engine's apply path (`shared/CLAUDE.md`).
+**Tier 3**: the sync engine's apply path, the local schema and the migration
+gate (`shared/CLAUDE.md`).
+
+**Revision 2 (2026-11-25).** Revision 1 pinned foreign keys **off** so that
+§11.6's orphan apply kept working. The maintainer chose foreign keys **on**
+for data consistency. This revision replaces it. Revision 1's code is on the
+branch's history (`1f4d189`) and is reverted by this one.
 
 ## 1. Current state
 
+- Nothing sets the pragma. `app/src/db/client.ts` and `client.web.ts` open
+  the database as SQLite builds it: foreign keys off (expo-sqlite 57.0.3 sets
+  no `SQLITE_DEFAULT_FOREIGN_KEYS`; the web preview's wa-sqlite read `0`).
+- The schema declares 14 foreign keys (`0000_baseline.sql`), all
+  `ON DELETE no action`. With enforcement off they document intent only. A
+  row can point at a parent that does not exist and nothing notices.
+- The tests already run with foreign keys **on** (`createTestDb`), so every
+  local query the suite reaches works under enforcement. Production is the
+  odd one out.
 - §11.6 of [`sync-family-refusal-spec.md`](./sync-family-refusal-spec.md)
-  decided that the phone applies a pulled child whose parent it does not
-  hold (H7′, ROOT, DISCARD), as the server does (N5). That works only while
-  SQLite foreign keys are **off** on the connection sync writes through.
-- Nothing sets them. `app/src/db/client.ts` and `app/src/db/client.web.ts`
-  open the database and set no pragma. Off holds only because expo-sqlite
-  57.0.3 builds SQLite without `SQLITE_DEFAULT_FOREIGN_KEYS`
-  (`android/build.gradle`, `ios/ExpoSQLite.podspec`). The web preview's
-  wa-sqlite build ships as WASM; its flags were never checked.
-- No build has ever read `PRAGMA foreign_keys`.
-- If foreign keys were on (an expo-sqlite upgrade that changes its flags, a
-  SQLite build that defaults them on, a future pragma), the orphan apply
-  fails at `COMMIT`, because `applyRows` defers the check
-  (`PRAGMA defer_foreign_keys = ON`). The whole pull page rolls back, the
-  cursor does not move, and every retry fails the same way: sync stalls with
-  no change the user can make to unstick it.
+  relies on enforcement being off. A pull can bring a child whose parent this
+  device will never hold:
+  - **ROOT / H7′**: the parent was refused, never stored, then deleted on
+    another device. The device pulls a tombstone for a row it never had (a
+    no-op) and the children, applied under it (N5).
+  - **DISCARD** (#943): the parent is discarded on the device that holds it;
+    every other device gets its children only.
+  - **Out of order**: a child pushed before its parent by a slow device
+    arrives a cycle earlier than the parent.
 
 ## 2. The rule
 
-Every connection the app's data goes through **sets foreign keys off
-itself and reads the setting back**. A read that is not `0` stops the app at
-open with an error naming §11.6, before any screen or sync runs. The app no
-longer depends on a compile default it does not control, and every launch
-makes the read the review asked for.
+1. **Every app connection runs with foreign keys on**, set and read back at
+   open. A read that is not `1` stops the app at open.
+2. **A pulled row whose parent this device does not hold is not written to
+   its table.** It goes to a new bookkeeping table, `sync_pending_rows`,
+   and is promoted into its table, in the same transaction, as soon as every
+   parent it names is there.
+3. **The database never holds a dangling reference.** `foreign_key_check`
+   runs after migrations at every open; any row it reports is moved aside the
+   same way.
 
-Foreign keys are **not** turned on. That would undo §11.6 and N5 and needs
-another way to hold orphans; it is out of scope here.
+What the user sees does not change: an orphan was never visible (the screens
+reach rows through their session or firearm), and a pending row is not
+either. When its parent arrives, both show.
 
-## 3. Behaviors
+### Why this route
 
-One module, `app/src/db/foreign-keys.ts`:
+| Option                                             | Verdict                                                                                                                                                                                    |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Parent-first ordering only                         | **Rejected.** Already in place (`APPLY_ORDER`). It cannot help when the parent never arrives (ROOT, DISCARD) or arrives a cycle later.                                                     |
+| `defer_foreign_keys` in the pull transaction only  | **Rejected as the fix, kept as a guard.** Already in place. It covers a parent later in the same transaction; any parent that never comes fails the commit and stalls sync on every retry. |
+| `DEFERRABLE INITIALLY DEFERRED` on the schema      | **Rejected.** Same limit as the pragma, and SQLite can only add it by rebuilding all 10 child tables.                                                                                      |
+| Placeholder parent rows                            | **Rejected.** Parents have NOT NULL columns with no honest value, and a placeholder session would show in lists and counts.                                                                |
+| Drop orphans                                       | **Rejected.** Loses the out-of-order case: the parent does arrive later and its children must be there.                                                                                    |
+| **Pending table, promoted when the parent exists** | **Chosen.** Enforcement holds everywhere, no data is dropped, out-of-order and never-arriving parents both work, and the server and wire format are unchanged.                             |
 
-- **FK1** `checkForeignKeysOff(row)`: pure. `{ foreign_keys: 0 }` passes.
-  `{ foreign_keys: 1 }` throws
-  `Error('SQLite foreign keys are on; sync needs them off (docs/specs/sync-family-refusal-spec.md §11.6)')`.
-  `null` (no row: a build with `SQLITE_OMIT_FOREIGN_KEY`, where they cannot
-  be on) passes. Any other shape throws the same error (fail closed).
-- **FK2** `pinForeignKeysOffSync(conn)`: runs `PRAGMA foreign_keys = OFF`,
-  then `checkForeignKeysOff(conn.getFirstSync('PRAGMA foreign_keys'))`.
-- **FK3** `pinForeignKeysOffAsync(conn)`: the same with `execAsync` and
-  `getFirstAsync`, for the web connection, which opens async.
-- **FK4** `client.ts` calls FK2 on the connection right after
-  `openDatabaseSync`, before `drizzle(...)`.
-- **FK5** `client.web.ts`'s `openWebDatabase` calls FK3 once, right after
-  `openDatabaseAsync`, before resolving.
-- **FK6** End to end on better-sqlite3 (which turns foreign keys **on** by
-  default): a connection with foreign keys on, pinned by FK2, then reads `0`
-  and applies the H7′ orphan through `createSyncStore(...).applyChanges`.
-  Without the pin the same apply throws `FOREIGN KEY` (the existing pin
-  test).
+Foreign keys add **integrity, not security**: they stop a row from pointing
+at nothing (a bug, a bad sync payload), so every screen and export can trust
+the joins. They do not protect against an attacker; the device's data is
+the user's own.
 
-## 4. Must not change
+## 3. Schema
 
-- **N1** `createTestDb()` keeps foreign keys on by default, so every
-  existing test still checks parents-first ordering; `{ foreignKeys: false }`
-  stays the production-like option.
-- **N2** `applyChangesSync` / `applyRows` unchanged, including
-  `defer_foreign_keys`.
-- **N3** No schema change, no migration, no new dependency, no UI string.
-- **N4** The two short-lived connections in `app/src/platform/backup-fs.ts`
-  (the `VACUUM INTO` copy and the restore's migrate-and-reset) are left
-  alone: neither applies sync changes, and the app reloads after a restore,
-  so FK4 runs again on the restored file.
-- **N5** Drizzle's migrator runs inside `BEGIN … COMMIT`, where
-  `PRAGMA foreign_keys` is a no-op (SQLite docs), so a generated migration's
-  `PRAGMA foreign_keys=ON` cannot flip the live connection. Recorded, not
-  changed.
+Migration `0001_sync_pending_rows.sql` (appended, Drizzle-generated):
 
-## 5. Evidence plan
+```
+sync_pending_rows(
+  table_name TEXT NOT NULL,
+  row_id     TEXT NOT NULL,
+  payload    TEXT NOT NULL,   -- the ChangeRow, JSON
+  PRIMARY KEY (table_name, row_id)
+)
+```
 
-- Vitest tests in `app/src/db/foreign-keys.test.ts` (FK1–FK3) and `app/src/db/queries/sync-store.test.ts` (FK6); each
-  seen failing first.
-- Changed-line coverage 100% on `foreign-keys.ts` (`vitest --coverage`).
-- Manual mutants (app code is outside Stryker): drop the `= OFF` exec; flip
-  `0` to `1` in the check; treat `null` as failure; make the unknown shape
-  pass; remove the FK2 call from a test's wiring. Each must be killed.
+Client-only, like `sync_outbox`: no outbox trigger, not synced, emptied by
+`resetSyncBookkeeping` and `resetSyncState`, so no backup carries it.
+
+## 4. Behaviors
+
+### Connection (`app/src/db/foreign-keys.ts`)
+
+- **FK1** `checkForeignKeysOn(row)`: `{ foreign_keys: 1 }` passes. `0`, no
+  row (a build without foreign-key support), or any other shape throws
+  `Error('SQLite foreign keys are off; the app needs them on (docs/specs/phone-foreign-keys-spec.md)')`.
+- **FK2** `client.ts` and `client.web.ts` open with foreign keys **off**,
+  so migrations can rebuild tables as SQLite's documented procedure requires
+  (`PRAGMA foreign_keys` is a no-op inside the migrator's transaction).
+- **FK3** The migration gate (`migration-gate.tsx`, `.web.tsx`), after
+  migrations succeed: runs the **sweep** (FK7), then
+  `PRAGMA foreign_keys = ON`, then FK1 on the read-back. Only then does the
+  app render. Any failure shows the gate's existing error screen.
+- **FK4** Restore: the restored connection is migrated with foreign keys off
+  as today; the app reloads, so FK3 runs on the restored file.
+
+### Apply (`app/src/db/queries/sync-store.ts`)
+
+- **AP1** A pulled live row whose every non-null foreign-key column names a
+  row present in its parent table (deleted or not) is written as today.
+  Parents are read from `PRAGMA foreign_key_list`, cached per table.
+- **AP2** A pulled live row with a missing parent is written to
+  `sync_pending_rows` (insert or replace by `(table_name, row_id)`), and
+  its table is not touched. If the row already exists locally (an update that
+  moves it under a parent this device lacks), the local version stays until
+  promotion.
+- **AP3** A pulled tombstone deletes the row's pending entry, then updates
+  the table as today.
+- **AP4** Any pulled row written to its table deletes its pending entry: the
+  newer version wins.
+- **AP5** Promotion: after the batch's rows, in the same transaction,
+  pending entries are retried in `APPLY_ORDER` until a pass promotes
+  nothing. An entry whose parents now exist is written as AP1 and removed.
+  Chains (a shot under a pending series under a pending session) promote in
+  one batch.
+- **AP6** An entry whose row has a queued outbox entry is dropped, not
+  promoted: the local edit is newer and its push returns the row.
+- **AP7** `defer_foreign_keys` stays on in the apply transaction. A
+  violation at commit (a case AP1 missed) rolls back the whole batch, as
+  today; tests prove none of the scenarios reach it.
+
+### Sweep (FK7)
+
+- **FK7** `PRAGMA foreign_key_check` with foreign keys off, after
+  migrations. Each reported row is copied to `sync_pending_rows` as a live
+  `ChangeRow` built from its current columns and deleted from its table. Repeat
+  until the check is empty (deleting a row can orphan its children). One
+  transaction. This is also the one-time move of orphans already on a
+  device from the foreign-keys-off era: no data migration is needed, and it
+  heals any later inconsistency the same way.
+- **FK8** The sweep's count goes to the dev log; no UI.
+
+### §11.6 scenarios, restated
+
+- **H7′ ROOT DISCARD** (`sync-store.test.ts`): the orphan series lands in
+  `sync_pending_rows`, not `series`; the commit succeeds with foreign keys
+  on; sync's cursor moves.
+- **LATE**: the orphan's session arrives in a later pull; both are in their
+  tables after it and the pending table is empty.
+- **CHAIN**: shot, series and session arrive in three pulls in reverse
+  order; all three are in their tables after the third.
+- **STALE**: a pending series, then its tombstone: the entry is gone and
+  `series` is untouched.
+- **NEWER**: a pending version, then a newer version whose parent exists:
+  the newer is written, the entry is gone.
+- **LOCAL**: a pending entry for a row with a queued outbox entry is dropped
+  at promotion; the local row is unchanged.
+
+## 5. Must not change
+
+- **N1** The server, the protocol, the wire format and the web app.
+- **N2** `createTestDb()` keeps foreign keys on; the `{ foreignKeys: false }`
+  option is removed once no test needs it.
+- **N3** Every existing test passes unchanged, except the three §11.6 orphan
+  tests, whose expected table moves from `series` to `sync_pending_rows`
+  (a spec change, recorded here).
+- **N4** Push, outbox triggers and refusal marks unchanged.
+- **N5** No new dependency, no UI string.
+
+## 6. Size and risk
+
+- **Size**: one migration and table, about 150 lines in `sync-store.ts`
+  and `foreign-keys.ts`, the two migration gates, the two reset functions,
+  about 20 tests, and the doc updates (§11.6, `ARCHITECTURE.md` § Local-first,
+  manual unchanged). Roughly one working session.
+- **Risks and their guards**:
+  - _A local write path that breaks under enforcement_: the suite already
+    runs with foreign keys on; plus a web-preview run that loads `/dev`
+    demo data, edits, deletes and syncs.
+  - _A future migration that rebuilds a parent table_: migrations run with
+    enforcement off (FK2), then the sweep and the check (FK3).
+  - _A pending row that never promotes_ (ROOT, DISCARD): it is invisible,
+    bounded by the refused families, and cleared by sign-out or restore.
+  - _An existing row hidden by the sweep_: only a row that points at
+    nothing, which no screen could show anyway.
+
+## 7. Evidence plan
+
+- RED first for every behavior; changed-line coverage 100% on the new code.
+- `scripts/manual-mutation-foreign-keys.mjs` rewritten for the new code:
+  mutants in the parent check, promotion loop, tombstone and newer-version
+  handling, outbox drop, sweep loop and the read-back.
+- A property test (fast-check): any order of a generated session/series/shot
+  family across pulls ends with every row in its table and an empty pending
+  table, and foreign-key-check empty after every pull.
 - `pnpm check` green.
-- **Real execution:** the phone's web preview (wa-sqlite) logs the read
-  before and after the pin once; the result goes in the evidence. An Android
-  dev-build read stays with the maintainer (cloud sessions have no Android
-  SDK), but FK4 makes every launch fail loudly if it ever reads `1`.
+- Real execution: web preview reads `1` after the gate; `/dev` demo data,
+  an edit, a delete and a sync against `wrangler dev`.
 
-## 6. Setup
+## 8. Setup
 
-Branch `bugfix/phone-foreign-keys-pinned-off`. Files: this spec, its evidence
-file, `app/src/db/foreign-keys.ts` and its test, `client.ts`,
-`client.web.ts`, a one-line pointer in §11.6 and in the #856 evidence's
-known limits. No dependency changes.
+Branch `bugfix/phone-foreign-keys-pinned-off` (PR #944), renamed in the PR
+title to say foreign keys are enforced. Files: this spec and its evidence,
+the migration and its snapshot, `schema.ts`, `foreign-keys.ts` and its test,
+`sync-store.ts` and its test, a property test, the two clients and the two
+gates, `ARCHITECTURE.md`, §11.6 pointer. No dependency changes.
