@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { RowRef } from '../sync/family';
 import type { RefusalEntry } from '../sync/protocol';
-import { badRows, badRowTitle, confirmKeys, type RowLookup } from './refusal-list';
+import { badRows, badRowTitle, confirmParts, type RowLookup } from './refusal-list';
 
 const invalid = (tableName: RefusalEntry['tableName'], rowId: string): RefusalEntry => ({
   tableName,
@@ -163,7 +163,7 @@ describe('badRows', () => {
 
 // Both clients word a bad row the same way (rule 11): its title, and the
 // confirm's lines as i18n keys.
-describe('badRowTitle and confirmKeys', () => {
+describe('badRowTitle and confirmParts', () => {
   const base = badRows([invalid('shots', 'T2')], sessionFamily)[0]!;
   const date = (iso: string) => `d(${iso.slice(0, 10)})`;
 
@@ -188,14 +188,8 @@ describe('badRowTitle and confirmKeys', () => {
   });
 
   it('the confirm adds the member or the root line to the body', () => {
-    expect(confirmKeys('member')).toEqual([
-      'account.refusal.confirmBody',
-      'account.refusal.confirmMember',
-    ]);
-    expect(confirmKeys('root')).toEqual([
-      'account.refusal.confirmBody',
-      'account.refusal.confirmRoot',
-    ]);
-    expect(confirmKeys('other')).toEqual(['account.refusal.confirmBody']);
+    expect(confirmParts('member')).toEqual(['body', 'member']);
+    expect(confirmParts('root')).toEqual(['body', 'root']);
+    expect(confirmParts('other')).toEqual(['body']);
   });
 });

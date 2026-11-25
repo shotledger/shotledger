@@ -79,7 +79,7 @@ describe('RefusedChanges', () => {
   it('confirms before discarding a session member, naming what happens to the rest', async () => {
     const onDiscard = jest.fn();
     await renderWithProviders(<RefusedChanges rows={[shot]} onDiscard={onDiscard} />);
-    fireEvent.press(screen.getByTestId('refused-discard-shots-T2'));
+    await fireEvent.press(screen.getByTestId('refused-discard-shots-T2'));
     expect(onDiscard).not.toHaveBeenCalled();
     expect(alert).toHaveBeenCalledWith(
       'Discard Refused Change?',
@@ -92,7 +92,7 @@ describe('RefusedChanges', () => {
 
   it('a root says everything that belongs to it goes too', async () => {
     await renderWithProviders(<RefusedChanges rows={[session]} onDiscard={jest.fn()} />);
-    fireEvent.press(screen.getByTestId('refused-discard-sessions-S1'));
+    await fireEvent.press(screen.getByTestId('refused-discard-sessions-S1'));
     expect(alert.mock.calls.at(-1)![1]).toMatch(
       /\n\nEverything that belongs to it is deleted with it\.$/,
     );
@@ -100,7 +100,7 @@ describe('RefusedChanges', () => {
 
   it('a row of no session and no root adds nothing to the confirm', async () => {
     await renderWithProviders(<RefusedChanges rows={[lost]} onDiscard={jest.fn()} />);
-    fireEvent.press(screen.getByTestId('refused-discard-licenses-L1'));
+    await fireEvent.press(screen.getByTestId('refused-discard-licenses-L1'));
     expect(alert.mock.calls.at(-1)![1]).toBe(
       'This deletes the refused change on all your devices, and any older version the server stores.',
     );
@@ -109,7 +109,7 @@ describe('RefusedChanges', () => {
   it('CANCEL cancelling sends nothing', async () => {
     const onDiscard = jest.fn();
     await renderWithProviders(<RefusedChanges rows={[shot]} onDiscard={onDiscard} />);
-    fireEvent.press(screen.getByTestId('refused-discard-shots-T2'));
+    await fireEvent.press(screen.getByTestId('refused-discard-shots-T2'));
     lastButtons()
       .find((b) => b.style === 'cancel')
       ?.onPress?.();

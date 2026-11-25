@@ -92,11 +92,10 @@ export function badRowTitle(row: BadRow, kind: string, date: (iso: string) => st
   return label === '' ? kind : `${kind} · ${label}`;
 }
 
-/** The confirm's paragraphs, as i18n keys (spec §2.3): the body, then what
- *  becomes of the rest of the family. */
-export function confirmKeys(role: BadRow['role']): string[] {
-  const body = 'account.refusal.confirmBody';
-  if (role === 'member') return [body, 'account.refusal.confirmMember'];
-  if (role === 'root') return [body, 'account.refusal.confirmRoot'];
-  return [body];
+/** The confirm's paragraphs (spec §2.3): the body, then what becomes of the
+ *  rest of the family. Each client maps a part to its own literal i18n key. */
+export type ConfirmPart = 'body' | 'member' | 'root';
+
+export function confirmParts(role: BadRow['role']): ConfirmPart[] {
+  return role === 'other' ? ['body'] : ['body', role];
 }

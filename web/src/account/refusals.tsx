@@ -9,14 +9,22 @@ import type { DiscardOutcome } from '@shotledger/shared/src/sync-client/discard'
 import {
   badRows,
   badRowTitle,
-  confirmKeys,
+  confirmParts,
   type BadRow,
+  type ConfirmPart,
 } from '@shotledger/shared/src/sync-client/refusal-list';
 import { countMarks, marksFromRefusals, rowKey } from '@shotledger/shared/src/sync-client/shadow';
 import type { RowRef } from '@shotledger/shared/src/sync/family';
 
 import { showDate } from '../dates';
 import type { PulledAccount, WebTable } from '../pull';
+
+/** The confirm's i18n keys, by the shared `confirmParts`. */
+const CONFIRM_KEY: Record<ConfirmPart, string> = {
+  body: 'account.refusal.confirmBody',
+  member: 'account.refusal.confirmMember',
+  root: 'account.refusal.confirmRoot',
+};
 
 export type DiscardState =
   { step: 'idle' } | { step: 'asking' | 'working' | 'failed'; key: string };
@@ -139,8 +147,8 @@ export function Refusals({
                     aria-label={t('account.refusal.confirmTitle')}
                   >
                     <h3>{t('account.refusal.confirmTitle')}</h3>
-                    {confirmKeys(row.role).map((k) => (
-                      <p key={k}>{t(k)}</p>
+                    {confirmParts(row.role).map((part) => (
+                      <p key={part}>{t(CONFIRM_KEY[part])}</p>
                     ))}
                     <div className="actions">
                       <button

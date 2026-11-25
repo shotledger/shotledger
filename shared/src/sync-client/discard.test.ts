@@ -92,7 +92,7 @@ describe('discardRefused', () => {
   });
 
   it('FAIL-NET a transport error fails with its key', async () => {
-    const network = Object.assign(new TypeError('Failed to fetch'));
+    const network = new TypeError('Failed to fetch');
     await expect(run(() => network).outcome).resolves.toEqual({
       kind: 'failed',
       error: 'network',
