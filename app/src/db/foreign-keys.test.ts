@@ -140,6 +140,33 @@ describe('FK7 the sweep at open', () => {
     expect(pendingKeys(db)).toEqual(['series/r1']);
   });
 
+  it('keeps a newer pulled pending version over the older local row, and still moves the row', async () => {
+    const { db, insertSeries } = legacyDatabase();
+    insertSeries('r1');
+    db.delete(syncOutbox).run();
+    const newer = { ...readRowSync(db, 'series', 'r1')! };
+    await createSyncStore(db).applyChanges([
+      {
+        tableName: 'series',
+        rowId: 'r1',
+        seq: 9,
+        arrival: 9,
+        deletedAt: null,
+        updatedAt: '2026-10-09T10:00:00.000Z',
+        payload: {
+          ...(newer.payload as object),
+          position: 7,
+          updated_at: '2026-10-09T10:00:00.000Z',
+        },
+      } as ChangeRow,
+    ]);
+    expect(finishOpeningDatabase(db)).toBe(1);
+    expect(db.select().from(series).all()).toEqual([]);
+    const held = JSON.parse(db.select().from(syncPendingRows).get()!.payload) as ChangeRow;
+    expect(held.seq).toBe(9);
+    expect((held.payload as { position: number }).position).toBe(7);
+  });
+
   it('leaves a row of a table that does not sync in place', () => {
     const { db, now } = legacyDatabase();
     db.insert(shotMarks)

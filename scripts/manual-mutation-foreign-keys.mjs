@@ -114,6 +114,13 @@ const MUTANTS = [
     replace: "          updatedAt: '',",
   },
   {
+    name: 'FK7 the sweep overwrites a newer pulled pending version',
+    file: STORE,
+    find: '          .onConflictDoNothing()',
+    replace:
+      '          .onConflictDoUpdate({ target: [syncPendingRows.tableName, syncPendingRows.rowId], set: { payload: JSON.stringify(swept) } })',
+  },
+  {
     name: 'a backup reset keeps the pending table',
     file: STORE,
     find: '    tx.delete(syncPendingRows).run();\n',

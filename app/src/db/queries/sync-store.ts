@@ -327,7 +327,9 @@ export function sweepOrphanRows(db: Database): number {
         if (row === undefined) continue;
         const rowId = row.id as string;
         if (hasQueuedEdit(inner, tableName, rowId)) continue;
-        holdPending(inner, {
+        // A pending entry already there is a newer pulled version (AP2/AP4):
+        // keep it, and still move the older local row out.
+        const swept = {
           tableName,
           rowId,
           seq: 0,
@@ -335,7 +337,12 @@ export function sweepOrphanRows(db: Database): number {
           payload: row,
           deletedAt: null,
           updatedAt: row.updated_at as string,
-        } as ChangeRow);
+        } as ChangeRow;
+        inner
+          .insert(syncPendingRows)
+          .values({ tableName, rowId, payload: JSON.stringify(swept) })
+          .onConflictDoNothing()
+          .run();
         // A local move, not a user delete: the row is not gone, it waits for
         // its parent, so no tombstone is synced (no-hard-delete.test.ts).
         inner.run(sql`DELETE FROM ${tableSql} WHERE rowid = ${rowid}`);

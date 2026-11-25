@@ -7,6 +7,11 @@ Source: the open item from the #856 sync review (Revision 4, item 6, in
 **Tier 3**: the sync engine's apply path, the local schema and the migration
 gate (`shared/CLAUDE.md`).
 
+**Revision 2.2 (2026-11-25), from review.** FK7 keeps an existing pending
+entry (a newer pulled version) rather than overwriting it with the older
+local row, and states that it runs with foreign keys off, so a parent with a
+kept child is still moved.
+
 **Revision 2.1 (2026-11-25), after approval.** From review: FK7 must not
 move a row with a queued local change, or the push loses the edit. FK7, AP6
 and rule 3 are amended and scenario KEEP is added. Found while implementing:
@@ -144,6 +149,11 @@ Client-only, like `sync_outbox`: no outbox trigger, not synced, emptied by
   keys still off). Only at open: with foreign keys on, moving a parent would fail on its kept children. Each reported row
   **without a queued outbox entry** is copied to `sync_pending_rows` as a
   live `ChangeRow` built from its current columns and deleted from its table.
+  If `sync_pending_rows` already holds an entry for that key, the entry is
+  kept: it is a newer pulled version (AP2, AP4). The local row is still
+  deleted (Revision 2.2, from review). The sweep runs with foreign keys off,
+  so deleting a parent that a kept child still references does not fail;
+  that child then dangles, as SQLite allows, until the parent is promoted.
   Repeat until no movable row is reported (deleting a row can orphan its
   children). One transaction.
   A reported row in a table that does not sync (`shot_marks`,
