@@ -84,6 +84,19 @@ describe('Refusals (web)', () => {
     expect(render()).not.toMatch(/disabled=""[^>]*>Discard</);
   });
 
+  it('shows a refused change with nothing waiting, online by default', () => {
+    const html = renderToStaticMarkup(
+      createElement(Refusals, {
+        tables: { ...tables, refusals: [refusals[2]!] } as unknown as PulledAccount,
+        discard: vi.fn(),
+        refresh: vi.fn(),
+      }),
+    );
+    expect(html).toContain('License · Pardini SP');
+    expect(html).not.toContain(i18next.t('account.heldChanges', { count: 0 }));
+    expect(html).not.toMatch(/disabled=""[^>]*>Discard</);
+  });
+
   it('shows nothing when nothing is refused or waiting', () => {
     const html = renderToStaticMarkup(
       createElement(Refusals, {
@@ -129,6 +142,15 @@ describe('discardStep', () => {
     expect(discardStep(IDLE, { type: 'done', outcome: { kind: 'discarded', arrival: 1 } })).toEqual(
       { state: IDLE, send: null },
     );
+  });
+
+  it('cancel or a result while another step is open changes nothing', () => {
+    const working: DiscardState = { step: 'working', key: 'shots:t2' };
+    expect(discardStep(working, { type: 'cancel' })).toEqual({ state: working, send: null });
+    const asking: DiscardState = { step: 'asking', key: 'shots:t2' };
+    expect(
+      discardStep(asking, { type: 'done', outcome: { kind: 'failed', error: 'network' } }),
+    ).toEqual({ state: asking, send: null });
   });
 
   it('after a failure, the row can be asked again', () => {

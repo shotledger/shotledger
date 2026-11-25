@@ -138,6 +138,17 @@ describe('badRows', () => {
     expect(row).toMatchObject({ held: true, root: null, context: null, role: 'member' });
   });
 
+  it('GONE a session missing above a held series leaves root and context null', () => {
+    const [row] = badRows(
+      [invalid('shots', 'T2')],
+      rows({
+        'shots:T2': { id: 'T2', series_id: 'R1' },
+        'series:R1': { id: 'R1', session_id: 'S1' },
+      }),
+    );
+    expect(row).toMatchObject({ held: true, root: null, context: null });
+  });
+
   it('GONE a member whose owner column is empty has no root', () => {
     const [row] = badRows([invalid('shots', 'T2')], rows({ 'shots:T2': { id: 'T2' } }));
     expect(row).toMatchObject({ held: true, root: null, context: null });

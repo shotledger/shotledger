@@ -75,6 +75,13 @@ describe('discardRefused', () => {
     });
   });
 
+  it('OK an applied ack is discarded whatever its reason says', async () => {
+    await expect(run(() => [ack('applied', { reason: 'note' })]).outcome).resolves.toEqual({
+      kind: 'discarded',
+      arrival: 7,
+    });
+  });
+
   it('OK-DUP a duplicate ack with no reason is discarded', async () => {
     await expect(run(() => [ack('duplicate', { arrival: 4 })]).outcome).resolves.toEqual({
       kind: 'discarded',

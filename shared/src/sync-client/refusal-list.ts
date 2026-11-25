@@ -41,7 +41,7 @@ function rootOf(ref: RowRef, row: Record<string, unknown> | undefined, lookup: R
   let at = ref;
   let atRow = row;
   while (!ROOTS.has(at.tableName)) {
-    const owner = atRow === undefined ? null : ownerOf(at.tableName, atRow);
+    const owner = ownerOf(at.tableName, atRow);
     if (owner === null) return null;
     at = owner;
     atRow = lookup(owner);
@@ -66,7 +66,8 @@ export function badRows(refusals: readonly RefusalEntry[], lookup: RowLookup): B
     .map((entry) => {
       const ref: RowRef = { tableName: entry.tableName, rowId: entry.rowId };
       const row = lookup(ref);
-      const root = familyKind(ref.tableName) === null ? null : rootOf(ref, row, lookup);
+      // A table with no family has no ownership edge, so no root.
+      const root = rootOf(ref, row, lookup);
       return {
         tableName: ref.tableName,
         rowId: ref.rowId,
