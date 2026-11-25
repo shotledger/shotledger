@@ -19,9 +19,9 @@ const migrationsDir = path.join(dirname, 'migrations');
 /**
  * Creates a fresh in-memory DB with the current schema applied. Foreign keys
  * are on unless `foreignKeys: false`, which matches production:
- * `app/src/db/client.ts` sets no pragma and expo-sqlite builds SQLite without
- * SQLITE_DEFAULT_FOREIGN_KEYS, so they are off there
- * (docs/specs/sync-family-refusal-spec.md §11.6). better-sqlite3 turns them
+ * `app/src/db/client.ts` pins them off at open
+ * (docs/specs/sync-family-refusal-spec.md §11.6,
+ * docs/specs/phone-foreign-keys-spec.md). better-sqlite3 turns them
  * on by default, so off is set explicitly.
  */
 export function createTestDb(options: { foreignKeys?: boolean } = {}) {

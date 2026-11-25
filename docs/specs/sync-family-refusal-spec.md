@@ -962,9 +962,12 @@ The intended behaviour is that the phone applies such a child, as the
 server does (N5), and as sync already does today for a child pushed before
 its parent.
 
-- **Production:** `app/src/db/client.ts` sets no `foreign_keys` pragma, so
-  SQLite's default (off) holds. The build confirms this by reading
-  `PRAGMA foreign_keys` in the dev build and records it in the evidence.
+- **Production:** foreign keys are off. `app/src/db/client.ts` and
+  `client.web.ts` set `PRAGMA foreign_keys = OFF` and read it back at open,
+  and the app stops if it still reads on
+  ([`phone-foreign-keys-spec.md`](./phone-foreign-keys-spec.md); this
+  replaces relying on SQLite's compile default and a one-off dev-build
+  read).
 - **Tests:** `app/src/db/test-db.ts` turns foreign keys on, and every
   existing test keeps that. `createTestDb` gains a `{ foreignKeys: false }`
   option that matches production. The H7', ROOT and DISCARD apply tests use
