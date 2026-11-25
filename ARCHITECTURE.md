@@ -55,8 +55,8 @@ every update over an existing install fail and left clearing the app's data as
 the only way out (#913).
 
 **Foreign keys are enforced.** SQLite foreign keys are on for every app
-connection: once they are on, no write can leave a row pointing at a parent
-that does not exist. A connection opens with them off so migrations can
+connection: once they are on, SQLite rejects an insert, or a change to a
+foreign-key column, that points at a parent that does not exist. A connection opens with them off so migrations can
 rebuild tables; the migration gate then moves dangling synced rows aside
 (`foreign_key_check`), turns them on and reads the setting back, and the app
 stops if it reads off. Two kinds of existing dangling row stay where they
