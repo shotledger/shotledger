@@ -1,92 +1,204 @@
-import Database from 'better-sqlite3';
+// docs/specs/phone-foreign-keys-spec.md FK1, FK3, FK7.
+import type { ChangeRow } from '@shotledger/shared';
+import { sql } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import {
-  checkForeignKeysOff,
-  pinForeignKeysOffAsync,
-  pinForeignKeysOffSync,
-  type AsyncPragmaConnection,
-  type SyncPragmaConnection,
+  checkForeignKeysOn,
+  enableForeignKeys,
+  finishOpeningDatabase,
+  type PragmaConnection,
 } from './foreign-keys';
+import { createSession } from './queries/sessions';
+import { createSyncStore, readRowSync } from './queries/sync-store';
+import { series, shotMarks, shots, syncOutbox, syncPendingRows } from './schema';
+import { createTestDb } from './test-db';
 
-const ON_ERROR =
-  'SQLite foreign keys are on; sync needs them off (docs/specs/sync-family-refusal-spec.md §11.6)';
+const OFF_ERROR =
+  'SQLite foreign keys are off; the app needs them on (docs/specs/phone-foreign-keys-spec.md)';
 
-// better-sqlite3 turns foreign keys on by default, the case the pin exists for.
-function syncConn(
-  sqlite = new Database(':memory:'),
-): SyncPragmaConnection & { sqlite: Database.Database } {
-  return {
-    sqlite,
-    execSync: (source) => {
-      sqlite.exec(source);
-    },
-    getFirstSync: <T>(source: string) => (sqlite.prepare(source).get() as T | undefined) ?? null,
-  };
-}
+const foreignKeys = (db: ReturnType<typeof createTestDb>) =>
+  db.$client.pragma('foreign_keys', { simple: true });
 
-function asyncConn(
-  sqlite = new Database(':memory:'),
-): AsyncPragmaConnection & { sqlite: Database.Database } {
-  const inner = syncConn(sqlite);
-  return {
-    sqlite,
-    execAsync: async (source) => inner.execSync(source),
-    getFirstAsync: async <T>(source: string) => inner.getFirstSync<T>(source),
-  };
-}
-
-const foreignKeys = (sqlite: Database.Database) => sqlite.pragma('foreign_keys', { simple: true });
-
-describe('FK1 checkForeignKeysOff', () => {
-  it('passes foreign_keys = 0', () => {
-    expect(() => checkForeignKeysOff({ foreign_keys: 0 })).not.toThrow();
+describe('FK1 checkForeignKeysOn', () => {
+  it('passes foreign_keys = 1', () => {
+    expect(() => checkForeignKeysOn({ foreign_keys: 1 })).not.toThrow();
   });
 
-  it('throws on foreign_keys = 1, naming §11.6', () => {
-    expect(() => checkForeignKeysOff({ foreign_keys: 1 })).toThrow(new Error(ON_ERROR));
-  });
-
-  it('passes no row (a build without foreign-key support, where they cannot be on)', () => {
-    expect(() => checkForeignKeysOff(null)).not.toThrow();
-  });
-
-  it.each([[undefined], [{}], [{ foreign_keys: '0' }], [{ foreign_keys: 2 }], [0], ['0']])(
-    'fails closed on the unexpected row %j',
-    (row) => {
-      expect(() => checkForeignKeysOff(row)).toThrow(new Error(ON_ERROR));
-    },
-  );
-});
-
-describe('FK2 pinForeignKeysOffSync', () => {
-  it('turns foreign keys off on a connection that has them on', () => {
-    const conn = syncConn();
-    expect(foreignKeys(conn.sqlite)).toBe(1);
-    pinForeignKeysOffSync(conn);
-    expect(foreignKeys(conn.sqlite)).toBe(0);
-  });
-
-  it('throws when the read-back still says on', () => {
-    const conn = syncConn();
-    expect(() => pinForeignKeysOffSync({ ...conn, execSync: () => undefined })).toThrow(
-      new Error(ON_ERROR),
-    );
+  it.each([
+    [{ foreign_keys: 0 }],
+    [undefined],
+    [null],
+    [{}],
+    [{ foreign_keys: '1' }],
+    [{ foreign_keys: true }],
+    [1],
+  ])('throws on %j', (row) => {
+    expect(() => checkForeignKeysOn(row)).toThrow(new Error(OFF_ERROR));
   });
 });
 
-describe('FK3 pinForeignKeysOffAsync', () => {
-  it('turns foreign keys off on a connection that has them on', async () => {
-    const conn = asyncConn();
-    expect(foreignKeys(conn.sqlite)).toBe(1);
-    await pinForeignKeysOffAsync(conn);
-    expect(foreignKeys(conn.sqlite)).toBe(0);
+describe('FK3 enableForeignKeys', () => {
+  it('turns foreign keys on and reads them back', () => {
+    const db = createTestDb({ foreignKeys: false });
+    expect(foreignKeys(db)).toBe(0);
+    enableForeignKeys(db);
+    expect(foreignKeys(db)).toBe(1);
   });
 
-  it('rejects when the read-back still says on', async () => {
-    const conn = asyncConn();
-    await expect(
-      pinForeignKeysOffAsync({ ...conn, execAsync: async () => undefined }),
-    ).rejects.toThrow(new Error(ON_ERROR));
+  it('throws when the read-back still says off', () => {
+    const db = createTestDb({ foreignKeys: false });
+    const ignoring: PragmaConnection = { run: () => undefined, get: (q) => db.get(q) };
+    expect(() => enableForeignKeys(ignoring)).toThrow(new Error(OFF_ERROR));
+  });
+});
+
+// The foreign-keys-off era: a database that already holds dangling rows.
+function legacyDatabase() {
+  const db = createTestDb({ foreignKeys: false });
+  const now = '2026-10-01T10:00:00.000Z';
+  const insertSeries = (id: string, deletedAt: string | null = null) =>
+    db
+      .insert(series)
+      .values({ id, createdAt: now, updatedAt: now, deletedAt, sessionId: 'gone', position: 1 })
+      .run();
+  return { db, now, insertSeries };
+}
+
+const pendingKeys = (db: ReturnType<typeof createTestDb>) =>
+  db
+    .select()
+    .from(syncPendingRows)
+    .all()
+    .map((r) => `${r.tableName}/${r.rowId}`)
+    .sort();
+
+describe('FK7 the sweep at open', () => {
+  it('moves an orphan to sync_pending_rows, then turns foreign keys on', () => {
+    const { db, insertSeries } = legacyDatabase();
+    insertSeries('r1');
+    db.delete(syncOutbox).run();
+    const before = readRowSync(db, 'series', 'r1')!;
+    expect(finishOpeningDatabase(db)).toBe(1);
+    expect(db.select().from(series).all()).toEqual([]);
+    expect(pendingKeys(db)).toEqual(['series/r1']);
+    const held = JSON.parse(db.select().from(syncPendingRows).get()!.payload) as ChangeRow;
+    expect(held).toMatchObject({
+      tableName: 'series',
+      rowId: 'r1',
+      payload: before.payload,
+      deletedAt: null,
+      updatedAt: before.updatedAt,
+    });
+    expect(foreignKeys(db)).toBe(1);
+    expect(db.all(sql`PRAGMA foreign_key_check`)).toEqual([]);
+  });
+
+  it('moves an orphan’s children too, until nothing movable is left', () => {
+    const { db, now, insertSeries } = legacyDatabase();
+    insertSeries('r1');
+    db.insert(shots)
+      .values({
+        id: 'x1',
+        createdAt: now,
+        updatedAt: now,
+        deletedAt: null,
+        seriesId: 'r1',
+        position: 1,
+        valueTenths: 100,
+        isInnerTen: 0,
+      })
+      .run();
+    db.delete(syncOutbox).run();
+    expect(finishOpeningDatabase(db)).toBe(2);
+    expect(pendingKeys(db)).toEqual(['series/r1', 'shots/x1']);
+    expect(db.all(sql`PRAGMA foreign_key_check`)).toEqual([]);
+  });
+
+  it('KEEP leaves an orphan with a queued edit in its table', () => {
+    const { db, insertSeries } = legacyDatabase();
+    insertSeries('r1'); // the insert trigger queues it
+    expect(finishOpeningDatabase(db)).toBe(0);
+    expect(
+      db
+        .select()
+        .from(series)
+        .all()
+        .map((r) => r.id),
+    ).toEqual(['r1']);
+    expect(pendingKeys(db)).toEqual([]);
+    expect(foreignKeys(db)).toBe(1);
+  });
+
+  it('KEEP once the push is acknowledged, the next open moves it', () => {
+    const { db, insertSeries } = legacyDatabase();
+    insertSeries('r1');
+    finishOpeningDatabase(db);
+    db.delete(syncOutbox).run(); // the ack
+    db.$client.pragma('foreign_keys = OFF'); // the next open
+    expect(finishOpeningDatabase(db)).toBe(1);
+    expect(pendingKeys(db)).toEqual(['series/r1']);
+  });
+
+  it('leaves a row of a table that does not sync in place', () => {
+    const { db, now } = legacyDatabase();
+    db.insert(shotMarks)
+      .values({
+        id: 'm1',
+        createdAt: now,
+        updatedAt: now,
+        deletedAt: null,
+        shotId: 'gone',
+        xMm: 0,
+        yMm: 0,
+        caliberMm: 4.5,
+      })
+      .run();
+    expect(finishOpeningDatabase(db)).toBe(0);
+    expect(
+      db
+        .select()
+        .from(shotMarks)
+        .all()
+        .map((r) => r.id),
+    ).toEqual(['m1']);
+  });
+
+  it('a swept orphan is promoted when its parent arrives, deleted_at intact', async () => {
+    const { db, insertSeries } = legacyDatabase();
+    insertSeries('r1', '2026-10-05T10:00:00.000Z');
+    db.delete(syncOutbox).run();
+    finishOpeningDatabase(db);
+    const source = createTestDb();
+    const session = createSession(source, {
+      name: 'S',
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      startedAt: '2026-10-01T10:00:00.000Z',
+    });
+    const snapshot = readRowSync(source, 'sessions', session.id)!;
+    // The orphan named 'gone'; the parent arrives under that id.
+    await createSyncStore(db).applyChanges([
+      {
+        tableName: 'sessions',
+        rowId: 'gone',
+        seq: 1,
+        arrival: 1,
+        deletedAt: null,
+        updatedAt: snapshot.updatedAt,
+        payload: { ...(snapshot.payload as object), id: 'gone' },
+      } as ChangeRow,
+    ]);
+    expect(db.select().from(series).get()).toMatchObject({
+      id: 'r1',
+      deletedAt: '2026-10-05T10:00:00.000Z',
+    });
+    expect(pendingKeys(db)).toEqual([]);
+  });
+
+  it('a clean database moves nothing', () => {
+    const db = createTestDb({ foreignKeys: false });
+    expect(finishOpeningDatabase(db)).toBe(0);
+    expect(foreignKeys(db)).toBe(1);
   });
 });

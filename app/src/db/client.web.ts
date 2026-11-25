@@ -12,7 +12,6 @@
 import { drizzle } from 'drizzle-orm/expo-sqlite';
 import { openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
 
-import { pinForeignKeysOffAsync } from './foreign-keys';
 import * as schema from './schema';
 import type { Database } from './types';
 
@@ -31,8 +30,8 @@ export async function openWebDatabase(): Promise<void> {
   }
   if (connection) return;
   const opened = await openDatabaseAsync(DATABASE_FILENAME, { enableChangeListener: false });
-  // As client.ts: sync needs foreign keys off (docs/specs/phone-foreign-keys-spec.md).
-  await pinForeignKeysOffAsync(opened);
+  // As client.ts: off while migrations run; the gate turns them on.
+  await opened.execAsync('PRAGMA foreign_keys = OFF');
   connection = opened;
 }
 

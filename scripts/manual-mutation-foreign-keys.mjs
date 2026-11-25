@@ -1,65 +1,129 @@
-// Manual mutation testing for the phone's foreign-key pin
+// Manual mutation testing for foreign-key enforcement and the pending table
 // (docs/specs/phone-foreign-keys-spec.md). It lives in app/src/db, which
 // Stryker's `mutate` list does not reach.
 //
 // FAILS CLOSED, on the same rules as manual-mutation-backup-sync.mjs: the
 // unmutated suite must pass first; a pattern that does not match exactly once,
-// a file that does not restore, or a run that fails without a failing test all
-// exit nonzero.
+// a file that does not restore, a run with runner errors, or a run that fails
+// without a failing test all exit nonzero.
 //
 // Run: node scripts/manual-mutation-foreign-keys.mjs
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 
-const SOURCE = 'app/src/db/foreign-keys.ts';
-const TESTS = ['app/src/db/foreign-keys.test.ts', 'app/src/db/queries/sync-store.test.ts'];
+const FK = 'app/src/db/foreign-keys.ts';
+const STORE = 'app/src/db/queries/sync-store.ts';
+const SOURCES = [FK, STORE];
+const TESTS = [
+  'app/src/db/foreign-keys.test.ts',
+  'app/src/db/queries/sync-pending.test.ts',
+  'app/src/db/queries/sync-pending.property.test.ts',
+  'app/src/db/queries/sync-store.test.ts',
+];
 
 /** Each mutant is a plausible bug, not a syntactic tweak. */
 const MUTANTS = [
   {
-    name: 'the sync pin only reads, never sets',
-    find: '  conn.execSync(SET_OFF);\n',
+    name: 'FK1 any defined value passes the read-back',
+    file: FK,
+    find: '.foreign_keys === 1',
+    replace: '.foreign_keys !== 0',
+  },
+  {
+    name: 'FK3 foreign keys are never turned on',
+    file: FK,
+    find: 'PRAGMA foreign_keys = ON',
+    replace: 'PRAGMA foreign_keys = OFF',
+  },
+  {
+    name: 'FK3 the read-back is not checked',
+    file: FK,
+    find: '  checkForeignKeysOn(db.get<unknown>(sql`PRAGMA foreign_keys`));',
+    replace: '  db.get<unknown>(sql`PRAGMA foreign_keys`);',
+  },
+  {
+    name: 'FK3 the sweep is skipped at open',
+    file: FK,
+    find: '  const moved = sweepOrphanRows(db);',
+    replace: '  const moved = 0;',
+  },
+  {
+    name: 'AP1 a null foreign key counts as a missing parent',
+    file: STORE,
+    find: '    if (value === null || value === undefined) continue;\n',
     replace: '',
   },
   {
-    name: 'the async pin only reads, never sets',
-    find: '  await conn.execAsync(SET_OFF);\n',
+    name: 'AP2 a missing parent is ignored (orphans written, commit fails)',
+    file: STORE,
+    find: '    if (found === undefined) return true;',
+    replace: '    if (found === undefined) return false;',
+  },
+  {
+    name: 'AP2 a newer pending version does not replace the older',
+    file: STORE,
+    find: '      set: { payload },',
+    replace: '      set: { tableName: change.tableName },',
+  },
+  {
+    name: 'AP3/AP4 a written row or tombstone keeps its stale pending entry',
+    file: STORE,
+    find: '  dropPending(db, change.tableName, change.rowId);\n  applyOne(db, change);\n}',
+    replace: '  applyOne(db, change);\n}',
+  },
+  {
+    name: 'AP5 promotion runs one pass only',
+    file: STORE,
+    find: '    if (promoted === 0) return;',
+    replace: '    return;',
+  },
+  {
+    name: 'AP5 promotion leaves the promoted entry behind',
+    file: STORE,
+    find: '      dropPending(db, change.tableName, change.rowId);\n      applyOne(db, change);\n      promoted += 1;',
+    replace: '      applyOne(db, change);\n      promoted += 1;',
+  },
+  {
+    name: 'AP6 a queued local edit is overwritten by its pending version',
+    file: STORE,
+    find: '        rowExists(db, change.tableName, change.rowId) &&',
+    replace: '        false &&',
+  },
+  {
+    name: 'FK7 the sweep moves a row with a queued edit (the edit is lost)',
+    file: STORE,
+    find: '        if (hasQueuedEdit(inner, tableName, rowId)) continue;\n',
     replace: '',
   },
   {
-    name: 'the pin turns foreign keys on',
-    find: "const SET_OFF = 'PRAGMA foreign_keys = OFF';",
-    replace: "const SET_OFF = 'PRAGMA foreign_keys = ON';",
-  },
-  {
-    name: 'the sync pin never checks the read-back',
-    find: '  checkForeignKeysOff(conn.getFirstSync(READ));',
-    replace: '  conn.getFirstSync(READ);',
-  },
-  {
-    name: 'the async pin never checks the read-back',
-    find: '  checkForeignKeysOff(await conn.getFirstAsync(READ));',
-    replace: '  await conn.getFirstAsync(READ);',
-  },
-  {
-    name: 'foreign keys on passes the check',
-    find: '.foreign_keys === 0) return;',
-    replace: '.foreign_keys !== undefined) return;',
-  },
-  {
-    name: 'only an explicit 1 fails (fail-open on odd answers)',
-    find: '.foreign_keys === 0) return;',
-    replace: '.foreign_keys !== 1) return;',
-  },
-  {
-    name: 'no row (no foreign-key support) is treated as on',
-    find: '  if (row === null) return;\n',
+    name: 'FK7 the sweep moves rows of local-only tables',
+    file: STORE,
+    find: '        if (tableName === undefined) continue;\n',
     replace: '',
   },
   {
-    name: 'an unreadable answer passes',
-    find: '  throw new Error(ON_ERROR);\n}',
-    replace: '  return;\n}',
+    name: 'FK7 the sweep runs one pass only (children stay dangling)',
+    file: STORE,
+    find: '      if (pass === 0) return;',
+    replace: '      return;',
+  },
+  {
+    name: 'FK7 the swept change loses its updated_at',
+    file: STORE,
+    find: '          updatedAt: row.updated_at as string,',
+    replace: "          updatedAt: '',",
+  },
+  {
+    name: 'a backup reset keeps the pending table',
+    file: STORE,
+    find: '    tx.delete(syncPendingRows).run();\n',
+    replace: '',
+  },
+  {
+    name: 'sign-out keeps the pending table',
+    file: STORE,
+    find: '  db.delete(syncPendingRows).run();\n',
+    replace: '',
   },
 ];
 
@@ -78,11 +142,11 @@ function runSuite() {
 }
 
 function assertClean() {
-  const dirty = execFileSync('git', ['status', '--porcelain', '--', SOURCE], {
+  const dirty = execFileSync('git', ['status', '--porcelain', '--', ...SOURCES], {
     encoding: 'utf8',
   }).trim();
   if (dirty) {
-    console.error(`FAIL: ${SOURCE} is not committed and pristine:\n${dirty}`);
+    console.error(`FAIL: ${SOURCES.join(', ')} not committed and pristine:\n${dirty}`);
     process.exit(1);
   }
 }
@@ -99,7 +163,7 @@ let killed = 0;
 const survivors = [];
 
 for (const mutant of MUTANTS) {
-  const original = readFileSync(SOURCE, 'utf8');
+  const original = readFileSync(mutant.file, 'utf8');
   const occurrences = original.split(mutant.find).length - 1;
   if (occurrences !== 1) {
     console.error(
@@ -109,12 +173,12 @@ for (const mutant of MUTANTS) {
     process.exit(1);
   }
 
-  writeFileSync(SOURCE, original.replace(mutant.find, mutant.replace));
+  writeFileSync(mutant.file, original.replace(mutant.find, mutant.replace));
   let result;
   try {
     result = runSuite();
   } finally {
-    writeFileSync(SOURCE, original);
+    writeFileSync(mutant.file, original);
   }
   assertClean();
 

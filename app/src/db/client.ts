@@ -5,7 +5,6 @@
 import { drizzle } from 'drizzle-orm/expo-sqlite';
 import { openDatabaseSync } from 'expo-sqlite';
 
-import { pinForeignKeysOffSync } from './foreign-keys';
 import * as schema from './schema';
 import type { Database } from './types';
 
@@ -14,9 +13,9 @@ import type { Database } from './types';
 export const DATABASE_FILENAME = 'shotledger.db';
 
 const expoDb = openDatabaseSync(DATABASE_FILENAME, { enableChangeListener: false });
-// Sync needs foreign keys off; set and checked here rather than left to how
-// SQLite was built (docs/specs/phone-foreign-keys-spec.md).
-pinForeignKeysOffSync(expoDb);
+// Off while migrations run, whatever SQLite's build default; the migration
+// gate turns them on (docs/specs/phone-foreign-keys-spec.md FK2–FK3).
+expoDb.execSync('PRAGMA foreign_keys = OFF');
 
 export const db: Database = drizzle(expoDb, { schema });
 

@@ -1,45 +1,49 @@
-// Sync applies a pulled child whose parent this device does not hold, as the
-// server does (docs/specs/sync-family-refusal-spec.md §11.6). That needs
-// SQLite foreign keys off, so every app connection sets them off itself and
-// reads the setting back (docs/specs/phone-foreign-keys-spec.md).
+// The app runs with SQLite foreign keys on (docs/specs/phone-foreign-keys-spec.md).
+// A connection opens with them off so migrations can rebuild tables, as
+// SQLite's documented procedure requires; the migration gate then sweeps any
+// dangling row aside and turns them on before anything renders.
+import { sql, type SQL } from 'drizzle-orm';
 
-/** The part of an expo-sqlite connection the sync pin uses. */
-export interface SyncPragmaConnection {
-  execSync(source: string): void;
-  getFirstSync<T>(source: string): T | null;
+import { sweepOrphanRows } from './queries/sync-store';
+import type { Database } from './types';
+
+const OFF_ERROR =
+  'SQLite foreign keys are off; the app needs them on (docs/specs/phone-foreign-keys-spec.md)';
+
+/** The part of a Drizzle database the pragma needs. */
+export interface PragmaConnection {
+  run(query: SQL): unknown;
+  get<T>(query: SQL): T;
 }
-
-/** The part of an expo-sqlite connection the async pin uses (web). */
-export interface AsyncPragmaConnection {
-  execAsync(source: string): Promise<void>;
-  getFirstAsync<T>(source: string): Promise<T | null>;
-}
-
-const ON_ERROR =
-  'SQLite foreign keys are on; sync needs them off (docs/specs/sync-family-refusal-spec.md §11.6)';
-
-const READ = 'PRAGMA foreign_keys';
-const SET_OFF = 'PRAGMA foreign_keys = OFF';
 
 /**
- * Checks the row `PRAGMA foreign_keys` returned. `null` (no row) is a build
- * without foreign-key support, where they cannot be on. Anything but
- * `{ foreign_keys: 0 }` or `null` throws: an unreadable answer is a failure.
+ * Checks the row `PRAGMA foreign_keys` returned. Only `{ foreign_keys: 1 }`
+ * passes: `0`, no row (a build without foreign-key support) or anything else
+ * means they are not enforced.
  */
-export function checkForeignKeysOff(row: unknown): void {
-  if (row === null) return;
-  if (typeof row === 'object' && (row as { foreign_keys?: unknown }).foreign_keys === 0) return;
-  throw new Error(ON_ERROR);
+export function checkForeignKeysOn(row: unknown): void {
+  if (
+    typeof row === 'object' &&
+    row !== null &&
+    (row as { foreign_keys?: unknown }).foreign_keys === 1
+  ) {
+    return;
+  }
+  throw new Error(OFF_ERROR);
 }
 
-/** Sets foreign keys off on `conn` and reads the setting back. */
-export function pinForeignKeysOffSync(conn: SyncPragmaConnection): void {
-  conn.execSync(SET_OFF);
-  checkForeignKeysOff(conn.getFirstSync(READ));
+/** Turns foreign keys on and reads the setting back. Outside any transaction. */
+export function enableForeignKeys(db: PragmaConnection): void {
+  db.run(sql`PRAGMA foreign_keys = ON`);
+  checkForeignKeysOn(db.get<unknown>(sql`PRAGMA foreign_keys`));
 }
 
-/** {@link pinForeignKeysOffSync} for a connection opened with the async API. */
-export async function pinForeignKeysOffAsync(conn: AsyncPragmaConnection): Promise<void> {
-  await conn.execAsync(SET_OFF);
-  checkForeignKeysOff(await conn.getFirstAsync(READ));
+/**
+ * After migrations: moves dangling rows aside (FK7), then turns foreign keys
+ * on (FK3). Returns how many rows the sweep moved.
+ */
+export function finishOpeningDatabase(db: Database): number {
+  const moved = sweepOrphanRows(db);
+  enableForeignKeys(db);
+  return moved;
 }
