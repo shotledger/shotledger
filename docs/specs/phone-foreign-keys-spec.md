@@ -9,7 +9,10 @@ gate (`shared/CLAUDE.md`).
 
 **Revision 2.1 (2026-11-25), after approval.** From review: FK7 must not
 move a row with a queued local change, or the push loses the edit. FK7, AP6
-and rule 3 are amended and scenario KEEP is added; nothing else changes.
+and rule 3 are amended and scenario KEEP is added. Found while implementing:
+the sweep runs at open only (with foreign keys on, moving a parent would
+fail on children it must keep), and rows in tables that do not sync stay in
+place. Nothing else changes.
 
 **Revision 2 (2026-11-25), approved by the maintainer.** Revision 1 pinned foreign keys **off** so that
 §11.6's orphan apply kept working. The maintainer chose foreign keys **on**
@@ -47,8 +50,7 @@ branch's history (`1f4d189`) and is reverted by this one.
    and is promoted into its table, in the same transaction, as soon as every
    parent it names is there.
 3. **The database holds no dangling reference it does not have to.**
-   `foreign_key_check` runs after migrations at every open and after every
-   sync cycle; any row it reports is moved aside the same way, **except a
+   `foreign_key_check` runs after migrations at every open; any row it reports is moved aside the same way, **except a
    row with a queued local change**, which stays until its push is
    acknowledged (FK7, Revision 2.1).
 
@@ -136,15 +138,18 @@ Client-only, like `sync_outbox`: no outbox trigger, not synced, emptied by
 ### Sweep (FK7)
 
 - **FK7** `PRAGMA foreign_key_check`, after migrations at open (foreign
-  keys still off) and at the end of every sync cycle. Each reported row
+  keys still off). Only at open: with foreign keys on, moving a parent would fail on its kept children. Each reported row
   **without a queued outbox entry** is copied to `sync_pending_rows` as a
   live `ChangeRow` built from its current columns and deleted from its table.
   Repeat until no movable row is reported (deleting a row can orphan its
   children). One transaction.
+  A reported row in a table that does not sync (`shot_marks`,
+  `training_samples`) also stays: it has no pending form, and it is valid
+  again once its parent is promoted.
   A reported row **with** a queued outbox entry stays in its table, so the
   push reads it and sends it; deleting it would make the push treat the
   entry as a hard delete and drop the edit (Revision 2.1, from review). Once
-  the push is acknowledged and the entry is gone, the next sweep moves it.
+  the push is acknowledged and the entry is gone, the sweep at the next open moves it.
   SQLite allows an existing violation to stay while foreign keys are on; it
   only refuses a write to that row, and an orphan has no screen to edit it
   from. This is also the one-time move of orphans already on a
@@ -152,7 +157,7 @@ Client-only, like `sync_outbox`: no outbox trigger, not synced, emptied by
   heals any later inconsistency the same way.
 - **FK7a** Scenario KEEP: an orphan with a queued edit survives the sweep in
   its table, is pushed with its edit, and is moved to `sync_pending_rows`
-  by the sweep after the push's ack.
+  by the sweep at the next open after the push's ack.
 - **FK8** The sweep's count goes to the dev log; no UI.
 
 ### §11.6 scenarios, restated
