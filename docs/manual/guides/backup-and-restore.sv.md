@@ -80,8 +80,8 @@ vapen dess licenser, grupper, kalibrar, underhåll och siktinställningar, men
 inte de pass som skjutits med det. Raderingar hålls aldrig tillbaka.
 
 - Servern behåller de tillbakahållna ändringarna tills den nekade ändringen
-  kommer fram rättad, eller tills den eller dess pass raderas, från vilken
-  enhet som helst. Då lagrar den alla på en gång.
+  kommer fram rättad, kastas, eller tills den eller dess pass raderas, från
+  vilken enhet som helst. Då lagrar den alla på en gång.
 - Ändringar av passet från dina andra enheter och från webbappen väntar också
   på servern. De går inte förlorade om du loggar ut, återställer en
   säkerhetskopia eller installerar om appen.
@@ -90,6 +90,30 @@ inte de pass som skjutits med det. Raderingar hålls aldrig tillbaka.
 - När två enheter ändrar samma post vinner den ändring som kom fram till
   servern sist. En tillbakahållen ändring räknas från när den kom fram till
   servern, inte från när den lagras. En radering vinner alltid.
+
+#### Kasta en nekad ändring
+
+När ingen ändring rättar en nekad ändring, till exempel för att bara en
+telefon du inte längre har har den, kan du kasta den. **Konto & synk** listar
+varje nekad ändring under raden om nekade ändringar: vad den är (ett skott,
+en serie, en licens och så vidare), passet eller vapnet den hör till när den
+här enheten känner till det, och hur många ändringar som väntar på den.
+"Finns inte på den här enheten" betyder att en annan enhet gjorde den; du kan
+ändå kasta den här.
+
+1. Öppna **Konto & synk**.
+2. Tryck på **Kasta** bredvid den nekade ändringen.
+3. Läs bekräftelsen och tryck på **Kasta**.
+
+Att kasta tar bort den nekade ändringen på alla dina enheter, liksom en äldre
+version av den som servern har sparat. För ett skott, en serie eller en
+station synkas sedan resten av passet utan den. Att kasta ett nekat pass
+eller vapen tar bort det, tillsammans med allt som hör till det. Ett vapens
+skottantal förblir som det är.
+
+Webbappens sida **Konto** listar samma nekade ändringar, och dess **Kasta**
+fungerar på samma sätt. Du behöver en anslutning: Kasta köas inte till
+senare.
 
 Andra enheter och webbappen visar passet som servern har lagrat det: som det
 var före den nekade ändringen, tills servern lagrar de tillbakahållna

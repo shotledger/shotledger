@@ -1273,6 +1273,13 @@ restates §0 rules 1–6 verbatim.
 > refusals; the phone keeps them as `sync_refusal_marks` so a pull does not
 > overwrite a held version, and Account & Sync and the web's account page
 > show the same two counts.
+>
+> **A refused change can be discarded** (#942, spec and evidence:
+> `docs/specs/sync-discard-refused-*`). Account & Sync and the web's
+> account page list each refused change with **Discard**, which pushes a
+> tombstone of the bad row through the shared `discardRefused`
+> (`shared/src/sync-client/discard.ts`); the server releases its family in
+> that batch. The phone runs it inside its one sync loop.
 
 > **All three timers have since shipped.** The time-limit/interval timer
 > (`feat/shot-timer`, `shared/src/timer/engine.ts`), the IPSC-style
