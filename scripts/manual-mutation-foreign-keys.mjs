@@ -72,16 +72,16 @@ const MUTANTS = [
     replace: '  applyOne(db, change);\n}',
   },
   {
-    name: 'AP5 promotion runs one pass only',
+    name: 'AP5 promotion runs children before parents',
     file: STORE,
-    find: '    if (promoted === 0) return;',
-    replace: '    return;',
+    find: '.sort((a, b) => order(a.tableName) - order(b.tableName));',
+    replace: '.sort((a, b) => order(b.tableName) - order(a.tableName));',
   },
   {
     name: 'AP5 promotion leaves the promoted entry behind',
     file: STORE,
-    find: '      dropPending(db, change.tableName, change.rowId);\n      applyOne(db, change);\n      promoted += 1;',
-    replace: '      applyOne(db, change);\n      promoted += 1;',
+    find: '    dropPending(db, change.tableName, change.rowId);\n    applyOne(db, change);\n  }\n}',
+    replace: '    applyOne(db, change);\n  }\n}',
   },
   {
     name: 'AP6 a queued local edit is overwritten by its pending version',

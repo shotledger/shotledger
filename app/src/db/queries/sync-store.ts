@@ -365,32 +365,31 @@ function hasQueuedEdit(db: Database, tableName: SyncTableName, rowId: string): b
   );
 }
 
-/** AP5–AP6: retry every pending entry, parents first, until a pass promotes nothing. */
+/**
+ * AP5–AP6: one pass over the pending entries in APPLY_ORDER, which puts every
+ * parent table before its children, so a chain (shot under series under
+ * session) promotes in the pass that brings its root.
+ */
 function promotePending(db: Database): void {
   const order = (name: string) => APPLY_ORDER.indexOf(name as SyncTableName);
-  for (;;) {
-    const entries = db
-      .select()
-      .from(syncPendingRows)
-      .all()
-      .sort((a, b) => order(a.tableName) - order(b.tableName));
-    let promoted = 0;
-    for (const entry of entries) {
-      const change = JSON.parse(entry.payload) as ChangeRow;
-      if (
-        rowExists(db, change.tableName, change.rowId) &&
-        hasQueuedEdit(db, change.tableName, change.rowId)
-      ) {
-        // The local row is newer; its push sends it (AP6).
-        dropPending(db, change.tableName, change.rowId);
-        continue;
-      }
-      if (lacksParent(db, change)) continue;
+  const entries = db
+    .select()
+    .from(syncPendingRows)
+    .all()
+    .sort((a, b) => order(a.tableName) - order(b.tableName));
+  for (const entry of entries) {
+    const change = JSON.parse(entry.payload) as ChangeRow;
+    if (
+      rowExists(db, change.tableName, change.rowId) &&
+      hasQueuedEdit(db, change.tableName, change.rowId)
+    ) {
+      // The local row is newer; its push sends it (AP6).
       dropPending(db, change.tableName, change.rowId);
-      applyOne(db, change);
-      promoted += 1;
+      continue;
     }
-    if (promoted === 0) return;
+    if (lacksParent(db, change)) continue;
+    dropPending(db, change.tableName, change.rowId);
+    applyOne(db, change);
   }
 }
 

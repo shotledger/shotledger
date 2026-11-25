@@ -121,11 +121,14 @@ Client-only, like `sync_outbox`: no outbox trigger, not synced, emptied by
   the table as today.
 - **AP4** Any pulled row written to its table deletes its pending entry: the
   newer version wins.
-- **AP5** Promotion: after the batch's rows, in the same transaction,
-  pending entries are retried in `APPLY_ORDER` until a pass promotes
-  nothing. An entry whose parents now exist is written as AP1 and removed.
-  Chains (a shot under a pending series under a pending session) promote in
-  one batch.
+- **AP5** Promotion: after the batch's rows, in the same transaction, one
+  pass over the pending entries in `APPLY_ORDER`, which puts every parent
+  table before its children. An entry whose parents now exist is written as
+  AP1 and removed. Chains (a shot under a pending series under a pending
+  session) promote in the pass that brings their root. (Implementation
+  note: the approved text said "until a pass promotes nothing"; a second
+  pass can never promote anything after an `APPLY_ORDER` pass, so the loop
+  was dead code, shown by a surviving mutant.)
 - **AP6** An entry whose row **is in its table** and has a queued outbox
   entry is dropped, not promoted: the local row is newer, and its push sends
   it (the push reads the row from its table, so it is there to send). No
