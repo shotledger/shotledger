@@ -71,7 +71,7 @@ failed` and one failed on an assertion. The two that passed (AP1 with its
 
 | Layer                              | Command                                         | Result                                                                     |
 | ---------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------- |
-| Full suite + types + lint + format | `pnpm check`                                    | green, exit 0. Vitest 260 files / 4684 tests; jest 114 suites / 1084 tests |
+| Full suite + types + lint + format | `pnpm check`                                    | green, exit 0. Vitest 260 files / 4685 tests; jest 114 suites / 1084 tests |
 | Migration chain                    | `migrations.test.ts` (in `pnpm check`)          | `0001_sync_pending_rows` hash recorded; the chain matches `schema.ts`      |
 | Mutation                           | `node scripts/manual-mutation-foreign-keys.mjs` | **18/18 killed**, baseline pass first                                      |
 | Mutation runner control            | the same script with the sources uncommitted    | refuses to run (`not committed and pristine`), exit 1                      |
