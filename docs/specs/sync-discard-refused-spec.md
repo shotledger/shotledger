@@ -48,7 +48,13 @@ discardRefused(transport, ref: RowRef, now: string, newId: () => string)
 ```
 
 - Sends exactly one change: `{ clientChangeId: newId(), tableName, rowId,
-payload: null, deletedAt: now, updatedAt: now }`, through `pushChanges`.
+payload: null, deletedAt: now, updatedAt: now }`, through
+  `transport.push` directly, not `pushChanges`: `pushChanges`' `saved`
+  outcome carries no ack, and the phone needs the ack's `arrival`. It reads
+  the answer by `pushChanges`' rule: exactly one ack, carrying the sent
+  `clientChangeId`, or the answer is unconfirmed.
+- `arrival` in `discarded` is that ack's `arrival`; the phone drops the mark
+  only up to it (§2.3).
 - `discarded` when the one ack is `applied`, `duplicate` with no reason, or
   `rejected` / `duplicate` with reason `tombstoned` (the row was already
   deleted: the user's intent holds).
@@ -106,6 +112,14 @@ parents.
   (`applyMarkUpdate` `drop`). The following cycle's pull replaces every mark
   from the server's `refusals`, so released waiting rows leave the held count
   and arrive as rows.
+- **An edit made while the discard is in flight does not survive it.** The
+  server stores the tombstone before the edit can arrive, and a deletion
+  always wins there (a later change to the row is rejected `tombstoned`). So
+  the local tombstone hides the edited row, the edit's outbox entry stays,
+  and the next push sends a tombstone (the row now reads as deleted), which
+  acks `duplicate` or `tombstoned` and clears. The row ends deleted
+  everywhere and nothing stays queued. The phone makes no attempt to keep
+  the edit; the user asked to delete the row.
 - **On `failed`**: nothing local changes; the mark stays. Account & Sync shows
   `account.refusal.discardFailed` under that row until the next attempt.
 - **Signed out or offline**: Account & Sync shows no sync card when signed
@@ -207,6 +221,13 @@ Feature: Discard a refused change
 
   Scenario: PHONE-LOCAL-NEWER a mark that arrived after the discard's arrival stays
 
+  Scenario: PHONE-INFLIGHT an edit made while the discard is in flight is deleted with the row
+    Given T2 is held, and the user edits T2 after its tombstone is sent, before the ack
+    When the discard is acked applied
+    Then T2 has deleted_at set, and the edit's outbox entry is still queued
+    And the next push sends a tombstone of T2, which acks duplicate or tombstoned
+    And the outbox is empty and T2 is deleted on the server
+
   Scenario: PHONE-FAIL a failed discard leaves the row, the outbox and the mark as they were
 
   Scenario: LOOP a discard requested during a cycle runs after it, never alongside
@@ -268,3 +289,7 @@ Feature: Discard a refused change
 ## Revisions
 
 - **Draft (2026-11-25).** First draft, before implementation.
+- **Draft revision (2026-11-25), from CodeRabbit's review of the draft.**
+  §2.1 sends through `transport.push`, not `pushChanges`, so the ack's
+  `arrival` reaches the phone; §2.3 states that an edit made while the
+  discard is in flight is deleted with the row, with scenario PHONE-INFLIGHT.
