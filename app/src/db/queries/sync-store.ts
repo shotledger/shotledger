@@ -7,16 +7,20 @@ import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
 import {
   APPLY_ORDER,
   applyMarkUpdate,
+  badRows,
   countMarks,
   isSyncableSettingRow,
   shadowPull,
   type AckOutcome,
+  type BadRow,
   type ChangeRow,
   type LocalRowSnapshot,
   type LocalStore,
   rowKey,
   type OutboxEntry,
+  type RefusalEntry,
   type RefusalMark,
+  type RowRef,
   type SyncTableName,
 } from '@shotledger/shared';
 
@@ -178,6 +182,10 @@ export function createSyncStore(db: Database): LocalStore {
     async markCounts() {
       return countMarks(readMarksSync(db));
     },
+
+    async applyDiscard(ref, now, arrival) {
+      applyDiscardSync(db, ref, now, arrival);
+    },
   };
 }
 
@@ -203,6 +211,23 @@ export function applyChangesSync(
     const inner = tx as unknown as Database;
     if (marks !== undefined) replaceMarks(inner, marks);
     applyRows(inner, changes);
+  });
+}
+
+/**
+ * A discarded bad row (docs/specs/sync-discard-refused-spec.md §2.3): its
+ * mark dropped up to the discard's arrival, and its tombstone applied as a
+ * pulled one, with the outbox triggers suppressed, in one transaction. A
+ * queued edit of the row stays queued, and pushes as a tombstone.
+ */
+function applyDiscardSync(db: Database, ref: RowRef, now: string, arrival: number): void {
+  db.transaction((tx) => {
+    const inner = tx as unknown as Database;
+    replaceMarks(inner, applyMarkUpdate(readMarksSync(inner), { drop: ref, upTo: arrival }));
+    applyRows(inner, [
+      // Local-only, like tombstoneFromRejection: applyOne ignores seq and arrival.
+      { ...ref, seq: 1, payload: null, deletedAt: now, updatedAt: now, arrival },
+    ]);
   });
 }
 
@@ -274,6 +299,26 @@ function writeAckOutcome(db: Database, outcome: AckOutcome): void {
   const shadow = shadowPull([outcome.current], pending, marks);
   replaceMarks(db, shadow.marks);
   applyRows(db, shadow.applicable);
+}
+
+/**
+ * Account & Sync's refused changes (docs/specs/sync-discard-refused-spec.md
+ * §2.2): the marks as the pull's `refusals` named them, looked up in this
+ * device's rows, deleted ones included.
+ */
+export function readBadRows(db: Database): BadRow[] {
+  const entries: RefusalEntry[] = readMarksSync(db).map((mark) => ({
+    tableName: mark.tableName,
+    rowId: mark.rowId,
+    reason: mark.kind === 'invalid' ? 'invalid_payload' : 'family_refused',
+    arrival: mark.arrival,
+    blocker: mark.blocker,
+  }));
+  return badRows(
+    entries,
+    (ref) =>
+      readRowSync(db, ref.tableName, ref.rowId)?.payload as Record<string, unknown> | undefined,
+  );
 }
 
 export function readRowSync(

@@ -235,6 +235,7 @@ export function App() {
         <Account
           key={generation}
           tables={state.tables}
+          refresh={refresh}
           onDeleted={() => {
             setPicks(NO_PICKS);
             setStatsFilter(DEFAULT_ANALYTICS_FILTER);

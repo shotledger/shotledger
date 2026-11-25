@@ -29,6 +29,7 @@ import { getSetting, SETTINGS_KEYS, setSetting } from './settings';
 import { enqueuePhotoTask } from './photo-queue';
 import {
   createSyncStore,
+  readBadRows,
   readRowSync,
   resetSyncBookkeeping,
   resetSyncState,
@@ -818,5 +819,187 @@ describe('refusal marks', () => {
     expect(result.shadowed).toBe(1);
     expect(db.select().from(firearms).get()!.model).toBe('A2');
     expect(await store.markCounts()).toEqual({ invalid: 0, waiting: 1 });
+  });
+});
+
+// docs/specs/sync-discard-refused-spec.md §2.3.
+describe('applyDiscard', () => {
+  const NOW = '2026-11-25T20:00:00.000Z';
+  const invalidMark = (rowId: string, arrival: number): RefusalMark => ({
+    tableName: 'firearms',
+    rowId,
+    kind: 'invalid',
+    arrival,
+    blocker: null,
+    own: true,
+  });
+  const other: RefusalMark = {
+    tableName: 'series',
+    rowId: 'r9',
+    kind: 'waiting',
+    arrival: 2,
+    blocker: { tableName: 'shots', rowId: 't9' },
+    own: false,
+  };
+
+  function heldFirearm(): string {
+    const id = createFirearm(db, { make: 'Pardini', model: 'SP' }).id;
+    db.delete(syncOutbox).run();
+    return id;
+  }
+
+  it('PHONE-LOCAL tombstones the held row without queueing, and drops its mark', async () => {
+    const id = heldFirearm();
+    await store.applyChanges([], [invalidMark(id, 3), other]);
+    await store.applyDiscard({ tableName: 'firearms', rowId: id }, NOW, 7);
+    const row = db.select().from(firearms).where(eq(firearms.id, id)).get()!;
+    expect(row.deletedAt).toBe(NOW);
+    expect(row.updatedAt).toBe(NOW);
+    expect(outboxRows()).toEqual([]);
+    expect(await store.readMarks()).toEqual([other]);
+  });
+
+  it('PHONE-LOCAL-NEWER a mark that arrived after the discard stays', async () => {
+    const id = heldFirearm();
+    await store.applyChanges([], [invalidMark(id, 9)]);
+    await store.applyDiscard({ tableName: 'firearms', rowId: id }, NOW, 7);
+    expect(await store.readMarks()).toEqual([invalidMark(id, 9)]);
+  });
+
+  it('COUNTER discarding a session moves no firearm round count', async () => {
+    const firearmId = createFirearm(db, { make: 'Pardini', model: 'SP' }).id;
+    db.update(firearms).set({ roundCount: 120 }).where(eq(firearms.id, firearmId)).run();
+    const sessionId = createSession(db, {
+      name: 'S',
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      startedAt: NOW,
+      firearmId,
+    }).id;
+    const before = db.select().from(firearms).where(eq(firearms.id, firearmId)).get()!.roundCount;
+    db.delete(syncOutbox).run();
+    await store.applyChanges([], [{ ...invalidMark(sessionId, 3), tableName: 'sessions' }]);
+    await store.applyDiscard({ tableName: 'sessions', rowId: sessionId }, NOW, 7);
+    const after = db.select().from(firearms).where(eq(firearms.id, firearmId)).get()!;
+    expect(after.roundCount).toBe(before);
+    expect(outboxRows()).toEqual([]);
+  });
+
+  it('GONE a row this device never held: no row appears, the mark goes', async () => {
+    await store.applyChanges([], [invalidMark('f-elsewhere', 3)]);
+    await store.applyDiscard({ tableName: 'firearms', rowId: 'f-elsewhere' }, NOW, 3);
+    expect(db.select().from(firearms).all()).toEqual([]);
+    expect(outboxRows()).toEqual([]);
+    expect(await store.readMarks()).toEqual([]);
+  });
+
+  it('PHONE-INFLIGHT an edit queued during the discard is deleted with the row, then clears', async () => {
+    const id = heldFirearm();
+    await store.applyChanges([], [invalidMark(id, 3)]);
+    updateFirearm(db, id, { model: 'SP New' }); // the edit, queued while the discard flies
+    expect(outboxRows()).toHaveLength(1);
+    await store.applyDiscard({ tableName: 'firearms', rowId: id }, NOW, 7);
+    expect(outboxRows()).toHaveLength(1);
+    expect((await store.readRow('firearms', id))!.deletedAt).toBe(NOW);
+
+    const pushed: unknown[] = [];
+    await runSyncCycle({
+      store,
+      transport: {
+        pull: async (request: PullRequest) => ({
+          protocolVersion: request.protocolVersion,
+          changes: [],
+          refusals: [],
+          nextCursors: request.tables.map((t) => ({
+            tableName: t.tableName,
+            cursor: t.cursor,
+            hasMore: false,
+          })),
+        }),
+        push: async (request) => {
+          pushed.push(...request.changes);
+          return {
+            protocolVersion: request.protocolVersion,
+            acks: request.changes.map((c) => ({
+              clientChangeId: c.clientChangeId,
+              status: 'rejected' as const,
+              reason: 'tombstoned',
+              arrival: 8,
+            })),
+          };
+        },
+      },
+      newId: () => '00000000-0000-4000-8000-000000000042',
+    });
+    expect(pushed).toEqual([
+      expect.objectContaining({ tableName: 'firearms', rowId: id, payload: null, deletedAt: NOW }),
+    ]);
+    expect(outboxRows()).toEqual([]);
+    expect((await store.readRow('firearms', id))!.deletedAt).toBe(NOW);
+  });
+
+  it('PHONE-FAIL a failed apply keeps the mark: both writes are one transaction', async () => {
+    const id = heldFirearm();
+    // A table this build does not know makes the row's apply throw, after
+    // the mark is dropped.
+    const unknown = { ...invalidMark(id, 3), tableName: 'nope' as 'firearms' };
+    await store.applyChanges([], [unknown]);
+    await expect(
+      store.applyDiscard({ tableName: unknown.tableName, rowId: id }, NOW, 7),
+    ).rejects.toThrow();
+    expect(await store.readMarks()).toEqual([unknown]);
+    expect(db.select().from(firearms).where(eq(firearms.id, id)).get()!.deletedAt).toBeNull();
+  });
+});
+
+// docs/specs/sync-discard-refused-spec.md §2.2 on the phone: the marks and
+// the local rows feed the shared badRows.
+describe('readBadRows', () => {
+  it('lists each invalid mark with its waiting count, held state and local context', async () => {
+    const id = createFirearm(db, { make: 'Pardini', model: 'SP' }).id;
+    const marks: RefusalMark[] = [
+      { tableName: 'firearms', rowId: id, kind: 'invalid', arrival: 3, blocker: null, own: true },
+      {
+        tableName: 'licenses',
+        rowId: 'l1',
+        kind: 'waiting',
+        arrival: 4,
+        blocker: { tableName: 'firearms', rowId: id },
+        own: true,
+      },
+      {
+        tableName: 'shots',
+        rowId: 't-gone',
+        kind: 'invalid',
+        arrival: 5,
+        blocker: null,
+        own: false,
+      },
+    ];
+    await store.applyChanges([], marks);
+    expect(readBadRows(db)).toEqual([
+      {
+        tableName: 'firearms',
+        rowId: id,
+        waiting: 1,
+        held: true,
+        root: { tableName: 'firearms', rowId: id },
+        context: { kind: 'firearm', label: 'Pardini SP' },
+        role: 'root',
+      },
+      {
+        tableName: 'shots',
+        rowId: 't-gone',
+        waiting: 0,
+        held: false,
+        root: null,
+        context: null,
+        role: 'member',
+      },
+    ]);
+  });
+
+  it('lists nothing without marks', () => {
+    expect(readBadRows(db)).toEqual([]);
   });
 });

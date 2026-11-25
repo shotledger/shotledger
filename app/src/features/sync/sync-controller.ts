@@ -3,6 +3,7 @@
 // § Sync) is enforced by there being exactly one; every trigger funnels through requestSync().
 import {
   classifySyncError,
+  discardRefused,
   initialSyncStatus,
   nextBackoffMs,
   reduceSyncStatus,
@@ -13,6 +14,8 @@ import {
   type SyncCycleResult,
   type SyncEvent,
   type SyncStatus,
+  type DiscardOutcome,
+  type RowRef,
 } from '@shotledger/shared';
 import { newId } from '@/db/util';
 
@@ -32,6 +35,9 @@ let running = false;
 let rerunRequested = false;
 let retryTimer: ReturnType<typeof setTimeout> | null = null;
 let writeDebounce: ReturnType<typeof setTimeout> | null = null;
+
+/** Discards waiting for the loop, which runs them before its next cycle. */
+const pendingDiscards: { ref: RowRef; done: (outcome: DiscardOutcome) => void }[] = [];
 
 const WRITE_DEBOUNCE_MS = 400;
 
@@ -145,6 +151,7 @@ export async function requestSync(): Promise<void> {
     let again: boolean;
     do {
       rerunRequested = false;
+      await runDiscards();
       const outcome = await runOnce();
       const continuePartial = outcome === 'partial' && partialReruns < MAX_PARTIAL_RERUNS;
       if (continuePartial) partialReruns += 1;
@@ -153,6 +160,10 @@ export async function requestSync(): Promise<void> {
     } while (again);
   } finally {
     running = false;
+    // The loop ended without reaching them: the session ended mid-loop.
+    for (const left of pendingDiscards.splice(0)) {
+      left.done({ kind: 'failed', error: 'unauthenticated' });
+    }
   }
 }
 
@@ -178,6 +189,46 @@ export function resetSyncController(): void {
     clearTimeout(writeDebounce);
     writeDebounce = null;
   }
+  // A queued discard belongs to the session that asked for it.
+  for (const queued of pendingDiscards.splice(0)) {
+    queued.done({ kind: 'failed', error: 'unauthenticated' });
+  }
   status = initialSyncStatus;
   for (const listener of listeners) listener(status);
+}
+
+/**
+ * Discard a refused change (docs/specs/sync-discard-refused-spec.md §2.3):
+ * queued for the one loop, which pushes it before its next cycle and never
+ * while a cycle runs, then runs that cycle so the pull's `refusals` replace
+ * the marks. Resolves with the server's verdict.
+ */
+export function requestDiscard(ref: RowRef): Promise<DiscardOutcome> {
+  if (!canSync()) return Promise.resolve({ kind: 'failed', error: 'unauthenticated' });
+  const outcome = new Promise<DiscardOutcome>((done) => pendingDiscards.push({ ref, done }));
+  void requestSync();
+  return outcome;
+}
+
+/** One at a time, in the order asked. Only the loop calls this. */
+async function runDiscards(): Promise<void> {
+  const store = createSyncStore(db);
+  for (let next = pendingDiscards.shift(); next !== undefined; next = pendingDiscards.shift()) {
+    const now = new Date().toISOString();
+    let outcome = await discardRefused(getSyncTransport(), next.ref, now, newId);
+    if (outcome.kind === 'discarded') {
+      try {
+        await store.applyDiscard(next.ref, now, outcome.arrival);
+      } catch {
+        // The server holds the tombstone; the next pull brings it and the marks.
+        outcome = { kind: 'failed', error: 'unknown' };
+      }
+    }
+    try {
+      await refreshPendingCount();
+    } catch {
+      // The counts are re-read after the cycle that follows; the verdict stands.
+    }
+    next.done(outcome);
+  }
 }

@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { browserSupportsWebAuthn } from '@simplewebauthn/browser';
-import type { RefusalEntry } from '@shotledger/shared/src/sync';
 import type {
   AccountDevice,
   AccountPasskey,
   PhotoUsage,
 } from '@shotledger/shared/src/sync-client/http';
-import { countMarks, marksFromRefusals } from '@shotledger/shared/src/sync-client/shadow';
 
 import { version } from '../../../app/package.json';
 import {
   addPasskey,
   deleteAccount,
+  discardRow,
   downloadPhoto,
   listDevices,
   listPasskeys,
@@ -22,7 +21,9 @@ import {
 } from '../api';
 import type { PasskeyError } from '../passkey-error';
 import type { PulledAccount, PulledTables } from '../pull';
+import { useOnline } from '../entry/entry';
 import { buildArchive, type ArchiveProgress } from './archive';
+import { Refusals } from './refusals';
 import { deviceLabel } from './device-label';
 import { showDate, showDateTime } from '../dates';
 
@@ -346,29 +347,20 @@ function Delete({ onDeleted }: { onDeleted: () => void }) {
   );
 }
 
-/**
- * The phone's two refusal lines on Account & Sync (app/src/app/account.tsx,
- * `sync-refused` and `sync-held`), counted the same way from the pull's
- * `refusals` (docs/specs/sync-family-refusal-spec.md §11.7). Shown only when
- * there is something to count, as on the phone.
- */
-function Refusals({ refusals }: { refusals: readonly RefusalEntry[] }) {
-  const { t } = useTranslation();
-  const { invalid, waiting } = countMarks(marksFromRefusals(refusals, []));
-  if (invalid === 0 && waiting === 0) return null;
-  return (
-    <section className="card">
-      <h2>{t('account.syncTitle')}</h2>
-      {invalid > 0 && <p className="muted">{t('account.refusedChanges', { count: invalid })}</p>}
-      {waiting > 0 && <p className="muted">{t('account.heldChanges', { count: waiting })}</p>}
-    </section>
-  );
-}
-
-export function Account({ tables, onDeleted }: { tables: PulledAccount; onDeleted: () => void }) {
+export function Account({
+  tables,
+  onDeleted,
+  refresh,
+}: {
+  tables: PulledAccount;
+  onDeleted: () => void;
+  /** Pulls the account again, after a discard (sync-discard-refused-spec §2.4). */
+  refresh: () => Promise<boolean>;
+}) {
+  const online = useOnline();
   return (
     <div className="account">
-      <Refusals refusals={tables.refusals} />
+      <Refusals tables={tables} discard={discardRow} refresh={refresh} online={online} />
       <Devices />
       <Passkeys />
       <Storage />

@@ -1,0 +1,85 @@
+// Account & Sync's refused changes, each with Discard
+// (docs/specs/sync-discard-refused-spec.md §2.3). Rows come from the shared
+// `badRows`; the web's Account page lists the same rows with the same strings.
+import {
+  badRowTitle,
+  confirmParts,
+  rowKey,
+  type BadRow,
+  type ConfirmPart,
+} from '@shotledger/shared';
+import { useTranslation } from 'react-i18next';
+import { Alert, View } from 'react-native';
+
+import { Button } from '@/components/button';
+import { ListRow } from '@/components/list-row';
+import { useDateFormat } from '@/features/dates/use-date-format';
+
+/** The confirm's i18n keys, by the shared `confirmParts`. */
+const CONFIRM_KEY: Record<ConfirmPart, string> = {
+  body: 'account.refusal.confirmBody',
+  member: 'account.refusal.confirmMember',
+  root: 'account.refusal.confirmRoot',
+};
+
+export interface RefusedChangesProps {
+  rows: readonly BadRow[];
+  onDiscard: (row: BadRow) => void;
+  /** `rowKey`s whose last discard failed. */
+  failed?: readonly string[];
+  /** The `rowKey` being discarded; every Discard waits while one runs. */
+  busy?: string | null;
+}
+
+export function RefusedChanges({ rows, onDiscard, failed = [], busy = null }: RefusedChangesProps) {
+  const { t } = useTranslation();
+  const dates = useDateFormat();
+
+  const title = (row: BadRow) =>
+    badRowTitle(row, t(`account.refusal.kind.${row.tableName}`), dates.date);
+
+  const confirm = (row: BadRow) => {
+    const body = confirmParts(row.role)
+      .map((part) => t(CONFIRM_KEY[part]))
+      .join('\n\n');
+    Alert.alert(t('account.refusal.confirmTitle'), body, [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('account.refusal.discard'),
+        style: 'destructive',
+        onPress: () => onDiscard(row),
+      },
+    ]);
+  };
+
+  return (
+    <>
+      {rows.map((row) => {
+        const key = rowKey(row.tableName, row.rowId);
+        const id = `${row.tableName}-${row.rowId}`;
+        return (
+          // ListRow sets a testID only on a pressable row.
+          <View key={key} testID={`refused-row-${id}`}>
+            <ListRow
+              title={title(row)}
+              subtitle={[
+                row.waiting > 0 ? t('account.refusal.waiting', { count: row.waiting }) : null,
+                row.held ? null : t('account.refusal.notOnDevice'),
+                failed.includes(key) ? t('account.refusal.discardFailed') : null,
+              ]}
+              trailing={
+                <Button
+                  variant="destructive"
+                  label={t('account.refusal.discard')}
+                  disabled={busy !== null}
+                  onPress={() => confirm(row)}
+                  testID={`refused-discard-${id}`}
+                />
+              }
+            />
+          </View>
+        );
+      })}
+    </>
+  );
+}

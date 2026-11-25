@@ -18,7 +18,12 @@ jest.mock('@/db/util', () => ({ newId: () => mockNewId() }));
 
 const mockPendingCount = jest.fn(async () => 0);
 const mockMarkCounts = jest.fn(async () => ({ invalid: 0, waiting: 0 }));
-const mockStore = { pendingCount: () => mockPendingCount(), markCounts: () => mockMarkCounts() };
+const mockApplyDiscard = jest.fn(async (..._args: unknown[]) => undefined);
+const mockStore = {
+  pendingCount: () => mockPendingCount(),
+  markCounts: () => mockMarkCounts(),
+  applyDiscard: (...args: unknown[]) => mockApplyDiscard(...args),
+};
 const mockCreateSyncStore = jest.fn((_db: unknown) => mockStore);
 jest.mock('@/db/queries/sync-store', () => ({
   createSyncStore: (db: unknown) => mockCreateSyncStore(db),
@@ -44,9 +49,11 @@ const mockRunPhotoQueue = jest.fn(async () => undefined);
 jest.mock('./photo-queue-runner', () => ({ runPhotoQueue: () => mockRunPhotoQueue() }));
 
 const mockRunSyncCycle = jest.fn();
+const mockDiscardRefused = jest.fn();
 jest.mock('@shotledger/shared', () => ({
   ...jest.requireActual('@shotledger/shared'),
   runSyncCycle: (deps: unknown) => mockRunSyncCycle(deps),
+  discardRefused: (...args: unknown[]) => mockDiscardRefused(...args),
 }));
 
 type Controller = typeof import('./sync-controller');
@@ -106,6 +113,7 @@ beforeEach(() => {
   mockPendingCount.mockResolvedValue(0);
   mockMarkCounts.mockResolvedValue({ invalid: 0, waiting: 0 });
   mockRunSyncCycle.mockResolvedValue(OK_RESULT);
+  mockDiscardRefused.mockResolvedValue({ kind: 'discarded', arrival: 7 });
 });
 
 afterEach(() => {
@@ -514,5 +522,169 @@ describe('an unauthenticated cycle', () => {
     expect(mockSetSessionTokenCache).not.toHaveBeenCalled();
     expect(mockClearSessionToken).not.toHaveBeenCalled();
     expect(controller.canSync()).toBe(true);
+  });
+});
+
+// docs/specs/sync-discard-refused-spec.md §2.3, scenarios LOOP, PHONE-*.
+describe('requestDiscard', () => {
+  const T2 = { tableName: 'shots', rowId: 'T2' } as const;
+
+  it('pushes the tombstone, applies it locally at its arrival, then runs a cycle', async () => {
+    const { controller } = load();
+    const order: string[] = [];
+    mockDiscardRefused.mockImplementationOnce(async () => {
+      order.push('discard');
+      return { kind: 'discarded', arrival: 7 };
+    });
+    mockApplyDiscard.mockImplementationOnce(async () => {
+      order.push('apply');
+    });
+    mockRunSyncCycle.mockImplementationOnce(async () => {
+      order.push('cycle');
+      return OK_RESULT;
+    });
+
+    await expect(controller.requestDiscard(T2)).resolves.toEqual({
+      kind: 'discarded',
+      arrival: 7,
+    });
+
+    expect(mockDiscardRefused).toHaveBeenCalledWith(
+      mockTransport,
+      T2,
+      NOW.toISOString(),
+      expect.any(Function),
+    );
+    expect(mockApplyDiscard).toHaveBeenCalledWith(T2, NOW.toISOString(), 7);
+    expect(order).toEqual(['discard', 'apply', 'cycle']);
+  });
+
+  it('LOOP a discard requested during a cycle runs after it, never alongside', async () => {
+    const { controller } = load();
+    const first = holdNextCycle();
+    const loop = controller.requestSync();
+    await settle();
+
+    const discarded = controller.requestDiscard(T2);
+    await settle();
+    expect(mockDiscardRefused).not.toHaveBeenCalled();
+
+    first.finish();
+    await loop;
+    await expect(discarded).resolves.toEqual({ kind: 'discarded', arrival: 7 });
+    // The discard went out after the first cycle, and a cycle followed it.
+    expect(mockDiscardRefused).toHaveBeenCalledTimes(1);
+    expect(mockRunSyncCycle).toHaveBeenCalledTimes(2);
+    expect(mockDiscardRefused.mock.invocationCallOrder[0]).toBeGreaterThan(
+      mockRunSyncCycle.mock.invocationCallOrder[0]!,
+    );
+    expect(mockDiscardRefused.mock.invocationCallOrder[0]).toBeLessThan(
+      mockRunSyncCycle.mock.invocationCallOrder[1]!,
+    );
+  });
+
+  it('runs two discards one at a time, then one cycle', async () => {
+    const { controller } = load();
+    const first = holdNextCycle();
+    const loop = controller.requestSync();
+    await settle();
+    let inFlight = 0;
+    let most = 0;
+    mockDiscardRefused.mockImplementation(async () => {
+      inFlight += 1;
+      most = Math.max(most, inFlight);
+      await Promise.resolve();
+      inFlight -= 1;
+      return { kind: 'discarded', arrival: 7 };
+    });
+    const a = controller.requestDiscard(T2);
+    const b = controller.requestDiscard({ tableName: 'licenses', rowId: 'L1' });
+    first.finish();
+    await loop;
+    await Promise.all([a, b]);
+    expect(mockDiscardRefused).toHaveBeenCalledTimes(2);
+    expect(most).toBe(1);
+    expect(mockRunSyncCycle).toHaveBeenCalledTimes(2);
+  });
+
+  it('PHONE-FAIL a failed discard writes nothing locally and says why', async () => {
+    const { controller } = load();
+    mockDiscardRefused.mockResolvedValueOnce({ kind: 'failed', error: 'network' });
+
+    await expect(controller.requestDiscard(T2)).resolves.toEqual({
+      kind: 'failed',
+      error: 'network',
+    });
+    expect(mockApplyDiscard).not.toHaveBeenCalled();
+  });
+
+  it('a local write that throws after the server took the tombstone reports a failure', async () => {
+    const { controller } = load();
+    mockApplyDiscard.mockRejectedValueOnce(new Error('disk'));
+
+    await expect(controller.requestDiscard(T2)).resolves.toEqual({
+      kind: 'failed',
+      error: 'unknown',
+    });
+  });
+
+  it('signed out: nothing is sent', async () => {
+    const { controller } = load();
+    mockToken.value = null;
+
+    await expect(controller.requestDiscard(T2)).resolves.toEqual({
+      kind: 'failed',
+      error: 'unauthenticated',
+    });
+    expect(mockDiscardRefused).not.toHaveBeenCalled();
+    expect(mockRunSyncCycle).not.toHaveBeenCalled();
+  });
+
+  it('refreshes the counts after the discard', async () => {
+    const { controller } = load();
+    const seen: SyncStatus[] = [];
+    controller.subscribeToSync((s) => seen.push(s));
+    mockMarkCounts.mockResolvedValue({ invalid: 0, waiting: 0 });
+    mockRunSyncCycle.mockImplementationOnce(() => new Promise(() => undefined)); // never ends
+
+    void controller.requestDiscard(T2);
+    await settle();
+    expect(mockMarkCounts).toHaveBeenCalled();
+  });
+
+  it('a discard queued when the session ends mid-cycle fails, and is never sent', async () => {
+    const { controller, shared } = load();
+    const first = holdNextCycle();
+    const loop = controller.requestSync();
+    await settle();
+    const discarded = controller.requestDiscard(T2);
+    first.fail(new shared.AuthError(401, 'unauthorized'));
+    await loop;
+    await expect(discarded).resolves.toEqual({ kind: 'failed', error: 'unauthenticated' });
+    expect(mockDiscardRefused).not.toHaveBeenCalled();
+  });
+
+  it('signing out fails a queued discard, so a later session never sends it', async () => {
+    const { controller } = load();
+    const first = holdNextCycle();
+    const loop = controller.requestSync();
+    await settle();
+    const discarded = controller.requestDiscard(T2);
+    controller.resetSyncController();
+    await expect(discarded).resolves.toEqual({ kind: 'failed', error: 'unauthenticated' });
+    first.finish();
+    await loop;
+    expect(mockDiscardRefused).not.toHaveBeenCalled();
+  });
+
+  it('a count refresh that throws still settles the discard, and the cycle runs', async () => {
+    const { controller } = load();
+    mockPendingCount.mockRejectedValueOnce(new Error('disk'));
+
+    await expect(controller.requestDiscard(T2)).resolves.toEqual({
+      kind: 'discarded',
+      arrival: 7,
+    });
+    expect(mockRunSyncCycle).toHaveBeenCalledTimes(1);
   });
 });

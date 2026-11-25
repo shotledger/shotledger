@@ -78,8 +78,8 @@ licenses, groups, calibers, maintenance and sight settings, but not the
 sessions shot with it. Deletions are never held.
 
 - The server keeps the held changes until the refused change arrives fixed,
-  or until it or its session is deleted, from any device. Then it stores them
-  all at once.
+  is discarded, or until it or its session is deleted, from any device. Then
+  it stores them all at once.
 - Changes to that session from your other devices and the web app wait on the
   server too. They are not lost by signing out, restoring a backup or
   reinstalling the app.
@@ -88,6 +88,29 @@ sessions shot with it. Deletions are never held.
 - When two devices change the same entry, the change that reached the server
   last wins. A held change counts from when it reached the server, not from
   when it is stored. A deletion always wins.
+
+#### Discard a refused change
+
+When no edit fixes a refused change, for example because only a phone you no
+longer have holds it, you can discard it. **Account & Sync** lists each
+refused change under the "refused" line: what it is (a shot, a series, a
+license and so on), the session or firearm it belongs to when this device
+knows it, and how many changes wait on it. "Not on this device" means
+another device made it; you can still discard it here.
+
+1. Open **Account & Sync**.
+2. Tap **Discard** next to the refused change.
+3. Read the confirmation and tap **Discard**.
+
+Discarding deletes the refused change on all your devices, and any older
+version of it the server stores. For a shot, a series or a station, the rest
+of the session then syncs without it. Discarding a refused session or firearm
+deletes it, together with everything that belongs to it. A firearm's round
+count stays as it is.
+
+The web app's **Account** page lists the same refused changes, and its
+**Discard** works the same way. You need a connection: Discard is not
+queued for later.
 
 Other devices and the web app show the session as the server stores it: as it
 was before the refused change, until the server stores the held changes. So
