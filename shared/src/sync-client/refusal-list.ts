@@ -56,7 +56,11 @@ function contextOf(root: RowRef, row: Record<string, unknown> | undefined): BadR
     return { kind: 'firearm', label: firearmDisplayName(row as { make: string; model: string }) };
   }
   const name = typeof row.name === 'string' && row.name.trim() !== '' ? row.name : null;
-  const startedAt = typeof row.started_at === 'string' ? row.started_at : null;
+  // The row was refused, so its date may not be one; the title then goes without.
+  const startedAt =
+    typeof row.started_at === 'string' && !Number.isNaN(Date.parse(row.started_at))
+      ? row.started_at
+      : null;
   return { kind: 'session', name, startedAt };
 }
 

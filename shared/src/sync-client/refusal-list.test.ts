@@ -102,6 +102,16 @@ describe('badRows', () => {
     expect(noDate!.context).toEqual({ kind: 'session', name: null, startedAt: null });
   });
 
+  it('CTX-NODATE a start date that is not a date is left out, so the title still renders', () => {
+    for (const started_at of ['not a date', '', 42]) {
+      const [row] = badRows(
+        [invalid('sessions', 'S1')],
+        rows({ 'sessions:S1': { id: 'S1', name: 'Kväll', started_at } }),
+      );
+      expect(row!.context).toEqual({ kind: 'session', name: 'Kväll', startedAt: null });
+    }
+  });
+
   it('CTX-FIREARM a license names its firearm, and a firearm itself', () => {
     const [license] = badRows([invalid('licenses', 'L1')], sessionFamily);
     expect(license).toMatchObject({
