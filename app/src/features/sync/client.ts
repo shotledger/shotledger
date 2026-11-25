@@ -33,7 +33,8 @@ export async function loadSessionTokenCache(): Promise<string | null> {
 
 function config() {
   return {
-    fetchImpl: fetch,
+    // Called as `config.fetchImpl(...)`; a browser's fetch needs the global as `this` (#945).
+    fetchImpl: (input: RequestInfo | URL, init?: RequestInit) => fetch(input, init),
     baseUrl: apiBaseUrl(),
     getToken: () => tokenCache,
   };
