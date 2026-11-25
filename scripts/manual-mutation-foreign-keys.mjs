@@ -90,6 +90,12 @@ const MUTANTS = [
     replace: '      false &&',
   },
   {
+    name: 'AP6 an acknowledged push keeps the older pending version',
+    file: STORE,
+    find: '        dropPending(inner, entry.tableName, entry.rowId);\n',
+    replace: '',
+  },
+  {
     name: 'FK7 the sweep moves a row with a queued edit (the edit is lost)',
     file: STORE,
     find: '        if (hasQueuedEdit(inner, tableName, rowId)) continue;\n',

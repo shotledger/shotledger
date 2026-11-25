@@ -152,15 +152,14 @@ export function createSyncStore(db: Database): LocalStore {
 
     async clearOutboxEntry(entry, outcome) {
       // rev-matched: a local write that landed while this push was in flight
-      // bumped rev, so the entry survives for the next cycle.
-      if (outcome === undefined) {
-        db.delete(syncOutbox).where(matches(entry)).run();
-        return;
-      }
+      // bumped rev, so the entry survives for the next cycle. The row's
+      // pending version is older than what the push sent, so it goes too
+      // (AP6): promoting it later would revert the acknowledged edit.
       db.transaction((tx) => {
         const inner = tx as unknown as Database;
         inner.delete(syncOutbox).where(matches(entry)).run();
-        writeAckOutcome(inner, outcome);
+        dropPending(inner, entry.tableName, entry.rowId);
+        if (outcome !== undefined) writeAckOutcome(inner, outcome);
       });
     },
 

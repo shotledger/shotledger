@@ -207,6 +207,27 @@ describe('AP5–AP6 promotion', () => {
     expect(pending()).toEqual([]);
   });
 
+  it('AP6 an acknowledged push drops the pending version, so promotion does not revert the edit', async () => {
+    await store.applyChanges([family.session, family.series]);
+    const moved = {
+      ...family.series,
+      seq: 9,
+      payload: { ...(family.series.payload as object), session_id: 'later', position: 5 },
+    } as ChangeRow;
+    await store.applyChanges([moved]);
+    db.update(series).set({ position: 3 }).run(); // queues an outbox entry
+    const [entry] = await store.readOutbox(10);
+    await store.clearOutboxEntry(entry!); // the server accepted position 3
+    expect(pending()).toEqual([]);
+    const later = {
+      ...family.session,
+      rowId: 'later',
+      payload: { ...(family.session.payload as object), id: 'later' },
+    } as ChangeRow;
+    await store.applyChanges([later]);
+    expect(db.select().from(series).get()!.position).toBe(3);
+  });
+
   it('AP6 a held row without a queued edit takes its pending version', async () => {
     await store.applyChanges([family.session, family.series]);
     const moved = {
