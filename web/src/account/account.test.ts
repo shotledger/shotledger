@@ -19,6 +19,7 @@ vi.mock('../i18n', () => ({ default: { language: 'en' } }));
 vi.mock('../api', () => ({
   addPasskey: vi.fn(),
   deleteAccount: vi.fn(),
+  discardRow: vi.fn(),
   downloadPhoto: vi.fn(),
   listDevices: vi.fn(),
   listPasskeys: vi.fn(),
@@ -44,6 +45,7 @@ const render = (refusals: RefusalEntry[]) =>
     createElement(Account, {
       tables: { refusals } as unknown as PulledAccount,
       onDeleted: () => undefined,
+      refresh: async () => true,
     }),
   );
 

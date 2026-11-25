@@ -78,3 +78,25 @@ export function badRows(refusals: readonly RefusalEntry[], lookup: RowLookup): B
       };
     });
 }
+
+/**
+ * The row's title on both clients: its kind, then its family's name. `kind`
+ * is the translated `account.refusal.kind.<table>`; `date` formats a date.
+ */
+export function badRowTitle(row: BadRow, kind: string, date: (iso: string) => string): string {
+  const context = row.context;
+  if (context === null) return kind;
+  if (context.kind === 'firearm') return `${kind} · ${context.label}`;
+  const parts = [context.name, context.startedAt === null ? null : date(context.startedAt)];
+  const label = parts.filter((part): part is string => part !== null).join(', ');
+  return label === '' ? kind : `${kind} · ${label}`;
+}
+
+/** The confirm's paragraphs, as i18n keys (spec §2.3): the body, then what
+ *  becomes of the rest of the family. */
+export function confirmKeys(role: BadRow['role']): string[] {
+  const body = 'account.refusal.confirmBody';
+  if (role === 'member') return [body, 'account.refusal.confirmMember'];
+  if (role === 'root') return [body, 'account.refusal.confirmRoot'];
+  return [body];
+}

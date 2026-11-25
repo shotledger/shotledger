@@ -1,7 +1,7 @@
 // Account & Sync's refused changes, each with Discard
 // (docs/specs/sync-discard-refused-spec.md §2.3). Rows come from the shared
 // `badRows`; the web's Account page lists the same rows with the same strings.
-import { rowKey, type BadRow } from '@shotledger/shared';
+import { badRowTitle, confirmKeys, rowKey, type BadRow } from '@shotledger/shared';
 import { useTranslation } from 'react-i18next';
 import { Alert, View } from 'react-native';
 
@@ -22,24 +22,13 @@ export function RefusedChanges({ rows, onDiscard, failed = [], busy = null }: Re
   const { t } = useTranslation();
   const dates = useDateFormat();
 
-  const title = (row: BadRow) => {
-    const kind = t(`account.refusal.kind.${row.tableName}`);
-    const context = row.context;
-    if (context === null) return kind;
-    if (context.kind === 'firearm') return `${kind} · ${context.label}`;
-    const date = context.startedAt === null ? null : dates.date(context.startedAt);
-    const label = [context.name, date].filter((part) => part !== null).join(', ');
-    return label === '' ? kind : `${kind} · ${label}`;
-  };
+  const title = (row: BadRow) =>
+    badRowTitle(row, t(`account.refusal.kind.${row.tableName}`), dates.date);
 
   const confirm = (row: BadRow) => {
-    const second =
-      row.role === 'member'
-        ? t('account.refusal.confirmMember')
-        : row.role === 'root'
-          ? t('account.refusal.confirmRoot')
-          : null;
-    const body = [t('account.refusal.confirmBody'), second].filter(Boolean).join('\n\n');
+    const body = confirmKeys(row.role)
+      .map((key) => t(key))
+      .join('\n\n');
     Alert.alert(t('account.refusal.confirmTitle'), body, [
       { text: t('common.cancel'), style: 'cancel' },
       {

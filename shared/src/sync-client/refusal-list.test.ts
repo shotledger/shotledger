@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { RowRef } from '../sync/family';
 import type { RefusalEntry } from '../sync/protocol';
-import { badRows, type RowLookup } from './refusal-list';
+import { badRows, badRowTitle, confirmKeys, type RowLookup } from './refusal-list';
 
 const invalid = (tableName: RefusalEntry['tableName'], rowId: string): RefusalEntry => ({
   tableName,
@@ -158,5 +158,44 @@ describe('badRows', () => {
       const [row] = badRows([invalid(tableName, 'X')], () => ({ id: 'X' }));
       expect(row).toMatchObject({ held: true, root: null, context: null, role: 'other' });
     }
+  });
+});
+
+// Both clients word a bad row the same way (rule 11): its title, and the
+// confirm's lines as i18n keys.
+describe('badRowTitle and confirmKeys', () => {
+  const base = badRows([invalid('shots', 'T2')], sessionFamily)[0]!;
+  const date = (iso: string) => `d(${iso.slice(0, 10)})`;
+
+  it('names the kind and its session, by name and date', () => {
+    expect(badRowTitle(base, 'Shot', date)).toBe('Shot · Kväll, d(2026-11-20)');
+  });
+
+  it('a session with no name shows its date; with neither, the kind alone', () => {
+    const noName = {
+      ...base,
+      context: { kind: 'session', name: null, startedAt: '2026-11-20T18:00:00.000Z' },
+    } as const;
+    expect(badRowTitle(noName, 'Session', date)).toBe('Session · d(2026-11-20)');
+    const bare = { ...base, context: { kind: 'session', name: null, startedAt: null } } as const;
+    expect(badRowTitle(bare, 'Session', date)).toBe('Session');
+  });
+
+  it('a firearm context shows its label; no context shows the kind', () => {
+    const firearm = { ...base, context: { kind: 'firearm', label: 'Pardini SP' } } as const;
+    expect(badRowTitle(firearm, 'License', date)).toBe('License · Pardini SP');
+    expect(badRowTitle({ ...base, context: null }, 'Shot', date)).toBe('Shot');
+  });
+
+  it('the confirm adds the member or the root line to the body', () => {
+    expect(confirmKeys('member')).toEqual([
+      'account.refusal.confirmBody',
+      'account.refusal.confirmMember',
+    ]);
+    expect(confirmKeys('root')).toEqual([
+      'account.refusal.confirmBody',
+      'account.refusal.confirmRoot',
+    ]);
+    expect(confirmKeys('other')).toEqual(['account.refusal.confirmBody']);
   });
 });

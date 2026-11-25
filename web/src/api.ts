@@ -9,6 +9,8 @@ import {
 } from '@simplewebauthn/browser';
 import { PROTOCOL_VERSION, type ClientChange } from '@shotledger/shared/src/sync';
 import { pushChanges, type PushOutcome } from '@shotledger/shared/src/sync-client/direct-push';
+import { discardRefused, type DiscardOutcome } from '@shotledger/shared/src/sync-client/discard';
+import type { RowRef } from '@shotledger/shared/src/sync/family';
 import {
   AuthError,
   createAccountApi,
@@ -161,6 +163,11 @@ export function loadTables(only: readonly WebTable[]): Promise<PulledTables> {
 /** One request, never retried here (ARCHITECTURE.md § Web app); Retry is the user's. */
 export function pushRows(changes: readonly ClientChange[]): Promise<PushOutcome> {
   return pushChanges(transport, PROTOCOL_VERSION, changes);
+}
+
+/** Discard a refused change (docs/specs/sync-discard-refused-spec.md §2.4). */
+export function discardRow(ref: RowRef): Promise<DiscardOutcome> {
+  return discardRefused(transport, ref, new Date().toISOString(), () => crypto.randomUUID());
 }
 
 /** Null when the stored token is no longer a valid session. */
