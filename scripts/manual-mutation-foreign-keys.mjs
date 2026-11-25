@@ -70,6 +70,9 @@ function runSuite() {
     return 'pass';
   } catch (error) {
     const output = `${error.stdout ?? ''}${error.stderr ?? ''}`;
+    // A runner error (Vitest's "Errors" summary line) is never a kill, even
+    // when a test failed too.
+    if (/^\s*Errors\s+\d+/m.test(output)) return 'error';
     return /Tests\s+\d+ failed/.test(output) ? 'fail' : 'error';
   }
 }
