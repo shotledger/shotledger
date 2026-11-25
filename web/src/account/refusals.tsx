@@ -27,12 +27,12 @@ const CONFIRM_KEY: Record<ConfirmPart, string> = {
 };
 
 export type DiscardState =
-  { step: 'idle' } | { step: 'asking' | 'working' | 'failed'; key: string };
+  { step: 'idle' | 'reload' } | { step: 'asking' | 'working' | 'failed'; key: string };
 export type DiscardEvent =
   | { type: 'ask'; key: string }
   | { type: 'cancel' }
   | { type: 'confirm' }
-  | { type: 'done'; outcome: DiscardOutcome };
+  | { type: 'done'; outcome: DiscardOutcome; refreshed?: boolean };
 export const IDLE: DiscardState = { step: 'idle' };
 
 /** One confirm at a time; `send` names the row to discard now. */
@@ -43,7 +43,7 @@ export function discardStep(
   const stay = { state, send: null };
   switch (event.type) {
     case 'ask':
-      return state.step === 'idle' || state.step === 'failed'
+      return state.step === 'idle' || state.step === 'failed' || state.step === 'reload'
         ? { state: { step: 'asking', key: event.key }, send: null }
         : stay;
     case 'cancel':
@@ -54,21 +54,27 @@ export function discardStep(
         : stay;
     case 'done':
       if (state.step !== 'working') return stay;
-      return event.outcome.kind === 'discarded'
-        ? { state: IDLE, send: null }
-        : { state: { step: 'failed', key: state.key }, send: null };
+      if (event.outcome.kind !== 'discarded') {
+        return { state: { step: 'failed', key: state.key }, send: null };
+      }
+      // Discarded, but the page still shows the old pull (as web.bulk.reload elsewhere).
+      return { state: event.refreshed === false ? { step: 'reload' } : IDLE, send: null };
   }
 }
 
 export interface DiscardDeps {
   discard: (ref: RowRef) => Promise<DiscardOutcome>;
-  refresh: () => Promise<unknown>;
+  /** Pulls the account again; false when that failed. */
+  refresh: () => Promise<boolean>;
 }
 
-export async function runDiscard(deps: DiscardDeps, ref: RowRef): Promise<DiscardOutcome> {
+export async function runDiscard(
+  deps: DiscardDeps,
+  ref: RowRef,
+): Promise<{ outcome: DiscardOutcome; refreshed: boolean }> {
   const outcome = await deps.discard(ref);
-  if (outcome.kind === 'discarded') await deps.refresh();
-  return outcome;
+  const refreshed = outcome.kind === 'discarded' ? await deps.refresh() : true;
+  return { outcome, refreshed };
 }
 
 export function Refusals({
@@ -102,8 +108,8 @@ export function Refusals({
     setState(next.state);
     if (next.send !== null && row !== undefined) {
       void runDiscard({ discard, refresh }, { tableName: row.tableName, rowId: row.rowId })
-        .catch((): DiscardOutcome => ({ kind: 'failed', error: 'unknown' }))
-        .then((outcome) => setState((was) => discardStep(was, { type: 'done', outcome }).state));
+        .catch(() => ({ outcome: { kind: 'failed', error: 'unknown' } as DiscardOutcome }))
+        .then((done) => setState((was) => discardStep(was, { type: 'done', ...done }).state));
     }
   };
 
@@ -175,6 +181,7 @@ export function Refusals({
         </ul>
       )}
       {waiting > 0 && <p className="muted">{t('account.heldChanges', { count: waiting })}</p>}
+      {state.step === 'reload' && <p className="muted">{t('web.bulk.reload')}</p>}
     </section>
   );
 }

@@ -97,6 +97,26 @@ describe('Refusals (web)', () => {
     expect(html).not.toMatch(/disabled=""[^>]*>Discard</);
   });
 
+  it('after a discard whose reload failed, says to reload the page', () => {
+    const html = renderToStaticMarkup(
+      createElement(Refusals, {
+        tables: tables as unknown as PulledAccount,
+        discard: vi.fn(),
+        refresh: vi.fn(),
+        initial: { step: 'reload' },
+      }),
+    );
+    expect(html).toContain(i18next.t('web.bulk.reload'));
+    const idle = renderToStaticMarkup(
+      createElement(Refusals, {
+        tables: tables as unknown as PulledAccount,
+        discard: vi.fn(),
+        refresh: vi.fn(),
+      }),
+    );
+    expect(idle).not.toContain(i18next.t('web.bulk.reload'));
+  });
+
   it('shows nothing when nothing is refused or waiting', () => {
     const html = renderToStaticMarkup(
       createElement(Refusals, {
@@ -153,6 +173,31 @@ describe('discardStep', () => {
     ).toEqual({ state: asking, send: null });
   });
 
+  it('a discard whose reload failed asks for a page reload; any row can be asked again', () => {
+    const working: DiscardState = { step: 'working', key: 'shots:t2' };
+    const done = discardStep(working, {
+      type: 'done',
+      outcome: { kind: 'discarded', arrival: 1 },
+      refreshed: false,
+    });
+    expect(done).toEqual({ state: { step: 'reload' }, send: null });
+    expect(discardStep(done.state, { type: 'ask', key: 'licenses:l1' }).state).toEqual({
+      step: 'asking',
+      key: 'licenses:l1',
+    });
+  });
+
+  it('a failed discard is a failure whatever the reload did', () => {
+    const working: DiscardState = { step: 'working', key: 'shots:t2' };
+    expect(
+      discardStep(working, {
+        type: 'done',
+        outcome: { kind: 'failed', error: 'network' },
+        refreshed: false,
+      }).state,
+    ).toEqual({ step: 'failed', key: 'shots:t2' });
+  });
+
   it('after a failure, the row can be asked again', () => {
     expect(
       discardStep({ step: 'failed', key: 'shots:t2' }, { type: 'ask', key: 'shots:t2' }).state,
@@ -165,14 +210,25 @@ describe('runDiscard', () => {
     const refresh = vi.fn(async () => true);
     const ok = vi.fn(async () => ({ kind: 'discarded', arrival: 4 }) as const);
     await expect(runDiscard({ discard: ok, refresh }, T2)).resolves.toEqual({
-      kind: 'discarded',
-      arrival: 4,
+      outcome: { kind: 'discarded', arrival: 4 },
+      refreshed: true,
     });
     expect(ok).toHaveBeenCalledWith(T2);
     expect(refresh).toHaveBeenCalledTimes(1);
 
     const bad = vi.fn(async () => ({ kind: 'failed', error: 'network' }) as const);
-    await runDiscard({ discard: bad, refresh }, T2);
+    await expect(runDiscard({ discard: bad, refresh }, T2)).resolves.toEqual({
+      outcome: { kind: 'failed', error: 'network' },
+      refreshed: true,
+    });
     expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it('says when the reload after a discard failed', async () => {
+    const ok = vi.fn(async () => ({ kind: 'discarded', arrival: 4 }) as const);
+    await expect(runDiscard({ discard: ok, refresh: async () => false }, T2)).resolves.toEqual({
+      outcome: { kind: 'discarded', arrival: 4 },
+      refreshed: false,
+    });
   });
 });

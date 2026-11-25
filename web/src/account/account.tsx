@@ -355,7 +355,7 @@ export function Account({
   tables: PulledAccount;
   onDeleted: () => void;
   /** Pulls the account again, after a discard (sync-discard-refused-spec §2.4). */
-  refresh: () => Promise<unknown>;
+  refresh: () => Promise<boolean>;
 }) {
   const online = useOnline();
   return (
