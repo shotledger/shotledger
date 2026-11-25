@@ -86,8 +86,8 @@ const MUTANTS = [
   {
     name: 'AP6 a queued local edit is overwritten by its pending version',
     file: STORE,
-    find: '        rowExists(db, change.tableName, change.rowId) &&',
-    replace: '        false &&',
+    find: '      rowExists(db, change.tableName, change.rowId) &&',
+    replace: '      false &&',
   },
   {
     name: 'FK7 the sweep moves a row with a queued edit (the edit is lost)',
