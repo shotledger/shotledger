@@ -21,6 +21,7 @@ import {
   rowKey,
   applyMarkUpdate,
   shadowPull,
+  discardRefused,
   runSyncCycle,
   type ChangeRow,
   type LocalRowSnapshot,
@@ -180,6 +181,13 @@ class Device {
           invalid: marks.filter((m) => m.kind === 'invalid').length,
           waiting: marks.filter((m) => m.kind === 'waiting').length,
         };
+      }, // As the adapter (sync-discard-refused-spec §2.3): the mark dropped up
+      // to the discard's arrival, then the tombstone applied as a pulled one.
+      applyDiscard: async (ref, now, arrival) => {
+        this.replaceMarks(applyMarkUpdate([...this.marks.values()], { drop: ref, upTo: arrival }));
+        this.applyRows([
+          { ...ref, seq: 1, payload: null, deletedAt: now, updatedAt: now, arrival },
+        ]);
       },
     };
   }
@@ -1078,5 +1086,80 @@ describe('the server keeps refused families (Revision 3)', () => {
     expect(live(deviceA)).toEqual(live(fresh));
     expect(live(deviceB)).toEqual(live(fresh));
     expect(nameOn(fresh)).toBe('two');
+  });
+
+  // docs/specs/sync-discard-refused-spec.md §3, E2E and E2E-ROOT: the shared
+  // discardRefused against the real worker, from a device that never held
+  // the bad row.
+  async function discard(device: Device, ref: { tableName: SyncTableName; rowId: string }) {
+    const outcome = await discardRefused(device.transport(), ref, TL, uuid);
+    if (outcome.kind === 'discarded') {
+      await device.store().applyDiscard(ref, TL, outcome.arrival);
+    }
+    return outcome;
+  }
+
+  it('E2E discarding a bad shot releases its session on every device', async () => {
+    deviceA.write('sessions', S1('S'));
+    deviceA.write('series', R('r1'));
+    deviceA.write('shots', T('t1', 'r1'));
+    await deviceA.sync();
+    deviceA.write('shots', T('t2', 'r1', null));
+    await deviceA.sync();
+    deviceA.write('shots', T('t3', 'r1'));
+    await deviceA.sync();
+    expect(marksOf(deviceA)).toEqual(['shots:t2:invalid', 'shots:t3:waiting']);
+
+    await deviceB.sync();
+    expect(deviceB.get('shots', 't2')).toBeUndefined();
+    expect(marksOf(deviceB)).toEqual(['shots:t2:invalid', 'shots:t3:waiting']);
+
+    await expect(discard(deviceB, { tableName: 'shots', rowId: 't2' })).resolves.toMatchObject({
+      kind: 'discarded',
+    });
+    await deviceB.sync();
+    expect(deviceB.marks.size).toBe(0);
+    expect(deviceB.get('shots', 't3')).toBeDefined();
+    expect(deviceB.get('shots', 't2')).toBeUndefined();
+
+    await deviceA.sync();
+    expect(deviceA.marks.size).toBe(0);
+    expect(deviceA.get('shots', 't2')).toMatchObject({ deleted_at: TL });
+    expect(deviceA.get('shots', 't3')).toMatchObject({ deleted_at: null });
+  });
+
+  it('E2E a second discard of the same row is still discarded (tombstoned)', async () => {
+    deviceA.write('sessions', S1('S'));
+    deviceA.write('series', R('r1'));
+    await deviceA.sync();
+    deviceA.write('shots', T('t2', 'r1', null));
+    await deviceA.sync();
+    await expect(discard(deviceA, { tableName: 'shots', rowId: 't2' })).resolves.toMatchObject({
+      kind: 'discarded',
+    });
+    await expect(discard(deviceB, { tableName: 'shots', rowId: 't2' })).resolves.toMatchObject({
+      kind: 'discarded',
+    });
+  });
+
+  it('E2E-ROOT discarding a refused session applies its waiting rows under the deleted session', async () => {
+    deviceA.write('sessions', S1(null));
+    await deviceA.sync();
+    deviceA.write('series', R('r1'));
+    deviceA.write('shots', T('t1', 'r1'));
+    await deviceA.sync();
+    expect(await deviceA.store().markCounts()).toEqual({ invalid: 1, waiting: 2 });
+
+    await expect(discard(deviceB, { tableName: 'sessions', rowId: 's1' })).resolves.toMatchObject({
+      kind: 'discarded',
+    });
+    await deviceB.sync();
+    expect(deviceB.marks.size).toBe(0);
+    expect(deviceB.get('series', 'r1')).toBeDefined();
+    expect(deviceB.get('sessions', 's1')).toBeUndefined();
+
+    await deviceA.sync();
+    expect(deviceA.marks.size).toBe(0);
+    expect(deviceA.get('sessions', 's1')).toMatchObject({ deleted_at: TL });
   });
 });

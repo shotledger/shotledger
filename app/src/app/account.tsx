@@ -18,6 +18,8 @@ import { apiBaseUrl } from '@/constants/backend';
 import { useAccount } from '@/features/account/use-account';
 import type { PasskeyErrorKey } from '@/features/account/passkey-error';
 import { usePasskeys } from '@/features/account/use-passkeys';
+import { RefusedChanges } from '@/features/sync/refused-changes';
+import { useRefusedChanges } from '@/features/sync/use-refused-changes';
 import { useSync } from '@/features/sync/use-sync';
 import { useDateFormat } from '@/features/dates/use-date-format';
 
@@ -28,6 +30,7 @@ export default function AccountScreen() {
   const dates = useDateFormat();
   const account = useAccount();
   const { status, syncNow } = useSync(account.signedIn);
+  const refused = useRefusedChanges(status);
   const passkeys = usePasskeys(account.signedIn);
   const [passkeySignInError, setPasskeySignInError] = useState<PasskeyErrorKey | null>(null);
 
@@ -106,6 +109,12 @@ export default function AccountScreen() {
                 {t('account.refusedChanges', { count: status.refusedCount })}
               </ThemedText>
             )}
+            <RefusedChanges
+              rows={refused.rows}
+              onDiscard={refused.discard}
+              failed={refused.failed}
+              busy={refused.busy}
+            />
             {status.heldCount > 0 && (
               <ThemedText type="small" themeColor="textSecondary" testID="sync-held">
                 {t('account.heldChanges', { count: status.heldCount })}

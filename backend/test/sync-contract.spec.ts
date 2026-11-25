@@ -210,6 +210,13 @@ class Device {
           invalid: marks.filter((m) => m.kind === 'invalid').length,
           waiting: marks.filter((m) => m.kind === 'waiting').length,
         };
+      }, // As the adapter (sync-discard-refused-spec §2.3): the mark dropped up
+      // to the discard's arrival, then the tombstone applied as a pulled one.
+      applyDiscard: async (ref, now, arrival) => {
+        this.replaceMarks(applyMarkUpdate([...this.marks.values()], { drop: ref, upTo: arrival }));
+        this.applyRows([
+          { ...ref, seq: 1, payload: null, deletedAt: now, updatedAt: now, arrival },
+        ]);
       },
     };
   }

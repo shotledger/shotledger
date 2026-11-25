@@ -105,6 +105,12 @@ export interface LocalStore {
   readMarks(): Promise<RefusalMark[]>;
   /** What Account & Sync shows: `invalid` and `waiting` marks. */
   markCounts(): Promise<{ invalid: number; waiting: number }>;
+  /**
+   * A discarded bad row (docs/specs/sync-discard-refused-spec.md §2.3), in
+   * one transaction: its tombstone applied as a pulled one, with the outbox
+   * triggers suppressed, and its mark dropped up to the discard's `arrival`.
+   */
+  applyDiscard(ref: RowRef, now: string, arrival: number): Promise<void>;
 }
 
 export interface SyncTransport {

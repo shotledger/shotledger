@@ -92,6 +92,9 @@ function createFakeStore(options: FakeStoreOptions = {}) {
         waiting: all.filter((m) => m.kind === 'waiting').length,
       };
     },
+    applyDiscard: async () => {
+      throw new Error('the engine never discards');
+    },
   };
 
   return { store, cursors, outbox, applied, cleared, assigned, marks, outcomes };

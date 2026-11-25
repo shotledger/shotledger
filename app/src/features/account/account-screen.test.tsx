@@ -16,6 +16,9 @@ const mockStatus: { value: SyncStatus } = { value: initialSyncStatus };
 jest.mock('@/features/sync/use-sync', () => ({
   useSync: () => ({ status: mockStatus.value, syncNow: jest.fn() }),
 }));
+jest.mock('@/features/sync/use-refused-changes', () => ({
+  useRefusedChanges: () => ({ rows: [], failed: [], busy: null, discard: jest.fn() }),
+}));
 jest.mock('@/features/account/use-account', () => ({
   useAccount: () => ({
     loading: false,
