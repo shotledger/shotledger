@@ -5,8 +5,8 @@ Spec: [`sync-discard-refused-spec.md`](./sync-discard-refused-spec.md).
 - **Spec approval: obtained, 2026-11-25**, before implementation: "I have
   approved the specs, go ahead." (Q1 design as written, Q2 no counter move,
   Q3 Swedish "Kasta").
-- **Source state**: commit `8955c65` on `feature/942-discard-refused-change`.
-  This report is the only file added after it.
+- **Source state**: commit `8955c65` on `feature/942-discard-refused-change`;
+  §4a covers the review fixes added after it (through `dfeb61d`).
 - **Tier**: 3 (sync engine, deletes data on every device).
 - **Reproduce**: `pnpm check`; `pnpm --filter @shotledger/backend test`;
   Stryker per §4.
@@ -88,6 +88,26 @@ order test (discard → apply → cycle).
   reach: web tests render static markup and the repo has no DOM testing
   library (adding one needs the maintainer's OK). One survivor (line 89) is
   equivalent. This file is not in `pnpm gauntlet`'s mutate list.
+- **The gauntlet as configured fails.** With the repo's config, Stryker
+  reports `discard.ts` as no coverage (0%). A full `pnpm mutation` in this
+  container scores `shared` at 10.6%, mostly no coverage. The scheduled
+  Mutation workflow on `main` has failed every week since 2026-11-02 (54.52%
+  on 2026-11-23). So the gate is broken on `main`, not only for this change.
+  The 100% above comes from per-file isolation and does not mean the gate
+  passes.
+
+## 4a. Review fixes after the report
+
+CodeRabbit's second round found four real gaps. Each got a failing test
+first, then the fix:
+
+- a discard still queued at sign-out now fails instead of going out under
+  the next session;
+- a count refresh that throws no longer leaves the discard unsettled;
+- a refused session whose `started_at` isn't a date leaves the date out of
+  its title instead of crashing the list (CTX-NODATE);
+- on the web, a discard whose reload failed says "Reload the page to see the
+  changes." instead of showing the old list as if nothing happened.
 
 ## 5. Must NOT
 
