@@ -1,8 +1,9 @@
 # Discard a refused change (#942)
 
-**Status: draft, awaiting the maintainer's approval.** No implementation
-code is written until it is approved (old-coder, Tier 3: it pushes from the
-sync engine's side of the phone).
+**Spec approved by the maintainer, 2026-11-25**, before implementation:
+"I have approved the specs, go ahead.", after the draft revision below, with
+the recommended answers to Q1–Q3 ("Approve all": Swedish label "Kasta")
+(old-coder, Tier 3: it pushes from the sync engine's side of the phone).
 
 Follow-up to #856 (PR #857): `sync-family-refusal-spec.md` §11.9, "The way
 out", and Q2 of Revision 3, which made the Discard action a follow-up.
@@ -293,3 +294,5 @@ Feature: Discard a refused change
   §2.1 sends through `transport.push`, not `pushChanges`, so the ack's
   `arrival` reaches the phone; §2.3 states that an edit made while the
   discard is in flight is deleted with the row, with scenario PHONE-INFLIGHT.
+- **Approved (2026-11-25).** By the maintainer: "I have approved the specs,
+  go ahead." Q1 yes; Q2 no counter move; Q3 "Kasta".
