@@ -663,4 +663,28 @@ describe('requestDiscard', () => {
     await expect(discarded).resolves.toEqual({ kind: 'failed', error: 'unauthenticated' });
     expect(mockDiscardRefused).not.toHaveBeenCalled();
   });
+
+  it('signing out fails a queued discard, so a later session never sends it', async () => {
+    const { controller } = load();
+    const first = holdNextCycle();
+    const loop = controller.requestSync();
+    await settle();
+    const discarded = controller.requestDiscard(T2);
+    controller.resetSyncController();
+    await expect(discarded).resolves.toEqual({ kind: 'failed', error: 'unauthenticated' });
+    first.finish();
+    await loop;
+    expect(mockDiscardRefused).not.toHaveBeenCalled();
+  });
+
+  it('a count refresh that throws still settles the discard, and the cycle runs', async () => {
+    const { controller } = load();
+    mockPendingCount.mockRejectedValueOnce(new Error('disk'));
+
+    await expect(controller.requestDiscard(T2)).resolves.toEqual({
+      kind: 'discarded',
+      arrival: 7,
+    });
+    expect(mockRunSyncCycle).toHaveBeenCalledTimes(1);
+  });
 });

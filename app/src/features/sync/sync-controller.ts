@@ -189,6 +189,10 @@ export function resetSyncController(): void {
     clearTimeout(writeDebounce);
     writeDebounce = null;
   }
+  // A queued discard belongs to the session that asked for it.
+  for (const queued of pendingDiscards.splice(0)) {
+    queued.done({ kind: 'failed', error: 'unauthenticated' });
+  }
   status = initialSyncStatus;
   for (const listener of listeners) listener(status);
 }
@@ -220,7 +224,11 @@ async function runDiscards(): Promise<void> {
         outcome = { kind: 'failed', error: 'unknown' };
       }
     }
-    await refreshPendingCount();
+    try {
+      await refreshPendingCount();
+    } catch {
+      // The counts are re-read after the cycle that follows; the verdict stands.
+    }
     next.done(outcome);
   }
 }
