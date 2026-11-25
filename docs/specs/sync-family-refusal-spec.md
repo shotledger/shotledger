@@ -962,18 +962,12 @@ The intended behaviour is that the phone applies such a child, as the
 server does (N5), and as sync already does today for a child pushed before
 its parent.
 
-- **Production:** foreign keys are off. `app/src/db/client.ts` and
-  `client.web.ts` set `PRAGMA foreign_keys = OFF` and read it back at open,
-  and the app stops if it still reads on
-  ([`phone-foreign-keys-spec.md`](./phone-foreign-keys-spec.md); this
-  replaces relying on SQLite's compile default and a one-off dev-build
-  read).
-- **Tests:** `app/src/db/test-db.ts` turns foreign keys on, and every
-  existing test keeps that. `createTestDb` gains a `{ foreignKeys: false }`
-  option that matches production. The H7', ROOT and DISCARD apply tests use
-  it. One more test pins the difference: on the default test DB, with foreign
-  keys on, the same apply fails at commit, because `applyChangesSync` defers foreign-key checks to
-  the end of the transaction.
+- **Superseded (2026-11-25)** by
+  [`phone-foreign-keys-spec.md`](./phone-foreign-keys-spec.md): the phone
+  now enforces foreign keys, and such a child waits in `sync_pending_rows`
+  until its parent is there, rather than being applied under a missing
+  parent. The H7′, ROOT and DISCARD tests moved to
+  `app/src/db/queries/sync-pending.test.ts`.
 
 **What the user sees (§2.4, revised):**
 
