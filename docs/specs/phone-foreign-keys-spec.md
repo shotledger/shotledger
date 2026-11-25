@@ -78,9 +78,9 @@ One module, `app/src/db/foreign-keys.ts`:
 
 ## 5. Evidence plan
 
-- Jest tests in `app/src/db/foreign-keys.test.ts` for FK1–FK3 and FK6; each
+- Vitest tests in `app/src/db/foreign-keys.test.ts` (FK1–FK3) and `app/src/db/queries/sync-store.test.ts` (FK6); each
   seen failing first.
-- Changed-line coverage 100% on `foreign-keys.ts` (`jest --coverage`).
+- Changed-line coverage 100% on `foreign-keys.ts` (`vitest --coverage`).
 - Manual mutants (app code is outside Stryker): drop the `= OFF` exec; flip
   `0` to `1` in the check; treat `null` as failure; make the unknown shape
   pass; remove the FK2 call from a test's wiring. Each must be killed.

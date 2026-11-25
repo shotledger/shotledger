@@ -21,6 +21,7 @@ import {
   syncRefusalMarks,
   syncState,
 } from '../schema';
+import { pinForeignKeysOffSync } from '../foreign-keys';
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
 import { createFirearm, softDeleteFirearm, updateFirearm } from './firearms';
@@ -777,6 +778,30 @@ describe('refusal marks', () => {
     it('fails at commit on the default test DB, which turns foreign keys on', async () => {
       await expect(store.applyChanges([orphan()])).rejects.toThrow(/FOREIGN KEY/);
       expect(db.select().from(series).all()).toEqual([]);
+    });
+
+    // docs/specs/phone-foreign-keys-spec.md FK6: the app's own pin makes the
+    // default test DB (foreign keys on) behave as production.
+    it('FK6 applies on a foreign-keys-on connection once the app pins them off', async () => {
+      const fkOn = createTestDb();
+      const sqlite = fkOn.$client;
+      expect(sqlite.pragma('foreign_keys', { simple: true })).toBe(1);
+      pinForeignKeysOffSync({
+        execSync: (source) => {
+          sqlite.exec(source);
+        },
+        getFirstSync: <T>(source: string) =>
+          (sqlite.prepare(source).get() as T | undefined) ?? null,
+      });
+      expect(sqlite.pragma('foreign_keys', { simple: true })).toBe(0);
+      await createSyncStore(fkOn).applyChanges([orphan()]);
+      expect(
+        fkOn
+          .select()
+          .from(series)
+          .all()
+          .map((r) => r.id),
+      ).toEqual(['r1']);
     });
   });
 
