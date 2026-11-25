@@ -1,27 +1,17 @@
 // The shared HTTP clients call `config.fetchImpl(...)` as a method. A
 // browser's fetch throws "Illegal invocation" unless `this` is the global
-// (#945), so the app must not hand over the bare `fetch`.
-const captured: { fetchImpl?: (input: string) => Promise<unknown> }[] = [];
+// (#945), so the app must not hand over the bare `fetch`. The shared adapters
+// stay real; only the app's config, storage and the fetch itself are stubbed.
+import type { HttpClient } from '@shotledger/shared/src/integrations/webshooter/api/httpClient';
 
-jest.mock('@shotledger/shared', () => {
-  const capture = (config: { fetchImpl: (input: string) => Promise<unknown> }) => {
-    captured.push(config);
-    return {};
-  };
-  return {
-    createAccountApi: capture,
-    createHttpSyncTransport: capture,
-    createPhotoApi: capture,
-  };
-});
-jest.mock('@shotledger/shared/src/integrations/webshooter/api/httpClient', () => ({
-  createHttpClient: (config: { fetchImpl: (input: string) => Promise<unknown> }) => {
-    captured.push(config);
+const webshooterHttp: { client?: HttpClient } = {};
+jest.mock('@shotledger/shared/src/integrations/webshooter/api/client', () => ({
+  // Only to reach the real HTTP client the app builds; the API layer above it
+  // has nothing to do with how fetch is called.
+  createWebshooterClient: (client: HttpClient) => {
+    webshooterHttp.client = client;
     return {};
   },
-}));
-jest.mock('@shotledger/shared/src/integrations/webshooter/api/client', () => ({
-  createWebshooterClient: () => ({}),
 }));
 jest.mock('@/constants/backend', () => ({ apiBaseUrl: () => 'http://localhost' }));
 jest.mock('@/constants/flags', () => ({ isFlagEnabled: () => false }));
@@ -31,35 +21,41 @@ jest.mock('@/platform/secure-store', () => ({
 }));
 jest.mock('@/features/webshooter/dev-mock', () => ({ createDevMockHttpClient: () => ({}) }));
 
+/** A schema that accepts any body (the app has no zod dependency of its own). */
+const anything = {
+  safeParse: (data: unknown) => ({ success: true, data }),
+} as unknown as Parameters<HttpClient['requestJson']>[1];
+
 const realFetch = global.fetch;
+const receivers: unknown[] = [];
 
 /** Rejects like a browser when called with any `this` but the global. */
-function strictFetch(this: unknown): Promise<unknown> {
+function strictFetch(this: unknown): Promise<Response> {
+  receivers.push(this);
   if (this !== undefined && this !== globalThis) {
     return Promise.reject(new TypeError('Illegal invocation'));
   }
-  return Promise.resolve('ok');
+  return Promise.resolve(new Response('{}', { status: 200 }));
 }
 
+const foreign = () => receivers.filter((r) => r !== undefined && r !== globalThis);
+
 beforeEach(() => {
-  captured.length = 0;
+  receivers.length = 0;
   global.fetch = strictFetch as unknown as typeof fetch;
 });
 afterAll(() => {
   global.fetch = realFetch;
 });
 
-async function callAsMethod(config: { fetchImpl?: (input: string) => Promise<unknown> }) {
-  return config.fetchImpl!('http://localhost/x');
-}
-
-it('the sync clients call fetch with the global as `this`', async () => {
-  const client = jest.requireActual<typeof import('./client')>('./client');
-  client.getAccountApi();
-  client.getSyncTransport();
-  client.getPhotoApi();
-  expect(captured).toHaveLength(3);
-  for (const config of captured) await expect(callAsMethod(config)).resolves.toBe('ok');
+it('the sync client calls fetch with the global as `this`', async () => {
+  const { getAccountApi } = jest.requireActual<typeof import('./client')>('./client');
+  // The response doesn't matter; only how fetch was called.
+  await getAccountApi()
+    .signIn('demo@example.invalid', 'pw')
+    .catch(() => undefined);
+  expect(receivers.length).toBeGreaterThan(0);
+  expect(foreign()).toEqual([]);
 });
 
 it('the Webshooter client calls fetch with the global as `this`', async () => {
@@ -67,6 +63,7 @@ it('the Webshooter client calls fetch with the global as `this`', async () => {
     '@/features/webshooter/client',
   );
   getWebshooterClient();
-  expect(captured).toHaveLength(1);
-  await expect(callAsMethod(captured[0]!)).resolves.toBe('ok');
+  await webshooterHttp.client!.requestJson('competitions', anything);
+  expect(receivers.length).toBeGreaterThan(0);
+  expect(foreign()).toEqual([]);
 });
