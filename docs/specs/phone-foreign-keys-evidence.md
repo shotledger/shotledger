@@ -25,26 +25,27 @@ Revision 1 (foreign keys pinned off) is superseded. Its code was replaced in
 `app/src/db/queries/sync-pending.test.ts`, `PROP` =
 `app/src/db/queries/sync-pending.property.test.ts`.
 
-| #           | Test                                                                                                                                    |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| FK1         | FK "FK1 checkForeignKeysOn": `{foreign_keys: 1}` passes; a value of `0`, `'1'` or `true`, null, undefined, `{}` and a bare `1` throw    |
-| FK2         | `client.ts` / `client.web.ts` set `PRAGMA foreign_keys = OFF` at open. Web: real execution, §4. Native: not run, §5                     |
-| FK3         | FK "FK3 enableForeignKeys" (on, and an ignored pragma throws); both gates call `useFinishOpening`. Web gate run, §4; native not run, §5 |
-| FK4         | No code: restore reloads the app, and the gate runs on the restored file                                                                |
-| AP1         | SP "AP1 a row whose parent is held…", "AP2 a null foreign key needs no parent"                                                          |
-| AP2         | SP "H7′ ROOT DISCARD AP2…", "AP2 the pending entry holds the whole change", "AP2 an update that moves a held row…"                      |
-| AP3         | SP "STALE AP3 a tombstone drops the pending entry…"                                                                                     |
-| AP4         | SP "NEWER AP4" ×2, "AP4 writing a row to its table drops a stale pending entry"                                                         |
-| AP5         | SP "LATE AP5", "CHAIN AP5", "AP5 promotion does not queue…", "AP5 an entry whose parent is still missing stays"                         |
-| AP6         | SP "LOCAL AP6…", "AP6 a held row without a queued edit takes its pending version"                                                       |
-| AP6 (2.2)   | SP "AP6 an acknowledged push drops the pending version, so promotion does not revert the edit"                                          |
-| AP7         | Every SP scenario commits with foreign keys on; PROP checks `foreign_key_check` is empty after every pull                               |
-| FK7         | FK "FK7 the sweep at open": moves an orphan, moves its children, local-only tables stay, clean DB moves nothing                         |
-| FK7 (2.2)   | FK "keeps a newer pulled pending version over the older local row, and still moves the row"                                             |
-| FK7a KEEP   | FK "KEEP leaves an orphan with a queued edit in its table", "KEEP once the push is acknowledged, the next open…"                        |
-| FK7 + AP5   | FK "a swept orphan is promoted when its parent arrives, deleted_at intact"                                                              |
-| Bookkeeping | SP "sign-out and a backup reset empty it"                                                                                               |
-| §7 property | PROP: 100 runs, a 10-row family in any order across 4 pulls, then every row in its table and nothing pending                            |
+| #                 | Test                                                                                                                                    |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| FK1               | FK "FK1 checkForeignKeysOn": `{foreign_keys: 1}` passes; a value of `0`, `'1'` or `true`, null, undefined, `{}` and a bare `1` throw    |
+| FK2               | `client.ts` / `client.web.ts` set `PRAGMA foreign_keys = OFF` at open. Web: real execution, §4. Native: not run, §5                     |
+| FK3               | FK "FK3 enableForeignKeys" (on, and an ignored pragma throws); both gates call `useFinishOpening`. Web gate run, §4; native not run, §5 |
+| FK4               | No code: restore reloads the app, and the gate runs on the restored file                                                                |
+| AP1               | SP "AP1 a row whose parent is held…", "AP2 a null foreign key needs no parent"                                                          |
+| AP2               | SP "H7′ ROOT DISCARD AP2…", "AP2 the pending entry holds the whole change", "AP2 an update that moves a held row…"                      |
+| AP3               | SP "STALE AP3 a tombstone drops the pending entry…"                                                                                     |
+| AP4               | SP "NEWER AP4" ×2, "AP4 writing a row to its table drops a stale pending entry"                                                         |
+| AP5               | SP "LATE AP5", "CHAIN AP5", "AP5 promotion does not queue…", "AP5 an entry whose parent is still missing stays"                         |
+| AP6               | SP "LOCAL AP6…", "AP6 a held row without a queued edit takes its pending version"                                                       |
+| AP6 (2.2)         | SP "AP6 an acknowledged push drops the pending version, so promotion does not revert the edit"                                          |
+| AP7               | Every SP scenario commits with foreign keys on; PROP checks `foreign_key_check` is empty after every pull                               |
+| FK7               | FK "FK7 the sweep at open": moves an orphan, moves its children, local-only tables stay, clean DB moves nothing                         |
+| FK7 (2.2)         | FK "keeps a newer pulled pending version over the older local row, and still moves the row"                                             |
+| FK7a KEEP         | FK "KEEP leaves an orphan with a queued edit in its table", "KEEP once the push is acknowledged, the next open…"                        |
+| FK7 + AP5         | FK "a swept orphan is promoted when its parent arrives, deleted_at intact"                                                              |
+| E2E (late parent) | `sync-pending.e2e.test.ts` against `wrangler dev`, §4b (opt-in)                                                                         |
+| Bookkeeping       | SP "sign-out and a backup reset empty it"                                                                                               |
+| §7 property       | PROP: 100 runs, a 10-row family in any order across 4 pulls, then every row in its table and nothing pending                            |
 
 **RED observed** (before any implementation):
 
@@ -108,14 +109,35 @@ time and it does not happen. It is not a foreign-key failure.
 
 `expo start` writes `app/.expo/types/router.d.ts`; it was deleted afterwards.
 
+## 4b. End-to-end sync against `wrangler dev` (2026-11-26, after merge)
+
+`app/src/db/queries/sync-pending.e2e.test.ts` (opt-in: it runs only when
+`SYNC_E2E_URL` is set, and its header gives the commands). The phone's real
+SQLite sync store, with foreign keys on, syncs over HTTP with a local
+`wrangler dev` (local D1, migrations applied, account created through
+better-auth):
+
+- Device A writes 201 sessions with one series each, two shots under the
+  first series, then renames the first session. Its push is acknowledged.
+- The server pages each table by seq, 200 rows a page, so device B pulls the
+  first series and its two shots on page 1, and their session on page 2.
+- After page 1, exactly those three rows wait in `sync_pending_rows`. After
+  page 2 nothing waits. `foreign_key_check` is empty after every page.
+- Every row lands, the rename is there, promotion queues nothing for upload,
+  and `foreign_keys` reads 1.
+
+Result: pass (`wrangler dev` logged one push and three pulls, two of them
+device B's pages). With `promotePending` disabled the test fails (the three
+rows still wait), so it is not vacuous.
+
 ## 5. Known limits
 
 - **No native read.** There is no Android or iOS dev build: the cloud session
   has no SDK. FK2 and FK3 are the same code on native, and every launch reads
   the setting back, so a native build that failed to enforce would stop at
   the gate.
-- **No end-to-end sync run against `wrangler dev`** for this change. The apply
-  path is covered by SP and PROP on the real schema with enforcement on;
-  push, the protocol and the server are unchanged.
+- **End to end covers the late parent only** (§4b). A parent that never
+  arrives (ROOT, DISCARD) and the acknowledged-push rule (AP6, Revision 2.2)
+  are covered by SP on the real schema, not through a running server.
 - **A pending row whose parent never arrives** (ROOT, DISCARD) stays in
   `sync_pending_rows` until sign-out or restore. It is invisible either way.
