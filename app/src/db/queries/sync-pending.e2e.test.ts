@@ -79,7 +79,7 @@ describe.skipIf(!BASE_URL)('E2E the phone store against a running Worker', () =>
     // Device B: the phone's own store, observed after every page it applies.
     const b = createTestDb();
     const real = createSyncStore(b);
-    const pages: { pending: string[]; violations: unknown[] }[] = [];
+    const pages: { pending: string[]; violations: unknown[]; queued: number }[] = [];
     const observed: LocalStore = {
       ...real,
       applyChanges: async (changes: ChangeRow[], marks?: readonly RefusalMark[]) => {
@@ -92,11 +92,13 @@ describe.skipIf(!BASE_URL)('E2E the phone store against a running Worker', () =>
             .map((r) => `${r.tableName}/${r.rowId}`)
             .sort(),
           violations: b.all(sql`PRAGMA foreign_key_check`),
+          // Checked here, before the cycle's push could send and clear it.
+          queued: b.select().from(syncOutbox).all().length,
         });
       },
     };
     const pulled = await device(b, () => tokenB)(observed);
-    expect(pulled).toMatchObject({ status: 'ok', rejected: 0, invalid: 0 });
+    expect(pulled).toMatchObject({ status: 'ok', pushed: 0, rejected: 0, invalid: 0 });
 
     // Page 1 held the first session's series and shots aside; page 2 brought
     // the session and promoted them. No page left a dangling row.
@@ -104,7 +106,10 @@ describe.skipIf(!BASE_URL)('E2E the phone store against a running Worker', () =>
     expect(pages[0]!.pending).toEqual(
       [`series/${first.series}`, ...shotIds.map((id) => `shots/${id}`)].sort(),
     );
-    for (const page of pages) expect(page.violations).toEqual([]);
+    for (const page of pages) {
+      expect(page.violations).toEqual([]);
+      expect(page.queued).toBe(0);
+    }
     expect(pages.at(-1)!.pending).toEqual([]);
 
     // Everything landed, nothing waits, and promotion queued no upload.
