@@ -22,7 +22,14 @@ import {
 
 import { SYNC_TABLES } from '@shotledger/shared/src/sync/tables';
 
-import { photoQueue, syncControl, syncOutbox, syncRefusalMarks, syncState } from '../schema';
+import {
+  photoQueue,
+  syncControl,
+  syncOutbox,
+  syncPendingRows,
+  syncRefusalMarks,
+  syncState,
+} from '../schema';
 import type { Database } from '../types';
 
 /** Protocol table name -> Drizzle table; lives in shared/ so the server's
@@ -145,15 +152,14 @@ export function createSyncStore(db: Database): LocalStore {
 
     async clearOutboxEntry(entry, outcome) {
       // rev-matched: a local write that landed while this push was in flight
-      // bumped rev, so the entry survives for the next cycle.
-      if (outcome === undefined) {
-        db.delete(syncOutbox).where(matches(entry)).run();
-        return;
-      }
+      // bumped rev, so the entry survives for the next cycle. The row's
+      // pending version is older than what the push sent, so it goes too
+      // (AP6): promoting it later would revert the acknowledged edit.
       db.transaction((tx) => {
         const inner = tx as unknown as Database;
         inner.delete(syncOutbox).where(matches(entry)).run();
-        writeAckOutcome(inner, outcome);
+        dropPending(inner, entry.tableName, entry.rowId);
+        if (outcome !== undefined) writeAckOutcome(inner, outcome);
       });
     },
 
@@ -210,12 +216,186 @@ export function applyChangesSync(
 function applyRows(db: Database, changes: readonly ChangeRow[]): void {
   setApplying(db, 1);
   try {
-    // Deferring FK checks to COMMIT covers a parent arriving in a later
-    // page of the same cycle; the engine has already sorted parents first.
+    // A guard, not the mechanism: applyPulled never writes a row whose parent
+    // is missing, so a violation at COMMIT means a case it missed (AP7).
     db.run(sql`PRAGMA defer_foreign_keys = ON`);
-    for (const change of changes) applyOne(db, change);
+    for (const change of changes) applyPulled(db, change);
+    promotePending(db);
   } finally {
     setApplying(db, 0);
+  }
+}
+
+// --- Rows whose parent this device does not hold (phone-foreign-keys-spec §4)
+
+interface ForeignKey {
+  /** Child column. */
+  from: string;
+  /** Parent table. */
+  table: string;
+  /** Parent column. */
+  to: string;
+}
+
+const foreignKeysByTable = new Map<string, readonly ForeignKey[]>();
+
+/** The schema's foreign keys of `tableSqlName`; fixed per build, so cached. */
+function foreignKeysOf(db: Database, tableSqlName: string): readonly ForeignKey[] {
+  let keys = foreignKeysByTable.get(tableSqlName);
+  if (keys === undefined) {
+    keys = db.all<ForeignKey>(
+      sql`SELECT "from", "table", "to" FROM pragma_foreign_key_list(${tableSqlName})`,
+    );
+    foreignKeysByTable.set(tableSqlName, keys);
+  }
+  return keys;
+}
+
+/** True when a non-null foreign key of a live change names a row this device lacks (AP1). */
+function lacksParent(db: Database, change: ChangeRow): boolean {
+  const payload = (change.payload ?? {}) as Record<string, unknown>;
+  const tableSqlName = getTableName(SYNC_TABLES[change.tableName]);
+  for (const key of foreignKeysOf(db, tableSqlName)) {
+    const value = payload[key.from];
+    if (value === null || value === undefined) continue;
+    const found = db.get(
+      sql`SELECT 1 AS found FROM ${sql.raw(quoteIdentifier(key.table))} WHERE ${sql.raw(
+        quoteIdentifier(key.to),
+      )} = ${value} LIMIT 1`,
+    );
+    if (found === undefined) return true;
+  }
+  return false;
+}
+
+function dropPending(db: Database, tableName: SyncTableName, rowId: string): void {
+  db.delete(syncPendingRows)
+    .where(and(eq(syncPendingRows.tableName, tableName), eq(syncPendingRows.rowId, rowId)))
+    .run();
+}
+
+function holdPending(db: Database, change: ChangeRow): void {
+  const payload = JSON.stringify(change);
+  db.insert(syncPendingRows)
+    .values({ tableName: change.tableName, rowId: change.rowId, payload })
+    .onConflictDoUpdate({
+      target: [syncPendingRows.tableName, syncPendingRows.rowId],
+      set: { payload },
+    })
+    .run();
+}
+
+/** AP1–AP4: write a pulled row, or hold it until its parent is here. */
+function applyPulled(db: Database, change: ChangeRow): void {
+  if (change.deletedAt === null && lacksParent(db, change)) {
+    holdPending(db, change);
+    return;
+  }
+  dropPending(db, change.tableName, change.rowId);
+  applyOne(db, change);
+}
+
+/**
+ * FK7, at open with foreign keys still off: every row `foreign_key_check`
+ * reports in a synced table, unless it has a queued local edit, moves to
+ * sync_pending_rows, until nothing movable is reported. A row with a queued
+ * edit stays for its push to read (deleting it would turn the push into a
+ * hard delete); a row of a local-only table stays too. Returns rows moved.
+ */
+export function sweepOrphanRows(db: Database): number {
+  const syncedBySqlName = new Map(
+    (Object.keys(SYNC_TABLES) as SyncTableName[]).map((name) => [
+      getTableName(SYNC_TABLES[name]),
+      name,
+    ]),
+  );
+  let moved = 0;
+  db.transaction((tx) => {
+    const inner = tx as unknown as Database;
+    for (;;) {
+      const reported = inner.all<{ table: string; rowid: number }>(sql`PRAGMA foreign_key_check`);
+      let pass = 0;
+      for (const { table, rowid } of reported) {
+        const tableName = syncedBySqlName.get(table);
+        if (tableName === undefined) continue;
+        const tableSql = sql.raw(quoteIdentifier(table));
+        const row = inner.get<Record<string, unknown> | undefined>(
+          sql`SELECT * FROM ${tableSql} WHERE rowid = ${rowid}`,
+        );
+        // Moved earlier in this pass (a row with two dangling keys is reported twice).
+        if (row === undefined) continue;
+        const rowId = row.id as string;
+        if (hasQueuedEdit(inner, tableName, rowId)) continue;
+        // A pending entry already there is a newer pulled version (AP2/AP4):
+        // keep it, and still move the older local row out.
+        const swept = {
+          tableName,
+          rowId,
+          seq: 0,
+          arrival: 0,
+          payload: row,
+          deletedAt: null,
+          updatedAt: row.updated_at as string,
+        } as ChangeRow;
+        inner
+          .insert(syncPendingRows)
+          .values({ tableName, rowId, payload: JSON.stringify(swept) })
+          .onConflictDoNothing()
+          .run();
+        // A local move, not a user delete: the row is not gone, it waits for
+        // its parent, so no tombstone is synced (no-hard-delete.test.ts).
+        inner.run(sql`DELETE FROM ${tableSql} WHERE rowid = ${rowid}`);
+        pass += 1;
+      }
+      if (pass === 0) return;
+      moved += pass;
+    }
+  });
+  return moved;
+}
+
+function rowExists(db: Database, tableName: SyncTableName, rowId: string): boolean {
+  const tableSql = quoteIdentifier(getTableName(SYNC_TABLES[tableName]));
+  return (
+    db.get(sql`SELECT 1 AS found FROM ${sql.raw(tableSql)} WHERE "id" = ${rowId}`) !== undefined
+  );
+}
+
+function hasQueuedEdit(db: Database, tableName: SyncTableName, rowId: string): boolean {
+  return (
+    db
+      .select()
+      .from(syncOutbox)
+      .where(and(eq(syncOutbox.tableName, tableName), eq(syncOutbox.rowId, rowId)))
+      .get() !== undefined
+  );
+}
+
+/**
+ * AP5–AP6: one pass over the pending entries in APPLY_ORDER, which puts every
+ * parent table before its children, so a chain (shot under series under
+ * session) promotes in the pass that brings its root.
+ */
+function promotePending(db: Database): void {
+  const order = (name: string) => APPLY_ORDER.indexOf(name as SyncTableName);
+  const entries = db
+    .select()
+    .from(syncPendingRows)
+    .all()
+    .sort((a, b) => order(a.tableName) - order(b.tableName));
+  for (const entry of entries) {
+    const change = JSON.parse(entry.payload) as ChangeRow;
+    if (
+      rowExists(db, change.tableName, change.rowId) &&
+      hasQueuedEdit(db, change.tableName, change.rowId)
+    ) {
+      // The local row is newer; its push sends it (AP6).
+      dropPending(db, change.tableName, change.rowId);
+      continue;
+    }
+    if (lacksParent(db, change)) continue;
+    dropPending(db, change.tableName, change.rowId);
+    applyOne(db, change);
   }
 }
 
@@ -308,6 +488,7 @@ export function resetSyncBookkeeping(db: Database): void {
     tx.delete(syncOutbox).run();
     tx.delete(syncState).run();
     tx.delete(syncRefusalMarks).run();
+    tx.delete(syncPendingRows).run();
     tx.delete(photoQueue).run();
     // Written, never deleted: the outbox triggers read `applying` from row 0,
     // and with no row they stop queueing edits.
@@ -326,4 +507,5 @@ export function resetSyncState(db: Database): void {
   db.delete(syncOutbox).run();
   db.delete(syncState).run();
   db.delete(syncRefusalMarks).run();
+  db.delete(syncPendingRows).run();
 }

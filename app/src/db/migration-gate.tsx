@@ -11,6 +11,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { db } from './client';
 import migrations from './migrations/migrations';
 import type * as schema from './schema';
+import { useFinishOpening } from './use-finish-opening';
 import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
 
 export function MigrationGate({ children }: { children: React.ReactNode }) {
@@ -20,7 +21,11 @@ export function MigrationGate({ children }: { children: React.ReactNode }) {
   // ExpoSQLiteDatabase type (SQLiteRunResult, not the agnostic `unknown`).
   // This module only ever runs against the real expo-sqlite client
   // (see db/client.ts), so the cast is safe.
-  const { success, error } = useMigrations(db as ExpoSQLiteDatabase<typeof schema>, migrations);
+  const migration = useMigrations(db as ExpoSQLiteDatabase<typeof schema>, migrations);
+  // Then the orphan sweep and foreign keys on (phone-foreign-keys-spec FK3).
+  const opening = useFinishOpening(db, migration.success);
+  const error = migration.error ?? opening.error;
+  const success = opening.done;
 
   useEffect(() => {
     if (error) {

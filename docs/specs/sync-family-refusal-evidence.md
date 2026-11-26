@@ -364,6 +364,9 @@ without payloads. No index was added.
 
 ## Local foreign keys (§11.6)
 
+> Superseded (2026-11-25): the phone now enforces foreign keys; see
+> [`phone-foreign-keys-evidence.md`](./phone-foreign-keys-evidence.md).
+
 - **Production:** `app/src/db/client.ts` opens the database with
   `openDatabaseSync` and sets no `foreign_keys` pragma. expo-sqlite 57.0.3
   compiles SQLite without `SQLITE_DEFAULT_FOREIGN_KEYS`: its
@@ -428,7 +431,10 @@ before the final `pnpm check`.
   included, would fail (round 6, E6-1; round 7, F2; round 8, V8-2). It counts bad and waiting rows,
   not stored ones: far beyond a real account; no test reaches it.
 - **The production `PRAGMA foreign_keys` read** in a dev build was not
-  made (Revision 4 item 6).
+  made (Revision 4 item 6). Closed by
+  [`phone-foreign-keys-spec.md`](./phone-foreign-keys-spec.md): the app now
+  enforces foreign keys, reads the setting back at every open, and holds a
+  child whose parent it lacks in `sync_pending_rows`.
 - **The Discard action is a follow-up** (Q2): a refusal no edit can fix
   holds its family until the row or its session is deleted.
 - **The web entry page's message for a waiting save** is #863.

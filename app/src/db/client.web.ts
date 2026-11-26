@@ -28,7 +28,11 @@ export async function openWebDatabase(): Promise<void> {
       'Page is not cross-origin isolated (COOP/COEP headers missing) — ARCHITECTURE.md § Web preview',
     );
   }
-  connection ??= await openDatabaseAsync(DATABASE_FILENAME, { enableChangeListener: false });
+  if (connection) return;
+  const opened = await openDatabaseAsync(DATABASE_FILENAME, { enableChangeListener: false });
+  // As client.ts: off while migrations run; the gate turns them on.
+  await opened.execAsync('PRAGMA foreign_keys = OFF');
+  connection = opened;
 }
 
 function connected(): SQLiteDatabase {

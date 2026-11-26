@@ -584,14 +584,14 @@ describe('refusal marks', () => {
     round_count: 0,
     rounds_since_maintenance: 0,
   });
-  const seriesPayload = (id: string, sessionId: string) => ({
-    id,
-    created_at: '2026-09-01T00:00:00.000Z',
-    updated_at: '2026-09-01T00:00:00.000Z',
-    deleted_at: null,
-    session_id: sessionId,
-    position: 1,
-  });
+  // A row SQLite refuses (NOT NULL `make`). An orphan no longer fails: it
+  // waits in sync_pending_rows (docs/specs/phone-foreign-keys-spec.md).
+  const unwritable = (id: string) =>
+    change({
+      tableName: 'firearms',
+      rowId: id,
+      payload: { ...firearmPayload(id, 'X'), make: null },
+    });
   const sortMarks = (marks: RefusalMark[]) =>
     [...marks].sort((a, b) => (a.rowId < b.rowId ? -1 : 1));
 
@@ -621,12 +621,7 @@ describe('refusal marks', () => {
 
   it('writes the marks in the transaction that applies the page: a failed apply keeps the old ones', async () => {
     await store.applyChanges([], [waiting('r1', 4)]);
-    await expect(
-      store.applyChanges(
-        [change({ tableName: 'series', rowId: 'x', payload: seriesPayload('x', 'gone') })],
-        [],
-      ),
-    ).rejects.toThrow();
+    await expect(store.applyChanges([unwritable('x')], [])).rejects.toThrow();
     expect(await store.readMarks()).toEqual([waiting('r1', 4)]);
   });
 
@@ -737,7 +732,7 @@ describe('refusal marks', () => {
       await expect(
         store.clearOutboxEntry(entry, {
           mark: { set: { ...invalid('x', 4), tableName: entry.tableName, rowId: entry.rowId } },
-          current: change({ tableName: 'series', rowId: 's', payload: seriesPayload('s', 'gone') }),
+          current: unwritable('s'),
         }),
       ).rejects.toThrow();
       expect(outboxRows()).toHaveLength(1);
@@ -755,30 +750,8 @@ describe('refusal marks', () => {
     expect(db.select().from(syncRefusalMarks).all()).toEqual([]);
   });
 
-  // §11.6, local foreign keys: production sets no foreign_keys pragma, so a
-  // released child whose parent this device never held applies (H7', ROOT,
-  // DISCARD), as on the server (N5).
-  describe('a child whose parent this device does not hold', () => {
-    const orphan = () =>
-      change({ tableName: 'series', rowId: 'r1', payload: seriesPayload('r1', 's-never-pulled') });
-
-    it('H7’ ROOT DISCARD applies with foreign keys off, as in production', async () => {
-      const prod = createTestDb({ foreignKeys: false });
-      await createSyncStore(prod).applyChanges([orphan()]);
-      expect(
-        prod
-          .select()
-          .from(series)
-          .all()
-          .map((r) => r.id),
-      ).toEqual(['r1']);
-    });
-
-    it('fails at commit on the default test DB, which turns foreign keys on', async () => {
-      await expect(store.applyChanges([orphan()])).rejects.toThrow(/FOREIGN KEY/);
-      expect(db.select().from(series).all()).toEqual([]);
-    });
-  });
+  // §11.6's orphan apply (H7', ROOT, DISCARD) with foreign keys on:
+  // sync-pending.test.ts (docs/specs/phone-foreign-keys-spec.md).
 
   it('ECHO with the real engine: this device’s own older push, pulled back, keeps its waiting edit', async () => {
     const id = createFirearm(db, { make: 'Pardini', model: 'A2' }).id;

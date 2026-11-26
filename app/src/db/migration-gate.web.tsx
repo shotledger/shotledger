@@ -9,6 +9,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { db, openWebDatabase } from './client.web';
 import migrations from './migrations/migrations';
 import type * as schema from './schema';
+import { useFinishOpening } from './use-finish-opening';
 
 export function MigrationGate({ children }: { children: React.ReactNode }) {
   const [opened, setOpened] = useState(false);
@@ -28,9 +29,11 @@ export function MigrationGate({ children }: { children: React.ReactNode }) {
 
 function Migrate({ children }: { children: React.ReactNode }) {
   // Same cast as migration-gate.tsx: useMigrations wants the concrete driver type.
-  const { success, error } = useMigrations(db as ExpoSQLiteDatabase<typeof schema>, migrations);
+  const migration = useMigrations(db as ExpoSQLiteDatabase<typeof schema>, migrations);
+  const opening = useFinishOpening(db, migration.success);
+  const error = migration.error ?? opening.error;
   if (error) return <Failure message={error.message} />;
-  if (!success) return null;
+  if (!opening.done) return null;
   return children;
 }
 

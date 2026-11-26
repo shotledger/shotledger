@@ -456,6 +456,22 @@ export const syncRefusalMarks = sqliteTable(
   (t) => [primaryKey({ columns: [t.tableName, t.rowId] })],
 );
 
+// A pulled row whose parent this device does not hold yet: foreign keys are
+// enforced, so it waits here and is promoted into its table, in the same
+// transaction, once every parent it names is there
+// (docs/specs/phone-foreign-keys-spec.md). Bookkeeping like sync_outbox:
+// never synced, emptied on sign-out and restore.
+export const syncPendingRows = sqliteTable(
+  'sync_pending_rows',
+  {
+    tableName: text('table_name').notNull(),
+    rowId: text('row_id').notNull(),
+    /** The ChangeRow, JSON. */
+    payload: text('payload').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.tableName, t.rowId] })],
+);
+
 export const syncState = sqliteTable('sync_state', {
   tableName: text('table_name').primaryKey(),
   cursor: integer('cursor').notNull().default(0),

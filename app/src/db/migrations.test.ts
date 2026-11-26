@@ -71,6 +71,7 @@ function freshDatabase(): Database.Database {
  */
 const SHIPPED_MIGRATIONS: Record<string, string> = {
   '0000_baseline': '3017ff1fd7bacc2274ea47cb1c4c1222a663a9843794c922210b066800f691b3',
+  '0001_sync_pending_rows': '682866250623d1391b21adcb36afc2a372df7a840bf26f8e793e24f5f646b6bc',
 };
 
 function sha256(tag: string): string {

@@ -13,6 +13,9 @@ import type { Database } from './types';
 export const DATABASE_FILENAME = 'shotledger.db';
 
 const expoDb = openDatabaseSync(DATABASE_FILENAME, { enableChangeListener: false });
+// Off while migrations run, whatever SQLite's build default; the migration
+// gate turns them on (docs/specs/phone-foreign-keys-spec.md FK2–FK3).
+expoDb.execSync('PRAGMA foreign_keys = OFF');
 
 export const db: Database = drizzle(expoDb, { schema });
 
