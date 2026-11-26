@@ -7,7 +7,8 @@ Revisions 2 to 2.2.
   implement it", 2026-11-25). After Revisions 2.1 and its amendments the
   maintainer wrote: "I have approved the specs, go ahead." Revision 2.2 (FK7
   keeps a newer pending entry; an acknowledged push drops the row's pending
-  entry) came later, from review, and is not yet approved.
+  entry) came later, from review; the maintainer approved it on 2026-11-26
+  ("Ok").
 - **Source state:** `bugfix/phone-foreign-keys-pinned-off`, code as of
   `c04fbfb` (from `origin/main` at `3393b69`), plus docs and this report.
 - **Tier:** 3 (the sync apply path, the local schema, the migration gate).
